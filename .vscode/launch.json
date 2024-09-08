@@ -6,7 +6,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/data-getter/bin/Debug/net8.0/data-getter.dll", // change data-getter to generic entrypoint
+            "program": "${workspaceFolder}/data-getter/bin/Debug/net8.0/entry.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
