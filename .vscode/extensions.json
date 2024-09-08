@@ -1,0 +1,12 @@
+{
+    // Existing extensions...
+    "recommendations": [
+        "ms-python.python",                 // Python - for machine learning models
+        "dbaeumer.vscode-eslint",           // ESLint - for React frontend
+        "esbenp.prettier-vscode",           // Prettier - for React frontend
+        "dsznajder.es7-react-js-snippets",  // React - for frontend
+        "ms-dotnettools.csharp",            // C# - for .NET Core backend
+        "ms-azuretools.vscode-docker",      // Docker - for container building
+        "hediet.vscode-drawio"              // Draw.io - for architecture diagrams
+    ]
+}
