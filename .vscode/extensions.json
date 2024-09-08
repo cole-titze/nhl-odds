@@ -7,6 +7,7 @@
         "dsznajder.es7-react-js-snippets",  // React - for frontend
         "ms-dotnettools.csharp",            // C# - for .NET Core backend
         "ms-azuretools.vscode-docker",      // Docker - for container building
-        "hediet.vscode-drawio"              // Draw.io - for architecture diagrams
+        "hediet.vscode-drawio",             // Draw.io - for architecture diagrams
+        "github.vscode-github-actions"      // GitHub Actions - for CI/CD
     ]
 }
