@@ -6,7 +6,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/data-getter/bin/Debug/net8.0/entry.dll",
+            "program": "${workspaceFolder}/Entry/bin/Debug/net8.0/Entry.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,

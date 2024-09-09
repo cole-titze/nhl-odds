@@ -22,6 +22,8 @@ namespace DatabaseAccess.PlayerRepository
             foreach (var player in playersWithValues)
             {
                 player.value = BuildPlayerValue(player);
+                if (player.name == null || player.name == "")
+                    continue;
 
                 var dbPlayer = _dbContext.PlayerValue.FirstOrDefault(p => p.id == player.id && p.seasonStartYear == player.seasonStartYear);
                 if (dbPlayer == null)

@@ -5,16 +5,17 @@ using Entities.Types.Mappers;
 
 namespace Services.NhlData.Mappers
 {
-	public static class MapPlayerStatResponseToPlayer
-	{
+    public static class MapPlayerStatResponseToPlayer
+    {
         /// <summary>
         /// Builds a player stats object
         /// </summary>
         /// <param name="playerStatResponse">Player stat response</param>
         /// <returns>Player stats object</returns>
 		public static IPlayerStats BuildPlayerStats(dynamic playerStatResponse)
-		{
-            if (playerStatResponse.total == 0)
+        {
+            var teamCount = (int)playerStatResponse.total;
+            if (teamCount == 0)
                 return new PlayerStats();
             var rawPlayerStats = playerStatResponse.data;
             IPlayerStats playerStats;
@@ -25,7 +26,7 @@ namespace Services.NhlData.Mappers
                 int goalsAgainst = 0;
                 int saves = 0;
                 int gamesStarted = 0;
-                foreach(var teamStat in rawPlayerStats)
+                foreach (var teamStat in rawPlayerStats)
                 {
                     goalsAgainst += (int)teamStat.goalsAgainst;
                     saves += (int)teamStat.saves;
@@ -55,7 +56,7 @@ namespace Services.NhlData.Mappers
             foreach (var teamStat in rawPlayerStats)
             {
                 gameCount += (int)teamStat.gamesPlayed;
-                faceOffPct += teamStat.faceoffWinPct != null ? (int)teamStat.faceoffWinPct : 0;
+                faceOffPct += teamStat.faceoffWinPct != null ? (int)teamStat.faceoffWinPct : 0; // New api doesn't have faceoff data
                 plusMinus += (int)teamStat.plusMinus;
                 penaltyMinutes += (int)teamStat.penaltyMinutes;
                 blockedShots += 0; // New api doesn't have blocked shot data
@@ -63,18 +64,19 @@ namespace Services.NhlData.Mappers
                 assists += (int)teamStat.assists;
                 goals += (int)teamStat.goals;
             };
+            var position = MapPositionStrToPosition.Map((string)rawPlayerStats[0].positionCode);
 
-            playerStats =  new PlayerStats()
+            playerStats = new PlayerStats()
             {
                 gamesPlayed = gameCount,
-                faceoffPercent = faceOffPct / (int)rawPlayerStats.total,
+                faceoffPercent = faceOffPct / teamCount,
                 plusMinus = plusMinus,
                 penaltyMinutes = penaltyMinutes,
                 blockedShots = blockedShots,
                 shotsOnGoal = shotsOnGoal,
                 assists = assists,
                 goals = goals,
-                position = MapPositionStrToPosition.Map(rawPlayerStats[0].positionCode),
+                position = position,
             };
 
             return playerStats;

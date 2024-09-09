@@ -8,7 +8,7 @@ using Services.RequestMaker;
 namespace Services.NhlData
 {
     public class NhlPlayerGetter : INhlPlayerGetter
-	{
+    {
         private readonly IRequestMaker _requestMaker;
         private readonly ILogger<NhlPlayerGetter> _logger;
         private const int DEFAULT_GAME_COUNT = 1400;
@@ -68,7 +68,7 @@ namespace Services.NhlData
 
             if (_cachedTeamRoster.ContainsKey(teamId))
             {
-                foreach(var player in _cachedTeamRoster[teamId])
+                foreach (var player in _cachedTeamRoster[teamId])
                 {
                     var clonedPlayer = new DbGamePlayer();
                     clonedPlayer.Clone(player, game.id);
@@ -155,6 +155,13 @@ namespace Services.NhlData
                 url = "https://api.nhle.com/stats/rest/en/goalie/summary";
                 query = "?cayenneExp=seasonId=" + NhlDataGetter.GetFullSeasonId(seasonStartYear).ToString() + "%20and%20playerId=" + playerId.ToString();
                 playerStatResponse = await _requestMaker.MakeRequest(url, query);
+            }
+
+            // If nothing was still found log warning and continue
+            if (playerStatResponse == null || (int)playerStatResponse?.total == 0)
+            {
+                _logger.LogWarning($"Player stat request failed: player id: {playerId} year: {seasonStartYear}");
+                return new DbPlayer();
             }
 
             IPlayerStats playerStats = MapPlayerStatResponseToPlayer.BuildPlayerStats(playerStatResponse);

@@ -2,8 +2,8 @@
 
 namespace Entities.Types.Mappers
 {
-	public static class MapPositionStrToPosition
-	{
+    public static class MapPositionStrToPosition
+    {
         public static POSITION Map(string position)
         {
             POSITION playerPosition;
@@ -13,11 +13,11 @@ namespace Entities.Types.Mappers
                     playerPosition = POSITION.Goalie;
                     break;
 
-                case "LW":
+                case "L":
                     playerPosition = POSITION.LeftWing;
                     break;
 
-                case "RW":
+                case "R":
                     playerPosition = POSITION.RightWing;
                     break;
 
