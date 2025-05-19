@@ -69,5 +69,7 @@ IF NOT EXISTS (SELECT * FROM dbo.TEAM)
 	(55, 'SEA', 'Seattle', 'Kraken', 'Kraken.svg'),
 	(56, 'CSE', 'California', 'Golden Seals', 'GoldenSeals.svg'),
 	(57, 'TAN', 'Toronto', 'Arenas', 'Arenas.svg'),
-	(58, 'TSP', 'Toronto', 'St. Patricks', 'StPats.svg')
+	(58, 'TSP', 'Toronto', 'St. Patricks', 'StPats.svg'),
+	(59, 'UTA', 'Utah', 'Hockey Club', 'Utah.svg')
+
 END
