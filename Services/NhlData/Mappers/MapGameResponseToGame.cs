@@ -51,8 +51,8 @@ namespace Services.NhlData.Mappers
                     game.awaySOG = (int)statCategory.awayValue;
                     break;
                 case "faceoffWinningPctg":
-                    game.homeFaceOffWinPercent = (int)statCategory.homeValue;
-                    game.awayFaceOffWinPercent = (int)statCategory.awayValue;
+                    game.homeFaceOffWinPercent = (double)statCategory.homeValue;
+                    game.awayFaceOffWinPercent = (double)statCategory.awayValue;
                     break;
                 case "pim":
                     game.homePIM = (int)statCategory.homeValue;
