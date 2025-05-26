@@ -88,15 +88,13 @@ namespace DataGetter.BusinessLogic.GameGetter
         /// <returns>List of games from the start year</returns>
         private async Task<List<DbGame>> GetSeasonGames(int seasonStartYear, int gameCount)
         {
-            await _gameRepo.CacheSeasonOfGames(seasonStartYear);
-
             var seasonGames = new List<DbGame>();
             DbGame game;
             // game ids start at 1
             for (int count = 1; count <= gameCount; count++)
             {
                 var gameId = NhlDataGetter.GetGameId(seasonStartYear, count);
-                game = _gameRepo.GetGame(gameId);
+                game = await _gameRepo.GetGame(gameId);
                 if (game.IsValid() && game.hasBeenPlayed)
                     continue;
 

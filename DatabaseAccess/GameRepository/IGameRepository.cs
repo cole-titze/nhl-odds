@@ -11,7 +11,7 @@ namespace DatabaseAccess.GameRepository
         Task CacheSeasonOfGames(int seasonStartYear);
         Task Commit();
         bool GameExistsInCache(int gameId);
-        DbGame GetGame(int gameId);
+        Task<DbGame> GetGame(int gameId);
         Task<int> GetGameCountInSeason(int year);
         Task<Dictionary<int, int>> GetSeasonGameCounts();
     }

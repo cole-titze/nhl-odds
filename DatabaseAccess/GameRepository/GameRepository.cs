@@ -1,12 +1,13 @@
 ﻿using Entities.DbModels;
 using Entities.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace DatabaseAccess.GameRepository
 {
     public class GameRepository : IGameRepository
     {
-        private List<DbGame> _cachedSeasonsGames = new List<DbGame>();
+        private Dictionary<int, List<DbGame>> _cachedSeasonsGames = new Dictionary<int, List<DbGame>>();
         private Dictionary<int, int> _seasonGameCountCache = new Dictionary<int, int>();
         private readonly NhlDbContext _dbContext;
         public GameRepository(NhlDbContext dbContext)
@@ -33,7 +34,8 @@ namespace DatabaseAccess.GameRepository
             var updateList = new List<DbGame>();
             foreach (var game in games)
             {
-                var dbGame = _cachedSeasonsGames.FirstOrDefault(x => x.id == game.id);
+                int seasonStartYear = GetSeasonStartYear(game.id);
+                var dbGame = _cachedSeasonsGames[seasonStartYear].FirstOrDefault(x => x.id == game.id);
                 if (dbGame == null)
                     addList.Add(game);
                 else
@@ -52,7 +54,9 @@ namespace DatabaseAccess.GameRepository
         /// <returns>None</returns>
         public async Task CacheSeasonOfGames(int seasonStartYear)
         {
-            _cachedSeasonsGames = await _dbContext.Game.Where(s => s.seasonStartYear == seasonStartYear)
+            _cachedSeasonsGames.Clear();
+
+            _cachedSeasonsGames[seasonStartYear] = await _dbContext.Game.Where(s => s.seasonStartYear == seasonStartYear)
                                         .Include(x => x.awayTeam)
                                         .Include(x => x.homeTeam)
                                         .ToListAsync();
@@ -64,7 +68,8 @@ namespace DatabaseAccess.GameRepository
         /// <returns>True if the game exists, otherwise false</returns>
         public bool GameExistsInCache(int gameId)
         {
-            var game = _cachedSeasonsGames.FirstOrDefault(i => i.id == gameId);
+            int seasonStartYear = GetSeasonStartYear(gameId);
+            var game = _cachedSeasonsGames[seasonStartYear].FirstOrDefault(i => i.id == gameId);
             if (game == null)
                 return false;
             return true;
@@ -129,9 +134,15 @@ namespace DatabaseAccess.GameRepository
         /// </summary>
         /// <param name="gameId">Id of the game to get</param>
         /// <returns>Desired game</returns>
-        public DbGame GetGame(int gameId)
+        public async Task<DbGame> GetGame(int gameId)
         {
-            var game = _cachedSeasonsGames.FirstOrDefault(x => x.id == gameId);
+            // Get the season start year from the game id
+            int seasonStartYear = int.Parse(gameId.ToString().Substring(0, 4));
+
+            if (_cachedSeasonsGames.Count == 0)
+                await CacheSeasonOfGames(seasonStartYear);
+
+            var game = _cachedSeasonsGames[seasonStartYear].FirstOrDefault(x => x.id == gameId);
             if (game == null)
                 return new DbGame();
 
@@ -179,6 +190,17 @@ namespace DatabaseAccess.GameRepository
             }
 
             await _dbContext.SeasonGameCount.AddRangeAsync(seasonGameCounts);
+        }
+        /// <summary>
+        /// Gets the season start year from the game id
+        /// </summary>
+        /// <param name="gameId">The game id</param>
+        /// <returns>The season start year</returns>
+        private int GetSeasonStartYear(int gameId)
+        {
+            // Get the season start year from the game id
+            int seasonStartYear = int.Parse(gameId.ToString().Substring(0, 4));
+            return seasonStartYear;
         }
     }
 }

@@ -50,17 +50,18 @@ namespace Entry
 
             _logger.LogTrace("Starting Player Getter");
             var playerGetter = new PlayerGetter(playerRepo, teamRepo, nhlRequestMaker, _loggerFactory);
-            await playerGetter.GetPlayers(playerYearRange);
+            //await playerGetter.GetPlayers(playerYearRange);
             _logger.LogTrace("Completed Player Getter");
 
             _logger.LogTrace("Starting Game Getter");
             var gameGetter = new GameGetter(gameRepo, nhlRequestMaker, _loggerFactory);
             await gameGetter.GetGames(yearRange);
+            _logger.LogTrace("Completed Game Getter");
 
             watch.Stop();
             var elapsedTime = watch.Elapsed;
             var minutes = elapsedTime.TotalMinutes.ToString();
-            _logger.LogTrace("Completed Game Getter in " + minutes + " minutes");
+            _logger.LogTrace("Completed Data Collection in " + minutes + " minutes");
         }
     }
 }
