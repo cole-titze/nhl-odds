@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Entities.DbModels;
+﻿using Entities.DbModels;
 using Entities.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -133,10 +132,7 @@ namespace DatabaseAccess.GameRepository
         }
 
         public async Task<IEnumerable<DbGame>> GetSeasonGames(int seasonStartYear)
-        {
-            if (_cachedSeasonsGames.ContainsKey(seasonStartYear) && _cachedSeasonsGames[seasonStartYear].Count > 0)
-                return _cachedSeasonsGames[seasonStartYear];
-            
+        {   
             await CacheSeasonOfGames(seasonStartYear);
 
             return _cachedSeasonsGames[seasonStartYear];
