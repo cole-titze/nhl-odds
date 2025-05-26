@@ -1,7 +1,8 @@
-﻿using Entities.DbModels;
+﻿using System.Threading.Tasks;
+using Entities.DbModels;
 using Entities.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Logging;
 
 namespace DatabaseAccess.GameRepository
 {
@@ -10,9 +11,12 @@ namespace DatabaseAccess.GameRepository
         private Dictionary<int, List<DbGame>> _cachedSeasonsGames = new Dictionary<int, List<DbGame>>();
         private Dictionary<int, int> _seasonGameCountCache = new Dictionary<int, int>();
         private readonly NhlDbContext _dbContext;
-        public GameRepository(NhlDbContext dbContext)
+        private readonly ILogger<GameRepository> _logger;
+
+        public GameRepository(NhlDbContext dbContext, ILoggerFactory loggerFactory)
         {
             _dbContext = dbContext;
+            _logger = loggerFactory.CreateLogger<GameRepository>();
         }
         /// <summary>
         /// Gets total games for given season in database
@@ -28,15 +32,14 @@ namespace DatabaseAccess.GameRepository
         /// </summary>
         /// <param name="games">List of games to add or update</param>
         /// <returns>None</returns>
-        public async Task AddUpdateGames(List<DbGame> games)
+        public async Task AddUpdateGames(IEnumerable<DbGame> games)
         {
             var addList = new List<DbGame>();
             var updateList = new List<DbGame>();
             foreach (var game in games)
             {
-                int seasonStartYear = GetSeasonStartYear(game.id);
-                var dbGame = _cachedSeasonsGames[seasonStartYear].FirstOrDefault(x => x.id == game.id);
-                if (dbGame == null)
+                var dbGame = await GetGame(game.id);
+                if (!dbGame.IsValid())
                     addList.Add(game);
                 else
                 {
@@ -54,8 +57,10 @@ namespace DatabaseAccess.GameRepository
         /// <returns>None</returns>
         public async Task CacheSeasonOfGames(int seasonStartYear)
         {
-            _cachedSeasonsGames.Clear();
+            if (_cachedSeasonsGames.ContainsKey(seasonStartYear) && _cachedSeasonsGames[seasonStartYear].Count > 0)
+                return;
 
+            _cachedSeasonsGames.Clear();
             _cachedSeasonsGames[seasonStartYear] = await _dbContext.Game.Where(s => s.seasonStartYear == seasonStartYear)
                                         .Include(x => x.awayTeam)
                                         .Include(x => x.homeTeam)
@@ -79,7 +84,7 @@ namespace DatabaseAccess.GameRepository
         /// </summary>
         /// <param name="rosters">List of players mapped to games</param>
         /// <returns>None</returns>
-        public async Task AddUpdateRosters(Dictionary<int, Roster> rosters)
+        public async Task AddUpdateRosters(IDictionary<int, Roster> rosters)
         {
             List<DbGamePlayer> oldRosters = new List<DbGamePlayer>();
             foreach (var key in rosters.Keys)
@@ -100,8 +105,8 @@ namespace DatabaseAccess.GameRepository
                 }
             }
 
-            await _dbContext.GamePlayer.AddRangeAsync(addList);
             _dbContext.GamePlayer.RemoveRange(oldRosters);
+            await _dbContext.GamePlayer.AddRangeAsync(addList);
         }
 
         /// <summary>
@@ -114,11 +119,27 @@ namespace DatabaseAccess.GameRepository
         {
             DbGamePlayer? dbPlayer;
 
+            if (addList.Any(x => x.gameId == player.gameId && x.playerId == player.playerId))
+            {
+                _logger.LogWarning($"Player {player.playerId} already exists in the add list for game {player.gameId}. Skipping duplicate addition.");
+                return;
+            }
+
             dbPlayer = oldRosters.FirstOrDefault(x => x.gameId == player.gameId && x.playerId == player.playerId);
             if (dbPlayer == null)
                 addList.Add(player);
             else
                 oldRosters.Remove(player);
+        }
+
+        public async Task<IEnumerable<DbGame>> GetSeasonGames(int seasonStartYear)
+        {
+            if (_cachedSeasonsGames.ContainsKey(seasonStartYear) && _cachedSeasonsGames[seasonStartYear].Count > 0)
+                return _cachedSeasonsGames[seasonStartYear];
+            
+            await CacheSeasonOfGames(seasonStartYear);
+
+            return _cachedSeasonsGames[seasonStartYear];
         }
 
         /// <summary>
@@ -138,11 +159,9 @@ namespace DatabaseAccess.GameRepository
         {
             // Get the season start year from the game id
             int seasonStartYear = int.Parse(gameId.ToString().Substring(0, 4));
+            var seasonGames = await GetSeasonGames(seasonStartYear);
 
-            if (_cachedSeasonsGames.Count == 0)
-                await CacheSeasonOfGames(seasonStartYear);
-
-            var game = _cachedSeasonsGames[seasonStartYear].FirstOrDefault(x => x.id == gameId);
+            var game = seasonGames.FirstOrDefault(x => x.id == gameId);
             if (game == null)
                 return new DbGame();
 
@@ -152,7 +171,7 @@ namespace DatabaseAccess.GameRepository
         /// Gets the Season game counts. Caches the first call from the database.
         /// </summary>
         /// <returns>Dictionary of season key and game count value</returns>
-        public async Task<Dictionary<int, int>> GetSeasonGameCounts()
+        public async Task<IDictionary<int, int>> GetSeasonGameCounts()
         {
             if (_seasonGameCountCache.Keys.Count != 0)
                 return _seasonGameCountCache;
@@ -171,7 +190,7 @@ namespace DatabaseAccess.GameRepository
         /// </summary>
         /// <param name="seasonGameCountCache">The dictionary of seasonGameCounts to add to the database if they don't exist</param>
         /// <returns></returns>
-        public async Task AddSeasonGameCounts(Dictionary<int, int> seasonGameCountCache)
+        public async Task AddSeasonGameCounts(IDictionary<int, int> seasonGameCountCache)
         {
             var seasonGameCounts = new List<DbSeasonGameCount>();
             var dbGameCounts = await _dbContext.SeasonGameCount.ToListAsync();

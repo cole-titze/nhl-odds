@@ -24,7 +24,6 @@ namespace Services.NhlData
         /// </summary>
         /// <param name="game">Game to get players from</param>
         /// <returns>List of players from the game</returns>
-        /// <exception cref="NotImplementedException"></exception>
         /// Example Request: https://api-web.nhle.com/v1/gamecenter/2023020884/boxscore
         public async Task<Roster> GetGameRoster(DbGame game)
         {

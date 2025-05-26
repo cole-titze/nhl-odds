@@ -35,9 +35,9 @@ namespace Entities.DbModels
         public int awayGiveaways { get; set; }
         public bool hasBeenPlayed { get; set; }
         [ForeignKey("homeTeamId")]
-        public DbTeam homeTeam { get; set; } = new DbTeam();
+        public DbTeam? homeTeam { get; set; }
         [ForeignKey("awayTeamId")]
-        public DbTeam awayTeam { get; set; } = new DbTeam();
+        public DbTeam? awayTeam { get; set; }
 
         public void Clone(DbGame game)
         {
@@ -82,9 +82,9 @@ namespace Entities.DbModels
         public string GetTeamAbbr(int teamId)
         {
             if (teamId == homeTeamId)
-                return homeTeam.abbreviation;
+                return homeTeam?.abbreviation ?? "";
             if (teamId == awayTeamId)
-                return awayTeam.abbreviation;
+                return awayTeam?.abbreviation ?? "";
 
             return "";
         }

@@ -5,15 +5,17 @@ namespace DatabaseAccess.GameRepository
 {
     public interface IGameRepository
     {
-        Task AddSeasonGameCounts(Dictionary<int, int> seasonGameCountCache);
-        Task AddUpdateGames(List<DbGame> seasonGames);
-        Task AddUpdateRosters(Dictionary<int, Roster> rosters);
+        Task AddSeasonGameCounts(IDictionary<int, int> seasonGameCountCache);
+        Task AddUpdateGames(IEnumerable<DbGame> seasonGames);
+        Task AddUpdateRosters(IDictionary<int, Roster> rosters);
         Task CacheSeasonOfGames(int seasonStartYear);
         Task Commit();
         bool GameExistsInCache(int gameId);
         Task<DbGame> GetGame(int gameId);
         Task<int> GetGameCountInSeason(int year);
-        Task<Dictionary<int, int>> GetSeasonGameCounts();
+        Task<IDictionary<int, int>> GetSeasonGameCounts();
+        Task<IEnumerable<DbGame>> GetSeasonGames(int seasonStartYear);
+
     }
 }
 

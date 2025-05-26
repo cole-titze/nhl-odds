@@ -8,10 +8,10 @@ namespace Services.NhlData
 	{
         private readonly IRequestMaker _requestMaker;
         private readonly ILogger<NhlGameGetter> _logger;
-        private Dictionary<int, int> _seasonGameCountCache = new Dictionary<int, int>();
+        private IDictionary<int, int> _seasonGameCountCache = new Dictionary<int, int>();
         private const int DEFAULT_GAME_COUNT = 1400;
 
-        public NhlScheduleGetter(IRequestMaker requestMaker, Dictionary<int, int> seasonGameCountCache, ILoggerFactory loggerFactory)
+        public NhlScheduleGetter(IRequestMaker requestMaker, IDictionary<int, int> seasonGameCountCache, ILoggerFactory loggerFactory)
         {
             _requestMaker = requestMaker;
             _logger = loggerFactory.CreateLogger<NhlGameGetter>();
@@ -44,7 +44,7 @@ namespace Services.NhlData
         /// Gets the seasons game counts
         /// </summary>
         /// <returns>Dictionary of year mapped to game count</returns>
-        public Dictionary<int, int> GetSeasonGameCounts()
+        public IDictionary<int, int> GetSeasonGameCounts()
         {
             return _seasonGameCountCache;
         }

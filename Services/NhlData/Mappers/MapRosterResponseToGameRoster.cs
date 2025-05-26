@@ -131,7 +131,7 @@ namespace Services.NhlData.Mappers
             }
 
             // Goalies
-            var homeGoalies = rosterResponse.playerByGameStats.awayTeam.goalies;
+            var homeGoalies = rosterResponse.playerByGameStats.homeTeam.goalies;
             var awayGoalies = rosterResponse.playerByGameStats.awayTeam.goalies;
             foreach (var player in homeGoalies)
             {

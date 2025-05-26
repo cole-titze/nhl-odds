@@ -43,7 +43,8 @@ namespace Services.NhlData.Mappers
         /// <returns>game</returns>
         private static DbGame BuildGameStat(dynamic statCategory, DbGame game)
         {
-            switch (statCategory.category)
+            string categoryName = (string)statCategory.category;   
+            switch (categoryName)
             {
                 case "sog":
                     game.homeSOG = (int)statCategory.homeValue;
