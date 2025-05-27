@@ -15,6 +15,7 @@ namespace DatabaseAccess.GameRepository
         Task<int> GetGameCountInSeason(int year);
         Task<IDictionary<int, int>> GetSeasonGameCounts();
         Task<IEnumerable<DbGame>> GetSeasonGames(int seasonStartYear);
+        Task<IEnumerable<Game>> GetRichSeasonGames(int seasonStartYear);
 
     }
 }

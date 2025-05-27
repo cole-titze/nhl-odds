@@ -1,4 +1,5 @@
-﻿using Entities.DbModels;
+﻿using DataAccess.GameRepository.Mappers;
+using Entities.DbModels;
 using Entities.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -132,7 +133,7 @@ namespace DatabaseAccess.GameRepository
         }
 
         public async Task<IEnumerable<DbGame>> GetSeasonGames(int seasonStartYear)
-        {   
+        {
             await CacheSeasonOfGames(seasonStartYear);
 
             return _cachedSeasonsGames[seasonStartYear];
@@ -216,6 +217,22 @@ namespace DatabaseAccess.GameRepository
             // Get the season start year from the game id
             int seasonStartYear = int.Parse(gameId.ToString().Substring(0, 4));
             return seasonStartYear;
+        }
+                /// <summary>
+        /// Gets a seasons list of games
+        /// </summary>
+        /// <param name="seasonStartYear">Year to get games for</param>
+        /// <returns>List of season games</returns>
+        public async Task<IEnumerable<Game>> GetRichSeasonGames(int seasonStartYear)
+        {
+            var dbGames = await GetSeasonGames(seasonStartYear);
+            var games = new List<Game>();
+
+            foreach(var dbGame in dbGames)
+            {
+                games.Add(MapDbGameToGame.Map(dbGame));
+            }
+            return games;
         }
     }
 }

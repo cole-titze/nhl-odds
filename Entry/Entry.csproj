@@ -19,6 +19,7 @@
     <ProjectReference Include="..\Services\Services.csproj" />
     <ProjectReference Include="..\DatabaseAccess\DatabaseAccess.csproj" />
     <ProjectReference Include="..\DataGetter\DataGetter.csproj" />
+    <ProjectReference Include="..\DataCleaner\DataCleaner.csproj" />
   </ItemGroup>
 
     <ItemGroup>

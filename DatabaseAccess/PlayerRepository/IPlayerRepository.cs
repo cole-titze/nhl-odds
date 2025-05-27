@@ -1,4 +1,5 @@
 ﻿using Entities.DbModels;
+using Entities.Models;
 
 namespace DatabaseAccess.PlayerRepository
 {
@@ -6,6 +7,7 @@ namespace DatabaseAccess.PlayerRepository
     {
         Task AddUpdatePlayers(List<DbPlayer> players);
         Task<int> GetPlayerCountBySeason(int seasonStartYear);
+        Task<GameRoster> GetGameRoster(Game game);
     }
 }
 
