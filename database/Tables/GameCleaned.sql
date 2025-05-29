@@ -44,5 +44,5 @@
     awayRosterGoalieValue FLOAT NOT NULL,
     awayHoursSinceLastGame FLOAT NOT NULL,
     PRIMARY KEY(gameId),
-    FOREIGN KEY (gameId) REFERENCES Game(id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id),
 );

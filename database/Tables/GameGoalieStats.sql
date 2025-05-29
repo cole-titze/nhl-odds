@@ -10,7 +10,7 @@ CREATE TABLE [dbo].[GameGoalieStats]
     timeOnIceSeconds FLOAT NOT NULL,
     isStarter BIT NOT NULL,
     CONSTRAINT PK_GameGoalieStats PRIMARY KEY(gameId,playerId),
-    FOREIGN KEY (gameId) REFERENCES Game(id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id),
     FOREIGN KEY (playerId) REFERENCES Player(id),
     FOREIGN KEY (teamId) REFERENCES Team(id)
 );

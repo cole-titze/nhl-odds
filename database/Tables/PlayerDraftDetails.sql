@@ -6,6 +6,6 @@ CREATE TABLE [dbo].[PlayerDraftDetails]
     round INT NOT NULL,
     pickInRound INT NOT NULL,
     overallPick INT NOT NULL,
-    CONSTRAINT PK_Player PRIMARY KEY(playerId),
+    CONSTRAINT PK_PlayerDraftDetails PRIMARY KEY(playerId),
     FOREIGN KEY (playerId) REFERENCES Player(id),
 );

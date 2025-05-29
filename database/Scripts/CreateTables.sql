@@ -100,7 +100,7 @@ CREATE TABLE [dbo].[GameCleaned]
     awayRosterGoalieValue FLOAT NOT NULL,
     awayHoursSinceLastGame FLOAT NOT NULL,
     PRIMARY KEY(gameId),
-    FOREIGN KEY (gameId) REFERENCES Game(id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id),
 );
 
 CREATE TABLE [dbo].[GameOdds]
@@ -113,7 +113,7 @@ CREATE TABLE [dbo].[GameOdds]
     logLoss FLOAT NOT NULL DEFAULT 0,
     notes VARCHAR(MAX),
     CONSTRAINT PK_GameOdds PRIMARY KEY(gameId, modelName, runDateUTC),
-    FOREIGN KEY (gameId) REFERENCES Game(id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id),
 );
 
 CREATE TABLE [dbo].[Player]
@@ -148,7 +148,7 @@ CREATE TABLE [dbo].[PlayerDraftDetails]
     round INT NOT NULL,
     pickInRound INT NOT NULL,
     overallPick INT NOT NULL,
-    CONSTRAINT PK_Player PRIMARY KEY(playerId),
+    CONSTRAINT PK_PlayerDraftDetails PRIMARY KEY(playerId),
     FOREIGN KEY (playerId) REFERENCES Player(id),
 );
 
@@ -170,7 +170,7 @@ CREATE TABLE [dbo].[GameSkaterStats]
     takeaways INT NOT NULL,
     timeOnIceSeconds FLOAT NOT NULL,
     CONSTRAINT PK_GameSkaterStats PRIMARY KEY(gameId,playerId),
-    FOREIGN KEY (gameId) REFERENCES Game(id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id),
     FOREIGN KEY (playerId) REFERENCES Player(id),
     FOREIGN KEY (teamId) REFERENCES Team(id)
 );
@@ -187,7 +187,7 @@ CREATE TABLE [dbo].[GameGoalieStats]
     timeOnIceSeconds FLOAT NOT NULL,
     isStarter BIT NOT NULL,
     CONSTRAINT PK_GameGoalieStats PRIMARY KEY(gameId,playerId),
-    FOREIGN KEY (gameId) REFERENCES Game(id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id),
     FOREIGN KEY (playerId) REFERENCES Player(id),
     FOREIGN KEY (teamId) REFERENCES Team(id)
 );

@@ -8,5 +8,5 @@
     logLoss FLOAT NOT NULL DEFAULT 0,
     notes VARCHAR(MAX),
     CONSTRAINT PK_GameOdds PRIMARY KEY(gameId, modelName, runDateUTC),
-    FOREIGN KEY (gameId) REFERENCES Game(id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id),
 );
