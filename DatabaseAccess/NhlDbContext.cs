@@ -10,12 +10,15 @@ namespace DatabaseAccess
         {
             _connectionString = connectionString;
         }
-        public virtual DbSet<DbGame> Game { get; set; } = null!;
+        public virtual DbSet<DbGameRaw> GameRaw { get; set; } = null!;
         public virtual DbSet<DbTeam> Team { get; set; } = null!;
-        public virtual DbSet<DbPlayer> PlayerValue { get; set; } = null!;
-        public virtual DbSet<DbGamePlayer> GamePlayer { get; set; } = null!;
+        public virtual DbSet<DbGameSkaterStats> GameSkaterStats { get; set; } = null!;
+        public virtual DbSet<DbGameGoalieStats> GameGoalieStats { get; set; } = null!;
+        public virtual DbSet<DbPlayer> Player { get; set; } = null!;
+        public virtual DbSet<DbPlayerDraftDetails> PlayerDraftDetails { get; set; } = null!;
         public virtual DbSet<DbSeasonGameCount> SeasonGameCount { get; set; } = null!;
-        public virtual DbSet<DbCleanedGame> CleanedGame { get; set; } = null!;
+        public virtual DbSet<DbGameCleaned> GameCleaned { get; set; } = null!;
+        public virtual DbSet<DbGameOdds> GameOdds { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -23,10 +26,12 @@ namespace DatabaseAccess
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<DbPlayer>()
-                .HasKey(c => new { c.id, c.seasonStartYear });
-            modelBuilder.Entity<DbGamePlayer>()
+            modelBuilder.Entity<DbGameSkaterStats>()
                 .HasKey(c => new { c.gameId, c.playerId });
+            modelBuilder.Entity<DbGameGoalieStats>()
+                .HasKey(c => new { c.gameId, c.playerId });
+            modelBuilder.Entity<DbGameOdds>()
+                .HasKey(c => new { c.gameId, c.modelName, c.runDateUTC });
         }
     }
 }

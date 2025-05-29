@@ -26,7 +26,7 @@ namespace Entities.Models
             double skillScore = 0;
             foreach (var player in players)
             {
-                skillScore += player.value;
+                skillScore += 0;
             }
 
             return skillScore;

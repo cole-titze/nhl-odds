@@ -7,13 +7,13 @@ namespace Entities.DbModels
         HOME,
         AWAY
     }
-    public class DbGame
+    public class DbGameRaw
     {
         public int id { get; set; } = -1;
         public int homeTeamId { get; set; }
         public int awayTeamId { get; set; }
         public int seasonStartYear { get; set; }
-        public DateTime gameDate { get; set; }
+        public DateTime gameDateUTC { get; set; }
         public int homeGoals { get; set; }
         public int awayGoals { get; set; }
         public Winner winner { get; set; }
@@ -35,17 +35,17 @@ namespace Entities.DbModels
         public int awayGiveaways { get; set; }
         public bool hasBeenPlayed { get; set; }
         [ForeignKey("homeTeamId")]
-        public DbTeam? homeTeam { get; set; }
+        public DbTeam homeTeam { get; set; } = new DbTeam();
         [ForeignKey("awayTeamId")]
-        public DbTeam? awayTeam { get; set; }
+        public DbTeam awayTeam { get; set; } = new DbTeam();
 
-        public void Clone(DbGame game)
+        public void Clone(DbGameRaw game)
         {
             id = game.id;
             homeTeamId = game.homeTeamId;
             awayTeamId = game.awayTeamId;
             seasonStartYear = game.seasonStartYear;
-            gameDate = game.gameDate;
+            gameDateUTC = game.gameDateUTC;
             homeGoals = game.homeGoals;
             awayGoals = game.awayGoals;
             winner = game.winner;
@@ -66,6 +66,8 @@ namespace Entities.DbModels
             homeGiveaways = game.homeGiveaways;
             awayGiveaways = game.awayGiveaways;
             hasBeenPlayed = game.hasBeenPlayed;
+            homeTeam = game.homeTeam;
+            awayTeam = game.awayTeam;
         }
         /// <summary>
         /// Gets whether a game is valid or not

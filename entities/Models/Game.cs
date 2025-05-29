@@ -11,7 +11,7 @@ namespace Entities.Models
         public int homeTeamId { get; set; }
         public int awayTeamId { get; set; }
         public int seasonStartYear { get; set; }
-        public DateTime gameDate { get; set; }
+        public DateTime gameDateUTC { get; set; }
         public int homeGoals { get; set; }
         public int awayGoals { get; set; }
         public Winner winner { get; set; }
@@ -54,7 +54,7 @@ namespace Entities.Models
         {
             if (game == null)
                 return DEFAULT_HOURS;
-            var hourDifference = (gameDate - game.gameDate).TotalHours;
+            var hourDifference = (gameDateUTC - game.gameDateUTC).TotalHours;
 
             return Math.Abs(hourDifference);
         }

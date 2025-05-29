@@ -1,0 +1,23 @@
+CREATE TABLE [dbo].[Player]
+(
+    id INT NOT NULL,
+    firstName VARCHAR(MAX) NOT NULL,
+    lastName VARCHAR(MAX) NOT NULL,
+    isActive BIT NOT NULL,
+    currentTeamId INT NOT NULL,
+    headShot VARCHAR(MAX) NOT NULL,
+    heroImage VARCHAR(MAX) NOT NULL,
+    heightInInches INT NOT NULL,
+    weightInPounds INT NOT NULL,
+    birthDate VARCHAR(MAX),
+    birthCity VARCHAR(MAX),
+    birthStateProvince VARCHAR(MAX),
+    isInTopOneHundredAllTime BIT NOT NULL,
+    isInHallOfFame BIT NOT NULL,
+    shopLink VARCHAR(MAX),
+    twitterLink VARCHAR(MAX),
+    watchLink VARCHAR(MAX),
+    playerSlug VARCHAR(MAX),
+    CONSTRAINT PK_Player PRIMARY KEY(id),
+    FOREIGN KEY (currentTeamId) REFERENCES Team(id),
+);

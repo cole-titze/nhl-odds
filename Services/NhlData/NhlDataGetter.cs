@@ -32,5 +32,85 @@
             int nextYear = seasonStartYear + 1;
             return (seasonStartYear * 10000) + nextYear;
         }
+        public enum GameRequestType
+        {
+            /// <summary>
+            /// Request type for game summary. This holds data like the team ID's and status
+            /// </summary>
+            GameSummary,
+            /// <summary>
+            /// Request type for game stats. This holds data like goals, shots on goal, and other stats
+            /// </summary>
+            GameStats
+        }
+        /// <summary>
+        /// Creates the game query
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="requestType">The type of request to make</param>
+        /// <returns>Game query string</returns>
+        public static string GetGameQuery(int id, GameRequestType requestType)
+        {
+            string urlParameters = string.Empty;
+            switch (requestType)
+            {
+                case GameRequestType.GameSummary:
+                    urlParameters = $"{id}/boxscore";
+                    break;
+                case GameRequestType.GameStats:
+                    urlParameters = $"{id}/right-rail";
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(requestType), requestType, null);
+            }
+
+            return urlParameters;
+        }
+        /// <summary>
+        /// Creates the game query
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="requestType">The type of request to make</param>
+        /// <returns>Game query string</returns>
+        public static string GetPlayerQuery(int playerId)
+        {
+            return $"{playerId}/landing";
+        }
+        /// <summary>
+        /// Determines if a game is in progress or not
+        /// </summary>
+        /// <param name="message">response from nhl api</param>
+        /// <returns>True if game is in progress, otherwise false</returns>
+        public static bool IsGameInProgress(string gameState)
+        {
+            if (gameState != "OFF" && gameState != "FUT")
+                return true;
+
+            return false;
+        }
+        /// <summary>
+        /// Determines if a game is done or not
+        /// </summary>
+        /// <param name="message">response from nhl api</param>
+        /// <returns>True if game is done, otherwise false</returns>
+        public static bool IsGameDone(string gameState)
+        {
+            if (gameState == "OFF")
+                return true;
+
+            return false;
+        }
+        /// <summary>
+        /// Determines if a game is yet to be played
+        /// </summary>
+        /// <param name="message">response from nhl api</param>
+        /// <returns>True if game is in the future, otherwise false</returns>
+        public static bool IsGameFuture(string gameState)
+        {
+            if (gameState == "FUT")
+                return true;
+
+            return false;
+        }
     }
 }

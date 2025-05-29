@@ -4,7 +4,7 @@ namespace Services.NhlData
 {
     public interface INhlGameGetter
 	{
-        Task<DbGame> GetGame(int gameId);
+        Task<DbGameRaw> GetGame(int gameId);
     }
 }
 

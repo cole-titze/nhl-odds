@@ -5,9 +5,9 @@ namespace DatabaseAccess.PlayerRepository
 {
     public interface IPlayerRepository
     {
-        Task AddUpdatePlayers(List<DbPlayer> players);
-        Task<int> GetPlayerCountBySeason(int seasonStartYear);
-        Task<GameRoster> GetGameRoster(Game game);
+        Task AddUpdateGamePlayerStats(IEnumerable<IDbGamePlayerStats> gamePlayerStats);
+        Task AddUpdatePlayers(IEnumerable<DbPlayer> players);
+        Task<int> GetPlayerStatsCountBySeason(int seasonStartYear);
     }
 }
 

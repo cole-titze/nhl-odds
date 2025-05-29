@@ -1,5 +1,4 @@
 ﻿using Entities.DbModels;
-using Newtonsoft.Json.Linq;
 
 namespace Services.NhlData.Mappers
 {
@@ -10,16 +9,16 @@ namespace Services.NhlData.Mappers
         /// </summary>
         /// <param name="message">Response from nhl api</param>
         /// <returns>Game Object</returns>
-		public static DbGame Map(dynamic messageGameSummary, dynamic messageGamesStats)
+		public static DbGameRaw Map(dynamic messageGameSummary, dynamic messageGamesStats)
         {
-            var game = new DbGame();
+            var game = new DbGameRaw();
 
             // Get game summary data
             game.homeTeamId = (int)messageGameSummary.homeTeam.id;
             game.awayTeamId = (int)messageGameSummary.awayTeam.id;
             game.id = (int)messageGameSummary.id;
             game.seasonStartYear = GetSeason((string)messageGameSummary.season);
-            game.gameDate = DateTime.Parse((string)messageGameSummary.startTimeUTC);
+            game.gameDateUTC = DateTime.Parse((string)messageGameSummary.startTimeUTC);
             game.hasBeenPlayed = (messageGameSummary.gameState == "OFF") ? true : false;
 
             // Get game stats data
@@ -41,7 +40,7 @@ namespace Services.NhlData.Mappers
         /// <param name="statCategory">The category from the API response</param>
         /// <param name="game">The game object to build</param>
         /// <returns>game</returns>
-        private static DbGame BuildGameStat(dynamic statCategory, DbGame game)
+        private static DbGameRaw BuildGameStat(dynamic statCategory, DbGameRaw game)
         {
             string categoryName = (string)statCategory.category;   
             switch (categoryName)

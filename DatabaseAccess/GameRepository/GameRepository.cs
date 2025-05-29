@@ -8,7 +8,7 @@ namespace DatabaseAccess.GameRepository
 {
     public class GameRepository : IGameRepository
     {
-        private Dictionary<int, List<DbGame>> _cachedSeasonsGames = new Dictionary<int, List<DbGame>>();
+        private Dictionary<int, List<DbGameRaw>> _cachedSeasonsGames = new Dictionary<int, List<DbGameRaw>>();
         private Dictionary<int, int> _seasonGameCountCache = new Dictionary<int, int>();
         private readonly NhlDbContext _dbContext;
         private readonly ILogger<GameRepository> _logger;
@@ -25,17 +25,17 @@ namespace DatabaseAccess.GameRepository
         /// <returns>number of games in the season</returns>
         public async Task<int> GetGameCountInSeason(int seasonStartYear)
         {
-            return await _dbContext.Game.Where(s => s.seasonStartYear == seasonStartYear).CountAsync();
+            return await _dbContext.GameRaw.Where(s => s.seasonStartYear == seasonStartYear).CountAsync();
         }
         /// <summary>
         /// Updates games to the database and adds them if they don't exist
         /// </summary>
         /// <param name="games">List of games to add or update</param>
         /// <returns>None</returns>
-        public async Task AddUpdateGames(IEnumerable<DbGame> games)
+        public async Task AddUpdateGames(IEnumerable<DbGameRaw> games)
         {
-            var addList = new List<DbGame>();
-            var updateList = new List<DbGame>();
+            var addList = new List<DbGameRaw>();
+            var updateList = new List<DbGameRaw>();
             foreach (var game in games)
             {
                 var dbGame = await GetGame(game.id);
@@ -47,8 +47,8 @@ namespace DatabaseAccess.GameRepository
                     updateList.Add(dbGame);
                 }
             }
-            await _dbContext.Game.AddRangeAsync(addList);
-            _dbContext.Game.UpdateRange(updateList);
+            await _dbContext.GameRaw.AddRangeAsync(addList);
+            _dbContext.GameRaw.UpdateRange(updateList);
         }
         /// <summary>
         /// Gets a seasons worth of games and stores them in the cache variable
@@ -61,7 +61,7 @@ namespace DatabaseAccess.GameRepository
                 return;
 
             _cachedSeasonsGames.Clear();
-            _cachedSeasonsGames[seasonStartYear] = await _dbContext.Game.Where(s => s.seasonStartYear == seasonStartYear)
+            _cachedSeasonsGames[seasonStartYear] = await _dbContext.GameRaw.Where(s => s.seasonStartYear == seasonStartYear)
                                         .Include(x => x.awayTeam)
                                         .Include(x => x.homeTeam)
                                         .ToListAsync();
@@ -79,60 +79,60 @@ namespace DatabaseAccess.GameRepository
                 return false;
             return true;
         }
-        /// <summary>
-        /// Adds player rosters to the database if they don't exist. Removes players that are no longer on the roster for the game
-        /// </summary>
-        /// <param name="rosters">List of players mapped to games</param>
-        /// <returns>None</returns>
-        public async Task AddUpdateRosters(IDictionary<int, Roster> rosters)
-        {
-            List<DbGamePlayer> oldRosters = new List<DbGamePlayer>();
-            foreach (var key in rosters.Keys)
-            {
-                oldRosters.AddRange(_dbContext.GamePlayer.Where(x => x.gameId == key));
-            }
+        // /// <summary>
+        // /// Adds player rosters to the database if they don't exist. Removes players that are no longer on the roster for the game
+        // /// </summary>
+        // /// <param name="rosters">List of players mapped to games</param>
+        // /// <returns>None</returns>
+        // public async Task AddUpdateRosters(IDictionary<int, Roster> rosters)
+        // {
+        //     List<DbGamePlayer> oldRosters = new List<DbGamePlayer>();
+        //     foreach (var key in rosters.Keys)
+        //     {
+        //         oldRosters.AddRange(_dbContext.GamePlayer.Where(x => x.gameId == key));
+        //     }
 
-            var addList = new List<DbGamePlayer>();
-            foreach (var roster in rosters)
-            {
-                foreach (var player in roster.Value.homeTeam)
-                {
-                    BuildDbRoster(addList, oldRosters, player);
-                }
-                foreach (var player in roster.Value.awayTeam)
-                {
-                    BuildDbRoster(addList, oldRosters, player);
-                }
-            }
+        //     var addList = new List<DbGamePlayer>();
+        //     foreach (var roster in rosters)
+        //     {
+        //         foreach (var player in roster.Value.homeTeam)
+        //         {
+        //             BuildDbRoster(addList, oldRosters, player);
+        //         }
+        //         foreach (var player in roster.Value.awayTeam)
+        //         {
+        //             BuildDbRoster(addList, oldRosters, player);
+        //         }
+        //     }
 
-            _dbContext.GamePlayer.RemoveRange(oldRosters);
-            await _dbContext.GamePlayer.AddRangeAsync(addList);
-        }
+        //     _dbContext.GamePlayer.RemoveRange(oldRosters);
+        //     await _dbContext.GamePlayer.AddRangeAsync(addList);
+        // }
 
-        /// <summary>
-        /// Determines what players should be added and removed
-        /// </summary>
-        /// <param name="addList">List of players to add (reference)</param>
-        /// <param name="oldRosters">List of players to remove (reference)</param>
-        /// <param name="player">The player to check</param>
-        private void BuildDbRoster(List<DbGamePlayer> addList, List<DbGamePlayer> oldRosters, DbGamePlayer player)
-        {
-            DbGamePlayer? dbPlayer;
+        // /// <summary>
+        // /// Determines what players should be added and removed
+        // /// </summary>
+        // /// <param name="addList">List of players to add (reference)</param>
+        // /// <param name="oldRosters">List of players to remove (reference)</param>
+        // /// <param name="player">The player to check</param>
+        // private void BuildDbRoster(List<DbGamePlayer> addList, List<DbGamePlayer> oldRosters, DbGamePlayer player)
+        // {
+        //     DbGamePlayer? dbPlayer;
 
-            if (addList.Any(x => x.gameId == player.gameId && x.playerId == player.playerId))
-            {
-                _logger.LogWarning($"Player {player.playerId} already exists in the add list for game {player.gameId}. Skipping duplicate addition.");
-                return;
-            }
+        //     if (addList.Any(x => x.gameId == player.gameId && x.playerId == player.playerId))
+        //     {
+        //         _logger.LogWarning($"Player {player.playerId} already exists in the add list for game {player.gameId}. Skipping duplicate addition.");
+        //         return;
+        //     }
 
-            dbPlayer = oldRosters.FirstOrDefault(x => x.gameId == player.gameId && x.playerId == player.playerId);
-            if (dbPlayer == null)
-                addList.Add(player);
-            else
-                oldRosters.Remove(player);
-        }
+        //     dbPlayer = oldRosters.FirstOrDefault(x => x.gameId == player.gameId && x.playerId == player.playerId);
+        //     if (dbPlayer == null)
+        //         addList.Add(player);
+        //     else
+        //         oldRosters.Remove(player);
+        // }
 
-        public async Task<IEnumerable<DbGame>> GetSeasonGames(int seasonStartYear)
+        public async Task<IEnumerable<DbGameRaw>> GetSeasonGames(int seasonStartYear)
         {
             await CacheSeasonOfGames(seasonStartYear);
 
@@ -152,7 +152,7 @@ namespace DatabaseAccess.GameRepository
         /// </summary>
         /// <param name="gameId">Id of the game to get</param>
         /// <returns>Desired game</returns>
-        public async Task<DbGame> GetGame(int gameId)
+        public async Task<DbGameRaw> GetGame(int gameId)
         {
             // Get the season start year from the game id
             int seasonStartYear = int.Parse(gameId.ToString().Substring(0, 4));
@@ -160,7 +160,7 @@ namespace DatabaseAccess.GameRepository
 
             var game = seasonGames.FirstOrDefault(x => x.id == gameId);
             if (game == null)
-                return new DbGame();
+                return new DbGameRaw();
 
             return game;
         }

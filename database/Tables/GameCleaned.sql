@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[CleanedGame]
+﻿CREATE TABLE [dbo].[GameCleaned]
 (
     gameId INT NOT NULL,
     homeWinRatio FLOAT NOT NULL,

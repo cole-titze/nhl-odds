@@ -5,7 +5,7 @@ namespace DataAccess.GameRepository.Mappers
 {
 	public static class MapDbGameToGame
 	{
-		public static Game Map(DbGame game)
+		public static Game Map(DbGameRaw game)
 		{
 			return new Game()
 			{
@@ -13,7 +13,7 @@ namespace DataAccess.GameRepository.Mappers
                 homeTeamId = game.homeTeamId,
                 awayTeamId = game.awayTeamId,
                 seasonStartYear = game.seasonStartYear,
-                gameDate = game.gameDate,
+                gameDateUTC = game.gameDateUTC,
                 homeGoals = game.homeGoals,
                 awayGoals = game.awayGoals,
                 winner = game.winner,

@@ -13,7 +13,6 @@ ServiceProvider serviceProvider = new ServiceCollection()
 var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
 
 var dataGetter = new DataGetterEntry(loggerFactory);
-var dataCleaner = new DataCleanerEntry(loggerFactory);
 string? gamesConnectionString = Environment.GetEnvironmentVariable("NHL_DATABASE");
 
 if (gamesConnectionString == null)
@@ -25,4 +24,3 @@ if (gamesConnectionString == null)
     throw new Exception("Connection String Null");
 
 await dataGetter.Main(gamesConnectionString);
-await dataCleaner.Main(gamesConnectionString);

@@ -3,7 +3,6 @@ using DatabaseAccess.PlayerRepository;
 using DatabaseAccess.TeamRepository;
 using DatabaseAccess;
 using DataGetter.BusinessLogic.GameGetter;
-using DataGetter.BusinessLogic.PlayerGetter;
 using Entities.Types;
 using Services.RequestMaker;
 using Services.NhlData;
@@ -14,7 +13,7 @@ namespace Entry
 {
     public class DataGetterEntry
     {
-        private const int START_YEAR = 2010;
+        private const int START_YEAR = 2008;
         private readonly ILogger<DataGetterEntry> _logger;
         private readonly ILoggerFactory _loggerFactory;
 
@@ -30,7 +29,7 @@ namespace Entry
         /// <returns>None</returns>
         public async Task Main(string gamesConnectionString)
         {
-            var watch = System.Diagnostics.Stopwatch.StartNew();
+            var watch = Stopwatch.StartNew();
             Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
 
             var nhlDbContext = new NhlDbContext(gamesConnectionString);
@@ -46,16 +45,10 @@ namespace Entry
 
             var nhlRequestMaker = new NhlDataGetter(gameDataGetter, playerDataGetter, scheduleDataGetter);
             var yearRange = new YearRange(START_YEAR, DateTime.Now);
-            var playerYearRange = new YearRange(START_YEAR - 1, DateTime.Now); // We use player values from previous season for team ratings
-
-            _logger.LogTrace("Starting Player Getter");
-            var playerGetter = new PlayerGetter(playerRepo, teamRepo, nhlRequestMaker, _loggerFactory);
-            //await playerGetter.GetPlayers(playerYearRange);
-            _logger.LogTrace("Completed Player Getter");
 
             _logger.LogTrace("Starting Game Getter");
-            var gameGetter = new GameGetter(gameRepo, nhlRequestMaker, _loggerFactory);
-            await gameGetter.GetGames(yearRange);
+            var gameGetter = new GameGetter(gameRepo, playerRepo, nhlRequestMaker, _loggerFactory);
+            await gameGetter.GetData(yearRange);
             _logger.LogTrace("Completed Game Getter");
 
             watch.Stop();

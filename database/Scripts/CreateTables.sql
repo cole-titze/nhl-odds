@@ -1,3 +1,10 @@
+CREATE TABLE [dbo].[ClassificationModel]
+(
+    id INT NOT NULL,
+    modelFile varchar(MAX) NULL
+    PRIMARY KEY(id),
+);
+
 CREATE TABLE [dbo].[Team]
 (
     id INT NOT NULL,
@@ -8,13 +15,20 @@ CREATE TABLE [dbo].[Team]
     PRIMARY KEY(id),
 );
 
-CREATE TABLE [dbo].[Game]
+CREATE TABLE [dbo].[SeasonGameCount]
+(
+	[seasonId] INT NOT NULL,
+	[gameCount] INT NOT NULL,
+    PRIMARY KEY(seasonId),
+);
+
+CREATE TABLE [dbo].[GameRaw]
 (
     id INT NOT NULL,
     homeTeamId INT NOT NULL,
     awayTeamId INT NOT NULL,
     seasonStartYear INT NOT NULL,
-    gameDate DATETIME2 NOT NULL,
+    gameDateUTC DATETIME2 NOT NULL,
     homeGoals INT NOT NULL,
     awayGoals INT NOT NULL,
     homeSOG INT NOT NULL,
@@ -38,37 +52,9 @@ CREATE TABLE [dbo].[Game]
     PRIMARY KEY(id),
     FOREIGN KEY (homeTeamId) REFERENCES Team(id),
     FOREIGN KEY (awayTeamId) REFERENCES Team(id),
-)
-
-CREATE TABLE [dbo].[LogLossGame]
-(
-    gameId INT NOT NULL,
-    draftKingsLogLoss FLOAT NOT NULL DEFAULT 0,
-    myBookieLogLoss FLOAT NOT NULL DEFAULT 0,
-    betMgmLogLoss FLOAT NOT NULL DEFAULT 0,
-    modelLogLoss FLOAT NOT NULL DEFAULT 0,
-    PRIMARY KEY(gameId),
-    FOREIGN KEY (gameId) REFERENCES Game(id),
 );
 
-CREATE TABLE [dbo].[GameOdds]
-(
-    gameId INT NOT NULL,
-    draftKingsHomeOdds FLOAT NOT NULL DEFAULT 0,
-    draftKingsAwayOdds FLOAT NOT NULL DEFAULT 0,
-    bovadaHomeOdds FLOAT NOT NULL DEFAULT 0,
-    bovadaAwayOdds FLOAT NOT NULL DEFAULT 0,
-    betMgmHomeOdds FLOAT NOT NULL DEFAULT 0,
-    betMgmAwayOdds FLOAT NOT NULL DEFAULT 0,
-    barstoolHomeOdds FLOAT NOT NULL DEFAULT 0,
-    barstoolAwayOdds FLOAT NOT NULL DEFAULT 0,
-    modelHomeOdds FLOAT NOT NULL DEFAULT 0,
-    modelAwayOdds FLOAT NOT NULL DEFAULT 0,
-    PRIMARY KEY(gameId),
-    FOREIGN KEY (gameId) REFERENCES Game(id),
-);
-
-CREATE TABLE [dbo].[CleanedGame]
+CREATE TABLE [dbo].[GameCleaned]
 (
     gameId INT NOT NULL,
     homeWinRatio FLOAT NOT NULL,
@@ -117,38 +103,93 @@ CREATE TABLE [dbo].[CleanedGame]
     FOREIGN KEY (gameId) REFERENCES Game(id),
 );
 
-CREATE TABLE [dbo].[PlayerValue]
-(
-	[id] INT NOT NULL,
-	[name] VARCHAR(MAX) NOT NULL,
-	[value] FLOAT NOT NULL,
-	[seasonStartYear] INT NOT NULL,
-	[position] varchar(MAX) NOT NULL
-	CONSTRAINT PK_PlayerValue PRIMARY KEY (id, seasonStartYear),
-)
-
-CREATE TABLE [dbo].[GamePlayer]
+CREATE TABLE [dbo].[GameOdds]
 (
     gameId INT NOT NULL,
-    teamId INT NOT NULL,
-    playerId INT NOT NULL,
-    seasonStartYear INT NOT NULL
-    CONSTRAINT PK_GamePlayer PRIMARY KEY(gameId,playerId),
+    modelName INT NOT NULL,
+    runDateUTC DATETIME2 NOT NULL,
+    homeOdds FLOAT NOT NULL,
+    awayOdds FLOAT NOT NULL,
+    logLoss FLOAT NOT NULL DEFAULT 0,
+    notes VARCHAR(MAX),
+    CONSTRAINT PK_GameOdds PRIMARY KEY(gameId, modelName, runDateUTC),
     FOREIGN KEY (gameId) REFERENCES Game(id),
-    FOREIGN KEY (teamId) REFERENCES Team(id),
 );
 
-CREATE TABLE [dbo].[SeasonGameCount]
-(
-	[seasonId] INT NOT NULL PRIMARY KEY,
-	[gameCount] INT NOT NULL,
-)
-
-CREATE TABLE [dbo].[ClassificationModel]
+CREATE TABLE [dbo].[Player]
 (
     id INT NOT NULL,
-    modelFile varchar(MAX) NULL
-    PRIMARY KEY(id),
-)
+    firstName VARCHAR(MAX) NOT NULL,
+    lastName VARCHAR(MAX) NOT NULL,
+    isActive BIT NOT NULL,
+    currentTeamId INT NOT NULL,
+    headShot VARCHAR(MAX) NOT NULL,
+    heroImage VARCHAR(MAX) NOT NULL,
+    heightInInches INT NOT NULL,
+    weightInPounds INT NOT NULL,
+    birthDate VARCHAR(MAX),
+    birthCity VARCHAR(MAX),
+    birthStateProvince VARCHAR(MAX),
+    isInTopOneHundredAllTime BIT NOT NULL,
+    isInHallOfFame BIT NOT NULL,
+    shopLink VARCHAR(MAX),
+    twitterLink VARCHAR(MAX),
+    watchLink VARCHAR(MAX),
+    playerSlug VARCHAR(MAX),
+    CONSTRAINT PK_Player PRIMARY KEY(id),
+    FOREIGN KEY (currentTeamId) REFERENCES Team(id),
+);
+
+CREATE TABLE [dbo].[PlayerDraftDetails]
+(
+    playerId INT NOT NULL,
+    [year] INT NOT NULL,
+    teamAbbrev VARCHAR(MAX) NOT NULL,
+    round INT NOT NULL,
+    pickInRound INT NOT NULL,
+    overallPick INT NOT NULL,
+    CONSTRAINT PK_Player PRIMARY KEY(playerId),
+    FOREIGN KEY (playerId) REFERENCES Player(id),
+);
+
+CREATE TABLE [dbo].[GameSkaterStats]
+(
+    gameId INT NOT NULL,
+    playerId INT NOT NULL,
+    teamId INT NOT NULL,
+    goals INT NOT NULL,
+    assists INT NOT NULL,
+    plusMinus INT NOT NULL,
+    penaltyMinutes INT NOT NULL,
+    hits INT NOT NULL,
+    powerPlayGoals INT NOT NULL,
+    shotsOnGoal INT NOT NULL,
+    faceoffWinningPctg FLOAT NOT NULL,
+    blockedShots INT NOT NULL,
+    giveaways INT NOT NULL,
+    takeaways INT NOT NULL,
+    timeOnIceSeconds FLOAT NOT NULL,
+    CONSTRAINT PK_GameSkaterStats PRIMARY KEY(gameId,playerId),
+    FOREIGN KEY (gameId) REFERENCES Game(id),
+    FOREIGN KEY (playerId) REFERENCES Player(id),
+    FOREIGN KEY (teamId) REFERENCES Team(id)
+);
+
+CREATE TABLE [dbo].[GameGoalieStats]
+(
+    gameId INT NOT NULL,
+    playerId INT NOT NULL,
+    teamId INT NOT NULL,
+    evenStrengthShotsSaved INT NOT NULL,
+    powerPlayShotsSaved INT NOT NULL,
+    evenStrengthGoalsAllowed INT NOT NULL,
+    powerPlayGoalsAllowed INT NOT NULL,
+    timeOnIceSeconds FLOAT NOT NULL,
+    isStarter BIT NOT NULL,
+    CONSTRAINT PK_GameGoalieStats PRIMARY KEY(gameId,playerId),
+    FOREIGN KEY (gameId) REFERENCES Game(id),
+    FOREIGN KEY (playerId) REFERENCES Player(id),
+    FOREIGN KEY (teamId) REFERENCES Team(id)
+);
 
 GO

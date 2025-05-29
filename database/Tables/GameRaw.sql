@@ -1,10 +1,10 @@
-﻿CREATE TABLE [dbo].[Game]
+﻿CREATE TABLE [dbo].[GameRaw]
 (
     id INT NOT NULL,
     homeTeamId INT NOT NULL,
     awayTeamId INT NOT NULL,
     seasonStartYear INT NOT NULL,
-    gameDate DATETIME2 NOT NULL,
+    gameDateUTC DATETIME2 NOT NULL,
     homeGoals INT NOT NULL,
     awayGoals INT NOT NULL,
     homeSOG INT NOT NULL,
@@ -28,4 +28,4 @@
     PRIMARY KEY(id),
     FOREIGN KEY (homeTeamId) REFERENCES Team(id),
     FOREIGN KEY (awayTeamId) REFERENCES Team(id),
-)
+);

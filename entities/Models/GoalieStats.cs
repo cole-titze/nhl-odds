@@ -2,11 +2,13 @@
 {
     public class GoalieStats : IPlayerStats
 	{
-        public int id { get; set; }
+        public int playerId { get; set; }
+        public int gameId { get; set; }
         public string name { get; set; } = string.Empty;
         public int goalsAgainst { get; set; }
         public int saves { get; set; }
         public int gamesStarted { get; set; }
+        public int timeOnIceSeconds { get; set; }
 
         // Default to goalie since this is goalie class
         public POSITION position { get; set; } = POSITION.Goalie;
