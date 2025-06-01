@@ -10,6 +10,8 @@ namespace Entities.Models
         public int id { get; set; } = -1;
         public int homeTeamId { get; set; }
         public int awayTeamId { get; set; }
+        public string homeTeamAbbr { get; set; } = string.Empty;
+        public string awayTeamAbbr { get; set; } = string.Empty;
         public int seasonStartYear { get; set; }
         public DateTime gameDateUTC { get; set; }
         public int homeGoals { get; set; }

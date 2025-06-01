@@ -1,4 +1,5 @@
-﻿using Entities.DbModels;
+﻿using DataAccess.PlayerRepository.Mappers;
+using Entities.DbModels;
 using Entities.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,14 +17,16 @@ namespace DatabaseAccess.PlayerRepository
         /// </summary>
         /// <param name="playersWithValues">List of players to store</param>
         /// <returns>None</returns>
-        public async Task AddUpdatePlayers(IEnumerable<DbPlayer> players)
+        public async Task AddUpdatePlayers(IEnumerable<Player> players)
         {
+            var dbPlayers = MapPlayerToDbPlayer.Map(players);
+
             var addList = new List<DbPlayer>();
             var updateList = new List<DbPlayer>();
-            foreach (var player in players)
+            foreach (var player in dbPlayers)
             {
-                var dbPlayer = await GetPlayer(player.id);
-                if (!dbPlayer.IsValid())
+                var dbPlayer = await GetDbPlayer(player.id);
+                if (dbPlayer == null)
                 {
                     addList.Add(player);
                 }
@@ -42,13 +45,14 @@ namespace DatabaseAccess.PlayerRepository
         /// </summary>
         /// <param name="playersWithValues">List of players to store</param>
         /// <returns>None</returns>
-        public async Task AddUpdateGamePlayerStats(IEnumerable<IDbGamePlayerStats> gamePlayerStats)
+        public async Task AddUpdateGamePlayerStats(IEnumerable<IGamePlayerStats> gamePlayerStats)
         {
+            var dbGamePlayerStats = MapGamePlayerStatsToDbGamePlayerStats.Map(gamePlayerStats);
             var addList = new List<IDbGamePlayerStats>();
             var updateList = new List<IDbGamePlayerStats>();
-            foreach (var playerStats in gamePlayerStats)
+            foreach (var playerStats in dbGamePlayerStats)
             {
-                var dbPlayerStats = await GetGamePlayerStats(playerStats);
+                var dbPlayerStats = await GetDbGamePlayerStats(playerStats);
                 if (!dbPlayerStats.IsValid())
                 {
 
@@ -71,11 +75,11 @@ namespace DatabaseAccess.PlayerRepository
         /// </summary>
         /// <param name="playerId">Id of the player to get</param>
         /// <returns>Desired player</returns>
-        private async Task<DbPlayer> GetPlayer(int playerId)
+        private async Task<DbPlayer?> GetDbPlayer(int playerId)
         {
             var dbPlayer = await _dbContext.Player.FirstOrDefaultAsync(x => x.id == playerId);
             if (dbPlayer == null)
-                return new DbPlayer();
+                return null;
 
             return dbPlayer;
         }
@@ -84,7 +88,7 @@ namespace DatabaseAccess.PlayerRepository
         /// </summary>
         /// <param name="gamePlayerStats">The game player stats</param>
         /// <returns>Desired player</returns>
-        private async Task<IDbGamePlayerStats> GetGamePlayerStats(IDbGamePlayerStats gamePlayerStats)
+        private async Task<IDbGamePlayerStats> GetDbGamePlayerStats(IDbGamePlayerStats gamePlayerStats)
         {
             var dbGoalieStatsTask = _dbContext.GameGoalieStats.FirstOrDefaultAsync(x => x.gameId == gamePlayerStats.gameId && x.playerId == gamePlayerStats.gameId);
             var dbSkaterStatsTask = _dbContext.GameSkaterStats.FirstOrDefaultAsync(x => x.gameId == gamePlayerStats.gameId && x.playerId == gamePlayerStats.gameId);

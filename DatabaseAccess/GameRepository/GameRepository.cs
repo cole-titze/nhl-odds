@@ -32,14 +32,16 @@ namespace DatabaseAccess.GameRepository
         /// </summary>
         /// <param name="games">List of games to add or update</param>
         /// <returns>None</returns>
-        public async Task AddUpdateGames(IEnumerable<DbGameRaw> games)
+        public async Task AddUpdateGames(IEnumerable<Game> games)
         {
+            var dbGames = MapGameToDbGame.Map(games);
+
             var addList = new List<DbGameRaw>();
             var updateList = new List<DbGameRaw>();
-            foreach (var game in games)
+            foreach (var game in dbGames)
             {
-                var dbGame = await GetGame(game.id);
-                if (!dbGame.IsValid())
+                var dbGame = await GetDbGame(game.id);
+                if (dbGame == null)
                     addList.Add(game);
                 else
                 {
@@ -55,7 +57,7 @@ namespace DatabaseAccess.GameRepository
         /// </summary>
         /// <param name="seasonStartYear">Season start year</param>
         /// <returns>None</returns>
-        public async Task CacheSeasonOfGames(int seasonStartYear)
+        private async Task CacheSeasonOfGames(int seasonStartYear)
         {
             if (_cachedSeasonsGames.ContainsKey(seasonStartYear) && _cachedSeasonsGames[seasonStartYear].Count > 0)
                 return;
@@ -66,19 +68,19 @@ namespace DatabaseAccess.GameRepository
                                         .Include(x => x.homeTeam)
                                         .ToListAsync();
         }
-        /// <summary>
-        /// Gets if a game exists in cache
-        /// </summary>
-        /// <param name="gameId">Game to check</param>
-        /// <returns>True if the game exists, otherwise false</returns>
-        public bool GameExistsInCache(int gameId)
-        {
-            int seasonStartYear = GetSeasonStartYear(gameId);
-            var game = _cachedSeasonsGames[seasonStartYear].FirstOrDefault(i => i.id == gameId);
-            if (game == null)
-                return false;
-            return true;
-        }
+        // /// <summary>
+        // /// Gets if a game exists in cache
+        // /// </summary>
+        // /// <param name="gameId">Game to check</param>
+        // /// <returns>True if the game exists, otherwise false</returns>
+        // public bool GameExistsInCache(int gameId)
+        // {
+        //     int seasonStartYear = GetSeasonStartYear(gameId);
+        //     var game = _cachedSeasonsGames[seasonStartYear].FirstOrDefault(i => i.id == gameId);
+        //     if (game == null)
+        //         return false;
+        //     return true;
+        //}
         // /// <summary>
         // /// Adds player rosters to the database if they don't exist. Removes players that are no longer on the roster for the game
         // /// </summary>
@@ -132,7 +134,24 @@ namespace DatabaseAccess.GameRepository
         //         oldRosters.Remove(player);
         // }
 
-        public async Task<IEnumerable<DbGameRaw>> GetSeasonGames(int seasonStartYear)
+        /// <summary>
+        /// Gets a seasons worth of games from the database and caches them
+        /// </summary>
+        /// <param name="seasonStartYear">Season start year</param>
+        /// <returns>Seasons games</returns>
+        public async Task<IEnumerable<Game>> GetSeasonGames(int seasonStartYear)
+        {
+            await CacheSeasonOfGames(seasonStartYear);
+
+            return MapDbGameToGame.Map(_cachedSeasonsGames[seasonStartYear]);
+        }
+
+        /// <summary>
+        /// Gets a seasons worth of games from the database and caches them
+        /// </summary>
+        /// <param name="seasonStartYear">Season start year</param>
+        /// <returns>Seasons games</returns>
+        private async Task<IEnumerable<DbGameRaw>> GetSeasonDbGames(int seasonStartYear)
         {
             await CacheSeasonOfGames(seasonStartYear);
 
@@ -152,15 +171,32 @@ namespace DatabaseAccess.GameRepository
         /// </summary>
         /// <param name="gameId">Id of the game to get</param>
         /// <returns>Desired game</returns>
-        public async Task<DbGameRaw> GetGame(int gameId)
+        public async Task<Game?> GetGame(int gameId)
         {
             // Get the season start year from the game id
             int seasonStartYear = int.Parse(gameId.ToString().Substring(0, 4));
-            var seasonGames = await GetSeasonGames(seasonStartYear);
+            var seasonGames = await GetSeasonDbGames(seasonStartYear);
 
             var game = seasonGames.FirstOrDefault(x => x.id == gameId);
             if (game == null)
-                return new DbGameRaw();
+                return null;
+
+            return MapDbGameToGame.Map(game);
+        }
+        /// <summary>
+        /// Gets a db game based on the id
+        /// </summary>
+        /// <param name="gameId">Id of the game to get</param>
+        /// <returns>Desired game</returns>
+        private async Task<DbGameRaw?> GetDbGame(int gameId)
+        {
+            // Get the season start year from the game id
+            int seasonStartYear = int.Parse(gameId.ToString().Substring(0, 4));
+            var seasonGames = await GetSeasonDbGames(seasonStartYear);
+
+            var game = seasonGames.FirstOrDefault(x => x.id == gameId);
+            if (game == null)
+                return null;
 
             return game;
         }
@@ -225,7 +261,7 @@ namespace DatabaseAccess.GameRepository
         /// <returns>List of season games</returns>
         public async Task<IEnumerable<Game>> GetRichSeasonGames(int seasonStartYear)
         {
-            var dbGames = await GetSeasonGames(seasonStartYear);
+            var dbGames = await GetSeasonDbGames(seasonStartYear);
             var games = new List<Game>();
 
             foreach(var dbGame in dbGames)

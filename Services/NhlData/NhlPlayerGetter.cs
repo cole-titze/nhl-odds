@@ -1,6 +1,5 @@
-﻿using Entities.DbModels;
+﻿using Entities.Models;
 using Microsoft.Extensions.Logging;
-using Services.NhlData.Mappers;
 using Services.RequestMaker;
 using static Services.NhlData.NhlDataGetter;
 
@@ -18,49 +17,49 @@ namespace Services.NhlData
             _logger = loggerFactory.CreateLogger<NhlPlayerGetter>();
         }
 
-        public async Task<IEnumerable<IDbGamePlayerStats>> GetPlayerGameStats(DbGameRaw game)
+        public async Task<IEnumerable<IGamePlayerStats>?> GetPlayerGameStats(Game game)
         {
             var gameId = game.id;
             var url = "http://api-web.nhle.com/v1/gamecenter/";
             var summaryQuery = GetGameQuery(gameId, GameRequestType.GameSummary);
 
             var gameSummaryResponse = await _requestMaker.MakeRequest(url, summaryQuery);
-            if (gameSummaryResponse == null)
+            if (gameSummaryResponse.response == null)
             {
                 _logger.LogWarning("Failed to get game with id: " + gameId.ToString());
-                return new List<IDbGamePlayerStats>() { new DbGameSkaterStats() };
+                return null;
             }
 
-            if (IsGameDone(gameSummaryResponse))
+            if (IsGameDone(gameSummaryResponse.response.gameState))
             {
-                return await GetPastGamePlayers(game);
+                return await GetPastGamePlayerStats(game);
             }
 
-            return await GetCurrentGamePlayers(game);
+            return await GetCurrentGamePlayerStats(game);
         }
 
-        private async Task<IEnumerable<IDbGamePlayerStats>> GetCurrentGamePlayers(DbGameRaw game)
+        private async Task<IEnumerable<IGamePlayerStats>> GetCurrentGamePlayerStats(Game game)
         {
             // Get current team roster to use
             var url = "https://api-web.nhle.com/v1/roster/";
-            var homeQuery = game.homeTeam.abbreviation + "/current";
-            var awayQuery = game.awayTeam.abbreviation + "/current";
+            var homeQuery = game.homeTeamAbbr + "/current";
+            var awayQuery = game.awayTeamAbbr + "/current";
             var homeRosterResponse = await _requestMaker.MakeRequest(url, homeQuery);
             var awayRosterResponse = await _requestMaker.MakeRequest(url, awayQuery);
 
             if (homeRosterResponse == null || awayRosterResponse == null)
             {
                 _logger.LogWarning("Failed to get current roster for game with id: " + game.id.ToString());
-                return new List<IDbGamePlayerStats>() { new DbGameSkaterStats() };
+                return new List<IGamePlayerStats>() { new GameSkaterStats() };
             }
 
-            var homeRoster = MapCurrentRosterResponseToGamePlayerStats.Map(homeRosterResponse);
-            var awayRoster = MapCurrentRosterResponseToGamePlayerStats.Map(awayRosterResponse);
+            var homeRoster = homeRosterResponse.CurentRosterResponseToPlayerStats();
+            var awayRoster = awayRosterResponse.CurentRosterResponseToPlayerStats();
 
             return homeRoster.Concat(awayRoster);
         }
 
-        private async Task<IEnumerable<IDbGamePlayerStats>> GetPastGamePlayers(DbGameRaw game)
+        private async Task<IEnumerable<IGamePlayerStats>> GetPastGamePlayerStats(Game game)
         {
             var gameId = game.id;
             var url = "http://api-web.nhle.com/v1/gamecenter/";
@@ -69,13 +68,13 @@ namespace Services.NhlData
             if(gameStatResponse == null)
             {
                 _logger.LogWarning("Failed to get game stats with id: " + gameId.ToString());
-                return new List<IDbGamePlayerStats>() { new DbGameSkaterStats() };
+                return new List<IGamePlayerStats>() { new GameSkaterStats() };
             }
 
-            return MapGamePlayerStatsResponseToGamePlayerStats.Map(gameStatResponse);
+            return gameStatResponse.GameStatsResponseToPlayerStats();
         }
 
-        public async Task<DbPlayer> GetPlayer(int playerId)
+        public async Task<Player> GetPlayer(int playerId)
         {
             string url = "https://api-web.nhle.com/v1/player/";
             string summaryQuery = GetPlayerQuery(playerId);
@@ -85,10 +84,10 @@ namespace Services.NhlData
             if (playerSummaryResponse == null)
             {
                 _logger.LogWarning("Failed to get player with id: " + playerId.ToString());
-                return new DbPlayer();
+                return new Player();
             }
 
-            return MapPlayerResponseToPlayer.Map(playerSummaryResponse);
+            return playerSummaryResponse.PlayerResponseToPlayer();
         }
     }
 }

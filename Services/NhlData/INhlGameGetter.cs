@@ -1,10 +1,10 @@
-﻿using Entities.DbModels;
+﻿using Entities.Models;
 
 namespace Services.NhlData
 {
     public interface INhlGameGetter
 	{
-        Task<DbGameRaw> GetGame(int gameId);
+        Task<Game?> GetGame(int gameId);
     }
 }
 

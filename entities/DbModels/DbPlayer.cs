@@ -2,7 +2,7 @@
 
 namespace Entities.DbModels
 {
-    public class DbPlayer
+    public class DbPlayer : IEquatable<DbPlayer>
     {
         public int id { get; set; }
         public string firstName { get; set; } = string.Empty;
@@ -24,27 +24,30 @@ namespace Entities.DbModels
         public string playerSlug { get; set; } = string.Empty;
         [ForeignKey("currentTeamId")]
         public DbTeam? team { get; set; } = new DbTeam();
-        public void Clone(DbPlayer playerDraftDetails)
+        [ForeignKey("id")]
+        public DbPlayerDraftDetails? draftDetails = new DbPlayerDraftDetails();
+        public void Clone(DbPlayer player)
         {
-            id = playerDraftDetails.id;
-            firstName = playerDraftDetails.firstName;
-            lastName = playerDraftDetails.lastName;
-            isActive = playerDraftDetails.isActive;
-            currentTeamId = playerDraftDetails.currentTeamId;
-            headShot = playerDraftDetails.headShot;
-            heroImage = playerDraftDetails.heroImage;
-            heightInInches = playerDraftDetails.heightInInches;
-            weightInPounds = playerDraftDetails.weightInPounds;
-            birthDate = playerDraftDetails.birthDate;
-            birthCity = playerDraftDetails.birthCity;
-            birthStateProvince = playerDraftDetails.birthStateProvince;
-            isInTopOneHundredAllTime = playerDraftDetails.isInTopOneHundredAllTime;
-            isInHallOfFame = playerDraftDetails.isInHallOfFame;
-            shopLink = playerDraftDetails.shopLink;
-            twitterLink = playerDraftDetails.twitterLink;
-            watchLink = playerDraftDetails.watchLink;
-            playerSlug = playerDraftDetails.playerSlug;
-            team = playerDraftDetails.team;
+            id = player.id;
+            firstName = player.firstName;
+            lastName = player.lastName;
+            isActive = player.isActive;
+            currentTeamId = player.currentTeamId;
+            headShot = player.headShot;
+            heroImage = player.heroImage;
+            heightInInches = player.heightInInches;
+            weightInPounds = player.weightInPounds;
+            birthDate = player.birthDate;
+            birthCity = player.birthCity;
+            birthStateProvince = player.birthStateProvince;
+            isInTopOneHundredAllTime = player.isInTopOneHundredAllTime;
+            isInHallOfFame = player.isInHallOfFame;
+            shopLink = player.shopLink;
+            twitterLink = player.twitterLink;
+            watchLink = player.watchLink;
+            playerSlug = player.playerSlug;
+            team = player.team;
+            draftDetails = player.draftDetails;
         }
 
         public bool IsValid()
@@ -52,6 +55,30 @@ namespace Entities.DbModels
             if (id == -1)
                 return false;
             return true;
+        }
+        public bool Equals(DbPlayer? other)
+        {
+            if (other == null)
+                return false;
+
+            return id == other.id
+                && firstName == other.firstName
+                && lastName == other.lastName
+                && isActive == other.isActive
+                && currentTeamId == other.currentTeamId
+                && headShot == other.headShot
+                && heroImage == other.heroImage
+                && heightInInches == other.heightInInches
+                && weightInPounds == other.weightInPounds
+                && birthDate == other.birthDate
+                && birthCity == other.birthCity
+                && birthStateProvince == other.birthStateProvince
+                && isInTopOneHundredAllTime == other.isInTopOneHundredAllTime
+                && isInHallOfFame == other.isInHallOfFame
+                && shopLink == other.shopLink
+                && twitterLink == other.twitterLink
+                && watchLink == other.watchLink
+                && playerSlug == other.playerSlug;
         }
     }
 }

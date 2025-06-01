@@ -1,6 +1,6 @@
-﻿namespace Entities.DbModels
+namespace Entities.Models
 {
-    public class DbTeam
+    public class Team
     {
         public int id { get; set; }
         public string abbreviation { get; set; } = string.Empty;
@@ -10,3 +10,4 @@
 
     }
 }
+

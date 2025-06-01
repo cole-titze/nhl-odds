@@ -1,11 +1,11 @@
-﻿using Entities.DbModels;
+﻿using Entities.Models;
 
 namespace Services.NhlData
 {
     public interface INhlPlayerGetter
 	{
-        Task<IEnumerable<IDbGamePlayerStats>> GetPlayerGameStats(DbGameRaw game);
-        Task<DbPlayer> GetPlayer(int playerId);
+        Task<IEnumerable<IGamePlayerStats>?> GetPlayerGameStats(Game game);
+        Task<Player> GetPlayer(int playerId);
     }
 }
 

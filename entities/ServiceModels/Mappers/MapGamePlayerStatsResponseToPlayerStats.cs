@@ -3,7 +3,7 @@ using Entities.DbModels;
 using Entities.Models;
 using Entities.Types.Mappers;
 
-namespace Services.NhlData.Mappers
+namespace Entities.ServiceModels.Mappers
 {
     public static class MapGamePlayerStatsResponseToGamePlayerStats
     {
@@ -12,9 +12,9 @@ namespace Services.NhlData.Mappers
         /// </summary>
         /// <param name="playerStatResponse">Player stat response</param>
         /// <returns>Player stats object</returns>
-		public static IDbGamePlayerStats Map(dynamic gamePlayerStatResponse)
+		public static IGamePlayerStats Map(dynamic gamePlayerStatResponse)
         {
-            return new DbGameSkaterStats();
+            return new GameGoalieStats();
         }
     }
 }

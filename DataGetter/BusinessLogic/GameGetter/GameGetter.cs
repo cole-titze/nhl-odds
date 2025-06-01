@@ -1,8 +1,10 @@
 ﻿using DatabaseAccess.GameRepository;
 using DatabaseAccess.PlayerRepository;
 using Entities.DbModels;
+using Entities.Models;
 using Entities.Types;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualBasic;
 using Services.NhlData;
 
 namespace DataGetter.BusinessLogic.GameGetter
@@ -80,20 +82,20 @@ namespace DataGetter.BusinessLogic.GameGetter
         /// <param name="seasonStartYear">year of games to get</param>
         /// <param name="gameCount">Number of games to get</param>
         /// <returns>List of games from the start year</returns>
-        private async Task<List<DbGameRaw>> GetSeasonGames(int seasonStartYear, int gameCount)
+        private async Task<IEnumerable<Game>> GetSeasonGames(int seasonStartYear, int gameCount)
         {
-            var seasonGames = new List<DbGameRaw>();
-            DbGameRaw game;
+            var seasonGames = new List<Game>();
+            Game? game;
             // game ids start at 1
             for (int count = 1; count <= gameCount; count++)
             {
                 var gameId = NhlDataGetter.GetGameId(seasonStartYear, count);
-                game = await _gameRepo.GetGame(gameId);
-                if (game.IsValid() && game.hasBeenPlayed)
+                var existingGame = await _gameRepo.GetGame(gameId);
+                if (existingGame != null && existingGame.hasBeenPlayed)
                     continue;
 
                 game = await _nhlDataGetter.GameDataGetter.GetGame(gameId);
-                if (game.IsValid())
+                if (game != null)
                     seasonGames.Add(game);
             }
 
@@ -103,18 +105,20 @@ namespace DataGetter.BusinessLogic.GameGetter
         /// </summary>
         /// <param name="seasonGames">Games to get player stats for</param>
         /// <returns>List of player game stats from the start year</returns>
-        private async Task<IEnumerable<IDbGamePlayerStats>> GetPlayerGameStats(IEnumerable<DbGameRaw> seasonGames)
+        private async Task<IEnumerable<IGamePlayerStats>> GetPlayerGameStats(IEnumerable<Game> seasonGames)
         {
-            var seasonPlayerGameStats = new List<IDbGamePlayerStats>();
-            IEnumerable<IDbGamePlayerStats> gamePlayerStats;
+            var seasonPlayerGameStats = new List<IGamePlayerStats>();
+            IEnumerable<IGamePlayerStats>? gamePlayerStats;
 
             foreach (var game in seasonGames)
             {
                 gamePlayerStats = await _nhlDataGetter.PlayerDataGetter.GetPlayerGameStats(game);
-                foreach (var playerStats in gamePlayerStats)
+                if( gamePlayerStats != null)
                 {
-                    if (playerStats.IsValid())
+                    foreach (var playerStats in gamePlayerStats)
+                    {
                         seasonPlayerGameStats.Add(playerStats);
+                    }
                 }
             }
 
@@ -124,7 +128,7 @@ namespace DataGetter.BusinessLogic.GameGetter
         /// </summary>
         /// <param name="seasonStartYear">year of games to get</param>
         /// <returns>List of games from the start year</returns>
-        private async Task<IEnumerable<DbPlayer>> GetPlayers(IEnumerable<IDbGamePlayerStats> gamePlayerStats)
+        private async Task<IEnumerable<Player>> GetPlayers(IEnumerable<IGamePlayerStats> gamePlayerStats)
         {
             var uniquePlayerIds = new HashSet<int>();
             foreach (var playerStats in gamePlayerStats)
@@ -132,11 +136,11 @@ namespace DataGetter.BusinessLogic.GameGetter
                 uniquePlayerIds.Add(playerStats.playerId);
             }
 
-            var players = new List<DbPlayer>();
+            var players = new List<Player>();
             foreach (var playerId in uniquePlayerIds)
             {
                 var player = await _nhlDataGetter.PlayerDataGetter.GetPlayer(playerId);
-                if (player.IsValid())
+                if (player != null)
                     players.Add(player);
             }
 

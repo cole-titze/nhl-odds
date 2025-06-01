@@ -1,4 +1,7 @@
 ﻿using System.Net.Http.Headers;
+using System.Text;
+using Entities.ServiceModels;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace Services.RequestMaker
@@ -6,9 +9,14 @@ namespace Services.RequestMaker
     public class RequestMaker : IRequestMaker
 	{
         private readonly IHttpClient _client;
-        public RequestMaker(IHttpClient client)
+        private readonly ILogger<RequestMaker> _logger;
+        private readonly Dictionary<string, ServiceResponse> _cachedResponses = new Dictionary<string, ServiceResponse>();
+        private int _cacheSize;
+        private const int _cacheByteSizeLimit = 1000000000; // 1 GB cache size limit
+        public RequestMaker(IHttpClient client, ILoggerFactory loggerFactory)
         {
             _client = client;
+            _logger = loggerFactory.CreateLogger<RequestMaker>();
         }
         /// <summary>
         /// Given a url and query makes a request and returns the response converted to a dynamic object
@@ -16,8 +24,12 @@ namespace Services.RequestMaker
         /// <param name="url">Base url to call</param>
         /// <param name="query">Query parameters to append to url</param>
         /// <returns>Dynamic response object</returns>
-        public async Task<dynamic?> MakeRequest(string url, string query)
+        public async Task<ServiceResponse> MakeRequest(string url, string query)
         {
+            string key = url + query;
+            if (_cachedResponses.ContainsKey(key))
+                return new ServiceResponse(_cachedResponses[key]);
+
             HttpResponseMessage response;
             HttpRequestMessage msg = new HttpRequestMessage
             {
@@ -28,15 +40,38 @@ namespace Services.RequestMaker
             msg.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             response = await _client.SendAsync(msg);
+
+            var serviceResponse = new ServiceResponse(await ParseResponse(response));
+            AddToCache(key, serviceResponse);
             
-            return await ParseResponse(response);
+            return serviceResponse;
         }
+        /// <summary>
+        /// Adds a response to the cache.
+        /// </summary>
+        /// <param name="key">The request</param>
+        /// <param name="jsonResponse">The response to cache</param>
+        private void AddToCache(string key, ServiceResponse serviceResponse)
+        {
+            if (serviceResponse.response != null)
+            {
+                _cachedResponses[key] = serviceResponse;
+                _cacheSize += Encoding.UTF8.GetByteCount(serviceResponse.response);
+                if (_cacheSize > _cacheByteSizeLimit)
+                {
+                    _logger.LogWarning("Cache size exceeded limit of 1 GB. Clearing cache.");
+                    _cachedResponses.Clear();
+                    _cacheSize = 0;
+                }
+            }
+        }
+
         /// <summary>
         /// Converts the raw http response into a dynamic object.
         /// </summary>
         /// <param name="response">The raw http response message</param>
         /// <returns>Dynamic object</returns>
-        private async Task<dynamic?> ParseResponse(HttpResponseMessage response)
+        private static async Task<dynamic?> ParseResponse(HttpResponseMessage response)
         {
             if (!response.IsSuccessStatusCode)
                 return null;

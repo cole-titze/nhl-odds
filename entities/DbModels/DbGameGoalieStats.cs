@@ -8,7 +8,6 @@ namespace Entities.DbModels
         public int gameId { get; set; } = -1;
         public int playerId { get; set; } = -1;
         public int teamId { get; set; }
-        public int seasonStartYear { get; set; }
         public int evenStrengthShotsSaved { get; set; }
         public int powerPlayShotsSaved { get; set; }
         public int evenStrengthGoalsAllowed { get; set; }
@@ -29,7 +28,6 @@ namespace Entities.DbModels
                 gameId = goalieStats.gameId;
                 teamId = goalieStats.teamId;
                 playerId = goalieStats.playerId;
-                seasonStartYear = goalieStats.seasonStartYear;
                 evenStrengthShotsSaved = goalieStats.evenStrengthShotsSaved;
                 powerPlayShotsSaved = goalieStats.powerPlayShotsSaved;
                 evenStrengthGoalsAllowed = goalieStats.evenStrengthGoalsAllowed;

@@ -1,13 +1,13 @@
-﻿using Entities.DbModels;
+using Entities.DbModels;
 using Entities.Models;
 
 namespace DataAccess.GameRepository.Mappers
 {
-    public static class MapDbGameToGame
+    public static class MapGameToDbGame
     {
-        public static Game Map(DbGameRaw game)
+        public static DbGameRaw Map(Game game)
         {
-            return new Game()
+            return new DbGameRaw()
             {
                 id = game.id,
                 homeTeamId = game.homeTeamId,
@@ -36,16 +36,15 @@ namespace DataAccess.GameRepository.Mappers
                 hasBeenPlayed = game.hasBeenPlayed,
             };
         }
-        public static IEnumerable<Game> Map(IEnumerable<DbGameRaw> games)
-        {
-            var gameList = new List<Game>();
+        public static IEnumerable<DbGameRaw> Map(IEnumerable<Game> games)
+		{
+			var dbGames = new List<DbGameRaw>();
             foreach (var game in games)
             {
-                gameList.Add(Map(game));
+                dbGames.Add(Map(game));
             }
-
-            return gameList;
-        }
+            return dbGames;
+		}
 	}
 }
 

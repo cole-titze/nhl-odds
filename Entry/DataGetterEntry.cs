@@ -36,7 +36,7 @@ namespace Entry
             var playerRepo = new PlayerRepository(nhlDbContext);
             var gameRepo = new GameRepository(nhlDbContext, _loggerFactory);
             var teamRepo = new TeamRepository(nhlDbContext);
-            var requestMaker = new RequestMaker(new HttpClientWrapper());
+            var requestMaker = new RequestMaker(new HttpClientWrapper(), _loggerFactory);
 
             var seasonGameCountCache = await gameRepo.GetSeasonGameCounts();
             INhlGameGetter gameDataGetter = new NhlGameGetter(requestMaker, _loggerFactory);

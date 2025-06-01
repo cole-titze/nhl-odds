@@ -15,7 +15,7 @@ namespace Entities.DbModels
         public int hits { get; set; }
         public int powerPlayGoals { get; set; }
         public int shotsOnGoal { get; set; }
-        public int faceOffWinningPctg { get; set; }
+        public double faceOffWinningPctg { get; set; }
         public int blockedShots { get; set; }
         public int giveaways { get; set; }
         public int takeaways { get; set; }
