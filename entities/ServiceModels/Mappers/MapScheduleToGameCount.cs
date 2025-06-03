@@ -1,6 +1,6 @@
-﻿namespace Services.NhlData.Mappers
+﻿namespace Entities.ServiceModels.Mappers
 {
-    public static class MapScheduleToGameCount
+    public static class MapScheduleResponseToGameCount
     {
         /// <summary>
         /// Gets the number of games from a schedule response

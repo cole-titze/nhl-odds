@@ -1,5 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
-using Services.NhlData.Mappers;
+﻿using Entities.ServiceModels;
+using Microsoft.Extensions.Logging;
 using Services.RequestMaker;
 
 namespace Services.NhlData
@@ -27,17 +27,19 @@ namespace Services.NhlData
         /// Example Request: https://api.nhle.com/stats/rest/en/season
         public async Task<int> GetGameCountInSeason(int seasonStartYear)
         {
-            if (_seasonGameCountCache.ContainsKey(seasonStartYear))
-                return _seasonGameCountCache[seasonStartYear];
+            if (_seasonGameCountCache.TryGetValue(seasonStartYear, out int value))
+                return value;
 
             string url = "https://api.nhle.com/stats/rest/en/season";
-            var scheduleResponse = await _requestMaker.MakeRequest(url, "");
-            if (scheduleResponse == null)
+            var scheduleServiceResponse = new ServiceScheduleResponse(await _requestMaker.MakeRequest(url, ""));
+            if (scheduleServiceResponse.response == null)
             {
                 _logger.LogWarning("Schedule request failed, using default game count: " + DEFAULT_GAME_COUNT.ToString());
                 return DEFAULT_GAME_COUNT;
             }
-            _seasonGameCountCache[seasonStartYear] = MapScheduleToGameCount.Map(scheduleResponse, NhlDataGetter.GetFullSeasonId(seasonStartYear));
+            var seasonId = NhlDataGetter.GetFullSeasonId(seasonStartYear);
+            _seasonGameCountCache[seasonStartYear] = scheduleServiceResponse.ScheduleResponseToGameCount(seasonId);
+
             return _seasonGameCountCache[seasonStartYear];
         }
         /// <summary>
@@ -48,26 +50,26 @@ namespace Services.NhlData
         {
             return _seasonGameCountCache;
         }
-        /// <summary>
-        /// Gets a list of team ids from the season start year
-        /// </summary>
-        /// <param name="seasonStartYear">Year to get teams from</param>
-        /// <returns>List of team ids</returns>
-        /// Ex. https://api.nhle.com/stats/rest/en/team/summary?cayenneExp=gameTypeId=2%20and%20seasonId=20202021
-        public async Task<List<int>> GetTeamsForSeason(int seasonStartYear)
-        {
-            int seasonId = NhlDataGetter.GetFullSeasonId(seasonStartYear);
-            string url = "https://api.nhle.com/stats/rest/en/team/summary";
-            string query = "?cayenneExp=gameTypeId=2%20and%20seasonId=" + seasonId.ToString();
-            var teamResponse = await _requestMaker.MakeRequest(url, query);
-            if (teamResponse == null)
-            {
-                _logger.LogWarning("Failed to get teams for season: " + seasonStartYear.ToString());
-                return new List<int>();
-            }
+        // /// <summary>
+        // /// Gets a list of team ids from the season start year
+        // /// </summary>
+        // /// <param name="seasonStartYear">Year to get teams from</param>
+        // /// <returns>List of team ids</returns>
+        // /// Ex. https://api.nhle.com/stats/rest/en/team/summary?cayenneExp=gameTypeId=2%20and%20seasonId=20202021
+        // public async Task<List<int>> GetTeamsForSeason(int seasonStartYear)
+        // {
+        //     int seasonId = NhlDataGetter.GetFullSeasonId(seasonStartYear);
+        //     string url = "https://api.nhle.com/stats/rest/en/team/summary";
+        //     string query = "?cayenneExp=gameTypeId=2%20and%20seasonId=" + seasonId.ToString();
+        //     var teamResponse = await _requestMaker.MakeRequest(url, query);
+        //     if (teamResponse == null)
+        //     {
+        //         _logger.LogWarning("Failed to get teams for season: " + seasonStartYear.ToString());
+        //         return new List<int>();
+        //     }
 
-            return MapTeamResponseToTeamIds.Map(teamResponse);
-        }
+        //     return MapTeamResponseToTeamIds.Map(teamResponse);
+        // }
     }
 }
 

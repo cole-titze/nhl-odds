@@ -4,7 +4,7 @@
 	{
         Task<int> GetGameCountInSeason(int year);
         IDictionary<int, int> GetSeasonGameCounts();
-        Task<List<int>> GetTeamsForSeason(int seasonStartYear);
+        //Task<List<int>> GetTeamsForSeason(int seasonStartYear);
     }
 }
 

@@ -1,4 +1,5 @@
 ﻿using Entities.Models;
+using Entities.ServiceModels;
 using Microsoft.Extensions.Logging;
 using Services.RequestMaker;
 using static Services.NhlData.NhlDataGetter;
@@ -28,18 +29,18 @@ namespace Services.NhlData
             string summaryQuery = GetGameQuery(gameId, GameRequestType.GameSummary);
             string statQuery = GetGameQuery(gameId, GameRequestType.GameStats);
 
-            var gameSummaryResponse = await _requestMaker.MakeRequest(url, summaryQuery);
-            var gameStatResponse = await _requestMaker.MakeRequest(url, statQuery);
+            var gameSummaryResponse = new ServiceGameSummaryResponse(await _requestMaker.MakeRequest(url, summaryQuery));
+            var gameStatResponse = new ServiceGameStatResponse(await _requestMaker.MakeRequest(url, statQuery));
 
             if (gameSummaryResponse.response == null || gameStatResponse.response == null)
             {
                 _logger.LogWarning("Failed to get game with id: " + gameId.ToString());
                 return null;
             }
-            if (NhlDataGetter.IsGameInProgress(gameSummaryResponse.response!.gameState))
+            if (gameSummaryResponse.IsGameInProgress())
                 return null;
 
-            return gameSummaryResponse.GameResponseToGame(gameStatResponse);
+            return gameSummaryResponse.GameSummaryResponseToGame(gameStatResponse);
         }
     }
 }

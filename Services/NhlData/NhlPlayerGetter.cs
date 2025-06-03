@@ -1,4 +1,5 @@
 ﻿using Entities.Models;
+using Entities.ServiceModels;
 using Microsoft.Extensions.Logging;
 using Services.RequestMaker;
 using static Services.NhlData.NhlDataGetter;
@@ -23,14 +24,14 @@ namespace Services.NhlData
             var url = "http://api-web.nhle.com/v1/gamecenter/";
             var summaryQuery = GetGameQuery(gameId, GameRequestType.GameSummary);
 
-            var gameSummaryResponse = await _requestMaker.MakeRequest(url, summaryQuery);
+            var gameSummaryResponse = new ServiceGameSummaryResponse(await _requestMaker.MakeRequest(url, summaryQuery));
             if (gameSummaryResponse.response == null)
             {
                 _logger.LogWarning("Failed to get game with id: " + gameId.ToString());
                 return null;
             }
 
-            if (IsGameDone(gameSummaryResponse.response.gameState))
+            if (gameSummaryResponse.IsGameDone())
             {
                 return await GetPastGamePlayerStats(game);
             }
@@ -44,10 +45,10 @@ namespace Services.NhlData
             var url = "https://api-web.nhle.com/v1/roster/";
             var homeQuery = game.homeTeamAbbr + "/current";
             var awayQuery = game.awayTeamAbbr + "/current";
-            var homeRosterResponse = await _requestMaker.MakeRequest(url, homeQuery);
-            var awayRosterResponse = await _requestMaker.MakeRequest(url, awayQuery);
+            var homeRosterResponse = new ServiceRosterResponse(await _requestMaker.MakeRequest(url, homeQuery));
+            var awayRosterResponse = new ServiceRosterResponse(await _requestMaker.MakeRequest(url, awayQuery));
 
-            if (homeRosterResponse == null || awayRosterResponse == null)
+            if (homeRosterResponse.response == null || awayRosterResponse.response == null)
             {
                 _logger.LogWarning("Failed to get current roster for game with id: " + game.id.ToString());
                 return new List<IGamePlayerStats>() { new GameSkaterStats() };
@@ -64,8 +65,8 @@ namespace Services.NhlData
             var gameId = game.id;
             var url = "http://api-web.nhle.com/v1/gamecenter/";
             var statQuery = GetGameQuery(gameId, GameRequestType.GameStats);
-            var gameStatResponse = await _requestMaker.MakeRequest(url, statQuery);
-            if(gameStatResponse == null)
+            var gameStatResponse = new ServiceGameStatResponse(await _requestMaker.MakeRequest(url, statQuery));
+            if(gameStatResponse.response == null)
             {
                 _logger.LogWarning("Failed to get game stats with id: " + gameId.ToString());
                 return new List<IGamePlayerStats>() { new GameSkaterStats() };
@@ -79,9 +80,9 @@ namespace Services.NhlData
             string url = "https://api-web.nhle.com/v1/player/";
             string summaryQuery = GetPlayerQuery(playerId);
 
-            var playerSummaryResponse = await _requestMaker.MakeRequest(url, summaryQuery);
+            var playerSummaryResponse = new ServicePlayerResponse(await _requestMaker.MakeRequest(url, summaryQuery));
 
-            if (playerSummaryResponse == null)
+            if (playerSummaryResponse.response == null)
             {
                 _logger.LogWarning("Failed to get player with id: " + playerId.ToString());
                 return new Player();

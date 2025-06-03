@@ -1,0 +1,29 @@
+using Entities.Models;
+using Entities.ServiceModels.Mappers;
+
+namespace Entities.ServiceModels
+{
+    /// <summary>
+    /// Creating objects for external service API responses can be challenging 
+    /// due to not having control over changes to the responses. I've been following 
+    /// the dynamic pattern so I don't have to create models that contain all 
+    /// information from the API. This way all service models are just dynamic objects 
+    /// and the mappers handle transforming them into the business logic models.
+    /// </summary>
+    public class ServicePlayerResponse
+    {
+        public readonly dynamic? response;
+        public ServicePlayerResponse(dynamic incomingResponse)
+        {
+            response = incomingResponse;
+        }
+        /// <summary>
+        /// Converts the player response to a collection of game player stats.
+        /// </summary>
+        /// <returns>The player</returns>
+        public Player PlayerResponseToPlayer()
+        {
+            return MapPlayerResponseToPlayer.Map(response);
+        }
+    }
+}

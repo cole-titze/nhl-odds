@@ -10,7 +10,7 @@ namespace Services.RequestMaker
 	{
         private readonly IHttpClient _client;
         private readonly ILogger<RequestMaker> _logger;
-        private readonly Dictionary<string, ServiceResponse> _cachedResponses = new Dictionary<string, ServiceResponse>();
+        private readonly Dictionary<string, dynamic> _cachedResponses = new Dictionary<string, dynamic>();
         private int _cacheSize;
         private const int _cacheByteSizeLimit = 1000000000; // 1 GB cache size limit
         public RequestMaker(IHttpClient client, ILoggerFactory loggerFactory)
@@ -24,11 +24,11 @@ namespace Services.RequestMaker
         /// <param name="url">Base url to call</param>
         /// <param name="query">Query parameters to append to url</param>
         /// <returns>Dynamic response object</returns>
-        public async Task<ServiceResponse> MakeRequest(string url, string query)
+        public async Task<dynamic?> MakeRequest(string url, string query)
         {
             string key = url + query;
             if (_cachedResponses.ContainsKey(key))
-                return new ServiceResponse(_cachedResponses[key]);
+                return _cachedResponses[key];
 
             HttpResponseMessage response;
             HttpRequestMessage msg = new HttpRequestMessage
@@ -41,7 +41,7 @@ namespace Services.RequestMaker
 
             response = await _client.SendAsync(msg);
 
-            var serviceResponse = new ServiceResponse(await ParseResponse(response));
+            var serviceResponse = await ParseResponse(response);
             AddToCache(key, serviceResponse);
             
             return serviceResponse;
@@ -51,12 +51,12 @@ namespace Services.RequestMaker
         /// </summary>
         /// <param name="key">The request</param>
         /// <param name="jsonResponse">The response to cache</param>
-        private void AddToCache(string key, ServiceResponse serviceResponse)
+        private void AddToCache(string key, dynamic? serviceResponse)
         {
-            if (serviceResponse.response != null)
+            if (serviceResponse != null)
             {
                 _cachedResponses[key] = serviceResponse;
-                _cacheSize += Encoding.UTF8.GetByteCount(serviceResponse.response);
+                _cacheSize += Encoding.UTF8.GetByteCount(serviceResponse);
                 if (_cacheSize > _cacheByteSizeLimit)
                 {
                     _logger.LogWarning("Cache size exceeded limit of 1 GB. Clearing cache.");

@@ -76,41 +76,5 @@
         {
             return $"{playerId}/landing";
         }
-        /// <summary>
-        /// Determines if a game is in progress or not
-        /// </summary>
-        /// <param name="message">response from nhl api</param>
-        /// <returns>True if game is in progress, otherwise false</returns>
-        public static bool IsGameInProgress(string gameState)
-        {
-            if (gameState != "OFF" && gameState != "FUT")
-                return true;
-
-            return false;
-        }
-        /// <summary>
-        /// Determines if a game is done or not
-        /// </summary>
-        /// <param name="message">response from nhl api</param>
-        /// <returns>True if game is done, otherwise false</returns>
-        public static bool IsGameDone(string gameState)
-        {
-            if (gameState == "OFF")
-                return true;
-
-            return false;
-        }
-        /// <summary>
-        /// Determines if a game is yet to be played
-        /// </summary>
-        /// <param name="message">response from nhl api</param>
-        /// <returns>True if game is in the future, otherwise false</returns>
-        public static bool IsGameFuture(string gameState)
-        {
-            if (gameState == "FUT")
-                return true;
-
-            return false;
-        }
     }
 }

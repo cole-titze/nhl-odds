@@ -4,7 +4,7 @@ namespace Services.RequestMaker
 {
 	public interface IRequestMaker
 	{
-        public Task<ServiceResponse> MakeRequest(string url, string query);
+        public Task<dynamic?> MakeRequest(string url, string query);
     }
 }
 

@@ -10,28 +10,20 @@ namespace Entities.ServiceModels
     /// information from the API. This way all service models are just dynamic objects 
     /// and the mappers handle transforming them into the business logic models.
     /// </summary>
-    public class ServiceResponse
+    public class ServiceRosterResponse
     {
         public readonly dynamic? response;
-        public ServiceResponse(dynamic incomingResponse)
+        public ServiceRosterResponse(dynamic incomingResponse)
         {
             response = incomingResponse;
         }
-        public IEnumerable<IGamePlayerStats> GameStatsResponseToPlayerStats()
-        {
-            return MapGamePlayerStatsResponseToGamePlayerStats.Map(response);
-        }
+        /// <summary>
+        /// Converts the current roster response to a collection of game player stats.
+        /// </summary>
+        /// <returns>The mapped game player stats</returns>
         public IEnumerable<IGamePlayerStats> CurentRosterResponseToPlayerStats()
         {
             return MapCurrentRosterResponseToGamePlayerStats.Map(response);
-        }
-        public Player PlayerResponseToPlayer()
-        {
-            return MapPlayerResponseToPlayer.Map(response);
-        }
-        public Game GameResponseToGame(ServiceResponse gameStatResponse)
-        {
-            return MapGameResponseToGame.Map(response, gameStatResponse);
         }
     }
 }
