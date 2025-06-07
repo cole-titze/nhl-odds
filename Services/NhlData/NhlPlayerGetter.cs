@@ -39,7 +39,7 @@ namespace Services.NhlData
 
             if (gameSummaryResponse.IsGameDone())
             {
-                return await BuildPastGameRosterStats(game);
+                return await BuildPastGameRosterStats(game, gameSummaryResponse);
             }
 
             return await BuildFutureGameRosterStats(game);
@@ -77,7 +77,7 @@ namespace Services.NhlData
         /// </summary>
         /// <param name="game">The game to get the roster for</param>
         /// <returns>Collection of GamePlayerStats</returns>
-        private async Task<GameRosterStats?> BuildPastGameRosterStats(Game game)
+        private async Task<GameRosterStats?> BuildPastGameRosterStats(Game game, ServiceGameSummaryResponse gameSummaryResonse)
         {
             var gameId = game.id;
             var url = "http://api-web.nhle.com/v1/gamecenter/";
@@ -89,7 +89,7 @@ namespace Services.NhlData
                 return null;
             }
 
-            var gameRoster = gameStatResponse.GameStatsResponseToGameRosterStats();
+            var gameRoster = gameStatResponse.GameStatsResponseToGameRosterStats(gameSummaryResonse);
             game.rosterStats = gameRoster;
 
             return gameRoster;

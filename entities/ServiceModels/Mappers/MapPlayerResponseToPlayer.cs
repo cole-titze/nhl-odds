@@ -13,7 +13,7 @@ namespace Entities.ServiceModels.Mappers
 		/// <returns></returns>
 		public static Player Map(dynamic playerResponse)
 		{
-
+			var playerDraftDetails = GetPlayerDraftDetails(playerResponse.draftDetails);
             return new Player()
 			{
 				id = (int)playerResponse.playerId,
@@ -33,8 +33,25 @@ namespace Entities.ServiceModels.Mappers
 				shopLink = (string)playerResponse.shopLink,
 				twitterLink = (string)playerResponse.twitterLink,
 				watchLink = (string)playerResponse.watchLink,
-				playerSlug = (string)playerResponse.playerSlug
+				playerSlug = (string)playerResponse.playerSlug,
+				playerDraftDetails = playerDraftDetails
 			};
 		}
-	}
+		/// <summary>
+		/// Gets the player draft details from the player response
+		/// </summary>
+		/// <param name="playerDraftResponse">NHL response for a player draft details</param>
+		/// <returns>The players draft details</returns>
+        private static PlayerDraftDetails GetPlayerDraftDetails(dynamic playerDraftResponse)
+        {
+            return new PlayerDraftDetails()
+			{
+				year = (int)playerDraftResponse.year,
+				teamAbbrev = (string)playerDraftResponse.teamAbbrev,
+				round = (int)playerDraftResponse.round,
+				pickInRound = (int)playerDraftResponse.pickInRound,
+				overallPick = (int)playerDraftResponse.overallPick
+			};
+        }
+    }
 }

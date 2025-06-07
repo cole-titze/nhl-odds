@@ -13,7 +13,8 @@
 		public IEnumerable<IGamePlayerStats> awayTeamForwards { get; set; } = new List<IGamePlayerStats>();
 		public IEnumerable<IGamePlayerStats> awayTeamDefensement { get; set; } = new List<IGamePlayerStats>();
 		public IEnumerable<IGamePlayerStats> awayTeamGoalies { get; set; } = new List<IGamePlayerStats>();
-		public IEnumerable<Referee> linesmen { get; set; } = new List<Referee>();
+		public IEnumerable<IOfficial> referees { get; set; } = new List<IOfficial>();
+		public IEnumerable<IOfficial> linesmen { get; set; } = new List<IOfficial>();
 
 		/// <summary>
 		/// Enumerates all players (forwards, defensemen, goalies) from both teams.

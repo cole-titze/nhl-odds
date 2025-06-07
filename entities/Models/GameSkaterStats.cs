@@ -16,7 +16,6 @@
         public int hits { get; set; }
         public int giveaways { get; set; }
         public int takeaways { get; set; }
-        public int gamesPlayed { get; set; }
         public int timeOnIceSeconds { get; set; }
         // Default to stop null warning left-wing has no special rules
         public POSITION position { get; set; } = POSITION.LeftWing;

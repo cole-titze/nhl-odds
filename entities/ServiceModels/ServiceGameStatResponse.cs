@@ -20,17 +20,18 @@ namespace Entities.ServiceModels
         /// <summary>
         /// Converts the game stats response to a collection of game player stats.
         /// </summary>
+        /// <param name="gameSummaryResponse"></param>
         /// <returns>The list of player stats for the game</returns>
-        public GameRosterStats GameStatsResponseToGameRosterStats()
+        public GameRosterStats GameStatsResponseToGameRosterStats(ServiceGameSummaryResponse gameSummaryResponse)
         {
-            return MapGamePlayerStatsResponseToGamePlayerStats.Map(response);
+            return MapGamePlayerStatsResponseToGamePlayerStats.Map(gameSummaryResponse, response);
         }
         /// <summary>
         /// Converts the game stat and summary response to a game object.
         /// </summary>
         /// <param name="gameSummaryResponse"></param>
         /// <returns></returns>
-        public Game GameStatResponseToGame(ServiceGameStatResponse gameSummaryResponse)
+        public Game GameStatResponseToGame(ServiceGameSummaryResponse gameSummaryResponse)
         {
             return MapGameResponseToGame.Map(gameSummaryResponse, response);
         }

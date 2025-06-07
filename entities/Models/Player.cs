@@ -20,6 +20,6 @@ namespace Entities.Models
         public string twitterLink { get; set; } = string.Empty;
         public string watchLink { get; set; } = string.Empty;
         public string playerSlug { get; set; } = string.Empty;
-        public PlayerDraftDetails? MyProperty { get; set; }
+        public PlayerDraftDetails? playerDraftDetails { get; set; }
     }
 }
