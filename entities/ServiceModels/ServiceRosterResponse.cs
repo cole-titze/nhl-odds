@@ -12,18 +12,20 @@ namespace Entities.ServiceModels
     /// </summary>
     public class ServiceRosterResponse
     {
-        public readonly dynamic? response;
-        public ServiceRosterResponse(dynamic incomingResponse)
+        private readonly dynamic? homeResponse;
+        private readonly dynamic? awayResponse;
+        public ServiceRosterResponse(dynamic homeTeamResponse, dynamic awayTeamResponse)
         {
-            response = incomingResponse;
+            homeResponse = homeTeamResponse;
+            awayResponse = awayTeamResponse;
         }
         /// <summary>
-        /// Converts the current roster response to a collection of game player stats.
+        /// Converts the current roster response to game roster stats.
         /// </summary>
         /// <returns>The mapped game player stats</returns>
-        public IEnumerable<IGamePlayerStats> CurentRosterResponseToPlayerStats(int gameId, int teamId)
+        public GameRosterStats CurentRosterResponseToGameRosterStats(int gameId, int homeTeamId, int awayTeamId)
         {
-            return MapCurrentRosterResponseToGamePlayerStats.Map(response, gameId, teamId);
+            return MapCurrentRosterResponseToGamePlayerStats.Map(homeResponse, awayResponse, gameId, homeTeamId, awayTeamId);
         }
     }
 }

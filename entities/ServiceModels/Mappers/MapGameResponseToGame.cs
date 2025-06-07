@@ -33,8 +33,39 @@ namespace Entities.ServiceModels.Mappers
                 game = BuildGameStat(statCategory, game);
             }
 
+            game.extendedInfo = GetGameExtendedInfo(messageGameSummary, messageGamesStats);
+
             return game;
         }
+        /// <summary>
+        /// Creates the extended info for the game.
+        /// </summary>
+        /// <param name="messageGameSummary">The game summary response</param>
+        /// <param name="messageGamesStats">The game stats response</param>
+        /// <returns>Extended infor about the game</returns>
+        private static GameExtendedInfo GetGameExtendedInfo(dynamic messageGameSummary, dynamic messageGamesStats)
+        {
+            var tvBroadcasters = new List<TvBroadcaster>();
+            foreach(var broadcaster in messageGameSummary.tvBroadcasts)
+            {
+                tvBroadcasters.Add(new TvBroadcaster()
+                {
+                    id = (int)broadcaster.id,
+                    marketAbbreviation = (string)broadcaster.market,
+                    networkName = (string)broadcaster.network,
+                    countryCode = (string)broadcaster.countryCode,
+                    sequenceNumber = (int)broadcaster.sequenceNumber,
+                });
+            }
+
+            return new GameExtendedInfo()
+            {
+                tvBroadcasters = tvBroadcasters,
+                venueName = (string)messageGameSummary.venue.@default,
+                venueLocation = (string)messageGameSummary.venueLocation.@default,
+            };
+        }
+
         /// <summary>
         /// Given a stat category from the API response, updates the game object with the relevant stats.
         /// </summary>

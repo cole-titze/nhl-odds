@@ -6,9 +6,9 @@ namespace Entities.Models
     public class TvBroadcaster
     {
         public int id { get; set; }
-        public string name { get; set; } = string.Empty;
+        public string networkName { get; set; } = string.Empty;
         public string marketAbbreviation { get; set; } = string.Empty;
-        public string network { get; set; } = string.Empty;
-        public string sequenceNumber { get; set; } = string.Empty;
+        public int sequenceNumber { get; set; }
+        public string countryCode { get; set; } = string.Empty;
     }
 }

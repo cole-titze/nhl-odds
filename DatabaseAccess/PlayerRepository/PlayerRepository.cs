@@ -45,9 +45,10 @@ namespace DatabaseAccess.PlayerRepository
         /// </summary>
         /// <param name="playersWithValues">List of players to store</param>
         /// <returns>None</returns>
-        public async Task AddUpdateGamePlayerStats(IEnumerable<IGamePlayerStats> gamePlayerStats)
+        public async Task AddUpdateGameRosterStats(IEnumerable<GameRosterStats> seasonGameRosterStats)
         {
-            var dbGamePlayerStats = MapGamePlayerStatsToDbGamePlayerStats.Map(gamePlayerStats);
+            var dbGamePlayerStats = MapGamePlayerStatsToDbGamePlayerStats.Map(seasonGameRosterStats);
+
             var addList = new List<IDbGamePlayerStats>();
             var updateList = new List<IDbGamePlayerStats>();
             foreach (var playerStats in dbGamePlayerStats)

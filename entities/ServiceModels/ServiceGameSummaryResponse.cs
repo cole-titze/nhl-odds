@@ -1,4 +1,3 @@
-using System.Net;
 using Entities.Models;
 using Entities.ServiceModels.Mappers;
 

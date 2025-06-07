@@ -12,21 +12,6 @@
         public int timeOnIceSeconds { get; set; }
         public bool isStarter { get; set; }
         public POSITION position { get; set; } = POSITION.Goalie;
-        public int SeasonStartYear()
-        {
-            return gameId / 1000000;
-        }
-
-        // Goalie Game Score = ( (-0.75 * GA) + (0.1 * SV) ) / GP
-        // public double GetPlayerValue()
-        // {
-        //     if (gamesStarted < 5)
-        //         return 0;
-
-        //     var value = ((-.75 * goalsAgainst) + (.1 * saves)) / gamesStarted;
-
-        //     return Math.Max(value * 60, 0);
-        // }
     }
 }
 

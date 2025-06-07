@@ -20,25 +20,5 @@
         public int timeOnIceSeconds { get; set; }
         // Default to stop null warning left-wing has no special rules
         public POSITION position { get; set; } = POSITION.LeftWing;
-        public int SeasonStartYear()
-        {
-            return gameId / 1000000;
-        }
-
-        // Player Game Score = ( (0.75 * G) + (.63A) + (0.075 * SOG) + (0.05 * BLK) – (0.075 * PIM) + (0.15 * PM) + ((17*GP*FOP)*.01) ) / GP
-        // public double GetPlayerValue()
-        // {
-        //     if (gamesPlayed < 5)
-        //         return 0;
-
-        //     var value = ((.75 * goals) + (.63 * assists) + (.075 * shotsOnGoal) + (.05 * blockedShots) - (.075 * penaltyMinutes)
-        //         + (.15 * plusMinus)) / gamesPlayed;
-
-        //     // Ignore faceoffs unless player is a center
-        //     if (position == POSITION.Center)
-        //         value += 17 * faceoffPercent * .01;
-
-        //     return Math.Max(value * 60, 0);
-        // }
     }
 }

@@ -34,8 +34,8 @@ namespace Entities.Models
         public int homeGiveaways { get; set; }
         public int awayGiveaways { get; set; }
         public bool hasBeenPlayed { get; set; }
-        public Roster roster { get; set; } = new Roster();
-        public GameExtendedInfo extendedInfo { get; set; } = new GameExtendedInfo();
+        public GameRosterStats? rosterStats { get; set; }
+        public GameExtendedInfo? extendedInfo { get; set; }
 
         /// <summary>
         /// Gets if the team won or not

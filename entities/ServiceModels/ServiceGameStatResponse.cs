@@ -21,7 +21,7 @@ namespace Entities.ServiceModels
         /// Converts the game stats response to a collection of game player stats.
         /// </summary>
         /// <returns>The list of player stats for the game</returns>
-        public IEnumerable<IGamePlayerStats> GameStatsResponseToPlayerStats()
+        public GameRosterStats GameStatsResponseToGameRosterStats()
         {
             return MapGamePlayerStatsResponseToGamePlayerStats.Map(response);
         }

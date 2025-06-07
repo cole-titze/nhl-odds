@@ -5,13 +5,16 @@ namespace DataAccess.PlayerRepository.Mappers
 {
     public static class MapGamePlayerStatsToDbGamePlayerStats
     {
-        public static IEnumerable<IDbGamePlayerStats> Map(IEnumerable<IGamePlayerStats> gamePlayersStats)
+        public static IEnumerable<IDbGamePlayerStats> Map(IEnumerable<GameRosterStats> seasonRosterStats)
 		{
-            var dbGamePlayersStats = new List<IDbGamePlayerStats>();
-            var gameSkaterStats = MapGameSkaterStatsToDbGameSkaterStats(gamePlayersStats.OfType<GameSkaterStats>());
-            var gameGoalieStats = MapGameGoalieStatsToDbGameGoalieStats(gamePlayersStats.OfType<GameGoalieStats>());
+            var dbGamePlayerStats = new List<IDbGamePlayerStats>();
+            foreach (var gameRosterStats in seasonRosterStats)
+            {
+                dbGamePlayerStats.AddRange(MapGameSkaterStatsToDbGameSkaterStats(gameRosterStats.AllPlayers.OfType<GameSkaterStats>()));
+                dbGamePlayerStats.AddRange(MapGameGoalieStatsToDbGameGoalieStats(gameRosterStats.AllPlayers.OfType<GameGoalieStats>()));
+            }
 
-            return gameSkaterStats.Concat(gameGoalieStats);
+            return dbGamePlayerStats;
 		}
 
         private static IEnumerable<IDbGamePlayerStats> MapGameGoalieStatsToDbGameGoalieStats(IEnumerable<GameGoalieStats> goalieStats)

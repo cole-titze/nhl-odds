@@ -45,11 +45,11 @@ namespace DataGetter.BusinessLogic.GameGetter
                 await _gameRepo.AddUpdateGames(seasonGames);
 
                 // Gets player stats for the game
-                var gamePlayerStats = await GetPlayerGameStats(seasonGames);
-                await _playerRepo.AddUpdateGamePlayerStats(gamePlayerStats);
+                var gameRosterStats = await GetGameRosterStats(seasonGames);
+                await _playerRepo.AddUpdateGameRosterStats(gameRosterStats);
 
-                // Gets players for the players who have game stats
-                var players = await GetPlayers(gamePlayerStats);
+                // Gets player data for the players who have game stats
+                var players = await GetPlayers(gameRosterStats);
                 await _playerRepo.AddUpdatePlayers(players);
 
                 // Save all data to the database
@@ -105,20 +105,17 @@ namespace DataGetter.BusinessLogic.GameGetter
         /// </summary>
         /// <param name="seasonGames">Games to get player stats for</param>
         /// <returns>List of player game stats from the start year</returns>
-        private async Task<IEnumerable<IGamePlayerStats>> GetPlayerGameStats(IEnumerable<Game> seasonGames)
+        private async Task<IEnumerable<GameRosterStats>> GetGameRosterStats(IEnumerable<Game> seasonGames)
         {
-            var seasonPlayerGameStats = new List<IGamePlayerStats>();
-            IEnumerable<IGamePlayerStats>? gamePlayerStats;
+            var seasonPlayerGameStats = new List<GameRosterStats>();
+            GameRosterStats? gameRosterStats;
 
             foreach (var game in seasonGames)
             {
-                gamePlayerStats = await _nhlDataGetter.PlayerDataGetter.GetPlayerGameStats(game);
-                if( gamePlayerStats != null)
+                gameRosterStats = await _nhlDataGetter.PlayerDataGetter.BuildGameRosterStats(game);
+                if( gameRosterStats != null)
                 {
-                    foreach (var playerStats in gamePlayerStats)
-                    {
-                        seasonPlayerGameStats.Add(playerStats);
-                    }
+                    seasonPlayerGameStats.Add(gameRosterStats);
                 }
             }
 
@@ -128,12 +125,15 @@ namespace DataGetter.BusinessLogic.GameGetter
         /// </summary>
         /// <param name="seasonStartYear">year of games to get</param>
         /// <returns>List of games from the start year</returns>
-        private async Task<IEnumerable<Player>> GetPlayers(IEnumerable<IGamePlayerStats> gamePlayerStats)
+        private async Task<IEnumerable<Player>> GetPlayers(IEnumerable<GameRosterStats> seasonGameRosterStats)
         {
             var uniquePlayerIds = new HashSet<int>();
-            foreach (var playerStats in gamePlayerStats)
+            foreach (var gameRosterStats in seasonGameRosterStats)
             {
-                uniquePlayerIds.Add(playerStats.playerId);
+                foreach (var playerStats in gameRosterStats.AllPlayers)
+                {
+                    uniquePlayerIds.Add(playerStats.playerId);
+                }
             }
 
             var players = new List<Player>();
