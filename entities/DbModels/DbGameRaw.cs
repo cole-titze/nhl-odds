@@ -34,10 +34,12 @@ namespace Entities.DbModels
         public int homeGiveaways { get; set; }
         public int awayGiveaways { get; set; }
         public bool hasBeenPlayed { get; set; }
+        [ForeignKey("id")]
+        public DbGameReports? reports { get; set; }
         [ForeignKey("homeTeamId")]
-        public DbTeam homeTeam { get; set; } = new DbTeam();
+        public DbTeam? homeTeam { get; set; }
         [ForeignKey("awayTeamId")]
-        public DbTeam awayTeam { get; set; } = new DbTeam();
+        public DbTeam? awayTeam { get; set; }
 
         public void Clone(DbGameRaw game)
         {
@@ -66,6 +68,7 @@ namespace Entities.DbModels
             homeGiveaways = game.homeGiveaways;
             awayGiveaways = game.awayGiveaways;
             hasBeenPlayed = game.hasBeenPlayed;
+            reports = game.reports;
             homeTeam = game.homeTeam;
             awayTeam = game.awayTeam;
         }

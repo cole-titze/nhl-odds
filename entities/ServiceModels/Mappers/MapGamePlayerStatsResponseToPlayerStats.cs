@@ -9,6 +9,8 @@ namespace Entities.ServiceModels.Mappers
     {
         /// <summary>
         /// Builds a player stats object
+        /// Example response:
+		/// https://api-web.nhle.com/v1/gamecenter/2023020204/right-rail
         /// </summary>
         /// <param name="playerStatResponse">Player stat response</param>
         /// <returns>Player stats object</returns>
@@ -18,4 +20,3 @@ namespace Entities.ServiceModels.Mappers
         }
     }
 }
-

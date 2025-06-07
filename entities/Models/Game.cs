@@ -4,7 +4,7 @@ namespace Entities.Models
 {
     public class Game
     {
-        // If no game has been played set default as 4 days of rest (season hasn't started)
+        // If no game has been played set default as ~4 days of rest (season hasn't started)
         public static readonly int DEFAULT_HOURS = 100;
 
         public int id { get; set; } = -1;
@@ -34,14 +34,15 @@ namespace Entities.Models
         public int homeGiveaways { get; set; }
         public int awayGiveaways { get; set; }
         public bool hasBeenPlayed { get; set; }
+        public Roster roster { get; set; } = new Roster();
+        public GameExtendedInfo extendedInfo { get; set; } = new GameExtendedInfo();
 
-        public GameRoster teamRosters { get; set; } = new GameRoster();
         /// <summary>
         /// Gets if the team won or not
         /// </summary>
         /// <param name="teamId"></param>
-        /// <returns></returns>
-        public bool IsWin(int teamId)
+        /// <returns>True if the team won, otherwise false</returns>
+        public bool IsWinner(int teamId)
         {
             if (homeTeamId == teamId && winner == Winner.HOME) return true;
             if (awayTeamId == teamId && winner == Winner.AWAY) return true;
