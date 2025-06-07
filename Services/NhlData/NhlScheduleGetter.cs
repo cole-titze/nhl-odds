@@ -21,10 +21,11 @@ namespace Services.NhlData
         /// <summary>
         /// Calls to the NHL's api to get the schedule response.
         /// Parses the response to get the maximum id which is used as the count
+        /// Example Request: 
+        /// https://api.nhle.com/stats/rest/en/season
         /// </summary>
         /// <param name="seasonStartYear">year of season to use</param>
         /// <returns>number of games in the season</returns>
-        /// Example Request: https://api.nhle.com/stats/rest/en/season
         public async Task<int> GetGameCountInSeason(int seasonStartYear)
         {
             if (_seasonGameCountCache.TryGetValue(seasonStartYear, out int value))

@@ -19,10 +19,12 @@ namespace Services.NhlData
 
         /// <summary>
         /// Calls the Nhl api and parses the response into a game.
+        /// Example Requests: 
+        /// https://api-web.nhle.com/v1/gamecenter/2023020204/boxscore
+        /// https://api-web.nhle.com/v1/gamecenter/2023020204/right-rail
         /// </summary>
         /// <param name="gameId">The game to get</param>
         /// <returns>A game object corresponding to the id passed in</returns>
-        /// Example Request: https://api-web.nhle.com/v1/gamecenter/2023020204/boxscore
         public async Task<Game?> GetGame(int gameId)
         {
             string url = "http://api-web.nhle.com/v1/gamecenter/";

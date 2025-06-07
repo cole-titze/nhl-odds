@@ -17,7 +17,14 @@ namespace Services.NhlData
             _requestMaker = requestMaker;
             _logger = loggerFactory.CreateLogger<NhlPlayerGetter>();
         }
-
+        /// <summary>
+        /// Gets the player stats for a game. This will return the players that are on the roster 
+        /// for a future game or the players that played in a past game. First calls the game summary 
+        /// to determine if the game is done or not. Example call:
+        /// https://api-web.nhle.com/v1/gamecenter/2024020325/boxscore
+        /// </summary>
+        /// <param name="game">The game to get the player stats for</param>
+        /// <returns>The player stats for a game</returns>
         public async Task<IEnumerable<IGamePlayerStats>?> GetPlayerGameStats(Game game)
         {
             var gameId = game.id;
@@ -36,10 +43,15 @@ namespace Services.NhlData
                 return await GetPastGamePlayerStats(game);
             }
 
-            return await GetCurrentGamePlayerStats(game);
+            return await GetFutureGamePlayerStats(game);
         }
-
-        private async Task<IEnumerable<IGamePlayerStats>> GetCurrentGamePlayerStats(Game game)
+        /// <summary>
+        /// Gets the players that are on the roster for a future game. Example call:
+        /// https://api-web.nhle.com/v1/roster/TOR/current
+        /// </summary>
+        /// <param name="game">The game to get the roster for</param>
+        /// <returns>The gamePlayerStats of the two teams</returns>
+        private async Task<IEnumerable<IGamePlayerStats>> GetFutureGamePlayerStats(Game game)
         {
             // Get current team roster to use
             var url = "https://api-web.nhle.com/v1/roster/";
@@ -54,12 +66,17 @@ namespace Services.NhlData
                 return new List<IGamePlayerStats>() { new GameSkaterStats() };
             }
 
-            var homeRoster = homeRosterResponse.CurentRosterResponseToPlayerStats();
-            var awayRoster = awayRosterResponse.CurentRosterResponseToPlayerStats();
+            var homeRoster = homeRosterResponse.CurentRosterResponseToPlayerStats(game.id, game.homeTeamId);
+            var awayRoster = awayRosterResponse.CurentRosterResponseToPlayerStats(game.id, game.awayTeamId);
 
             return homeRoster.Concat(awayRoster);
         }
-
+        /// <summary>
+        /// Gets the player stats for a past game. Example call:
+        /// https://api-web.nhle.com/v1/gamecenter/2024020325/right-rail
+        /// </summary>
+        /// <param name="game">The game to get the roster for</param>
+        /// <returns>Collection of GamePlayerStats</returns>
         private async Task<IEnumerable<IGamePlayerStats>> GetPastGamePlayerStats(Game game)
         {
             var gameId = game.id;
@@ -75,6 +92,12 @@ namespace Services.NhlData
             return gameStatResponse.GameStatsResponseToPlayerStats();
         }
 
+        /// <summary>
+        /// Gets the a player by their id. Example call:
+        /// https://api-web.nhle.com/v1/player/8478402/landing
+        /// </summary>
+        /// <param name="playerId">Id of the player</param>
+        /// <returns>Player object</returns>
         public async Task<Player> GetPlayer(int playerId)
         {
             string url = "https://api-web.nhle.com/v1/player/";
