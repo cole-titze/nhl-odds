@@ -34,8 +34,21 @@ namespace Entities.DbModels
         public int homeGiveaways { get; set; }
         public int awayGiveaways { get; set; }
         public bool hasBeenPlayed { get; set; }
-        [ForeignKey("id")]
-        public DbGameReports? reports { get; set; }
+        public string gameSummary { get; set; } = string.Empty;
+        public string eventSummary { get; set; } = string.Empty;
+        public string playByPlaySummary { get; set; } = string.Empty;
+        public string faceoffSummary { get; set; } = string.Empty;
+        public string faceoffComparisonSummary { get; set; } = string.Empty;
+        public string rosterSummary { get; set; } = string.Empty;
+        public string shotSummary { get; set; } = string.Empty;
+        public string shiftChartSummary { get; set; } = string.Empty;
+        public string toiAwaySummary { get; set; } = string.Empty;
+        public string toiHomeSummary { get; set; } = string.Empty;
+        public int threeMinuteRecapVideoId { get; set; }
+        public int condensedGameVideoId { get; set; }
+        public string venueName { get; set; } = string.Empty;
+        public string venueLocation { get; set; } = string.Empty;
+
         [ForeignKey("homeTeamId")]
         public DbTeam? homeTeam { get; set; }
         [ForeignKey("awayTeamId")]
@@ -68,9 +81,20 @@ namespace Entities.DbModels
             homeGiveaways = game.homeGiveaways;
             awayGiveaways = game.awayGiveaways;
             hasBeenPlayed = game.hasBeenPlayed;
-            reports = game.reports;
             homeTeam = game.homeTeam;
             awayTeam = game.awayTeam;
+            gameSummary = game.gameSummary;
+            eventSummary = game.eventSummary;
+            playByPlaySummary = game.playByPlaySummary;
+            faceoffSummary = game.faceoffSummary;
+            faceoffComparisonSummary = game.faceoffComparisonSummary;
+            rosterSummary = game.rosterSummary;
+            shotSummary = game.shotSummary;
+            shiftChartSummary = game.shiftChartSummary;
+            toiAwaySummary = game.toiAwaySummary;
+            toiHomeSummary = game.toiHomeSummary;
+            threeMinuteRecapVideoId = game.threeMinuteRecapVideoId;
+            condensedGameVideoId = game.condensedGameVideoId;
         }
         /// <summary>
         /// Gets whether a game is valid or not

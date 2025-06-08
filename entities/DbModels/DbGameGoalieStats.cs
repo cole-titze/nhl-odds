@@ -5,13 +5,15 @@ namespace Entities.DbModels
 {
     public class DbGameGoalieStats : IDbGamePlayerStats
     {
-        public int gameId { get; set; } = -1;
-        public int playerId { get; set; } = -1;
+        public int gameId { get; set; }
+        public int playerId { get; set; }
         public int teamId { get; set; }
         public int evenStrengthShotsSaved { get; set; }
         public int powerPlayShotsSaved { get; set; }
+        public int shortHandedShotsSaved { get; set; }
         public int evenStrengthGoalsAllowed { get; set; }
         public int powerPlayGoalsAllowed { get; set; }
+        public int shortHandedGoalsAllowed { get; set; }
         public int timeOnIceSeconds { get; set; }
         public bool isStarter { get; set; }
         public POSITION position { get; set; } = POSITION.Goalie;

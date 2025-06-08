@@ -1,5 +1,6 @@
 ﻿using DataAccess.GameRepository.Mappers;
 using Entities.DbModels;
+using Entities.DbModels.Mappers;
 using Entities.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -18,6 +19,7 @@ namespace DatabaseAccess.GameRepository
             _dbContext = dbContext;
             _logger = loggerFactory.CreateLogger<GameRepository>();
         }
+        
         /// <summary>
         /// Gets total games for given season in database
         /// </summary>
@@ -27,6 +29,7 @@ namespace DatabaseAccess.GameRepository
         {
             return await _dbContext.GameRaw.Where(s => s.seasonStartYear == seasonStartYear).CountAsync();
         }
+
         /// <summary>
         /// Updates games to the database and adds them if they don't exist
         /// </summary>
@@ -51,7 +54,70 @@ namespace DatabaseAccess.GameRepository
             }
             await _dbContext.GameRaw.AddRangeAsync(addList);
             _dbContext.GameRaw.UpdateRange(updateList);
+
+            await AddUpdateTvBroadcasters(games);
+            await AddUpdateGameTvBroadcasters(games);
         }
+
+        public async Task AddUpdateGameTvBroadcasters(IEnumerable<Game> games)
+        {
+            var gameBroadcasters = MapGameToDbGameTvBroadcasters.MapList(games);
+
+            var addList = new List<DbGameTvBroadcaster>();
+            var updateList = new List<DbGameTvBroadcaster>();
+            foreach (var gameBroadcaster in gameBroadcasters)
+            {
+                var dbTvBroadcaster = await GetGameDbTvBroadcaster(gameBroadcaster.gameId, gameBroadcaster.broadcasterId);
+                if (dbTvBroadcaster == null)
+                    addList.Add(gameBroadcaster);
+                else
+                {
+                    dbTvBroadcaster.Clone(gameBroadcaster);
+                    updateList.Add(dbTvBroadcaster);
+                }
+            }
+            
+            await _dbContext.GameTvBroadcaster.AddRangeAsync(addList);
+            _dbContext.GameTvBroadcaster.UpdateRange(updateList);
+        }
+
+        /// <summary>
+        /// Adds or updates the TV broadcasters for the games.
+        /// </summary>
+        /// <param name="games">The games to add broadcasters for</param>
+        public async Task AddUpdateTvBroadcasters(IEnumerable<Game> games)
+        {
+            var dbTvBroadcasters = MapGameToDbTvBroadcasters.MapList(games);
+            var uniqueTvBroadcasters = dbTvBroadcasters.GroupBy(b => b.id).Select(g => g.First()).ToList();
+            
+            var addList = new List<DbTvBroadcaster>();
+            var updateList = new List<DbTvBroadcaster>();
+            foreach (var broadcaster in uniqueTvBroadcasters)
+            {
+                var dbTvBroadcaster = await GetDbTvBroadcaster(broadcaster.id);
+                if (dbTvBroadcaster == null)
+                    addList.Add(broadcaster);
+                else
+                {
+                    dbTvBroadcaster.Clone(broadcaster);
+                    updateList.Add(dbTvBroadcaster);
+                }
+            }
+
+            await _dbContext.TvBroadcaster.AddRangeAsync(addList);
+            _dbContext.TvBroadcaster.UpdateRange(updateList);
+        }
+
+        private async Task<DbTvBroadcaster?> GetDbTvBroadcaster(int id)
+        {
+            return await _dbContext.TvBroadcaster.FirstOrDefaultAsync(x => x.id == id);
+        }
+
+        private async Task<DbGameTvBroadcaster?> GetGameDbTvBroadcaster(int gameId, int tvBroadcasterId)
+        {
+            return await _dbContext.GameTvBroadcaster.FirstOrDefaultAsync(x => x.gameId == gameId && x.broadcasterId == tvBroadcasterId);
+        }
+
         /// <summary>
         /// Gets a seasons worth of games and stores them in the cache variable
         /// </summary>
@@ -67,83 +133,6 @@ namespace DatabaseAccess.GameRepository
                                         .Include(x => x.awayTeam)
                                         .Include(x => x.homeTeam)
                                         .ToListAsync();
-        }
-        // /// <summary>
-        // /// Gets if a game exists in cache
-        // /// </summary>
-        // /// <param name="gameId">Game to check</param>
-        // /// <returns>True if the game exists, otherwise false</returns>
-        // public bool GameExistsInCache(int gameId)
-        // {
-        //     int seasonStartYear = GetSeasonStartYear(gameId);
-        //     var game = _cachedSeasonsGames[seasonStartYear].FirstOrDefault(i => i.id == gameId);
-        //     if (game == null)
-        //         return false;
-        //     return true;
-        //}
-        // /// <summary>
-        // /// Adds player rosters to the database if they don't exist. Removes players that are no longer on the roster for the game
-        // /// </summary>
-        // /// <param name="rosters">List of players mapped to games</param>
-        // /// <returns>None</returns>
-        // public async Task AddUpdateRosters(IDictionary<int, Roster> rosters)
-        // {
-        //     List<DbGamePlayer> oldRosters = new List<DbGamePlayer>();
-        //     foreach (var key in rosters.Keys)
-        //     {
-        //         oldRosters.AddRange(_dbContext.GamePlayer.Where(x => x.gameId == key));
-        //     }
-
-        //     var addList = new List<DbGamePlayer>();
-        //     foreach (var roster in rosters)
-        //     {
-        //         foreach (var player in roster.Value.homeTeam)
-        //         {
-        //             BuildDbRoster(addList, oldRosters, player);
-        //         }
-        //         foreach (var player in roster.Value.awayTeam)
-        //         {
-        //             BuildDbRoster(addList, oldRosters, player);
-        //         }
-        //     }
-
-        //     _dbContext.GamePlayer.RemoveRange(oldRosters);
-        //     await _dbContext.GamePlayer.AddRangeAsync(addList);
-        // }
-
-        // /// <summary>
-        // /// Determines what players should be added and removed
-        // /// </summary>
-        // /// <param name="addList">List of players to add (reference)</param>
-        // /// <param name="oldRosters">List of players to remove (reference)</param>
-        // /// <param name="player">The player to check</param>
-        // private void BuildDbRoster(List<DbGamePlayer> addList, List<DbGamePlayer> oldRosters, DbGamePlayer player)
-        // {
-        //     DbGamePlayer? dbPlayer;
-
-        //     if (addList.Any(x => x.gameId == player.gameId && x.playerId == player.playerId))
-        //     {
-        //         _logger.LogWarning($"Player {player.playerId} already exists in the add list for game {player.gameId}. Skipping duplicate addition.");
-        //         return;
-        //     }
-
-        //     dbPlayer = oldRosters.FirstOrDefault(x => x.gameId == player.gameId && x.playerId == player.playerId);
-        //     if (dbPlayer == null)
-        //         addList.Add(player);
-        //     else
-        //         oldRosters.Remove(player);
-        // }
-
-        /// <summary>
-        /// Gets a seasons worth of games from the database and caches them
-        /// </summary>
-        /// <param name="seasonStartYear">Season start year</param>
-        /// <returns>Seasons games</returns>
-        public async Task<IEnumerable<Game>> GetSeasonGames(int seasonStartYear)
-        {
-            await CacheSeasonOfGames(seasonStartYear);
-
-            return MapDbGameToGame.Map(_cachedSeasonsGames[seasonStartYear]);
         }
 
         /// <summary>
@@ -166,6 +155,7 @@ namespace DatabaseAccess.GameRepository
         {
             await _dbContext.SaveChangesAsync();
         }
+
         /// <summary>
         /// Gets a game based on the id
         /// </summary>
@@ -183,6 +173,7 @@ namespace DatabaseAccess.GameRepository
 
             return MapDbGameToGame.Map(game);
         }
+
         /// <summary>
         /// Gets a db game based on the id
         /// </summary>
@@ -200,6 +191,7 @@ namespace DatabaseAccess.GameRepository
 
             return game;
         }
+
         /// <summary>
         /// Gets the Season game counts. Caches the first call from the database.
         /// </summary>
@@ -218,6 +210,7 @@ namespace DatabaseAccess.GameRepository
 
             return _seasonGameCountCache;
         }
+
         /// <summary>
         /// Adds the season game counts to the database
         /// </summary>
@@ -242,33 +235,6 @@ namespace DatabaseAccess.GameRepository
             }
 
             await _dbContext.SeasonGameCount.AddRangeAsync(seasonGameCounts);
-        }
-        /// <summary>
-        /// Gets the season start year from the game id
-        /// </summary>
-        /// <param name="gameId">The game id</param>
-        /// <returns>The season start year</returns>
-        private int GetSeasonStartYear(int gameId)
-        {
-            // Get the season start year from the game id
-            int seasonStartYear = int.Parse(gameId.ToString().Substring(0, 4));
-            return seasonStartYear;
-        }
-                /// <summary>
-        /// Gets a seasons list of games
-        /// </summary>
-        /// <param name="seasonStartYear">Year to get games for</param>
-        /// <returns>List of season games</returns>
-        public async Task<IEnumerable<Game>> GetRichSeasonGames(int seasonStartYear)
-        {
-            var dbGames = await GetSeasonDbGames(seasonStartYear);
-            var games = new List<Game>();
-
-            foreach(var dbGame in dbGames)
-            {
-                games.Add(MapDbGameToGame.Map(dbGame));
-            }
-            return games;
         }
     }
 }

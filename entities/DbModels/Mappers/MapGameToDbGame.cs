@@ -7,6 +7,11 @@ namespace DataAccess.GameRepository.Mappers
     {
         public static DbGameRaw Map(Game game)
         {
+            if (game.extendedInfo == null)
+            {
+                throw new ArgumentNullException(nameof(game.extendedInfo), "Game extended info cannot be null");
+            }
+            
             return new DbGameRaw()
             {
                 id = game.id,
@@ -34,6 +39,18 @@ namespace DataAccess.GameRepository.Mappers
                 homeGiveaways = game.homeGiveaways,
                 awayGiveaways = game.awayGiveaways,
                 hasBeenPlayed = game.hasBeenPlayed,
+                gameSummary = game.extendedInfo.gameSummary,
+                eventSummary = game.extendedInfo.eventSummary,
+                playByPlaySummary = game.extendedInfo.playByPlaySummary,
+                faceoffSummary = game.extendedInfo.faceoffSummary,
+                faceoffComparisonSummary = game.extendedInfo.faceoffComparisonSummary,
+                rosterSummary = game.extendedInfo.rosterSummary,
+                shotSummary = game.extendedInfo.shotSummary,
+                shiftChartSummary = game.extendedInfo.shiftChartSummary,
+                toiAwaySummary = game.extendedInfo.toiAwaySummary,
+                toiHomeSummary = game.extendedInfo.toiHomeSummary,
+                threeMinuteRecapVideoId = game.extendedInfo.threeMinuteRecapVideoId,
+                condensedGameVideoId = game.extendedInfo.condensedGameVideoId,
             };
         }
         public static IEnumerable<DbGameRaw> Map(IEnumerable<Game> games)

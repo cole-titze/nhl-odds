@@ -15,6 +15,7 @@ CREATE TABLE [dbo].[GameSkaterStats]
     giveaways INT NOT NULL,
     takeaways INT NOT NULL,
     timeOnIceSeconds FLOAT NOT NULL,
+    position INT NOT NULL,
     CONSTRAINT PK_GameSkaterStats PRIMARY KEY(gameId,playerId),
     FOREIGN KEY (gameId) REFERENCES GameRaw(id),
     FOREIGN KEY (playerId) REFERENCES Player(id),

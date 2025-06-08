@@ -49,9 +49,29 @@ CREATE TABLE [dbo].[GameRaw]
     awayGiveaways INT NOT NULL,
     winner INT NOT NULL,
     hasBeenPlayed BIT NOT NULL,
+    gameSummary VARCHAR(MAX) NULL,
+    eventSummary VARCHAR(MAX) NULL,
+    playByPlaySummary VARCHAR(MAX) NULL,
+    faceoffSummary VARCHAR(MAX) NULL,
+    faceoffComparisonSummary VARCHAR(MAX) NULL,
+    rosterSummary VARCHAR(MAX) NULL,
+    shotSummary VARCHAR(MAX) NULL,
+    shiftChartSummary VARCHAR(MAX) NULL,
+    toiAwaySummary VARCHAR(MAX) NULL,
+    toiHomeSummary VARCHAR(MAX) NULL,
+    threeMinuteRecapVideoId INT NOT NULL,
+    condensedGameVideoId INT NOT NULL,
     PRIMARY KEY(id),
     FOREIGN KEY (homeTeamId) REFERENCES Team(id),
     FOREIGN KEY (awayTeamId) REFERENCES Team(id),
+);
+
+CREATE TABLE [dbo].[GameOfficial]
+(
+    gameId INT NOT NULL,
+    [name] VARCHAR(MAX) NOT NULL,
+    CONSTRAINT PK_GameOfficial PRIMARY KEY(gameId, [name]),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id),
 );
 
 CREATE TABLE [dbo].[GameCleaned]
@@ -169,6 +189,7 @@ CREATE TABLE [dbo].[GameSkaterStats]
     giveaways INT NOT NULL,
     takeaways INT NOT NULL,
     timeOnIceSeconds FLOAT NOT NULL,
+    position INT NOT NULL,
     CONSTRAINT PK_GameSkaterStats PRIMARY KEY(gameId,playerId),
     FOREIGN KEY (gameId) REFERENCES GameRaw(id),
     FOREIGN KEY (playerId) REFERENCES Player(id),
@@ -182,14 +203,36 @@ CREATE TABLE [dbo].[GameGoalieStats]
     teamId INT NOT NULL,
     evenStrengthShotsSaved INT NOT NULL,
     powerPlayShotsSaved INT NOT NULL,
+    shortHandedShotsSaved INT NOT NULL,
     evenStrengthGoalsAllowed INT NOT NULL,
     powerPlayGoalsAllowed INT NOT NULL,
+    shortHandedGoalsAllowed INT NOT NULL,
     timeOnIceSeconds FLOAT NOT NULL,
     isStarter BIT NOT NULL,
+    position INT NOT NULL,
     CONSTRAINT PK_GameGoalieStats PRIMARY KEY(gameId,playerId),
     FOREIGN KEY (gameId) REFERENCES GameRaw(id),
     FOREIGN KEY (playerId) REFERENCES Player(id),
     FOREIGN KEY (teamId) REFERENCES Team(id)
+);
+
+CREATE TABLE [dbo].[TvBroadcaster]
+(
+    id INT NOT NULL,
+    networkName VARCHAR(MAX) NOT NULL,
+    marketAbbreviation VARCHAR(MAX) NOT NULL,
+    sequenceNumber INT NOT NULL,
+    countryCode VARCHAR(MAX) NOT NULL,
+    CONSTRAINT PK_TvBroadcaster PRIMARY KEY(id),
+);
+
+CREATE TABLE [dbo].[GameTvBroadcaster]
+(
+    gameId INT NOT NULL,
+    broadcasterId INT NOT NULL,
+    CONSTRAINT PK_GameTvBroadcaster PRIMARY KEY(gameId, broadcasterId),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id),
+    FOREIGN KEY (broadcasterId) REFERENCES GameTvBroadcaster(id),
 );
 
 GO
