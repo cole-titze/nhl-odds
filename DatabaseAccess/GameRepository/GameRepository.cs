@@ -54,11 +54,12 @@ namespace DatabaseAccess.GameRepository
             }
             await _dbContext.GameRaw.AddRangeAsync(addList);
             _dbContext.GameRaw.UpdateRange(updateList);
-
-            await AddUpdateTvBroadcasters(games);
-            await AddUpdateGameTvBroadcasters(games);
         }
 
+        /// <summary>
+        /// Adds or updates the TV broadcasters for the games.
+        /// </summary>
+        /// <param name="games">The list of games that contain broadcaster info</param>
         public async Task AddUpdateGameTvBroadcasters(IEnumerable<Game> games)
         {
             var gameBroadcasters = MapGameToDbGameTvBroadcasters.MapList(games);
@@ -76,7 +77,7 @@ namespace DatabaseAccess.GameRepository
                     updateList.Add(dbTvBroadcaster);
                 }
             }
-            
+
             await _dbContext.GameTvBroadcaster.AddRangeAsync(addList);
             _dbContext.GameTvBroadcaster.UpdateRange(updateList);
         }
@@ -108,11 +109,22 @@ namespace DatabaseAccess.GameRepository
             _dbContext.TvBroadcaster.UpdateRange(updateList);
         }
 
+        /// <summary>
+        /// Gets a TV broadcaster from the database based on the id
+        /// </summary>
+        /// <param name="id">The tv broadcaster id</param>
+        /// <returns>Tv broadcaster or null if it doesn't exist</returns>
         private async Task<DbTvBroadcaster?> GetDbTvBroadcaster(int id)
         {
             return await _dbContext.TvBroadcaster.FirstOrDefaultAsync(x => x.id == id);
         }
 
+        /// <summary>
+        /// Gets a game TV broadcaster from the database based on the game id and tv broadcaster id
+        /// </summary>
+        /// <param name="gameId">The game Id</param>
+        /// <param name="tvBroadcasterId"><The broadcaster id/param>
+        /// <returns>The game broadcaster object, or null if it doesn't exist</returns>
         private async Task<DbGameTvBroadcaster?> GetGameDbTvBroadcaster(int gameId, int tvBroadcasterId)
         {
             return await _dbContext.GameTvBroadcaster.FirstOrDefaultAsync(x => x.gameId == gameId && x.broadcasterId == tvBroadcasterId);

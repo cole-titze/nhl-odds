@@ -1,10 +1,8 @@
 ﻿using DatabaseAccess.GameRepository;
 using DatabaseAccess.PlayerRepository;
-using Entities.DbModels;
 using Entities.Models;
 using Entities.Types;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualBasic;
 using Services.NhlData;
 
 namespace DataGetter.BusinessLogic.GameGetter
@@ -43,6 +41,10 @@ namespace DataGetter.BusinessLogic.GameGetter
                 var seasonGameCount = await _nhlDataGetter.ScheduleDataGetter.GetGameCountInSeason(seasonStartYear);
                 var seasonGames = await GetSeasonGames(seasonStartYear, seasonGameCount);
                 await _gameRepo.AddUpdateGames(seasonGames);
+
+                // Updates tv broadcasters for the games
+                await _gameRepo.AddUpdateTvBroadcasters(seasonGames);
+                await _gameRepo.AddUpdateGameTvBroadcasters(seasonGames);
 
                 // Gets player stats for the game
                 var gameRosterStats = await GetGameRosterStats(seasonGames);
