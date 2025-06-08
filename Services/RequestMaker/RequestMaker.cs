@@ -56,7 +56,8 @@ namespace Services.RequestMaker
             if (serviceResponse != null)
             {
                 _cachedResponses[key] = serviceResponse;
-                _cacheSize += Encoding.UTF8.GetByteCount(serviceResponse);
+                string responseString = JsonConvert.SerializeObject(serviceResponse);
+                _cacheSize += Encoding.UTF8.GetByteCount(responseString);
                 if (_cacheSize > _cacheByteSizeLimit)
                 {
                     _logger.LogWarning("Cache size exceeded limit of 1 GB. Clearing cache.");

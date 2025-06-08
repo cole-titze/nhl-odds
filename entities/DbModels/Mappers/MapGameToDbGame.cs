@@ -51,6 +51,8 @@ namespace DataAccess.GameRepository.Mappers
                 toiHomeSummary = game.extendedInfo.toiHomeSummary,
                 threeMinuteRecapVideoId = game.extendedInfo.threeMinuteRecapVideoId,
                 condensedGameVideoId = game.extendedInfo.condensedGameVideoId,
+                venueName = game.extendedInfo.venueName,
+                venueLocation = game.extendedInfo.venueLocation,
             };
         }
         public static IEnumerable<DbGameRaw> Map(IEnumerable<Game> games)

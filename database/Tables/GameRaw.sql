@@ -37,6 +37,8 @@
     toiHomeSummary VARCHAR(MAX) NULL,
     threeMinuteRecapVideoId INT NOT NULL,
     condensedGameVideoId INT NOT NULL,
+    venueName VARCHAR(MAX) NOT NULL,
+    venueLocation VARCHAR(MAX) NOT NULL,
     PRIMARY KEY(id),
     FOREIGN KEY (homeTeamId) REFERENCES Team(id),
     FOREIGN KEY (awayTeamId) REFERENCES Team(id),

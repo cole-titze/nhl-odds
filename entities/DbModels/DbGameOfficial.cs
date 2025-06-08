@@ -1,4 +1,4 @@
-using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace Entities.DbModels
 {
@@ -9,6 +9,7 @@ namespace Entities.DbModels
     }
     public class DbGameOfficial
     {
+        [Key]
         public string name { get; set; } = string.Empty;
         public Role role { get; set; } = Role.Referee;
     }

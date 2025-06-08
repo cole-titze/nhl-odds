@@ -21,6 +21,8 @@ namespace DataAccess.GameRepository.Mappers
                 toiHomeSummary = game.toiHomeSummary,
                 threeMinuteRecapVideoId = game.threeMinuteRecapVideoId,
                 condensedGameVideoId = game.condensedGameVideoId,
+                venueName = game.venueName,
+                venueLocation = game.venueLocation,
             };
             return new Game()
             {
