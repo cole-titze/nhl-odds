@@ -69,7 +69,8 @@ CREATE TABLE [dbo].[GameRaw]
 CREATE TABLE [dbo].[GameOfficial]
 (
     gameId INT NOT NULL,
-    [name] VARCHAR(MAX) NOT NULL,
+    [name] VARCHAR(250) NOT NULL,
+    [role] INT NOT NULL,
     CONSTRAINT PK_GameOfficial PRIMARY KEY(gameId, [name]),
     FOREIGN KEY (gameId) REFERENCES GameRaw(id),
 );
@@ -232,7 +233,7 @@ CREATE TABLE [dbo].[GameTvBroadcaster]
     broadcasterId INT NOT NULL,
     CONSTRAINT PK_GameTvBroadcaster PRIMARY KEY(gameId, broadcasterId),
     FOREIGN KEY (gameId) REFERENCES GameRaw(id),
-    FOREIGN KEY (broadcasterId) REFERENCES GameTvBroadcaster(id),
+    FOREIGN KEY (gameId, broadcasterId) REFERENCES GameTvBroadcaster(gameId, broadcasterId),
 );
 
 GO
