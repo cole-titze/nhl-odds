@@ -12,6 +12,7 @@ CREATE TABLE [dbo].[Player]
     birthDate VARCHAR(MAX),
     birthCity VARCHAR(MAX),
     birthStateProvince VARCHAR(MAX),
+    birthCountry VARCHAR(MAX),
     isInTopOneHundredAllTime BIT NOT NULL,
     isInHallOfFame BIT NOT NULL,
     shopLink VARCHAR(MAX),

@@ -21,7 +21,7 @@ namespace Entities.ServiceModels.Mappers
 				homeTeamDefensemen = GetTeamDefensemen(homeRosterResponse, gameId, homeTeamId),
 				homeTeamGoalies = GetTeamGoalies(homeRosterResponse, gameId, homeTeamId),
 				awayTeamForwards = GetTeamForwards(awayRosterResponse, gameId, awayTeamId),
-				awayTeamDefensement = GetTeamDefensemen(awayRosterResponse, gameId, awayTeamId),
+				awayTeamDefensemen = GetTeamDefensemen(awayRosterResponse, gameId, awayTeamId),
 				awayTeamGoalies = GetTeamGoalies(awayRosterResponse, gameId, awayTeamId),
 			};
 

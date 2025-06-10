@@ -25,7 +25,7 @@ namespace Entities.ServiceModels.Mappers
                 awayTeamCoach = new Coach() { name = (string)gamePlayerStatResponse.gameInfo.awayTeam.headCoach.@default },
                 homeTeamForwards = GetGameSkaters(gameSummaryResponse.playerByGameStats.homeTeam.forwards, gameId, homeTeamId),
                 awayTeamForwards = GetGameSkaters(gameSummaryResponse.playerByGameStats.awayTeam.forwards, gameId, awayTeamId),
-                homeTeamDefensemen = GetGameSkaters(gameSummaryResponse.playerByGameStats.homeTeam.defense, gameId, homeTeamId).
+                homeTeamDefensemen = GetGameSkaters(gameSummaryResponse.playerByGameStats.homeTeam.defense, gameId, homeTeamId),
                 awayTeamDefensemen = GetGameSkaters(gameSummaryResponse.playerByGameStats.awayTeam.defense, gameId, awayTeamId),
                 homeTeamGoalies = GetGameGoalies(gameSummaryResponse.playerByGameStats.homeTeam.goalies, gameId, homeTeamId),
                 awayTeamGoalies = GetGameGoalies(gameSummaryResponse.playerByGameStats.awayTeam.goalies, gameId, awayTeamId)
@@ -41,19 +41,29 @@ namespace Entities.ServiceModels.Mappers
             var gameGoalies = new List<IGamePlayerStats>();
             foreach (var goalie in goalies)
             {
+                var evenStrengthShotsSaved = goalie.evenStrengthShotsAgainst == null ? 0 :
+                    int.Parse(new string(((string)goalie.evenStrengthShotsAgainst).TakeWhile(Char.IsDigit).ToArray()));
+                var powerPlayShotsSaved = goalie.powerPlayShotsAgainst == null ? 0 :
+                    int.Parse(new string(((string)goalie.powerPlayShotsAgainst).TakeWhile(Char.IsDigit).ToArray()));
+                var shortHandedShotsSaved = goalie.shortHandedShotsAgainst == null ? 0 :
+                    int.Parse(new string(((string)goalie.shortHandedShotsAgainst).TakeWhile(Char.IsDigit).ToArray()));
+                var evenStrengthGoalsAllowed = goalie.evenStrengthGoalsAgainst == null ? 0 : (int)goalie.evenStrengthGoalsAgainst;
+                var powerPlayGoalsAllowed = goalie.powerPlayGoalsAgainst == null ? 0 : (int)goalie.powerPlayGoalsAgainst;
+                var shortHandedGoalsAllowed = goalie.shortHandedGoalsAgainst == null ? 0 : (int)goalie.shortHandedGoalsAgainst;
+                var timeOnIceSeconds = goalie.toi == null ? 0 : ((string)goalie.toi).ParseToiToSeconds();
 
                 var goalieStats = new GameGoalieStats()
                 {
                     playerId = (int)goalie.playerId,
                     gameId = gameId,
                     teamId = homeTeamId,
-                    evenStrengthShotsSaved = int.Parse(new string(((string)goalie.evenStrengthShotsAgainst).TakeWhile(Char.IsDigit).ToArray())),
-                    powerPlayShotsSaved = int.Parse(new string(((string)goalie.powerPlayShotsAgainst).TakeWhile(Char.IsDigit).ToArray())),
-                    shortHandedShotsSaved = int.Parse(new string(((string)goalie.shortHandedShotsAgainst).TakeWhile(Char.IsDigit).ToArray())),
-                    evenStrengthGoalsAllowed = (int)goalie.evenStrengthGoalsAgainst,
-                    powerPlayGoalsAllowed = (int)goalie.powerPlayGoalsAgainst,
-                    shortHandedGoalsAllowed = (int)goalie.shortHandedGoalsAgainst,
-                    timeOnIceSeconds = ((string)goalie.toi).ParseToiToSeconds(),
+                    evenStrengthShotsSaved = evenStrengthShotsSaved,
+                    powerPlayShotsSaved = powerPlayShotsSaved,
+                    shortHandedShotsSaved = shortHandedShotsSaved,
+                    evenStrengthGoalsAllowed = evenStrengthGoalsAllowed,
+                    powerPlayGoalsAllowed = powerPlayGoalsAllowed,
+                    shortHandedGoalsAllowed = shortHandedGoalsAllowed,
+                    timeOnIceSeconds = timeOnIceSeconds,
                     isStarter = (bool)goalie.starter,
                     position = POSITION.Goalie
                 };
@@ -80,7 +90,7 @@ namespace Entities.ServiceModels.Mappers
                     penaltyMinutes = (int)player.pim,
                     powerPlayGoals = (int)player.powerPlayGoals,
                     plusMinus = (int)player.plusMinus,
-                    faceOffWinningPctg = (double)player.faceOffWinningPctg,
+                    faceOffWinningPctg = (double)player.faceoffWinningPctg,
                     hits = (int)player.hits,
                     giveaways = (int)player.giveaways,
                     takeaways = (int)player.takeaways,

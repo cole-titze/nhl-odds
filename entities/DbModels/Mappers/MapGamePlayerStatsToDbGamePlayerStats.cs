@@ -75,7 +75,7 @@ namespace DataAccess.PlayerRepository.Mappers
                 giveaways = skaterStat.giveaways,
                 takeaways = skaterStat.takeaways,
                 timeOnIceSeconds = skaterStat.timeOnIceSeconds,
-                position = skaterStat.position
+                position = skaterStat.position,
             };
         }
     }

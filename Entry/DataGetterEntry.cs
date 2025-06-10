@@ -39,9 +39,10 @@ namespace Entry
             var requestMaker = new RequestMaker(new HttpClientWrapper(), _loggerFactory);
 
             var seasonGameCountCache = await gameRepo.GetSeasonGameCounts();
+            var teamAbbrevToId = await teamRepo.GetTeamAbbrevToIdMap();
             INhlGameGetter gameDataGetter = new NhlGameGetter(requestMaker, _loggerFactory);
             INhlScheduleGetter scheduleDataGetter = new NhlScheduleGetter(requestMaker, seasonGameCountCache, _loggerFactory);
-            INhlPlayerGetter playerDataGetter = new NhlPlayerGetter(requestMaker, _loggerFactory);
+            INhlPlayerGetter playerDataGetter = new NhlPlayerGetter(requestMaker, teamAbbrevToId, _loggerFactory);
 
             var nhlRequestMaker = new NhlDataGetter(gameDataGetter, playerDataGetter, scheduleDataGetter);
             var yearRange = new YearRange(START_YEAR, DateTime.Now);

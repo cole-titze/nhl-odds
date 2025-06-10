@@ -1,5 +1,6 @@
 ﻿using DataAccess.PlayerRepository.Mappers;
 using Entities.DbModels;
+using Entities.DbModels.Mappers;
 using Entities.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -33,7 +34,7 @@ namespace DatabaseAccess.PlayerRepository
                 else
                 {
                     dbPlayer.Clone(player);
-                    updateList.Add(player);
+                    updateList.Add(dbPlayer);
                 }
             }
 
@@ -54,9 +55,8 @@ namespace DatabaseAccess.PlayerRepository
             foreach (var playerStats in dbGamePlayerStats)
             {
                 var dbPlayerStats = await GetDbGamePlayerStats(playerStats);
-                if (!dbPlayerStats.IsValid())
+                if (dbPlayerStats == null)
                 {
-
                     addList.Add(playerStats);
                 }
                 else
@@ -85,25 +85,35 @@ namespace DatabaseAccess.PlayerRepository
             return dbPlayer;
         }
         /// <summary>
+        /// Gets a player's draft details based on the id
+        /// </summary>
+        /// <param name="playerId">Id of the player to get</param>
+        /// <returns>Desired player</returns>
+        private async Task<DbPlayerDraftDetails?> GetDbPlayerDraftDetails(int playerId)
+        {
+            var dbPlayerDraftDetails = await _dbContext.PlayerDraftDetails.FirstOrDefaultAsync(x => x.playerId == playerId);
+            if (dbPlayerDraftDetails == null)
+                return null;
+
+            return dbPlayerDraftDetails;
+        }
+        /// <summary>
         /// Gets a stats for a game
         /// </summary>
         /// <param name="gamePlayerStats">The game player stats</param>
         /// <returns>Desired player</returns>
-        private async Task<IDbGamePlayerStats> GetDbGamePlayerStats(IDbGamePlayerStats gamePlayerStats)
+        private async Task<IDbGamePlayerStats?> GetDbGamePlayerStats(IDbGamePlayerStats gamePlayerStats)
         {
-            var dbGoalieStatsTask = _dbContext.GameGoalieStats.FirstOrDefaultAsync(x => x.gameId == gamePlayerStats.gameId && x.playerId == gamePlayerStats.gameId);
-            var dbSkaterStatsTask = _dbContext.GameSkaterStats.FirstOrDefaultAsync(x => x.gameId == gamePlayerStats.gameId && x.playerId == gamePlayerStats.gameId);
-            await Task.WhenAll(dbGoalieStatsTask, dbSkaterStatsTask);
+            var dbGoalieStats = await _dbContext.GameGoalieStats.FirstOrDefaultAsync(x => x.gameId == gamePlayerStats.gameId && x.playerId == gamePlayerStats.gameId);
+            var dbSkaterStats = await _dbContext.GameSkaterStats.FirstOrDefaultAsync(x => x.gameId == gamePlayerStats.gameId && x.playerId == gamePlayerStats.gameId);
 
-            var dbGoalieStats = dbGoalieStatsTask.Result;
             if (dbGoalieStats != null)
                 return dbGoalieStats;
 
-            var dbSkaterStats = dbSkaterStatsTask.Result;
             if (dbSkaterStats != null)
                 return dbSkaterStats;
 
-            return new DbGameSkaterStats();
+            return null;
         }
         /// <summary>
         /// Gets the number of players in the database for a given season.
@@ -112,11 +122,47 @@ namespace DatabaseAccess.PlayerRepository
         /// <returns>Number of players found</returns>
         public async Task<int> GetPlayerStatsCountBySeason(int seasonStartYear)
         {
-            var skaterCountTask = _dbContext.GameSkaterStats.Include(x => x.game).Where(y => y.game.seasonStartYear == seasonStartYear).CountAsync();
-            var goalieCountTask = _dbContext.GameGoalieStats.Include(x => x.game).Where(y => y.game.seasonStartYear == seasonStartYear).CountAsync();
+            var skaterCountTask = _dbContext.GameSkaterStats
+                .Include(x => x.game)
+                .Where(y => y.game != null && y.game.seasonStartYear == seasonStartYear)
+                .CountAsync();
+            var goalieCountTask = _dbContext.GameGoalieStats
+                .Include(x => x.game)
+                .Where(y => y.game != null && y.game.seasonStartYear == seasonStartYear)
+                .CountAsync();
+                
             await Task.WhenAll(skaterCountTask, goalieCountTask);
 
             return skaterCountTask.Result + goalieCountTask.Result;
+        }
+
+        /// <summary>
+        /// Adds or updates player draft details in the database.
+        /// </summary>
+        /// <param name="players">The players to add draft details for</param>
+        /// <returns>None</returns>
+        public async Task AddUpdatePlayerDraftDetails(IEnumerable<Player> players)
+        {
+            IEnumerable<DbPlayerDraftDetails> dbPlayersDraftDetails = MapPlayerToDbPlayerDraftDetails.MapList(players);
+
+            var addList = new List<DbPlayerDraftDetails>();
+            var updateList = new List<DbPlayerDraftDetails>();
+            foreach (var playerDraftDetails in dbPlayersDraftDetails)
+            {
+                var dbPlayerDraftDetails = await GetDbPlayerDraftDetails(playerDraftDetails.playerId);
+                if (dbPlayerDraftDetails == null)
+                {
+                    addList.Add(playerDraftDetails);
+                }
+                else
+                {
+                    dbPlayerDraftDetails.Clone(playerDraftDetails);
+                    updateList.Add(dbPlayerDraftDetails);
+                }
+            }
+
+            await _dbContext.PlayerDraftDetails.AddRangeAsync(addList);
+            _dbContext.PlayerDraftDetails.UpdateRange(updateList);
         }
     }
 }

@@ -10,11 +10,13 @@ namespace Services.NhlData
     {
         private readonly IRequestMaker _requestMaker;
         private readonly ILogger<NhlPlayerGetter> _logger;
+        private readonly IDictionary<string, int> _teamAbbrevToId;
 
-        public NhlPlayerGetter(IRequestMaker requestMaker, ILoggerFactory loggerFactory)
+        public NhlPlayerGetter(IRequestMaker requestMaker, IDictionary<string, int> teamAbbrevToId, ILoggerFactory loggerFactory)
         {
             _requestMaker = requestMaker;
             _logger = loggerFactory.CreateLogger<NhlPlayerGetter>();
+            _teamAbbrevToId = teamAbbrevToId;
         }
         /// <summary>
         /// Gets the player stats for a game. This will return the players that are on the roster 
@@ -114,7 +116,7 @@ namespace Services.NhlData
                 return null;
             }
 
-            return playerSummaryResponse.PlayerResponseToPlayer();
+            return playerSummaryResponse.PlayerResponseToPlayer(_teamAbbrevToId);
         }
     }
 }

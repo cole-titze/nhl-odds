@@ -7,7 +7,7 @@ namespace Entities.Models
         // If no game has been played set default as ~4 days of rest (season hasn't started)
         public static readonly int DEFAULT_HOURS = 100;
 
-        public int id { get; set; } = -1;
+        public int id { get; set; }
         public int homeTeamId { get; set; }
         public int awayTeamId { get; set; }
         public string homeTeamAbbr { get; set; } = string.Empty;

@@ -23,6 +23,8 @@ namespace DataGetter.BusinessLogic.GameGetter
         /// <summary>
         /// Gets all nhl games within the season range. If the game is already in the database, it is skipped.
         /// </summary>
+        /// <param name="seasonYearRange">The years to get data for</param>
+        /// <returns>None</returns>
         public async Task GetData(YearRange seasonYearRange)
         {
             int numberOfGamesAdded = 0;
@@ -42,6 +44,8 @@ namespace DataGetter.BusinessLogic.GameGetter
                 var seasonGames = await GetSeasonGames(seasonStartYear, seasonGameCount);
                 await _gameRepo.AddUpdateGames(seasonGames);
 
+                // Add Officials
+
                 // Updates tv broadcasters for the games
                 await _gameRepo.AddUpdateTvBroadcasters(seasonGames);
                 await _gameRepo.AddUpdateGameTvBroadcasters(seasonGames);
@@ -53,6 +57,7 @@ namespace DataGetter.BusinessLogic.GameGetter
                 // Gets player data for the players who have game stats
                 var players = await GetPlayers(gameRosterStats);
                 await _playerRepo.AddUpdatePlayers(players);
+                await _playerRepo.AddUpdatePlayerDraftDetails(players);
 
                 // Save all data to the database
                 await _gameRepo.Commit();
@@ -86,6 +91,8 @@ namespace DataGetter.BusinessLogic.GameGetter
         /// <returns>List of games from the start year</returns>
         private async Task<IEnumerable<Game>> GetSeasonGames(int seasonStartYear, int gameCount)
         {
+            gameCount = 1; // For testing
+
             var seasonGames = new List<Game>();
             Game? game;
             // game ids start at 1

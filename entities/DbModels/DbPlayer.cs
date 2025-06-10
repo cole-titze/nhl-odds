@@ -23,9 +23,9 @@ namespace Entities.DbModels
         public string watchLink { get; set; } = string.Empty;
         public string playerSlug { get; set; } = string.Empty;
         [ForeignKey("currentTeamId")]
-        public DbTeam? team { get; set; } = new DbTeam();
+        public DbTeam? team { get; set; }
         [ForeignKey("id")]
-        public DbPlayerDraftDetails? draftDetails = new DbPlayerDraftDetails();
+        public DbPlayerDraftDetails? draftDetails { get; set; }
         public void Clone(DbPlayer player)
         {
             id = player.id;
@@ -48,13 +48,6 @@ namespace Entities.DbModels
             playerSlug = player.playerSlug;
             team = player.team;
             draftDetails = player.draftDetails;
-        }
-
-        public bool IsValid()
-        {
-            if (id == -1)
-                return false;
-            return true;
         }
         public bool Equals(DbPlayer? other)
         {

@@ -11,7 +11,7 @@
 		public IEnumerable<IGamePlayerStats> homeTeamGoalies { get; set; } = new List<IGamePlayerStats>();
 		public Coach awayTeamCoach { get; set; } = new Coach();
 		public IEnumerable<IGamePlayerStats> awayTeamForwards { get; set; } = new List<IGamePlayerStats>();
-		public IEnumerable<IGamePlayerStats> awayTeamDefensement { get; set; } = new List<IGamePlayerStats>();
+		public IEnumerable<IGamePlayerStats> awayTeamDefensemen { get; set; } = new List<IGamePlayerStats>();
 		public IEnumerable<IGamePlayerStats> awayTeamGoalies { get; set; } = new List<IGamePlayerStats>();
 		public IEnumerable<IOfficial> referees { get; set; } = new List<IOfficial>();
 		public IEnumerable<IOfficial> linesmen { get; set; } = new List<IOfficial>();
@@ -28,7 +28,7 @@
 					.Concat(homeTeamDefensemen)
 					.Concat(homeTeamGoalies)
 					.Concat(awayTeamForwards)
-					.Concat(awayTeamDefensement)
+					.Concat(awayTeamDefensemen)
 					.Concat(awayTeamGoalies);
 			}
 		}

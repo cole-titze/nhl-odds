@@ -10,26 +10,31 @@ namespace Entities.ServiceModels.Mappers
 		/// https://api-web.nhle.com/v1/player/8478402/landing
 		/// </summary>
 		/// <param name="playerResponse">Nhl response that contains a teams roster</param>
-		/// <returns></returns>
-		public static Player Map(dynamic playerResponse)
+		/// <returns>The player object</returns>
+		public static Player Map(dynamic playerResponse, IDictionary<string, int> teamAbbrevToId)
 		{
 			var playerDraftDetails = GetPlayerDraftDetails(playerResponse.draftDetails);
-            return new Player()
+			var currentTeamId = GetFinalTeam(playerResponse, teamAbbrevToId);
+			var isActive = (bool)playerResponse.isActive;
+			var birthStateProvince = playerResponse.birthStateProvince == null ? string.Empty 
+										: (string)playerResponse.birthStateProvince.@default;
+			return new Player()
 			{
 				id = (int)playerResponse.playerId,
 				firstName = (string)playerResponse.firstName.@default,
 				lastName = (string)playerResponse.lastName.@default,
-				isActive = (bool)playerResponse.isActive,
-				currentTeamId = (int)playerResponse.currentTeamId,
-				headShot = (string)playerResponse.headShot,
+				isActive = isActive,
+				currentTeamId = currentTeamId,
+				headShot = (string)playerResponse.headshot,
 				heroImage = (string)playerResponse.heroImage,
 				heightInInches = (int)playerResponse.heightInInches,
 				weightInPounds = (int)playerResponse.weightInPounds,
-				birthDate = DateTime.Parse(playerResponse.birthDate),
+				birthDate = DateTime.Parse((string)playerResponse.birthDate),
 				birthCity = (string)playerResponse.birthCity.@default,
-				birthStateProvince = (string)playerResponse.birthStateProvince.@default,
-				isInTopOneHundredAllTime = (bool)playerResponse.isInTopOneHundredAllTime,
-				isInHallOfFame = (bool)playerResponse.isInHallOfFame,
+				birthStateProvince = birthStateProvince,
+				birthCountry = playerResponse.birthCountry,
+				isInTopOneHundredAllTime = (bool)playerResponse.inTop100AllTime,
+				isInHallOfFame = (bool)playerResponse.inHHOF,
 				shopLink = (string)playerResponse.shopLink,
 				twitterLink = (string)playerResponse.twitterLink,
 				watchLink = (string)playerResponse.watchLink,
@@ -38,12 +43,32 @@ namespace Entities.ServiceModels.Mappers
 			};
 		}
 		/// <summary>
-		/// Gets the player draft details from the player response
+		/// Gets the current or final team id from the player response.
 		/// </summary>
-		/// <param name="playerDraftResponse">NHL response for a player draft details</param>
-		/// <returns>The players draft details</returns>
-        private static PlayerDraftDetails GetPlayerDraftDetails(dynamic playerDraftResponse)
+		/// <param name="playerResponse">The player response from the nhl api</param>
+		/// <returns>The team id</returns>
+		private static int GetFinalTeam(dynamic playerResponse, IDictionary<string, int> teamAbbrevToId)
+		{
+			if (playerResponse.currentTeamId != null)
+				return (int)playerResponse.currentTeamId;
+
+			var finalTeamId = (string)playerResponse.last5Games[0].teamAbbrev;
+			if (teamAbbrevToId.TryGetValue(finalTeamId, out int teamId))
+				return teamId;
+
+			throw new KeyNotFoundException($"Team abbreviation {finalTeamId} not found in teamAbbrevToId dictionary.");
+        }
+
+        /// <summary>
+        /// Gets the player draft details from the player response
+        /// </summary>
+        /// <param name="playerDraftResponse">NHL response for a player draft details</param>
+        /// <returns>The players draft details</returns>
+        private static PlayerDraftDetails? GetPlayerDraftDetails(dynamic playerDraftResponse)
         {
+			if (playerDraftResponse == null)
+				return null;
+
             return new PlayerDraftDetails()
 			{
 				year = (int)playerDraftResponse.year,

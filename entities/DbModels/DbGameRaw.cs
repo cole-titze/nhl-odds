@@ -9,7 +9,7 @@ namespace Entities.DbModels
     }
     public class DbGameRaw
     {
-        public int id { get; set; } = -1;
+        public int id { get; set; }
         public int homeTeamId { get; set; }
         public int awayTeamId { get; set; }
         public int seasonStartYear { get; set; }
@@ -95,14 +95,8 @@ namespace Entities.DbModels
             toiHomeSummary = game.toiHomeSummary;
             threeMinuteRecapVideoId = game.threeMinuteRecapVideoId;
             condensedGameVideoId = game.condensedGameVideoId;
-        }
-        /// <summary>
-        /// Gets whether a game is valid or not
-        /// </summary>
-        /// <returns>True if both teams won 0 faceoffs</returns>
-        public bool IsValid()
-        {
-            return id != -1;
+            venueName = game.venueName;
+            venueLocation = game.venueLocation;
         }
         /// <summary>
         /// Gets the abbreviation for the team

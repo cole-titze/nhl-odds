@@ -24,7 +24,7 @@ namespace Entities.ServiceModels
         /// <returns>The list of player stats for the game</returns>
         public GameRosterStats GameStatsResponseToGameRosterStats(ServiceGameSummaryResponse gameSummaryResponse)
         {
-            return MapGamePlayerStatsResponseToGamePlayerStats.Map(gameSummaryResponse, response);
+            return MapGamePlayerStatsResponseToGamePlayerStats.Map(gameSummaryResponse.response, response);
         }
         /// <summary>
         /// Converts the game stat and summary response to a game object.
@@ -33,7 +33,7 @@ namespace Entities.ServiceModels
         /// <returns></returns>
         public Game GameStatResponseToGame(ServiceGameSummaryResponse gameSummaryResponse)
         {
-            return MapGameResponseToGame.Map(gameSummaryResponse, response);
+            return MapGameResponseToGame.Map(gameSummaryResponse.response, response);
         }
     }
 }

@@ -12,7 +12,7 @@ namespace Entities.DbModels
         public double logLoss { get; set; }
         public string notes { get; set; } = string.Empty;
         [ForeignKey("gameId")]
-        public DbGameRaw? game { get; set; } = new DbGameRaw();
+        public DbGameRaw? game { get; set; }
         public void Clone(DbGameOdds gameOdds)
         {
             gameId = gameOdds.gameId;

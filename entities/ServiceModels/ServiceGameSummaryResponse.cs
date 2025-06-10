@@ -24,7 +24,7 @@ namespace Entities.ServiceModels
         /// <returns>The game object</returns>
         public Game GameSummaryResponseToGame(ServiceGameStatResponse gameStatResponse)
         {
-            return MapGameResponseToGame.Map(response, gameStatResponse);
+            return MapGameResponseToGame.Map(response, gameStatResponse.response);
         }
         /// <summary>
         /// Determines if a game is done or not

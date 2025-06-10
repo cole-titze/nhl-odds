@@ -29,5 +29,15 @@ namespace DatabaseAccess.TeamRepository
         {
             return await GetAllTeamsQuery().Where(x => x.id == teamId).FirstAsync();
         }
+        /// <summary>
+        /// Gets a dictionary mapping team abbreviations to team ids. The NHL API often
+        /// only returns a teams abbreviation
+        /// </summary>
+        /// <returns>Team abbreviation to id map</returns>
+        public async Task<IDictionary<string, int>> GetTeamAbbrevToIdMap()
+        {
+            var teams = await GetAllTeamsQuery().ToListAsync();
+            return teams.ToDictionary(team => team.abbreviation, team => team.id);
+        }
     }
 }

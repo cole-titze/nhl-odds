@@ -5,8 +5,8 @@ namespace Entities.DbModels
 {
     public class DbGameSkaterStats : IDbGamePlayerStats
     {
-        public int gameId { get; set; } = -1;
-        public int playerId { get; set; } = -1;
+        public int gameId { get; set; }
+        public int playerId { get; set; }
         public int teamId { get; set; }
         public int goals { get; set; }
         public int assists { get; set; }
@@ -23,11 +23,11 @@ namespace Entities.DbModels
         public POSITION position { get; set; } = POSITION.LeftWing;
 
         [ForeignKey("playerId")]
-        public DbPlayer player { get; set; } = new DbPlayer();
+        public DbPlayer? player { get; set; }
         [ForeignKey("gameId")]
-        public DbGameRaw game { get; set; } = new DbGameRaw();
+        public DbGameRaw? game { get; set; }
         [ForeignKey("teamId")]
-        public DbTeam team { get; set; } = new DbTeam();
+        public DbTeam? team { get; set; }
         public void Clone(IDbGamePlayerStats gamePlayerStats)
         {
             if (gamePlayerStats is DbGameSkaterStats gameSkaterStats)
@@ -52,14 +52,8 @@ namespace Entities.DbModels
             }
             else
             {
-                throw new InvalidOperationException("Invalid type passed to CloneFrom.");
+                throw new InvalidOperationException("Invalid type passed to Clone.");
             }
-        }
-        public bool IsValid()
-        {
-            if (gameId == -1 && playerId == -1)
-                return false;
-            return true;
         }
     }
 }

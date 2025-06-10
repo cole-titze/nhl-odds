@@ -12,8 +12,6 @@ namespace Entities.DbModels
         public int round { get; set; }
         public int pickInRound { get; set; }
         public int overallPick { get; set; }
-        [ForeignKey("playerId")]
-        public DbPlayer? player { get; set; } = new DbPlayer();
         public void Clone(DbPlayerDraftDetails playerDraftDetails)
         {
             playerId = playerDraftDetails.playerId;
@@ -22,7 +20,6 @@ namespace Entities.DbModels
             round = playerDraftDetails.round;
             pickInRound = playerDraftDetails.pickInRound;
             overallPick = playerDraftDetails.overallPick;
-            player = playerDraftDetails.player;
         }
     }
 }

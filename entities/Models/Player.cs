@@ -14,6 +14,7 @@ namespace Entities.Models
         public DateTime birthDate { get; set; }
         public string birthCity { get; set; } = string.Empty;
         public string birthStateProvince { get; set; } = string.Empty;
+        public string birthCountry { get; set; } = string.Empty;
         public bool isInTopOneHundredAllTime { get; set; }
         public bool isInHallOfFame { get; set; }
         public string shopLink { get; set; } = string.Empty;
