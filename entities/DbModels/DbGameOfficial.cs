@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Entities.DbModels
 {
@@ -12,6 +13,8 @@ namespace Entities.DbModels
         public int gameId { get; set; }
         public string name { get; set; } = string.Empty;
         public Role role { get; set; } = Role.Referee;
+        [ForeignKey("gameId")]
+        public DbGameRaw? game { get; set; }
 
         public void Clone(DbGameOfficial gameOfficial)
         {

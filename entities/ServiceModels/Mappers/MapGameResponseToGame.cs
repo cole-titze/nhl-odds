@@ -17,6 +17,8 @@ namespace Entities.ServiceModels.Mappers
             // Get game summary data
             game.homeTeamId = (int)messageGameSummary.homeTeam.id;
             game.awayTeamId = (int)messageGameSummary.awayTeam.id;
+            game.homeTeamAbbr = (string)messageGameSummary.homeTeam.abbrev;
+            game.awayTeamAbbr = (string)messageGameSummary.awayTeam.abbrev;
             game.id = (int)messageGameSummary.id;
             game.seasonStartYear = GetSeason((string)messageGameSummary.season);
             game.gameDateUTC = DateTime.Parse((string)messageGameSummary.startTimeUTC);

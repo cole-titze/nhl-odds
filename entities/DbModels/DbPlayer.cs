@@ -24,8 +24,6 @@ namespace Entities.DbModels
         public string playerSlug { get; set; } = string.Empty;
         [ForeignKey("currentTeamId")]
         public DbTeam? team { get; set; }
-        [ForeignKey("id")]
-        public DbPlayerDraftDetails? draftDetails { get; set; }
         public void Clone(DbPlayer player)
         {
             id = player.id;
@@ -47,7 +45,6 @@ namespace Entities.DbModels
             watchLink = player.watchLink;
             playerSlug = player.playerSlug;
             team = player.team;
-            draftDetails = player.draftDetails;
         }
         public bool Equals(DbPlayer? other)
         {

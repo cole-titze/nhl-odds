@@ -12,6 +12,8 @@ namespace Entities.DbModels
         public int round { get; set; }
         public int pickInRound { get; set; }
         public int overallPick { get; set; }
+        [ForeignKey("playerId")]
+        public DbPlayer? player { get; set; }
         public void Clone(DbPlayerDraftDetails playerDraftDetails)
         {
             playerId = playerDraftDetails.playerId;
