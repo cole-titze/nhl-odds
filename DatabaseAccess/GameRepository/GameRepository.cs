@@ -57,6 +57,44 @@ namespace DatabaseAccess.GameRepository
         }
 
         /// <summary>
+        /// Adds or updates the officials for the games.
+        /// </summary>
+        /// <param name="games">The list of games that contain official info</param>
+        public async Task AddUpdateGameOfficials(IEnumerable<Game> games)
+        {
+            var gameOfficials = MapGameToDbGameOfficial.MapList(games);
+
+            var addList = new List<DbGameOfficial>();
+            var updateList = new List<DbGameOfficial>();
+            foreach (var gameOfficial in gameOfficials)
+            {
+                var dbGameOfficial = await GetDbGameOfficial(gameOfficial.gameId, gameOfficial.name);
+                if (dbGameOfficial == null)
+                    addList.Add(gameOfficial);
+                else
+                {
+                    dbGameOfficial.Clone(gameOfficial);
+                    updateList.Add(dbGameOfficial);
+                }
+            }
+
+            await _dbContext.GameOfficial.AddRangeAsync(addList);
+            _dbContext.GameOfficial.UpdateRange(updateList);
+        }
+
+        /// <summary>
+        /// Gets a game official from the database based on the game id and official name
+        /// </summary>
+        /// <param name="gameId">The game id</param>
+        /// <param name="officialName">The official name</param>
+        /// <returns>The game official object or null if not found</returns>
+        private async Task<DbGameOfficial?> GetDbGameOfficial(int gameId, string officialName)
+        {
+            return await _dbContext.GameOfficial
+                .FirstOrDefaultAsync(x => x.gameId == gameId && x.name == officialName);
+        }
+
+        /// <summary>
         /// Adds or updates the TV broadcasters for the games.
         /// </summary>
         /// <param name="games">The list of games that contain broadcaster info</param>
@@ -68,7 +106,7 @@ namespace DatabaseAccess.GameRepository
             var updateList = new List<DbGameTvBroadcaster>();
             foreach (var gameBroadcaster in gameBroadcasters)
             {
-                var dbTvBroadcaster = await GetGameDbTvBroadcaster(gameBroadcaster.gameId, gameBroadcaster.broadcasterId);
+                var dbTvBroadcaster = await GetDbGameTvBroadcaster(gameBroadcaster.gameId, gameBroadcaster.broadcasterId);
                 if (dbTvBroadcaster == null)
                     addList.Add(gameBroadcaster);
                 else
@@ -125,7 +163,7 @@ namespace DatabaseAccess.GameRepository
         /// <param name="gameId">The game Id</param>
         /// <param name="tvBroadcasterId"><The broadcaster id/param>
         /// <returns>The game broadcaster object, or null if it doesn't exist</returns>
-        private async Task<DbGameTvBroadcaster?> GetGameDbTvBroadcaster(int gameId, int tvBroadcasterId)
+        private async Task<DbGameTvBroadcaster?> GetDbGameTvBroadcaster(int gameId, int tvBroadcasterId)
         {
             return await _dbContext.GameTvBroadcaster.FirstOrDefaultAsync(x => x.gameId == gameId && x.broadcasterId == tvBroadcasterId);
         }

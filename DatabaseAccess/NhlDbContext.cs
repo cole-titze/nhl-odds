@@ -35,6 +35,8 @@ namespace DatabaseAccess
                 .HasKey(c => new { c.gameId, c.playerId });
             modelBuilder.Entity<DbGameOdds>()
                 .HasKey(c => new { c.gameId, c.modelName, c.runDateUTC });
+            modelBuilder.Entity<DbGameOfficial>()
+                .HasKey(c => new { c.gameId, c.name });
         }
     }
 }

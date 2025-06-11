@@ -143,7 +143,7 @@ namespace DatabaseAccess.PlayerRepository
         /// <returns>None</returns>
         public async Task AddUpdatePlayerDraftDetails(IEnumerable<Player> players)
         {
-            IEnumerable<DbPlayerDraftDetails> dbPlayersDraftDetails = MapPlayerToDbPlayerDraftDetails.MapList(players);
+            var dbPlayersDraftDetails = MapPlayerToDbPlayerDraftDetails.MapList(players);
 
             var addList = new List<DbPlayerDraftDetails>();
             var updateList = new List<DbPlayerDraftDetails>();

@@ -9,8 +9,15 @@ namespace Entities.DbModels
     }
     public class DbGameOfficial
     {
-        [Key]
+        public int gameId { get; set; }
         public string name { get; set; } = string.Empty;
         public Role role { get; set; } = Role.Referee;
+
+        public void Clone(DbGameOfficial gameOfficial)
+        {
+            gameId = gameOfficial.gameId;
+            name = gameOfficial.name;
+            role = gameOfficial.role;
+        }
     }
 }

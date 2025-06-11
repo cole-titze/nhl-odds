@@ -4,11 +4,11 @@ namespace Entities.DbModels.Mappers
 {
     public static class MapPlayerToDbPlayerDraftDetails
     {
-        public static DbPlayerDraftDetails Map(Player player)
+        public static DbPlayerDraftDetails? Map(Player player)
         {
             var playerDraftDetails = player.playerDraftDetails;
             if (playerDraftDetails == null)
-                throw new ArgumentNullException(nameof(player.playerDraftDetails), "Game extended info or TV broadcasters cannot be null.");
+                return null;
 
             return new DbPlayerDraftDetails()
             {
@@ -26,7 +26,8 @@ namespace Entities.DbModels.Mappers
             foreach (var player in players)
             {
                 var playerDraftDetails = Map(player);
-                playersDraftDetails.Add(playerDraftDetails);
+                if (playerDraftDetails != null)
+                    playersDraftDetails.Add(playerDraftDetails);
             }
 
             return playersDraftDetails;

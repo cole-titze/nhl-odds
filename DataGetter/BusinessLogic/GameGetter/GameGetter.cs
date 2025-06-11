@@ -44,20 +44,21 @@ namespace DataGetter.BusinessLogic.GameGetter
                 var seasonGames = await GetSeasonGames(seasonStartYear, seasonGameCount);
                 await _gameRepo.AddUpdateGames(seasonGames);
 
-                // Add Officials
-
                 // Updates tv broadcasters for the games
                 await _gameRepo.AddUpdateTvBroadcasters(seasonGames);
                 await _gameRepo.AddUpdateGameTvBroadcasters(seasonGames);
 
                 // Gets player stats for the game
-                var gameRosterStats = await GetGameRosterStats(seasonGames);
+                var gameRosterStats = await BuildGameRosterStats(seasonGames);
                 await _playerRepo.AddUpdateGameRosterStats(gameRosterStats);
 
                 // Gets player data for the players who have game stats
                 var players = await GetPlayers(gameRosterStats);
                 await _playerRepo.AddUpdatePlayers(players);
                 await _playerRepo.AddUpdatePlayerDraftDetails(players);
+
+                // Add Officials
+                await _gameRepo.AddUpdateGameOfficials(seasonGames);
 
                 // Save all data to the database
                 await _gameRepo.Commit();
@@ -114,7 +115,7 @@ namespace DataGetter.BusinessLogic.GameGetter
         /// </summary>
         /// <param name="seasonGames">Games to get player stats for</param>
         /// <returns>List of player game stats from the start year</returns>
-        private async Task<IEnumerable<GameRosterStats>> GetGameRosterStats(IEnumerable<Game> seasonGames)
+        private async Task<IEnumerable<GameRosterStats>> BuildGameRosterStats(IEnumerable<Game> seasonGames)
         {
             var seasonPlayerGameStats = new List<GameRosterStats>();
             GameRosterStats? gameRosterStats;
@@ -122,9 +123,10 @@ namespace DataGetter.BusinessLogic.GameGetter
             foreach (var game in seasonGames)
             {
                 gameRosterStats = await _nhlDataGetter.PlayerDataGetter.BuildGameRosterStats(game);
-                if( gameRosterStats != null)
+                if (gameRosterStats != null)
                 {
                     seasonPlayerGameStats.Add(gameRosterStats);
+                    game.rosterStats = gameRosterStats;
                 }
             }
 
