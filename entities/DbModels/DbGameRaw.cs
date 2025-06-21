@@ -1,12 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using Entities.Types;
 
 namespace Entities.DbModels
 {
-    public enum Winner
-    {
-        HOME,
-        AWAY
-    }
     public class DbGameRaw
     {
         public int id { get; set; }

@@ -1,4 +1,5 @@
-using Entities.DbModels;
+using Entities.Models.GamePlayEvents;
+using Entities.Types;
 
 namespace Entities.Models
 {
@@ -36,6 +37,7 @@ namespace Entities.Models
         public bool hasBeenPlayed { get; set; }
         public GameRosterStats? rosterStats { get; set; }
         public GameExtendedInfo? extendedInfo { get; set; }
+        public GameEvents? gameEvents { get; set; }
 
         /// <summary>
         /// Gets if the team won or not

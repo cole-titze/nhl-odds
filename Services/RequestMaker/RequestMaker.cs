@@ -1,6 +1,5 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
-using Entities.ServiceModels;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 

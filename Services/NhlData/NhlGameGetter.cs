@@ -22,6 +22,7 @@ namespace Services.NhlData
         /// Example Requests: 
         /// https://api-web.nhle.com/v1/gamecenter/2023020204/boxscore
         /// https://api-web.nhle.com/v1/gamecenter/2023020204/right-rail
+        /// https://api-web.nhle.com/v1/gamecenter/2024020279/play-by-play
         /// </summary>
         /// <param name="gameId">The game to get</param>
         /// <returns>A game object corresponding to the id passed in</returns>
@@ -30,11 +31,13 @@ namespace Services.NhlData
             string url = "http://api-web.nhle.com/v1/gamecenter/";
             string summaryQuery = GetGameQuery(gameId, GameRequestType.GameSummary);
             string statQuery = GetGameQuery(gameId, GameRequestType.GameStats);
+            string playByPlayQuery = GetGameQuery(gameId, GameRequestType.GameEvents);
 
             var gameSummaryResponse = new ServiceGameSummaryResponse(await _requestMaker.MakeRequest(url, summaryQuery));
             var gameStatResponse = new ServiceGameStatResponse(await _requestMaker.MakeRequest(url, statQuery));
+            var gameEventResponse = new ServiceGameEventResponse(await _requestMaker.MakeRequest(url, playByPlayQuery));
 
-            if (gameSummaryResponse.response == null || gameStatResponse.response == null)
+            if (gameSummaryResponse.response == null || gameStatResponse.response == null || gameEventResponse.response == null)
             {
                 _logger.LogWarning("Failed to get game with id: " + gameId.ToString());
                 return null;
@@ -42,7 +45,7 @@ namespace Services.NhlData
             if (gameSummaryResponse.IsGameInProgress())
                 return null;
 
-            return gameSummaryResponse.GameSummaryResponseToGame(gameStatResponse);
+            return gameSummaryResponse.GameSummaryResponseToGame(gameStatResponse, gameEventResponse);
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace Entities.Models
+﻿using Entities.Types;
+
+namespace Entities.Models
 {
     public class GameGoalieStats : IGamePlayerStats
     {

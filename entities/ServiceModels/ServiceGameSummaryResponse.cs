@@ -22,9 +22,9 @@ namespace Entities.ServiceModels
         /// </summary>
         /// <param name="gameStatResponse">The game stats response</param>
         /// <returns>The game object</returns>
-        public Game GameSummaryResponseToGame(ServiceGameStatResponse gameStatResponse)
+        public Game GameSummaryResponseToGame(ServiceGameStatResponse gameStatResponse, ServiceGameEventResponse gameEventResponse)
         {
-            return MapGameResponseToGame.Map(response, gameStatResponse.response);
+            return MapGameResponseToGame.Map(response, gameStatResponse.response, gameEventResponse.response);
         }
         /// <summary>
         /// Determines if a game is done or not

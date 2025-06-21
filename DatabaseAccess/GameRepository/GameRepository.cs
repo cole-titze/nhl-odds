@@ -286,6 +286,37 @@ namespace DatabaseAccess.GameRepository
 
             await _dbContext.SeasonGameCount.AddRangeAsync(seasonGameCounts);
         }
+
+        /// <summary>
+        /// Adds/updates the game events
+        /// </summary>
+        /// <param name="games">List of games to store the events of</param>
+        /// <returns>None</returns>
+        public async Task AddUpdateGameEvents(IEnumerable<Game> seasonGames)
+        {
+            var dbGameEvents = MapGamePlayerStatsToDbGamePlayerStats.Map(seasonGameRosterStats);
+
+            var addList = new List<IDbGameEvent>();
+            var updateList = new List<IDbGameEvent>();
+            foreach (var gameEvent in dbGameEvents)
+            {
+                var dbGameEvent = await GetDbGameEvent(playerStats);
+                if (dbGameEvent == null)
+                {
+                    addList.Add(gameEvent);
+                }
+                else
+                {
+                    dbGameEvent.Clone(gameEvent);
+                    updateList.Add(dbGameEvent);
+                }
+            }
+
+            await _dbContext.GameSkaterStats.AddRangeAsync(addList.OfType<DbGameSkaterStats>());
+            _dbContext.GameSkaterStats.UpdateRange(updateList.OfType<DbGameEvent>());
+            await _dbContext.GameGoalieStats.AddRangeAsync(addList.OfType<DbGameGoalieStats>());
+            _dbContext.GameGoalieStats.UpdateRange(updateList.OfType<DbGameGoalieStats>());
+        }
     }
 }
 

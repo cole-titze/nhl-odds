@@ -1,24 +1,24 @@
-﻿using DatabaseAccess.GameRepository;
+using DatabaseAccess.GameRepository;
 using DatabaseAccess.PlayerRepository;
 using Entities.Models;
 using Entities.Types;
 using Microsoft.Extensions.Logging;
 using Services.NhlData;
 
-namespace DataGetter.BusinessLogic.GameGetter
+namespace DataGetter.BusinessLogic
 {
-    public class GameGetter
+    public class DataGetter
     {
         private readonly IGameRepository _gameRepo;
         private readonly IPlayerRepository _playerRepo;
         private readonly NhlDataGetter _nhlDataGetter;
-        private readonly ILogger<GameGetter> _logger;
-        public GameGetter(IGameRepository gameRepository, IPlayerRepository playerRepository, NhlDataGetter nhlDataGetter, ILoggerFactory loggerFactory)
+        private readonly ILogger<DataGetter> _logger;
+        public DataGetter(IGameRepository gameRepository, IPlayerRepository playerRepository, NhlDataGetter nhlDataGetter, ILoggerFactory loggerFactory)
         {
             _gameRepo = gameRepository;
             _playerRepo = playerRepository;
             _nhlDataGetter = nhlDataGetter;
-            _logger = loggerFactory.CreateLogger<GameGetter>();
+            _logger = loggerFactory.CreateLogger<DataGetter>();
         }
         /// <summary>
         /// Gets all nhl games within the season range. If the game is already in the database, it is skipped.
@@ -27,7 +27,7 @@ namespace DataGetter.BusinessLogic.GameGetter
         /// <returns>None</returns>
         public async Task GetData(YearRange seasonYearRange)
         {
-            int numberOfGamesAdded = 0;
+            int totalGamesAdded = 0;
             for (int seasonStartYear = seasonYearRange.StartYear; seasonStartYear <= seasonYearRange.EndYear; seasonStartYear++)
             {
                 // Determines if data is already found and season can be skipped
@@ -39,37 +39,51 @@ namespace DataGetter.BusinessLogic.GameGetter
                     continue;
                 }
 
-                // Gets basic game information
-                var seasonGameCount = await _nhlDataGetter.ScheduleDataGetter.GetGameCountInSeason(seasonStartYear);
-                var seasonGames = await GetSeasonGames(seasonStartYear, seasonGameCount);
-                await _gameRepo.AddUpdateGames(seasonGames);
+                var seasonGames = await GetAndSaveNhlGameData(seasonStartYear);
 
-                // Updates tv broadcasters for the games
-                await _gameRepo.AddUpdateTvBroadcasters(seasonGames);
-                await _gameRepo.AddUpdateGameTvBroadcasters(seasonGames);
-
-                // Gets player stats for the game
-                var gameRosterStats = await BuildGameRosterStats(seasonGames);
-                await _playerRepo.AddUpdateGameRosterStats(gameRosterStats);
-
-                // Gets player data for the players who have game stats
-                var players = await GetPlayers(gameRosterStats);
-                await _playerRepo.AddUpdatePlayers(players);
-                await _playerRepo.AddUpdatePlayerDraftDetails(players);
-
-                // Add Officials
-                await _gameRepo.AddUpdateGameOfficials(seasonGames);
-
-                // Save all data to the database
-                await _gameRepo.Commit();
-
-                numberOfGamesAdded += seasonGames.Count();
+                totalGamesAdded += seasonGames.Count();
                 _logger.LogInformation("Number of Games Added To Season " + seasonStartYear.ToString() + ": " + seasonGames.Count().ToString());
             }
             var seasonGameCountCache = _nhlDataGetter.ScheduleDataGetter.GetSeasonGameCounts();
             await _gameRepo.AddSeasonGameCounts(seasonGameCountCache);
             await _gameRepo.Commit();
-            _logger.LogInformation("Number of Total Games Added: " + numberOfGamesAdded.ToString());
+            _logger.LogInformation("Number of Total Games Added: " + totalGamesAdded.ToString());
+        }
+
+        /// <summary>
+        /// Gets all game and player data for a given season and stores it to the database
+        /// </summary>
+        /// <param name="seasonStartYear">Season to get data for</param>
+        private async Task<IEnumerable<Game>> GetAndSaveNhlGameData(int seasonStartYear)
+        {
+            // Gets basic game information
+            var seasonGameCount = await _nhlDataGetter.ScheduleDataGetter.GetGameCountInSeason(seasonStartYear);
+            var seasonGames = await GetSeasonGames(seasonStartYear, seasonGameCount);
+            await _gameRepo.AddUpdateGames(seasonGames);
+
+            // Updates tv broadcasters for the games
+            await _gameRepo.AddUpdateTvBroadcasters(seasonGames);
+            await _gameRepo.AddUpdateGameTvBroadcasters(seasonGames);
+
+            // Update game events and save to the db
+            await _gameRepo.AddUpdateGameEvents(seasonGames);
+
+            // Gets player stats for the game
+            var gameRosterStats = await BuildGameRosterStats(seasonGames);
+            await _playerRepo.AddUpdateGameRosterStats(gameRosterStats);
+
+            // Gets player data for the players who have game stats
+            var players = await GetPlayers(gameRosterStats);
+            await _playerRepo.AddUpdatePlayers(players);
+            await _playerRepo.AddUpdatePlayerDraftDetails(players);
+
+            // Add Officials
+            await _gameRepo.AddUpdateGameOfficials(seasonGames);
+
+            // Save all data to the database
+            await _gameRepo.Commit();
+                
+            return seasonGames;
         }
 
         /// <summary>
@@ -132,6 +146,7 @@ namespace DataGetter.BusinessLogic.GameGetter
 
             return seasonPlayerGameStats;
         }
+
         /// Gets a seasons worth of players. Only returns players that are active
         /// </summary>
         /// <param name="seasonStartYear">year of games to get</param>

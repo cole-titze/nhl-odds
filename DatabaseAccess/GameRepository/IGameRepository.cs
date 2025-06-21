@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Entities.DbModels;
 using Entities.Models;
+using Entities.Models.GamePlayEvents;
 using Microsoft.VisualBasic;
 
 namespace DatabaseAccess.GameRepository
@@ -12,6 +13,7 @@ namespace DatabaseAccess.GameRepository
         Task AddUpdateTvBroadcasters(IEnumerable<Game> games);
         Task AddUpdateGameTvBroadcasters(IEnumerable<Game> games);
         Task AddUpdateGameOfficials(IEnumerable<Game> games);
+        Task AddUpdateGameEvents(IEnumerable<Game> games);
         Task Commit();
         Task<Game?> GetGame(int gameId);
         Task<int> GetGameCountInSeason(int seasonStartYear);

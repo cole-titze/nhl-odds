@@ -41,7 +41,11 @@
             /// <summary>
             /// Request type for game stats. This holds data like goals, shots on goal, and other stats
             /// </summary>
-            GameStats
+            GameStats,
+            /// <summary>
+            /// Request type for game play by play events. This holds data like the events that happened in the game
+            /// </summary>
+            GameEvents
         }
         /// <summary>
         /// Creates the game query

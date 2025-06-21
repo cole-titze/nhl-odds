@@ -2,7 +2,7 @@ namespace Entities.Types
 {
     public static class ToiExtensions
     {
-        public static int ParseToiToSeconds(this string toi)
+        public static int ParseIceTimeToSeconds(this string toi)
         {
             if (string.IsNullOrWhiteSpace(toi))
                 throw new ArgumentException("TOI string is null or empty");

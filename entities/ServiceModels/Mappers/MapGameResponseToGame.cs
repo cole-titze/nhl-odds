@@ -1,5 +1,6 @@
-﻿using Entities.DbModels;
-using Entities.Models;
+﻿using Entities.Models;
+using Entities.Models.GamePlayEvents;
+using Entities.Types;
 
 namespace Entities.ServiceModels.Mappers
 {
@@ -10,7 +11,7 @@ namespace Entities.ServiceModels.Mappers
         /// </summary>
         /// <param name="message">Response from nhl api</param>
         /// <returns>Game Object</returns>
-		public static Game Map(dynamic messageGameSummary, dynamic messageGamesStats)
+		public static Game Map(dynamic messageGameSummary, dynamic messageGamesStats, dynamic messageGameEvents)
         {
             var game = new Game();
 
@@ -35,37 +36,10 @@ namespace Entities.ServiceModels.Mappers
                 game = BuildGameStat(statCategory, game);
             }
 
-            game.extendedInfo = GetGameExtendedInfo(messageGameSummary, messageGamesStats);
+            game.extendedInfo = MapGameSummaryToGameExtendedInfo.Map(messageGameSummary);
+            game.gameEvents = MapGameEventsResponseToGameEvents.Map(messageGameEvents);
 
             return game;
-        }
-        /// <summary>
-        /// Creates the extended info for the game.
-        /// </summary>
-        /// <param name="messageGameSummary">The game summary response</param>
-        /// <param name="messageGamesStats">The game stats response</param>
-        /// <returns>Extended infor about the game</returns>
-        private static GameExtendedInfo GetGameExtendedInfo(dynamic messageGameSummary, dynamic messageGamesStats)
-        {
-            var tvBroadcasters = new List<TvBroadcaster>();
-            foreach(var broadcaster in messageGameSummary.tvBroadcasts)
-            {
-                tvBroadcasters.Add(new TvBroadcaster()
-                {
-                    id = (int)broadcaster.id,
-                    marketAbbreviation = (string)broadcaster.market,
-                    networkName = (string)broadcaster.network,
-                    countryCode = (string)broadcaster.countryCode,
-                    sequenceNumber = (int)broadcaster.sequenceNumber,
-                });
-            }
-
-            return new GameExtendedInfo()
-            {
-                tvBroadcasters = tvBroadcasters,
-                venueName = (string)messageGameSummary.venue.@default,
-                venueLocation = (string)messageGameSummary.venueLocation.@default,
-            };
         }
 
         /// <summary>

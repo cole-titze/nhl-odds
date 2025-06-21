@@ -3,9 +3,9 @@ using Entities.Models;
 
 namespace Entities.DbModels.Mappers
 {
-    public static class MapGamePlayerStatsToDbGamePlayerStats
+    public static class MapGameEventToDbGameEvent
     {
-        public static IEnumerable<IDbGamePlayerStats> Map(IEnumerable<GameRosterStats> seasonRosterStats)
+        public static IEnumerable<IDbGameEvent> Map(IEnumerable<GameRosterStats> seasonRosterStats)
 		{
             var dbGamePlayerStats = new List<IDbGamePlayerStats>();
             foreach (var gameRosterStats in seasonRosterStats)

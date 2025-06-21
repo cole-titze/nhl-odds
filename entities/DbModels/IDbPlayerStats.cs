@@ -1,4 +1,4 @@
-using Entities.Models;
+using Entities.Types;
 
 namespace Entities.DbModels
 {
