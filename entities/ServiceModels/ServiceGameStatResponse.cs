@@ -31,9 +31,9 @@ namespace Entities.ServiceModels
         /// </summary>
         /// <param name="gameSummaryResponse"></param>
         /// <returns></returns>
-        public Game GameStatResponseToGame(ServiceGameSummaryResponse gameSummaryResponse)
+        public Game GameStatResponseToGame(ServiceGameSummaryResponse gameSummaryResponse, ServiceGameEventResponse gameEventResponse)
         {
-            return MapGameResponseToGame.Map(gameSummaryResponse.response, response);
+            return MapGameResponseToGame.Map(gameSummaryResponse.response, response, gameEventResponse.response);
         }
     }
 }

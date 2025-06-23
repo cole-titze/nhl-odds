@@ -1,4 +1,3 @@
-using Entities.Types;
 using Entities.Types.Enums;
 
 namespace Entities.Models.GamePlayEvents

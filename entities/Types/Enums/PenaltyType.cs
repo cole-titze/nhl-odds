@@ -1,0 +1,59 @@
+namespace Entities.Types.Enums
+{
+    public enum PenaltyType
+    {
+        Tripping,
+        Slashing,
+        Hooking,
+        Roughing,
+        RoughingRemovingOpponentsHelmet,
+        DelayOfGamePuckOverGlass,
+        DelayOfGameFailedChallenge,
+        Interference,
+        TooManyMen,
+        HighStick,
+        Fighting,
+        Holding,
+        Boarding,
+        UnsportsmanlikeConduct
+    }
+    public static class PenaltyTypeParser
+    {
+        public static PenaltyType ParseFromString(string periodType)
+        {
+            switch (periodType)
+            {
+                case "tripping":
+                    return PenaltyType.Tripping;
+                case "delaying-game-puck-over-glass":
+                    return PenaltyType.DelayOfGamePuckOverGlass;
+                case "hooking":
+                    return PenaltyType.Hooking;
+                case "roughing":
+                    return PenaltyType.Roughing;
+                case "interference":
+                    return PenaltyType.Interference;
+                case "slashing":
+                    return PenaltyType.Slashing;
+                case "too-many-men-on-the-ice":
+                    return PenaltyType.TooManyMen;
+                case "high-sticking":
+                    return PenaltyType.HighStick;
+                case "fighting":
+                    return PenaltyType.Fighting;
+                case "holding":
+                    return PenaltyType.Holding;
+                case "boarding":
+                    return PenaltyType.Boarding;
+                case "roughing-removing-opponents-helmet":
+                    return PenaltyType.RoughingRemovingOpponentsHelmet;
+                case "unsportsmanlike-conduct":
+                    return PenaltyType.UnsportsmanlikeConduct;
+                case "delaying-game-unsuccessful-challenge":
+                    return PenaltyType.DelayOfGameFailedChallenge;
+                default:
+                    throw new ArgumentException($"Invalid PeriodType value: {periodType}", nameof(periodType));
+            }
+        }
+    }
+}

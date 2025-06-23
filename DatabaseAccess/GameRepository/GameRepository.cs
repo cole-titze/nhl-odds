@@ -1,5 +1,6 @@
 ﻿using DataAccess.GameRepository.Mappers;
 using Entities.DbModels;
+using Entities.DbModels.GamePlayEvents;
 using Entities.DbModels.Mappers;
 using Entities.Models;
 using Microsoft.EntityFrameworkCore;
@@ -13,13 +14,29 @@ namespace DatabaseAccess.GameRepository
         private Dictionary<int, int> _seasonGameCountCache = new Dictionary<int, int>();
         private readonly NhlDbContext _dbContext;
         private readonly ILogger<GameRepository> _logger;
-
+        private readonly IDictionary<Type, dynamic> _dbSetEventMap;
         public GameRepository(NhlDbContext dbContext, ILoggerFactory loggerFactory)
         {
             _dbContext = dbContext;
             _logger = loggerFactory.CreateLogger<GameRepository>();
+            _dbSetEventMap = new Dictionary<Type, dynamic>
+            {
+                { typeof(DbBlockedShot), _dbContext.BlockedShotEvent },
+                { typeof(DbGoal), _dbContext.GoalEvent },
+                { typeof(DbPenalty), _dbContext.PenaltyEvent },
+                { typeof(DbFaceoff), _dbContext.FaceoffEvent },
+                { typeof(DbGiveaway), _dbContext.GiveawayEvent },
+                { typeof(DbHit), _dbContext.HitEvent },
+                { typeof(DbMissedShot), _dbContext.MissedShotEvent },
+                { typeof(DbTakeaway), _dbContext.TakeawayEvent },
+                { typeof(DbShot), _dbContext.ShotEvent },
+                { typeof(DbDelayedPenalty), _dbContext.DelayedPenaltyEvent },
+                { typeof(DbGameEnd), _dbContext.GameEndEvent },
+                { typeof(DbPeriodStart), _dbContext.PeriodStartEvent },
+                { typeof(DbStoppage), _dbContext.StoppageEvent },
+            };
         }
-        
+
         /// <summary>
         /// Gets total games for given season in database
         /// </summary>
@@ -128,7 +145,7 @@ namespace DatabaseAccess.GameRepository
         {
             var dbTvBroadcasters = MapGameToDbTvBroadcasters.MapList(games);
             var uniqueTvBroadcasters = dbTvBroadcasters.GroupBy(b => b.id).Select(g => g.First()).ToList();
-            
+
             var addList = new List<DbTvBroadcaster>();
             var updateList = new List<DbTvBroadcaster>();
             foreach (var broadcaster in uniqueTvBroadcasters)
@@ -294,13 +311,13 @@ namespace DatabaseAccess.GameRepository
         /// <returns>None</returns>
         public async Task AddUpdateGameEvents(IEnumerable<Game> seasonGames)
         {
-            var dbGameEvents = MapGamePlayerStatsToDbGamePlayerStats.Map(seasonGameRosterStats);
+            var dbGameEvents = MapGameToDbGameEvent.MapList(seasonGames);
 
             var addList = new List<IDbGameEvent>();
             var updateList = new List<IDbGameEvent>();
             foreach (var gameEvent in dbGameEvents)
             {
-                var dbGameEvent = await GetDbGameEvent(playerStats);
+                var dbGameEvent = await GetDbGameEvent(gameEvent);
                 if (dbGameEvent == null)
                 {
                     addList.Add(gameEvent);
@@ -311,11 +328,45 @@ namespace DatabaseAccess.GameRepository
                     updateList.Add(dbGameEvent);
                 }
             }
+            await SaveGameEvents(addList, updateList);
+        }
 
-            await _dbContext.GameSkaterStats.AddRangeAsync(addList.OfType<DbGameSkaterStats>());
-            _dbContext.GameSkaterStats.UpdateRange(updateList.OfType<DbGameEvent>());
-            await _dbContext.GameGoalieStats.AddRangeAsync(addList.OfType<DbGameGoalieStats>());
-            _dbContext.GameGoalieStats.UpdateRange(updateList.OfType<DbGameGoalieStats>());
+        private async Task SaveGameEvents(IEnumerable<IDbGameEvent> addList, IEnumerable<IDbGameEvent> updateList)
+        {   
+            foreach (var kvp in _dbSetEventMap)
+            {
+                var type = kvp.Key;
+                var dbSet = kvp.Value;
+
+                var addItems = addList.Where(e => type.IsInstanceOfType(e)).ToList();
+                var updateItems = updateList.Where(e => type.IsInstanceOfType(e)).ToList();
+
+                await dbSet.AddRangeAsync(addItems);
+                dbSet.UpdateRange(updateItems);
+            }
+        }
+
+        /// <summary>
+        /// Gets a game event from the database
+        /// </summary>
+        /// <param name="gameEvent">The game event to get</param>
+        /// <returns>Desired game event</returns>
+        private async Task<IDbGameEvent?> GetDbGameEvent(IDbGameEvent gameEvent)
+        {
+            int gameId = gameEvent.gameId;
+            int id = gameEvent.id;
+
+            foreach (var kvp in _dbSetEventMap)
+            {
+                var type = kvp.Key;
+                var dbSet = kvp.Value as IQueryable<IDbGameEvent> ?? ((IQueryable)kvp.Value).Cast<IDbGameEvent>();
+                var entity = await dbSet.FirstOrDefaultAsync(x => x.gameId == gameId && x.id == id);
+
+                if (entity != null)
+                    return entity;
+            }
+
+            return null;
         }
     }
 }

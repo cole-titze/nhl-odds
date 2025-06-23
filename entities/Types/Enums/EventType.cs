@@ -6,16 +6,15 @@ namespace Entities.Types.Enums
         DelayedPenalty = 2,
         Faceoff = 3,
         GameEnd = 4,
-        GameEvents = 5,
-        Giveaway = 6,
-        Goal = 7,
-        Hit = 8,
-        MissedShot = 9,
-        Penalty = 10,
-        PeriodStart = 11,
-        Shot = 12,
-        Stoppage = 13,
-        Takeaway = 14
+        Giveaway = 5,
+        Goal = 6,
+        Hit = 7,
+        MissedShot = 8,
+        Penalty = 9,
+        PeriodStart = 10,
+        Shot = 11,
+        Stoppage = 12,
+        Takeaway = 13
     }
     public static class EventTypeParser {
         public static EventType Parse(string eventType)
@@ -30,16 +29,26 @@ namespace Entities.Types.Enums
                     return EventType.Shot;
                 case "stoppage":
                     return EventType.Stoppage;
-                case "Penalty":
-                    return new Penalty(responseGameEvent);
-                case "Faceoff":
-                    return new Faceoff(responseGameEvent);
-                case "Blocked Shot":
-                    return new BlockedShot(responseGameEvent);
-                case "Missed Shot":
-                    return new MissedShot(responseGameEvent);
+                case "missed-shot":
+                    return EventType.MissedShot;
+                case "goal":
+                    return EventType.Goal;
+                case "hit":
+                    return EventType.Hit;
+                case "giveaway":
+                    return EventType.Giveaway;
+                case "takeaway":
+                    return EventType.Takeaway;
+                case "blocked-shot":
+                    return EventType.BlockedShot;
+                case "delayed-penalty":
+                    return EventType.DelayedPenalty;
+                case "penalty":
+                    return EventType.Penalty;
+                case "game-end":
+                    return EventType.GameEnd;
                 default:
-                    return new UnknownEvent(responseGameEvent);
+                    throw new ArgumentException($"Unknown event type: {eventType}", nameof(eventType));
             }
         }
     }

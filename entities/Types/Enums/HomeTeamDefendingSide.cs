@@ -1,4 +1,4 @@
-namespace Entities.Types
+namespace Entities.Types.Enums
 {
     public enum HomeTeamDefendingSide
     {

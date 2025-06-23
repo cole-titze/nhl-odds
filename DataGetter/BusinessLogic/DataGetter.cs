@@ -7,18 +7,18 @@ using Services.NhlData;
 
 namespace DataGetter.BusinessLogic
 {
-    public class DataGetter
+    public class NhlDataManager
     {
         private readonly IGameRepository _gameRepo;
         private readonly IPlayerRepository _playerRepo;
         private readonly NhlDataGetter _nhlDataGetter;
-        private readonly ILogger<DataGetter> _logger;
-        public DataGetter(IGameRepository gameRepository, IPlayerRepository playerRepository, NhlDataGetter nhlDataGetter, ILoggerFactory loggerFactory)
+        private readonly ILogger<NhlDataManager> _logger;
+        public NhlDataManager(IGameRepository gameRepository, IPlayerRepository playerRepository, NhlDataGetter nhlDataGetter, ILoggerFactory loggerFactory)
         {
             _gameRepo = gameRepository;
             _playerRepo = playerRepository;
             _nhlDataGetter = nhlDataGetter;
-            _logger = loggerFactory.CreateLogger<DataGetter>();
+            _logger = loggerFactory.CreateLogger<NhlDataManager>();
         }
         /// <summary>
         /// Gets all nhl games within the season range. If the game is already in the database, it is skipped.

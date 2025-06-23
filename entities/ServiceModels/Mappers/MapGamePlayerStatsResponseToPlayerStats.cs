@@ -50,7 +50,7 @@ namespace Entities.ServiceModels.Mappers
                 var evenStrengthGoalsAllowed = goalie.evenStrengthGoalsAgainst == null ? 0 : (int)goalie.evenStrengthGoalsAgainst;
                 var powerPlayGoalsAllowed = goalie.powerPlayGoalsAgainst == null ? 0 : (int)goalie.powerPlayGoalsAgainst;
                 var shortHandedGoalsAllowed = goalie.shortHandedGoalsAgainst == null ? 0 : (int)goalie.shortHandedGoalsAgainst;
-                var timeOnIceSeconds = goalie.toi == null ? 0 : ((string)goalie.toi).ParseToiToSeconds();
+                var timeOnIceSeconds = goalie.toi == null ? 0 : ((string)goalie.toi).ParseIceTimeToSeconds();
 
                 var goalieStats = new GameGoalieStats()
                 {
@@ -94,7 +94,7 @@ namespace Entities.ServiceModels.Mappers
                     hits = (int)player.hits,
                     giveaways = (int)player.giveaways,
                     takeaways = (int)player.takeaways,
-                    timeOnIceSeconds = ((string)player.toi).ParseToiToSeconds(),
+                    timeOnIceSeconds = ((string)player.toi).ParseIceTimeToSeconds(),
                     position = MapPositionStrToPosition.Map((string)player.position)
                 };
                 gamePlayers.Add(playerStats);
