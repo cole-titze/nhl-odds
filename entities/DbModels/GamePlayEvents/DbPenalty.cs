@@ -1,4 +1,5 @@
 using Entities.Types.Enums;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Entities.DbModels.GamePlayEvents
 {
@@ -24,6 +25,19 @@ namespace Entities.DbModels.GamePlayEvents
         public int duration { get; set; }
         public PenaltyType penaltyType { get; set; }
         public PenaltySeverity penaltySeverity { get; set; }
+
+        [ForeignKey(nameof(gameId))]
+        public DbGameRaw? game { get; set; }
+
+        [ForeignKey(nameof(drawnByPlayerId))]
+        public DbPlayer? drawnByPlayer { get; set; }
+
+        [ForeignKey(nameof(committedByPlayerId))]
+        public DbPlayer? committedByPlayer { get; set; }
+
+        [ForeignKey(nameof(committedByPlayerTeamId))]
+        public DbTeam? committedByPlayerTeam { get; set; }
+
         public void Clone(IDbGameEvent gameEvent)
         {
             if (gameEvent is DbPenalty penaltyEvent)
@@ -48,6 +62,10 @@ namespace Entities.DbModels.GamePlayEvents
                 duration = penaltyEvent.duration;
                 penaltyType = penaltyEvent.penaltyType;
                 penaltySeverity = penaltyEvent.penaltySeverity;
+                game = penaltyEvent.game;
+                drawnByPlayer = penaltyEvent.drawnByPlayer;
+                committedByPlayer = penaltyEvent.committedByPlayer;
+                committedByPlayerTeam = penaltyEvent.committedByPlayerTeam;
             }
             else
             {

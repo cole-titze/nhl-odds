@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Types.Enums;
 
 namespace Entities.DbModels.GamePlayEvents
@@ -20,6 +21,13 @@ namespace Entities.DbModels.GamePlayEvents
         public int xCoordinate { get; set; }
         public int yCoordinate { get; set; }
         public Zone zone { get; set; }
+        [ForeignKey(nameof(takeawayPlayerTeamId))]
+        public DbTeam? takeawayPlayerTeam { get; set; }
+        [ForeignKey(nameof(takeawayPlayerId))]
+        public DbPlayer? takeawayPlayer { get; set; }
+        [ForeignKey(nameof(gameId))]
+        public DbGameRaw? game { get; set; }
+
         public void Clone(IDbGameEvent gameEvent)
         {
             if (gameEvent is DbTakeaway takeawayEvent)

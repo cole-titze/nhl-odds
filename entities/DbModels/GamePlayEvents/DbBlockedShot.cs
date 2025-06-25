@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Types.Enums;
 
 namespace Entities.DbModels.GamePlayEvents
@@ -22,6 +23,14 @@ namespace Entities.DbModels.GamePlayEvents
         public int yCoordinate { get; set; }
         public Zone zone { get; set; }
         public BlockType blockType { get; set; }
+        [ForeignKey("shooterPlayerId")]
+        public DbPlayer? shooterPlayer { get; set; }
+        [ForeignKey("blockingPlayerId")]
+        public DbPlayer? blockingPlayer { get; set; }
+        [ForeignKey("gameId")]
+        public DbGameRaw? game { get; set; }
+        [ForeignKey("blockingPlayerTeamId")]
+        public DbTeam? blockingTeam { get; set; }
         public void Clone(IDbGameEvent gameEvent)
         {
             if (gameEvent is DbBlockedShot blockedShotEvent)
@@ -44,6 +53,10 @@ namespace Entities.DbModels.GamePlayEvents
                 yCoordinate = blockedShotEvent.yCoordinate;
                 zone = blockedShotEvent.zone;
                 blockType = blockedShotEvent.blockType;
+                shooterPlayer = blockedShotEvent.shooterPlayer;
+                blockingPlayer = blockedShotEvent.blockingPlayer;
+                game = blockedShotEvent.game;
+                blockingTeam = blockedShotEvent.blockingTeam;
             }
             else
             {

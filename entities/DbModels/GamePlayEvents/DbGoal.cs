@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Types.Enums;
 
 namespace Entities.DbModels.GamePlayEvents
@@ -28,6 +29,23 @@ namespace Entities.DbModels.GamePlayEvents
         public int highlightClipId { get; set; }
         public int discreetClipId { get; set; }
         public string pptReplayUrl { get; set; } = string.Empty;
+        [ForeignKey(nameof(gameId))]
+        public DbGameRaw? Game { get; set; }
+
+        [ForeignKey(nameof(scoringPlayerId))]
+        public DbPlayer? ScoringPlayer { get; set; }
+
+        [ForeignKey(nameof(assistOnePlayerId))]
+        public DbPlayer? AssistOnePlayer { get; set; }
+
+        [ForeignKey(nameof(assistTwoPlayerId))]
+        public DbPlayer? AssistTwoPlayer { get; set; }
+        [ForeignKey(nameof(scoringPlayerTeamId))]
+        public DbTeam? scoringTeam { get; set; }
+
+        [ForeignKey(nameof(goalieId))]
+        public DbPlayer? Goalie { get; set; }
+
         public void Clone(IDbGameEvent gameEvent)
         {
             if (gameEvent is DbGoal goalEvent)
@@ -56,6 +74,11 @@ namespace Entities.DbModels.GamePlayEvents
                 highlightClipId = goalEvent.highlightClipId;
                 discreetClipId = goalEvent.discreetClipId;
                 pptReplayUrl = goalEvent.pptReplayUrl;
+                Game = goalEvent.Game;
+                ScoringPlayer = goalEvent.ScoringPlayer;
+                AssistOnePlayer = goalEvent.AssistOnePlayer;
+                AssistTwoPlayer = goalEvent.AssistTwoPlayer;
+                Goalie = goalEvent.Goalie;
             }
             else
             {

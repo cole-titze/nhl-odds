@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Types.Enums;
 
 namespace Entities.DbModels.GamePlayEvents
@@ -15,13 +16,21 @@ namespace Entities.DbModels.GamePlayEvents
         public HomeTeamDefendingSide homeTeamDefendingSide { get; set; }
         public int secondsIntoPeriod { get; set; }
         public int secondsLeftInPeriod { get; set; }
-        public int shooterTeamId { get; set; }
-        public int shooterPlayerId { get; set; }
+        public int shootingTeamId { get; set; }
+        public int shootingPlayerId { get; set; }
         public int goalieId { get; set; }
         public int xCoordinate { get; set; }
         public int yCoordinate { get; set; }
         public Zone zone { get; set; }
         public ShotType shotType { get; set; }
+        [ForeignKey("shootingPlayerId")]
+        public DbPlayer? shootingPlayer { get; set; }
+        [ForeignKey("goalieId")]
+        public DbPlayer? goaliePlayer { get; set; }
+        [ForeignKey("gameId")]
+        public DbGameRaw? game { get; set; }
+        [ForeignKey("shootingTeamId")]
+        public DbTeam? shootingTeam { get; set; }
         public void Clone(IDbGameEvent gameEvent)
         {
             if (gameEvent is DbShot shotEvent)
@@ -37,13 +46,17 @@ namespace Entities.DbModels.GamePlayEvents
                 homeTeamDefendingSide = shotEvent.homeTeamDefendingSide;
                 secondsIntoPeriod = shotEvent.secondsIntoPeriod;
                 secondsLeftInPeriod = shotEvent.secondsLeftInPeriod;
-                shooterTeamId = shotEvent.shooterTeamId;
-                shooterPlayerId = shotEvent.shooterPlayerId;
+                shootingTeamId = shotEvent.shootingTeamId;
+                shootingPlayerId = shotEvent.shootingPlayerId;
                 goalieId = shotEvent.goalieId;
                 xCoordinate = shotEvent.xCoordinate;
                 yCoordinate = shotEvent.yCoordinate;
                 zone = shotEvent.zone;
                 shotType = shotEvent.shotType;
+                shootingPlayer = shotEvent.shootingPlayer;
+                goaliePlayer = shotEvent.goaliePlayer;
+                game = shotEvent.game;
+                shootingTeam = shotEvent.shootingTeam;
             }
             else
             {

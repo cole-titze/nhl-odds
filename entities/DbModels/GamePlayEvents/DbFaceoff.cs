@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Types.Enums;
 
 namespace Entities.DbModels.GamePlayEvents
@@ -21,6 +22,14 @@ namespace Entities.DbModels.GamePlayEvents
         public int xCoordinate { get; set; }
         public int yCoordinate { get; set; }
         public Zone zone { get; set; }
+        [ForeignKey("winningPlayerId")]
+        public DbPlayer? winningPlayer { get; set; }
+        [ForeignKey("losingPlayerId")]
+        public DbPlayer? losingPlayer { get; set; }
+        [ForeignKey("gameId")]
+        public DbGameRaw? game { get; set; }
+        [ForeignKey("winningTeamId")]
+        public DbTeam? winningTeam { get; set; }
         public void Clone(IDbGameEvent gameEvent)
         {
             if (gameEvent is DbFaceoff faceoffEvent)
@@ -42,6 +51,10 @@ namespace Entities.DbModels.GamePlayEvents
                 xCoordinate = faceoffEvent.xCoordinate;
                 yCoordinate = faceoffEvent.yCoordinate;
                 zone = faceoffEvent.zone;
+                winningPlayer = faceoffEvent.winningPlayer;
+                losingPlayer = faceoffEvent.losingPlayer;
+                game = faceoffEvent.game;
+                winningTeam = faceoffEvent.winningTeam;
             }
             else
             {

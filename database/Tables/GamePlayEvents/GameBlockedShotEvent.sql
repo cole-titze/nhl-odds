@@ -1,0 +1,26 @@
+CREATE TABLE [dbo].[BlockedShotEvent]
+(
+    id INT NOT NULL,
+    gameId INT NOT NULL,
+    typeCode INT NOT NULL,
+    sortOrder INT NOT NULL,
+    situationCode INT NOT NULL,
+    periodNumber INT NOT NULL,
+    periodType INT NOT NULL,
+    eventTypeName VARCHAR(100) NOT NULL,
+    homeTeamDefendingSide INT NOT NULL,
+    secondsIntoPeriod INT NOT NULL,
+    secondsLeftInPeriod INT NOT NULL,
+    blockingPlayerTeamId INT NOT NULL,
+    blockingPlayerId INT NOT NULL,
+    shooterPlayerId INT NOT NULL,
+    xCoordinate INT NOT NULL,
+    yCoordinate INT NOT NULL,
+    [zone] INT NOT NULL,
+    blockType INT NOT NULL,
+    CONSTRAINT PK_BlockedShotEvent PRIMARY KEY(gameId, id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id),
+    FOREIGN KEY (blockingPlayerTeamId) REFERENCES Team(id),
+    FOREIGN KEY (blockingPlayerId) REFERENCES Player(id),
+    FOREIGN KEY (shooterPlayerId) REFERENCES Player(id)
+);

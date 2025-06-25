@@ -239,4 +239,323 @@ CREATE TABLE [dbo].[GameTvBroadcaster]
     FOREIGN KEY (broadcasterId) REFERENCES TvBroadcaster(id)
 );
 
+-- Add Game Event Tables
+CREATE TABLE [dbo].[BlockedShotEvent]
+(
+    id INT NOT NULL,
+    gameId INT NOT NULL,
+    typeCode INT NOT NULL,
+    sortOrder INT NOT NULL,
+    situationCode INT NOT NULL,
+    periodNumber INT NOT NULL,
+    periodType INT NOT NULL,
+    eventTypeName VARCHAR(100) NOT NULL,
+    homeTeamDefendingSide INT NOT NULL,
+    secondsIntoPeriod INT NOT NULL,
+    secondsLeftInPeriod INT NOT NULL,
+    blockingPlayerTeamId INT NOT NULL,
+    blockingPlayerId INT NOT NULL,
+    shooterPlayerId INT NOT NULL,
+    xCoordinate INT NOT NULL,
+    yCoordinate INT NOT NULL,
+    [zone] INT NOT NULL,
+    blockType INT NOT NULL,
+    CONSTRAINT PK_BlockedShotEvent PRIMARY KEY(gameId, id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id),
+    FOREIGN KEY (blockingPlayerTeamId) REFERENCES Team(id),
+    FOREIGN KEY (blockingPlayerId) REFERENCES Player(id),
+    FOREIGN KEY (shooterPlayerId) REFERENCES Player(id)
+);
+
+CREATE TABLE [dbo].[GameDelayedPenaltyEvent]
+(
+    id INT NOT NULL,
+    gameId INT NOT NULL,
+    typeCode INT NOT NULL,
+    sortOrder INT NOT NULL,
+    situationCode INT NOT NULL,
+    periodNumber INT NOT NULL,
+    periodType INT NOT NULL,
+    eventTypeName VARCHAR(100) NOT NULL,
+    homeTeamDefendingSide INT NOT NULL,
+    secondsIntoPeriod INT NOT NULL,
+    secondsLeftInPeriod INT NOT NULL,
+    penaltyTeamId INT NOT NULL,
+    CONSTRAINT PK_GameDelayedPenaltyEvent PRIMARY KEY(gameId, id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id),
+    FOREIGN KEY (penaltyTeamId) REFERENCES Team(id)
+);
+
+CREATE TABLE [dbo].[GameFaceoffEvent]
+(
+    id INT NOT NULL,
+    gameId INT NOT NULL,
+    typeCode INT NOT NULL,
+    sortOrder INT NOT NULL,
+    situationCode INT NOT NULL,
+    periodNumber INT NOT NULL,
+    periodType INT NOT NULL,
+    eventTypeName VARCHAR(100) NOT NULL,
+    homeTeamDefendingSide INT NOT NULL,
+    secondsIntoPeriod INT NOT NULL,
+    secondsLeftInPeriod INT NOT NULL,
+    winningTeamId INT NOT NULL,
+    winningPlayerId INT NOT NULL,
+    losingPlayerId INT NOT NULL,
+    xCoordinate INT NOT NULL,
+    yCoordinate INT NOT NULL,
+    [zone] INT NOT NULL,
+    CONSTRAINT PK_GameFaceoffEvent PRIMARY KEY(gameId, id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id),
+    FOREIGN KEY (winningTeamId) REFERENCES Team(id),
+    FOREIGN KEY (winningPlayerId) REFERENCES Player(id),
+    FOREIGN KEY (losingPlayerId) REFERENCES Player(id)
+);
+
+CREATE TABLE [dbo].[GameGameEndEvent]
+(
+    id INT NOT NULL,
+    gameId INT NOT NULL,
+    typeCode INT NOT NULL,
+    sortOrder INT NOT NULL,
+    situationCode INT NOT NULL,
+    periodNumber INT NOT NULL,
+    periodType INT NOT NULL,
+    eventTypeName VARCHAR(100) NOT NULL,
+    homeTeamDefendingSide INT NOT NULL,
+    secondsIntoPeriod INT NOT NULL,
+    secondsLeftInPeriod INT NOT NULL,
+    CONSTRAINT PK_GameGameEndEvent PRIMARY KEY(gameId, id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id)
+);
+
+CREATE TABLE [dbo].[GameGiveawayEvent]
+(
+    id INT NOT NULL,
+    gameId INT NOT NULL,
+    typeCode INT NOT NULL,
+    sortOrder INT NOT NULL,
+    situationCode INT NOT NULL,
+    periodNumber INT NOT NULL,
+    periodType INT NOT NULL,
+    eventTypeName VARCHAR(100) NOT NULL,
+    homeTeamDefendingSide INT NOT NULL,
+    secondsIntoPeriod INT NOT NULL,
+    secondsLeftInPeriod INT NOT NULL,
+    giveawayPlayerTeamId INT NOT NULL,
+    giveawayPlayerId INT NOT NULL,
+    xCoordinate INT NOT NULL,
+    yCoordinate INT NOT NULL,
+    [zone] INT NOT NULL,
+    CONSTRAINT PK_GameGiveawayEvent PRIMARY KEY(gameId, id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id),
+    FOREIGN KEY (giveawayPlayerTeamId) REFERENCES Team(id),
+    FOREIGN KEY (giveawayPlayerId) REFERENCES Player(id)
+);
+
+CREATE TABLE [dbo].[GameGoalEvent]
+(
+    id INT NOT NULL,
+    gameId INT NOT NULL,
+    typeCode INT NOT NULL,
+    sortOrder INT NOT NULL,
+    situationCode INT NOT NULL,
+    periodNumber INT NOT NULL,
+    periodType INT NOT NULL,
+    eventTypeName VARCHAR(100) NOT NULL,
+    homeTeamDefendingSide INT NOT NULL,
+    secondsIntoPeriod INT NOT NULL,
+    secondsLeftInPeriod INT NOT NULL,
+    xCoordinate INT NOT NULL,
+    yCoordinate INT NOT NULL,
+    [zone] INT NOT NULL,
+    shotType INT NOT NULL,
+    scoringPlayerTeamId INT NOT NULL,
+    assistOnePlayerId INT NOT NULL,
+    assistTwoPlayerId INT NOT NULL,
+    scoringPlayerId INT NOT NULL,
+    goalieId INT NOT NULL,
+    highlightClipSharingUrl VARCHAR(255) NOT NULL,
+    highlightClipId INT NOT NULL,
+    discreetClipId INT NOT NULL,
+    pptReplayUrl VARCHAR(255) NOT NULL,
+    CONSTRAINT PK_GameGoalEvent PRIMARY KEY(gameId, id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id),
+    FOREIGN KEY (scoringPlayerTeamId) REFERENCES Team(id),
+    FOREIGN KEY (scoringPlayerId) REFERENCES Player(id),
+    FOREIGN KEY (assistOnePlayerId) REFERENCES Player(id),
+    FOREIGN KEY (assistTwoPlayerId) REFERENCES Player(id),
+    FOREIGN KEY (goalieId) REFERENCES Player(id)
+);
+
+CREATE TABLE [dbo].[GameHitEvent]
+(
+    id INT NOT NULL,
+    gameId INT NOT NULL,
+    typeCode INT NOT NULL,
+    sortOrder INT NOT NULL,
+    situationCode INT NOT NULL,
+    periodNumber INT NOT NULL,
+    periodType INT NOT NULL,
+    eventTypeName VARCHAR(100) NOT NULL,
+    homeTeamDefendingSide INT NOT NULL,
+    secondsIntoPeriod INT NOT NULL,
+    secondsLeftInPeriod INT NOT NULL,
+    hittingPlayerTeamId INT NOT NULL,
+    hittingPlayerId INT NOT NULL,
+    hitteePlayerId INT NOT NULL,
+    xCoordinate INT NOT NULL,
+    yCoordinate INT NOT NULL,
+    [zone] INT NOT NULL,
+    CONSTRAINT PK_GameHitEvent PRIMARY KEY(gameId, id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id),
+    FOREIGN KEY (hittingPlayerTeamId) REFERENCES Team(id),
+    FOREIGN KEY (hittingPlayerId) REFERENCES Player(id),
+    FOREIGN KEY (hitteePlayerId) REFERENCES Player(id)
+);
+
+CREATE TABLE [dbo].[GameMissedShotEvent]
+(
+    id INT NOT NULL,
+    gameId INT NOT NULL,
+    typeCode INT NOT NULL,
+    sortOrder INT NOT NULL,
+    situationCode INT NOT NULL,
+    periodNumber INT NOT NULL,
+    periodType INT NOT NULL,
+    eventTypeName VARCHAR(100) NOT NULL,
+    homeTeamDefendingSide INT NOT NULL,
+    shotType INT NOT NULL,
+    secondsIntoPeriod INT NOT NULL,
+    secondsLeftInPeriod INT NOT NULL,
+    shootingPlayerTeamId INT NOT NULL,
+    shootingPlayerId INT NOT NULL,
+    goalieId INT NOT NULL,
+    xCoordinate INT NOT NULL,
+    yCoordinate INT NOT NULL,
+    [zone] INT NOT NULL,
+    missType INT NOT NULL,
+    CONSTRAINT PK_GameMissedShotEvent PRIMARY KEY(gameId, id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id),
+    FOREIGN KEY (shootingPlayerTeamId) REFERENCES Team(id),
+    FOREIGN KEY (shootingPlayerId) REFERENCES Player(id),
+    FOREIGN KEY (goalieId) REFERENCES Player(id)
+);
+
+CREATE TABLE [dbo].[GamePenaltyEvent]
+(
+    id INT NOT NULL,
+    gameId INT NOT NULL,
+    typeCode INT NOT NULL,
+    sortOrder INT NOT NULL,
+    situationCode INT NOT NULL,
+    periodNumber INT NOT NULL,
+    periodType INT NOT NULL,
+    eventTypeName VARCHAR(100) NOT NULL,
+    homeTeamDefendingSide INT NOT NULL,
+    secondsIntoPeriod INT NOT NULL,
+    secondsLeftInPeriod INT NOT NULL,
+    committedByPlayerTeamId INT NOT NULL,
+    drawnByPlayerId INT NOT NULL,
+    committedByPlayerId INT NOT NULL,
+    xCoordinate INT NOT NULL,
+    yCoordinate INT NOT NULL,
+    [zone] INT NOT NULL,
+    duration INT NOT NULL,
+    penaltyType INT NOT NULL,
+    penaltySeverity INT NOT NULL,
+    CONSTRAINT PK_GamePenaltyEvent PRIMARY KEY(gameId, id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id),
+    FOREIGN KEY (committedByPlayerTeamId) REFERENCES Team(id),
+    FOREIGN KEY (drawnByPlayerId) REFERENCES Player(id),
+    FOREIGN KEY (committedByPlayerId) REFERENCES Player(id)
+);
+
+CREATE TABLE [dbo].[GamePeriodStart]
+(
+    id INT NOT NULL,
+    gameId INT NOT NULL,
+    typeCode INT NOT NULL,
+    sortOrder INT NOT NULL,
+    situationCode INT NOT NULL,
+    periodNumber INT NOT NULL,
+    periodType INT NOT NULL,
+    eventTypeName VARCHAR(100) NOT NULL,
+    homeTeamDefendingSide INT NOT NULL,
+    secondsIntoPeriod INT NOT NULL,
+    secondsLeftInPeriod INT NOT NULL,
+    CONSTRAINT PK_GamePeriodStart PRIMARY KEY(gameId, id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id)
+);
+
+CREATE TABLE [dbo].[ShotEvent]
+(
+    id INT NOT NULL,
+    gameId INT NOT NULL,
+    typeCode INT NOT NULL,
+    sortOrder INT NOT NULL,
+    situationCode INT NOT NULL,
+    periodNumber INT NOT NULL,
+    periodType INT NOT NULL,
+    eventTypeName VARCHAR(100) NOT NULL,
+    homeTeamDefendingSide INT NOT NULL,
+    secondsIntoPeriod INT NOT NULL,
+    secondsLeftInPeriod INT NOT NULL,
+    shooterTeamId INT NOT NULL,
+    shooterPlayerId INT NOT NULL,
+    goalieId INT NOT NULL,
+    xCoordinate INT NOT NULL,
+    yCoordinate INT NOT NULL,
+    [zone] INT NOT NULL,
+    shotType INT NOT NULL,
+    CONSTRAINT PK_ShotEvent PRIMARY KEY(gameId,id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id),
+    FOREIGN KEY (shooterTeamId) REFERENCES Team(id),
+    FOREIGN KEY (shooterPlayerId) REFERENCES Player(id),
+    FOREIGN KEY (goalieId) REFERENCES Player(id)
+);
+
+CREATE TABLE [dbo].[GameStoppageEvent]
+(
+    id INT NOT NULL,
+    gameId INT NOT NULL,
+    typeCode INT NOT NULL,
+    sortOrder INT NOT NULL,
+    situationCode INT NOT NULL,
+    periodNumber INT NOT NULL,
+    periodType INT NOT NULL,
+    eventTypeName VARCHAR(100) NOT NULL,
+    homeTeamDefendingSide INT NOT NULL,
+    secondsIntoPeriod INT NOT NULL,
+    secondsLeftInPeriod INT NOT NULL,
+    stoppageType INT NOT NULL,
+    stoppageDetails INT NOT NULL,
+    CONSTRAINT PK_GameStoppageEvent PRIMARY KEY(gameId, id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id)
+);
+
+CREATE TABLE [dbo].[GameTakeawayEvent]
+(
+    id INT NOT NULL,
+    gameId INT NOT NULL,
+    typeCode INT NOT NULL,
+    sortOrder INT NOT NULL,
+    situationCode INT NOT NULL,
+    periodNumber INT NOT NULL,
+    periodType INT NOT NULL,
+    eventTypeName VARCHAR(100) NOT NULL,
+    homeTeamDefendingSide INT NOT NULL,
+    secondsIntoPeriod INT NOT NULL,
+    secondsLeftInPeriod INT NOT NULL,
+    takeawayPlayerTeamId INT NOT NULL,
+    takeawayPlayerId INT NOT NULL,
+    xCoordinate INT NOT NULL,
+    yCoordinate INT NOT NULL,
+    [zone] INT NOT NULL,
+    CONSTRAINT PK_GameTakeawayEvent PRIMARY KEY(gameId, id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id),
+    FOREIGN KEY (takeawayPlayerTeamId) REFERENCES Team(id),
+    FOREIGN KEY (takeawayPlayerId) REFERENCES Player(id)
+);
+
 GO

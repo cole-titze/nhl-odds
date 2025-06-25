@@ -1,0 +1,27 @@
+CREATE TABLE [dbo].[GameMissedShotEvent]
+(
+    id INT NOT NULL,
+    gameId INT NOT NULL,
+    typeCode INT NOT NULL,
+    sortOrder INT NOT NULL,
+    situationCode INT NOT NULL,
+    periodNumber INT NOT NULL,
+    periodType INT NOT NULL,
+    eventTypeName VARCHAR(100) NOT NULL,
+    homeTeamDefendingSide INT NOT NULL,
+    shotType INT NOT NULL,
+    secondsIntoPeriod INT NOT NULL,
+    secondsLeftInPeriod INT NOT NULL,
+    shootingPlayerTeamId INT NOT NULL,
+    shootingPlayerId INT NOT NULL,
+    goalieId INT NOT NULL,
+    xCoordinate INT NOT NULL,
+    yCoordinate INT NOT NULL,
+    [zone] INT NOT NULL,
+    missType INT NOT NULL,
+    CONSTRAINT PK_GameMissedShotEvent PRIMARY KEY(gameId, id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id),
+    FOREIGN KEY (shootingPlayerTeamId) REFERENCES Team(id),
+    FOREIGN KEY (shootingPlayerId) REFERENCES Player(id),
+    FOREIGN KEY (goalieId) REFERENCES Player(id)
+);

@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Types.Enums;
 
 namespace Entities.DbModels.GamePlayEvents
@@ -23,6 +24,14 @@ namespace Entities.DbModels.GamePlayEvents
         public int yCoordinate { get; set; }
         public Zone zone { get; set; }
         public MissedShotType missType { get; set; }
+        [ForeignKey("shootingPlayerId")]
+        public DbPlayer? shootingPlayer { get; set; }
+        [ForeignKey("goalieId")]
+        public DbPlayer? goaliePlayer { get; set; }
+        [ForeignKey("gameId")]
+        public DbGameRaw? game { get; set; }
+        [ForeignKey("shootingTeamId")]
+        public DbTeam? shootingTeam { get; set; }
         public void Clone(IDbGameEvent gameEvent)
         {
             if (gameEvent is DbMissedShot missedShotEvent)

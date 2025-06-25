@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Types.Enums;
 
 namespace Entities.DbModels.GamePlayEvents
@@ -15,6 +16,8 @@ namespace Entities.DbModels.GamePlayEvents
         public HomeTeamDefendingSide homeTeamDefendingSide { get; set; }
         public int secondsIntoPeriod { get; set; }
         public int secondsLeftInPeriod { get; set; }
+        [ForeignKey("gameId")]
+        public DbGameRaw? game { get; set; }
         public void Clone(IDbGameEvent gameEvent)
         {
             if (gameEvent is DbGameEnd gameEndEvent)
@@ -30,6 +33,7 @@ namespace Entities.DbModels.GamePlayEvents
                 homeTeamDefendingSide = gameEndEvent.homeTeamDefendingSide;
                 secondsIntoPeriod = gameEndEvent.secondsIntoPeriod;
                 secondsLeftInPeriod = gameEndEvent.secondsLeftInPeriod;
+                game = gameEndEvent.game;
             }
             else
             {

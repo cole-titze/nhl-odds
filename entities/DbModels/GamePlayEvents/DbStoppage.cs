@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Types.Enums;
 
 namespace Entities.DbModels.GamePlayEvents
@@ -17,6 +18,8 @@ namespace Entities.DbModels.GamePlayEvents
         public int secondsLeftInPeriod { get; set; }
         public StoppageType stoppageType { get; set; }
         public StoppageDetails stoppageDetails { get; set; }
+        [ForeignKey(nameof(gameId))]
+        public DbGameRaw? game { get; set; }
         public void Clone(IDbGameEvent gameEvent)
         {
             if (gameEvent is DbStoppage stoppageEvent)
@@ -34,6 +37,7 @@ namespace Entities.DbModels.GamePlayEvents
                 secondsLeftInPeriod = stoppageEvent.secondsLeftInPeriod;
                 stoppageType = stoppageEvent.stoppageType;
                 stoppageDetails = stoppageEvent.stoppageDetails;
+                game = stoppageEvent.game;
             }
             else
             {
