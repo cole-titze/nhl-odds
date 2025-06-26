@@ -1,4 +1,4 @@
-CREATE TABLE [dbo].[BlockedShotEvent]
+CREATE TABLE [dbo].[GameBlockedShotEvent]
 (
     id INT NOT NULL,
     gameId INT NOT NULL,

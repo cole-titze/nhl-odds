@@ -8,6 +8,7 @@ namespace Entities.DbModels
         public int gameId { get; set; }
         public int periodNumber { get; set; }
         public PeriodType periodType { get; set; }
+        // Players on ice (Ex. "1551" means 1 goalie 5 players on both sides)
         public int situationCode { get; set; }
         public int typeCode { get; set; }
         public int sortOrder { get; set; }

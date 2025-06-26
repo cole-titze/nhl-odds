@@ -25,19 +25,20 @@ namespace DatabaseAccess
         public virtual DbSet<DbGameTvBroadcaster> GameTvBroadcaster { get; set; } = null!;
 
         // Game Event Tables
-        public virtual DbSet<DbBlockedShot> BlockedShotEvent { get; set; } = null!;
-        public virtual DbSet<DbDelayedPenalty> DelayedPenaltyEvent { get; set; } = null!;
-        public virtual DbSet<DbFaceoff> FaceoffEvent { get; set; } = null!;
-        public virtual DbSet<DbGameEnd> GameEndEvent { get; set; } = null!;
-        public virtual DbSet<DbGiveaway> GiveawayEvent { get; set; } = null!;
-        public virtual DbSet<DbGoal> GoalEvent { get; set; } = null!;
-        public virtual DbSet<DbHit> HitEvent { get; set; } = null!;
-        public virtual DbSet<DbMissedShot> MissedShotEvent { get; set; } = null!;
-        public virtual DbSet<DbPenalty> PenaltyEvent { get; set; } = null!;
-        public virtual DbSet<DbPeriodStart> PeriodStartEvent { get; set; } = null!;
-        public virtual DbSet<DbShot> ShotEvent { get; set; } = null!;
-        public virtual DbSet<DbStoppage> StoppageEvent { get; set; } = null!;
-        public virtual DbSet<DbTakeaway> TakeawayEvent { get; set; } = null!;
+        public virtual DbSet<DbBlockedShot> GameBlockedShotEvent { get; set; } = null!;
+        public virtual DbSet<DbDelayedPenalty> GameDelayedPenaltyEvent { get; set; } = null!;
+        public virtual DbSet<DbFaceoff> GameFaceoffEvent { get; set; } = null!;
+        public virtual DbSet<DbGameEnd> GameGameEndEvent { get; set; } = null!;
+        public virtual DbSet<DbGiveaway> GameGiveawayEvent { get; set; } = null!;
+        public virtual DbSet<DbGoal> GameGoalEvent { get; set; } = null!;
+        public virtual DbSet<DbHit> GameHitEvent { get; set; } = null!;
+        public virtual DbSet<DbMissedShot> GameMissedShotEvent { get; set; } = null!;
+        public virtual DbSet<DbPenalty> GamePenaltyEvent { get; set; } = null!;
+        public virtual DbSet<DbPeriodStart> GamePeriodStartEvent { get; set; } = null!;
+        public virtual DbSet<DbPeriodStart> GamePeriodEndEvent { get; set; } = null!;
+        public virtual DbSet<DbShot> GameShotEvent { get; set; } = null!;
+        public virtual DbSet<DbStoppage> GameStoppageEvent { get; set; } = null!;
+        public virtual DbSet<DbTakeaway> GameTakeawayEvent { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -77,6 +78,8 @@ namespace DatabaseAccess
             modelBuilder.Entity<DbPenalty>()
                 .HasKey(c => new { c.id, c.gameId });
             modelBuilder.Entity<DbPeriodStart>()
+                .HasKey(c => new { c.id, c.gameId });
+            modelBuilder.Entity<DbPeriodEnd>()
                 .HasKey(c => new { c.id, c.gameId });
             modelBuilder.Entity<DbShot>()
                 .HasKey(c => new { c.id, c.gameId });

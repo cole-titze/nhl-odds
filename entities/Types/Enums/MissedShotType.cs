@@ -2,6 +2,8 @@ namespace Entities.Types.Enums
 {
     public enum MissedShotType
     {
+        // Wide was used in older years before having more specific left and right
+        Wide,
         WideLeft,
         HighWideLeft,
         High,
@@ -18,6 +20,8 @@ namespace Entities.Types.Enums
         {
             switch (periodType)
             {
+                case "wide-of-net":
+                    return MissedShotType.Wide;
                 case "wide-left":
                     return MissedShotType.WideLeft;
                 case "high-and-wide-left":
@@ -29,6 +33,7 @@ namespace Entities.Types.Enums
                 case "hit-right-post":
                     return MissedShotType.RightPost;
                 case "above-crossbar":
+                case "over-net":
                     return MissedShotType.High;
                 case "short":
                     return MissedShotType.Short;

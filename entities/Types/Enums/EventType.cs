@@ -14,7 +14,8 @@ namespace Entities.Types.Enums
         PeriodStart = 10,
         Shot = 11,
         Stoppage = 12,
-        Takeaway = 13
+        Takeaway = 13,
+        PeriodEnd = 14,
     }
     public static class EventTypeParser {
         public static EventType Parse(string eventType)
@@ -47,6 +48,8 @@ namespace Entities.Types.Enums
                     return EventType.Penalty;
                 case "game-end":
                     return EventType.GameEnd;
+                case "period-end":
+                    return EventType.PeriodEnd;
                 default:
                     throw new ArgumentException($"Unknown event type: {eventType}", nameof(eventType));
             }

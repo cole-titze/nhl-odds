@@ -1,4 +1,6 @@
-﻿namespace Services.NhlData
+﻿using Entities.Models;
+
+namespace Services.NhlData
 {
     public class NhlDataGetter
     {
@@ -63,6 +65,9 @@
                     break;
                 case GameRequestType.GameStats:
                     urlParameters = $"{id}/right-rail";
+                    break;
+                case GameRequestType.GameEvents:
+                    urlParameters = $"{id}/play-by-play";
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(requestType), requestType, null);

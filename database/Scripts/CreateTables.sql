@@ -240,7 +240,7 @@ CREATE TABLE [dbo].[GameTvBroadcaster]
 );
 
 -- Add Game Event Tables
-CREATE TABLE [dbo].[BlockedShotEvent]
+CREATE TABLE [dbo].[GameBlockedShotEvent]
 (
     id INT NOT NULL,
     gameId INT NOT NULL,
@@ -455,8 +455,8 @@ CREATE TABLE [dbo].[GamePenaltyEvent]
     homeTeamDefendingSide INT NOT NULL,
     secondsIntoPeriod INT NOT NULL,
     secondsLeftInPeriod INT NOT NULL,
-    committedByPlayerTeamId INT NOT NULL,
-    drawnByPlayerId INT NOT NULL,
+    committedByPlayerTeamId INT,
+    drawnByPlayerId INT,
     committedByPlayerId INT NOT NULL,
     xCoordinate INT NOT NULL,
     yCoordinate INT NOT NULL,
@@ -488,7 +488,7 @@ CREATE TABLE [dbo].[GamePeriodStart]
     FOREIGN KEY (gameId) REFERENCES GameRaw(id)
 );
 
-CREATE TABLE [dbo].[ShotEvent]
+CREATE TABLE [dbo].[GamePeriodEnd]
 (
     id INT NOT NULL,
     gameId INT NOT NULL,
@@ -501,8 +501,25 @@ CREATE TABLE [dbo].[ShotEvent]
     homeTeamDefendingSide INT NOT NULL,
     secondsIntoPeriod INT NOT NULL,
     secondsLeftInPeriod INT NOT NULL,
-    shooterTeamId INT NOT NULL,
-    shooterPlayerId INT NOT NULL,
+    CONSTRAINT PK_GamePeriodEnd PRIMARY KEY(gameId, id),
+    FOREIGN KEY (gameId) REFERENCES GameRaw(id)
+);
+
+CREATE TABLE [dbo].[GameShotEvent]
+(
+    id INT NOT NULL,
+    gameId INT NOT NULL,
+    typeCode INT NOT NULL,
+    sortOrder INT NOT NULL,
+    situationCode INT NOT NULL,
+    periodNumber INT NOT NULL,
+    periodType INT NOT NULL,
+    eventTypeName VARCHAR(100) NOT NULL,
+    homeTeamDefendingSide INT NOT NULL,
+    secondsIntoPeriod INT NOT NULL,
+    secondsLeftInPeriod INT NOT NULL,
+    shootingTeamId INT NOT NULL,
+    shootingPlayerId INT NOT NULL,
     goalieId INT NOT NULL,
     xCoordinate INT NOT NULL,
     yCoordinate INT NOT NULL,
@@ -510,8 +527,8 @@ CREATE TABLE [dbo].[ShotEvent]
     shotType INT NOT NULL,
     CONSTRAINT PK_ShotEvent PRIMARY KEY(gameId,id),
     FOREIGN KEY (gameId) REFERENCES GameRaw(id),
-    FOREIGN KEY (shooterTeamId) REFERENCES Team(id),
-    FOREIGN KEY (shooterPlayerId) REFERENCES Player(id),
+    FOREIGN KEY (shootingTeamId) REFERENCES Team(id),
+    FOREIGN KEY (shootingPlayerId) REFERENCES Player(id),
     FOREIGN KEY (goalieId) REFERENCES Player(id)
 );
 

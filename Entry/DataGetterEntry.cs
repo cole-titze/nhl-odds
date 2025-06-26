@@ -13,7 +13,8 @@ namespace Entry
 {
     public class DataGetterEntry
     {
-        private const int START_YEAR = 2008;
+        // 2009 was the first year with modern play-by-play statistics
+        private const int START_YEAR = 2009;
         private readonly ILogger<DataGetterEntry> _logger;
         private readonly ILoggerFactory _loggerFactory;
 

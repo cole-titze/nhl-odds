@@ -21,19 +21,20 @@ namespace DatabaseAccess.GameRepository
             _logger = loggerFactory.CreateLogger<GameRepository>();
             _dbSetEventMap = new Dictionary<Type, dynamic>
             {
-                { typeof(DbBlockedShot), _dbContext.BlockedShotEvent },
-                { typeof(DbGoal), _dbContext.GoalEvent },
-                { typeof(DbPenalty), _dbContext.PenaltyEvent },
-                { typeof(DbFaceoff), _dbContext.FaceoffEvent },
-                { typeof(DbGiveaway), _dbContext.GiveawayEvent },
-                { typeof(DbHit), _dbContext.HitEvent },
-                { typeof(DbMissedShot), _dbContext.MissedShotEvent },
-                { typeof(DbTakeaway), _dbContext.TakeawayEvent },
-                { typeof(DbShot), _dbContext.ShotEvent },
-                { typeof(DbDelayedPenalty), _dbContext.DelayedPenaltyEvent },
-                { typeof(DbGameEnd), _dbContext.GameEndEvent },
-                { typeof(DbPeriodStart), _dbContext.PeriodStartEvent },
-                { typeof(DbStoppage), _dbContext.StoppageEvent },
+                { typeof(DbBlockedShot), _dbContext.GameBlockedShotEvent },
+                { typeof(DbGoal), _dbContext.GameGoalEvent },
+                { typeof(DbPenalty), _dbContext.GamePenaltyEvent },
+                { typeof(DbFaceoff), _dbContext.GameFaceoffEvent },
+                { typeof(DbGiveaway), _dbContext.GameGiveawayEvent },
+                { typeof(DbHit), _dbContext.GameHitEvent },
+                { typeof(DbMissedShot), _dbContext.GameMissedShotEvent },
+                { typeof(DbTakeaway), _dbContext.GameTakeawayEvent },
+                { typeof(DbShot), _dbContext.GameShotEvent },
+                { typeof(DbDelayedPenalty), _dbContext.GameDelayedPenaltyEvent },
+                { typeof(DbGameEnd), _dbContext.GameGameEndEvent },
+                { typeof(DbPeriodStart), _dbContext.GamePeriodStartEvent },
+                { typeof(DbStoppage), _dbContext.GameStoppageEvent },
+                { typeof(DbPeriodEnd), _dbContext.GamePeriodEndEvent },
             };
         }
 
@@ -360,6 +361,9 @@ namespace DatabaseAccess.GameRepository
             {
                 var type = kvp.Key;
                 var dbSet = kvp.Value as IQueryable<IDbGameEvent> ?? ((IQueryable)kvp.Value).Cast<IDbGameEvent>();
+                if (!type.IsInstanceOfType(gameEvent))
+                    continue;
+
                 var entity = await dbSet.FirstOrDefaultAsync(x => x.gameId == gameId && x.id == id);
 
                 if (entity != null)

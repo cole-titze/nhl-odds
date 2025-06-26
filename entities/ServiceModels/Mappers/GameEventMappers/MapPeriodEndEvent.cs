@@ -4,19 +4,19 @@ using Entities.Types.Enums;
 
 namespace Entities.ServiceModels.Mappers.GameEventMappers
 {
-    public static class MapPeriodStartEvent
+    public static class MapPeriodEndEvent
     {
         /// <summary>
         ///  Maps a period start event from the response to a PeriodStart object.
         /// </summary>
         /// <param name="responseGameEvent">The event response from the NHL api</param>
         /// <returns>The period start event</returns>
-        public static PeriodStart Map(dynamic responseGameEvent)
+        public static PeriodEnd Map(dynamic responseGameEvent)
         {
             string timeInPeriod = responseGameEvent.timeInPeriod;
             string timeLeftInPeriod = responseGameEvent.timeRemaining;
 
-            return new PeriodStart
+            return new PeriodEnd
             {
                 id = (int)responseGameEvent.eventId,
                 typeCode = (int)responseGameEvent.typeCode,

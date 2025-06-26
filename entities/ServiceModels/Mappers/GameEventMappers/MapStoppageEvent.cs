@@ -23,7 +23,7 @@ namespace Entities.ServiceModels.Mappers.GameEventMappers
                 sortOrder = (int)responseGameEvent.sortOrder,
                 situationCode = int.Parse((string)responseGameEvent.situationCode),
                 periodNumber = (int)responseGameEvent.periodDescriptor.number,
-                periodType = responseGameEvent.periodDescriptor.periodType,
+                periodType = PeriodTypeParser.ParseFromString((string)responseGameEvent.periodDescriptor.periodType),
                 eventTypeName = responseGameEvent.typeDescKey,
                 homeTeamDefendingSide = HomeTeamDefendingSideParser.ParseFromString((string)responseGameEvent.homeTeamDefendingSide),
                 secondsIntoPeriod = timeInPeriod.ParseIceTimeToSeconds(),

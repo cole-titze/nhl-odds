@@ -38,8 +38,8 @@ namespace Entities.ServiceModels.Mappers.GameEventMappers
                 xCoordinate = (int)responseGameEvent.details.xCoord,
                 yCoordinate = (int)responseGameEvent.details.yCoord,
                 highlightClipSharingUrl = (string)responseGameEvent.details.highlightClipSharingUrl,
-                highlightClipId = (int)responseGameEvent.details.highlightClip,
-                discreetClipId = (int)responseGameEvent.details.discreteClip,
+                highlightClipId = (int?)responseGameEvent.details.highlightClip ?? -1,
+                discreetClipId = (int?)responseGameEvent.details.discreteClip ?? -1,
                 pptReplayUrl = (string)responseGameEvent.pptReplayUrl,
             };
         }

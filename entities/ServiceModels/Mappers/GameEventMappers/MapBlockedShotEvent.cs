@@ -28,7 +28,7 @@ namespace Entities.ServiceModels.Mappers.GameEventMappers
                 homeTeamDefendingSide = HomeTeamDefendingSideParser.ParseFromString((string)responseGameEvent.homeTeamDefendingSide),
                 secondsIntoPeriod = timeInPeriod.ParseIceTimeToSeconds(),
                 secondsLeftInPeriod = timeLeftInPeriod.ParseIceTimeToSeconds(),
-                blockType = BlockTypeParser.ParseFromString((string)responseGameEvent.details.reason),
+                blockType = BlockTypeParser.ParseFromString((string?)responseGameEvent.details.reason),
                 blockingPlayerTeamId = (int)responseGameEvent.details.eventOwnerTeamId,
                 blockingPlayerId = (int)responseGameEvent.details.blockingPlayerId,
                 shooterPlayerId = (int)responseGameEvent.details.shootingPlayerId,

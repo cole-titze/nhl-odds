@@ -15,13 +15,16 @@ namespace Entities.Types.Enums
         Fighting,
         Holding,
         Boarding,
-        UnsportsmanlikeConduct
+        UnsportsmanlikeConduct,
+        HoldingTheStick,
+        CrossCheck,
+        GoaltenderInterfence,
     }
     public static class PenaltyTypeParser
     {
-        public static PenaltyType ParseFromString(string periodType)
+        public static PenaltyType ParseFromString(string penaltyType)
         {
-            switch (periodType)
+            switch (penaltyType)
             {
                 case "tripping":
                     return PenaltyType.Tripping;
@@ -51,8 +54,14 @@ namespace Entities.Types.Enums
                     return PenaltyType.UnsportsmanlikeConduct;
                 case "delaying-game-unsuccessful-challenge":
                     return PenaltyType.DelayOfGameFailedChallenge;
+                case "holding-the-stick":
+                    return PenaltyType.HoldingTheStick;
+                case "cross-checking":
+                    return PenaltyType.CrossCheck;
+                case "interference-goalkeeper":
+                    return PenaltyType.GoaltenderInterfence;
                 default:
-                    throw new ArgumentException($"Invalid PeriodType value: {periodType}", nameof(periodType));
+                    throw new ArgumentException($"Invalid PenaltyType value: {penaltyType}", nameof(penaltyType));
             }
         }
     }

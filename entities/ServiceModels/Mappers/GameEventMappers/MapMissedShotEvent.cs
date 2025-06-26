@@ -28,7 +28,7 @@ namespace Entities.ServiceModels.Mappers.GameEventMappers
                 homeTeamDefendingSide = HomeTeamDefendingSideParser.ParseFromString((string)responseGameEvent.homeTeamDefendingSide),
                 secondsIntoPeriod = timeInPeriod.ParseIceTimeToSeconds(),
                 secondsLeftInPeriod = timeLeftInPeriod.ParseIceTimeToSeconds(),
-                shotType = ShotTypeParser.ParseFromString((string)responseGameEvent.details.reason),
+                shotType = ShotTypeParser.ParseFromString((string)responseGameEvent.details.shotType),
                 shootingPlayerTeamId = (int)responseGameEvent.details.eventOwnerTeamId,
                 shootingPlayerId = (int)responseGameEvent.details.shootingPlayerId,
                 goalieId = (int)responseGameEvent.details.goalieInNetId,
