@@ -14,8 +14,8 @@ namespace Entities.Models.GamePlayEvents
         public HomeTeamDefendingSide homeTeamDefendingSide { get; set; }
         public int secondsIntoPeriod { get; set; }
         public int secondsLeftInPeriod { get; set; }
-        public int xCoordinate { get; set; }
-        public int yCoordinate { get; set; }
+        public int? xCoordinate { get; set; }
+        public int? yCoordinate { get; set; }
         public Zone zone { get; set; }
         public ShotType shotType { get; set; }
         public int scoringPlayerTeamId { get; set; }

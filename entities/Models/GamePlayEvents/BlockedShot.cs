@@ -17,8 +17,8 @@ namespace Entities.Models.GamePlayEvents
         public int blockingPlayerTeamId { get; set; }
         public int blockingPlayerId { get; set; }
         public int shooterPlayerId { get; set; }
-        public int xCoordinate { get; set; }
-        public int yCoordinate { get; set; }
+        public int? xCoordinate { get; set; }
+        public int? yCoordinate { get; set; }
         public Zone zone { get; set; }
         public BlockType blockType { get; set; }
     }

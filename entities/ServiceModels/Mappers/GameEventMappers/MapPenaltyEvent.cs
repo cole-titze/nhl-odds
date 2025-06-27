@@ -35,8 +35,8 @@ namespace Entities.ServiceModels.Mappers.GameEventMappers
                 servedByPlayerId = (int?)responseGameEvent.details.servedByPlayerId,
                 committedByPlayerId = (int?)responseGameEvent.details.committedByPlayerId,
                 zone = ZoneParser.ParseFromString((string)responseGameEvent.details.zoneCode),
-                xCoordinate = (int)responseGameEvent.details.xCoord,
-                yCoordinate = (int)responseGameEvent.details.yCoord,
+                xCoordinate = (int?)responseGameEvent.details.xCoord ?? 0,
+                yCoordinate = (int?)responseGameEvent.details.yCoord ?? 0,
                 duration = (int)responseGameEvent.details.duration,
             };
         }

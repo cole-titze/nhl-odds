@@ -19,8 +19,8 @@ namespace Entities.DbModels.GamePlayEvents
         public int hittingPlayerTeamId { get; set; }
         public int hittingPlayerId { get; set; }
         public int hitteePlayerId { get; set; }
-        public int xCoordinate { get; set; }
-        public int yCoordinate { get; set; }
+        public int? xCoordinate { get; set; }
+        public int? yCoordinate { get; set; }
         public Zone zone { get; set; }
 
         [ForeignKey(nameof(gameId))]

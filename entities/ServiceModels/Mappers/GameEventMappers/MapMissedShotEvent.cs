@@ -33,8 +33,8 @@ namespace Entities.ServiceModels.Mappers.GameEventMappers
                 shootingPlayerId = (int)responseGameEvent.details.shootingPlayerId,
                 goalieId = (int?)responseGameEvent.details.goalieInNetId,
                 zone = ZoneParser.ParseFromString((string)responseGameEvent.details.zoneCode),
-                xCoordinate = (int?)responseGameEvent.details.xCoord ?? 0,
-                yCoordinate = (int?)responseGameEvent.details.yCoord ?? 0,
+                xCoordinate = (int?)responseGameEvent.details.xCoord,
+                yCoordinate = (int?)responseGameEvent.details.yCoord,
                 missType = MissedShotTypeParser.ParseFromString((string)responseGameEvent.details.reason)
             };
         }

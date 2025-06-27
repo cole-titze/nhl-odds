@@ -15,8 +15,8 @@ namespace Entities.Models.GamePlayEvents
         public int secondsIntoPeriod { get; set; }
         public int secondsLeftInPeriod { get; set; }
         public int committedByPlayerTeamId { get; set; }
-        public int xCoordinate { get; set; }
-        public int yCoordinate { get; set; }
+        public int? xCoordinate { get; set; }
+        public int? yCoordinate { get; set; }
         public int? committedByPlayerId { get; set; }
         public int? drawnByPlayerId { get; set; }
         public int? servedByPlayerId { get; set; }

@@ -19,8 +19,8 @@ namespace Entities.DbModels.GamePlayEvents
         public int winningTeamId { get; set; }
         public int winningPlayerId { get; set; }
         public int losingPlayerId { get; set; }
-        public int xCoordinate { get; set; }
-        public int yCoordinate { get; set; }
+        public int? xCoordinate { get; set; }
+        public int? yCoordinate { get; set; }
         public Zone zone { get; set; }
         [ForeignKey("winningPlayerId")]
         public DbPlayer? winningPlayer { get; set; }

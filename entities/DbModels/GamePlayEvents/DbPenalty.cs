@@ -20,8 +20,8 @@ namespace Entities.DbModels.GamePlayEvents
         public int? drawnByPlayerId { get; set; }
         public int? committedByPlayerId { get; set; }
         public int? servedByPlayerId { get; set; }
-        public int xCoordinate { get; set; }
-        public int yCoordinate { get; set; }
+        public int? xCoordinate { get; set; }
+        public int? yCoordinate { get; set; }
         public Zone zone { get; set; }
         public int duration { get; set; }
         public PenaltyType penaltyType { get; set; }

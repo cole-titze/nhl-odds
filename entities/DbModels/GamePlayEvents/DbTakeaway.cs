@@ -18,8 +18,8 @@ namespace Entities.DbModels.GamePlayEvents
         public int secondsLeftInPeriod { get; set; }
         public int takeawayPlayerTeamId { get; set; }
         public int takeawayPlayerId { get; set; }
-        public int xCoordinate { get; set; }
-        public int yCoordinate { get; set; }
+        public int? xCoordinate { get; set; }
+        public int? yCoordinate { get; set; }
         public Zone zone { get; set; }
         [ForeignKey(nameof(takeawayPlayerTeamId))]
         public DbTeam? takeawayPlayerTeam { get; set; }
