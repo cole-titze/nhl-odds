@@ -4,40 +4,30 @@ using Entities.Types.Enums;
 
 namespace Entities.ServiceModels.Mappers.GameEventMappers
 {
-    public static class MapPenaltyEvent
+    public static class MapShootoutCompleteEvent
     {
         /// <summary>
-        /// Maps a penalty event
+        ///  Maps a shootout event from the response to a ShootoutComplete object.
         /// </summary>
         /// <param name="responseGameEvent">The event response from the NHL api</param>
-        /// <returns>The penalty event</returns>
-        public static Penalty Map(dynamic responseGameEvent)
+        /// <returns>The shootout event</returns>
+        public static ShootoutComplete Map(dynamic responseGameEvent)
         {
             string timeInPeriod = responseGameEvent.timeInPeriod;
             string timeLeftInPeriod = responseGameEvent.timeRemaining;
 
-            return new Penalty
+            return new ShootoutComplete
             {
                 id = (int)responseGameEvent.eventId,
                 typeCode = (int)responseGameEvent.typeCode,
                 sortOrder = (int)responseGameEvent.sortOrder,
-                situationCode = int.Parse((string)responseGameEvent.situationCode ?? "1551"),
+                situationCode = int.TryParse((string?)responseGameEvent.situationCode, out var situation) ? situation : -1,
                 periodNumber = (int)responseGameEvent.periodDescriptor.number,
                 periodType = PeriodTypeParser.ParseFromString((string)responseGameEvent.periodDescriptor.periodType),
                 eventTypeName = (string)responseGameEvent.typeDescKey,
                 homeTeamDefendingSide = HomeTeamDefendingSideParser.ParseFromString((string?)responseGameEvent.homeTeamDefendingSide),
                 secondsIntoPeriod = timeInPeriod.ParseIceTimeToSeconds(),
                 secondsLeftInPeriod = timeLeftInPeriod.ParseIceTimeToSeconds(),
-                penaltyType = PenaltyTypeParser.ParseFromString((string)responseGameEvent.details.descKey),
-                penaltySeverity = PenaltySeverityParser.ParseFromString((string)responseGameEvent.details.typeCode),
-                committedByPlayerTeamId = (int)responseGameEvent.details.eventOwnerTeamId,
-                drawnByPlayerId = (int?)responseGameEvent.details.drawnByPlayerId,
-                servedByPlayerId = (int?)responseGameEvent.details.servedByPlayerId,
-                committedByPlayerId = (int?)responseGameEvent.details.committedByPlayerId,
-                zone = ZoneParser.ParseFromString((string)responseGameEvent.details.zoneCode),
-                xCoordinate = (int?)responseGameEvent.details.xCoord,
-                yCoordinate = (int?)responseGameEvent.details.yCoord,
-                duration = (int)responseGameEvent.details.duration,
             };
         }
     }

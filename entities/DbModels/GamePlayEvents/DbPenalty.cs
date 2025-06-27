@@ -38,6 +38,8 @@ namespace Entities.DbModels.GamePlayEvents
 
         [ForeignKey(nameof(committedByPlayerTeamId))]
         public DbTeam? committedByPlayerTeam { get; set; }
+        [ForeignKey(nameof(servedByPlayerId))]
+        public DbTeam? servedByPlayer { get; set; }
 
         public void Clone(IDbGameEvent gameEvent)
         {
@@ -68,6 +70,7 @@ namespace Entities.DbModels.GamePlayEvents
                 drawnByPlayer = penaltyEvent.drawnByPlayer;
                 committedByPlayer = penaltyEvent.committedByPlayer;
                 committedByPlayerTeam = penaltyEvent.committedByPlayerTeam;
+                servedByPlayer = penaltyEvent.servedByPlayer;
             }
             else
             {

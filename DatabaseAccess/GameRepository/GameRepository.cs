@@ -35,6 +35,7 @@ namespace DatabaseAccess.GameRepository
                 { typeof(DbPeriodStart), _dbContext.GamePeriodStartEvent },
                 { typeof(DbStoppage), _dbContext.GameStoppageEvent },
                 { typeof(DbPeriodEnd), _dbContext.GamePeriodEndEvent },
+                { typeof(DbShootoutComplete), _dbContext.GameShootoutCompleteEvent },
             };
         }
 

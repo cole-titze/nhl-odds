@@ -7,10 +7,10 @@ namespace Entities.ServiceModels.Mappers.GameEventMappers
     public static class MapPeriodEndEvent
     {
         /// <summary>
-        ///  Maps a period start event from the response to a PeriodStart object.
+        ///  Maps a period end event from the response to a PeriodEnd object.
         /// </summary>
         /// <param name="responseGameEvent">The event response from the NHL api</param>
-        /// <returns>The period start event</returns>
+        /// <returns>The period end event</returns>
         public static PeriodEnd Map(dynamic responseGameEvent)
         {
             string timeInPeriod = responseGameEvent.timeInPeriod;

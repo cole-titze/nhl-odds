@@ -39,6 +39,7 @@ namespace DatabaseAccess
         public virtual DbSet<DbShot> GameShotEvent { get; set; } = null!;
         public virtual DbSet<DbStoppage> GameStoppageEvent { get; set; } = null!;
         public virtual DbSet<DbTakeaway> GameTakeawayEvent { get; set; } = null!;
+        public virtual DbSet<DbShootoutComplete> GameShootoutCompleteEvent { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -86,6 +87,8 @@ namespace DatabaseAccess
             modelBuilder.Entity<DbStoppage>()
                 .HasKey(c => new { c.id, c.gameId });
             modelBuilder.Entity<DbTakeaway>()
+                .HasKey(c => new { c.id, c.gameId });
+            modelBuilder.Entity<DbShootoutComplete>()
                 .HasKey(c => new { c.id, c.gameId });
         }
     }

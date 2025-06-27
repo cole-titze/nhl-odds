@@ -1,4 +1,3 @@
-using Entities.DbModels;
 using Entities.DbModels.Mappers.GameEventMappers;
 using Entities.Models;
 using Entities.Models.GamePlayEvents;
@@ -28,6 +27,7 @@ namespace Entities.DbModels.Mappers
                 dbGameEvents.AddRange(MapPeriodStartEventToDbPeriodStartEvent.MapList(game.gameEvents.events.OfType<PeriodStart>(), game.id));
                 dbGameEvents.AddRange(MapStoppageEventToDbStoppageEvent.MapList(game.gameEvents.events.OfType<Stoppage>(), game.id));
                 dbGameEvents.AddRange(MapTakeawayEventToDbTakeawayEvent.MapList(game.gameEvents.events.OfType<Takeaway>(), game.id));
+                dbGameEvents.AddRange(MapShootoutCompleteEventToDbShootoutCompleteEvent.MapList(game.gameEvents.events.OfType<ShootoutComplete>(), game.id));
             }
 
             return dbGameEvents;

@@ -19,6 +19,8 @@ namespace Entities.Types.Enums
         VideoReview,
         HandPass,
         HighStick,
+        IceProblem,
+        VisitorTimeout,
     }
     public static class StoppageTypeParser
     {
@@ -60,6 +62,10 @@ namespace Entities.Types.Enums
                     return StoppageType.HandPass;
                 case "high-stick":
                     return StoppageType.HighStick;
+                case "ice-problem":
+                    return StoppageType.IceProblem;
+                case "visitor-timeout":
+                    return StoppageType.VisitorTimeout;
                 default:
                     throw new ArgumentException($"Invalid StoppageType value: {stoppageType}", nameof(stoppageType));
             }

@@ -23,6 +23,7 @@ namespace Entities.Types.Enums
         Elbow,
         FightInstigator,
         Misconduct,
+        IllegalGoaliePlay
     }
     public static class PenaltyTypeParser
     {
@@ -72,6 +73,8 @@ namespace Entities.Types.Enums
                     return PenaltyType.FightInstigator;
                 case "misconduct":
                     return PenaltyType.Misconduct;
+                case "delaying-game-illegal-play-by-goalie":
+                    return PenaltyType.IllegalGoaliePlay;
                 default:
                     throw new ArgumentException($"Invalid PenaltyType value: {penaltyType}", nameof(penaltyType));
             }

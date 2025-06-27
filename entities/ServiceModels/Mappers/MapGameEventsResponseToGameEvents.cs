@@ -56,6 +56,8 @@ namespace Entities.ServiceModels.Mappers
                     return MapTakeawayEvent.Map(responseGameEvent);
                 case EventType.PeriodEnd:
                     return MapPeriodEndEvent.Map(responseGameEvent);
+                case EventType.ShootoutComplete:
+                    return MapShootoutCompleteEvent.Map(responseGameEvent);
                 default:
                     throw new ArgumentException(nameof(eventType), $"Unknown event type: {eventType}");
             }
