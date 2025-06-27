@@ -31,16 +31,16 @@ namespace Entities.ServiceModels.Mappers.GameEventMappers
                 shotType = ShotTypeParser.ParseFromString((string)responseGameEvent.details.shotType),
                 scoringPlayerTeamId = (int)responseGameEvent.details.eventOwnerTeamId,
                 scoringPlayerId = (int)responseGameEvent.details.scoringPlayerId,
-                goalieId = (int)responseGameEvent.details.goalieInNetId,
-                assistOnePlayerId = (int)responseGameEvent.details.assist1PlayerId,
-                assistTwoPlayerId = (int)responseGameEvent.details.assist2PlayerId,
+                goalieId = (int?)responseGameEvent.details.goalieInNetId,
+                assistOnePlayerId = (int?)responseGameEvent.details.assist1PlayerId,
+                assistTwoPlayerId = (int?)responseGameEvent.details.assist2PlayerId,
                 zone = ZoneParser.ParseFromString((string)responseGameEvent.details.zoneCode),
                 xCoordinate = (int)responseGameEvent.details.xCoord,
                 yCoordinate = (int)responseGameEvent.details.yCoord,
-                highlightClipSharingUrl = (string)responseGameEvent.details.highlightClipSharingUrl,
+                highlightClipSharingUrl = (string)responseGameEvent.details.highlightClipSharingUrl ?? "",
                 highlightClipId = (int?)responseGameEvent.details.highlightClip ?? -1,
                 discreetClipId = (int?)responseGameEvent.details.discreteClip ?? -1,
-                pptReplayUrl = (string)responseGameEvent.pptReplayUrl,
+                pptReplayUrl = (string)responseGameEvent.pptReplayUrl ?? "",
             };
         }
     }

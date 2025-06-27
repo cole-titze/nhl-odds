@@ -106,8 +106,6 @@ namespace DataGetter.BusinessLogic
         /// <returns>List of games from the start year</returns>
         private async Task<IEnumerable<Game>> GetSeasonGames(int seasonStartYear, int gameCount)
         {
-            gameCount = 1; // For testing
-
             var seasonGames = new List<Game>();
             Game? game;
             // game ids start at 1
@@ -118,6 +116,7 @@ namespace DataGetter.BusinessLogic
                 if (existingGame != null && existingGame.hasBeenPlayed)
                     continue;
 
+                _logger.LogInformation("Getting Game: " + gameId);
                 game = await _nhlDataGetter.GameDataGetter.GetGame(gameId);
                 if (game != null)
                     seasonGames.Add(game);

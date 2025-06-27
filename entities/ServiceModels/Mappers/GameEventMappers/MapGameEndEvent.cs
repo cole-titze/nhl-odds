@@ -21,7 +21,7 @@ namespace Entities.ServiceModels.Mappers.GameEventMappers
                 id = (int)responseGameEvent.eventId,
                 typeCode = (int)responseGameEvent.typeCode,
                 sortOrder = (int)responseGameEvent.sortOrder,
-                situationCode = int.Parse((string)responseGameEvent.situationCode),
+                situationCode = int.Parse((string)responseGameEvent.situationCode ?? "1551"),
                 periodNumber = (int)responseGameEvent.periodDescriptor.number,
                 periodType = PeriodTypeParser.ParseFromString((string)responseGameEvent.periodDescriptor.periodType),
                 eventTypeName = responseGameEvent.typeDescKey,

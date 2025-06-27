@@ -329,21 +329,44 @@ namespace DatabaseAccess.GameRepository
                     updateList.Add(dbGameEvent);
                 }
             }
-            await SaveGameEvents(addList, updateList);
+
+            // Type-safe, clean, no reflection
+            await AddOrUpdateEvents(_dbContext.GameBlockedShotEvent, addList, updateList);
+            await AddOrUpdateEvents(_dbContext.GameGoalEvent, addList, updateList);
+            await AddOrUpdateEvents(_dbContext.GamePenaltyEvent, addList, updateList);
+            await AddOrUpdateEvents(_dbContext.GameFaceoffEvent, addList, updateList);
+            await AddOrUpdateEvents(_dbContext.GameGiveawayEvent, addList, updateList);
+            await AddOrUpdateEvents(_dbContext.GameHitEvent, addList, updateList);
+            await AddOrUpdateEvents(_dbContext.GameMissedShotEvent, addList, updateList);
+            await AddOrUpdateEvents(_dbContext.GameTakeawayEvent, addList, updateList);
+            await AddOrUpdateEvents(_dbContext.GameShotEvent, addList, updateList);
+            await AddOrUpdateEvents(_dbContext.GameDelayedPenaltyEvent, addList, updateList);
+            await AddOrUpdateEvents(_dbContext.GameGameEndEvent, addList, updateList);
+            await AddOrUpdateEvents(_dbContext.GamePeriodStartEvent, addList, updateList);
+            await AddOrUpdateEvents(_dbContext.GameStoppageEvent, addList, updateList);
+            await AddOrUpdateEvents(_dbContext.GamePeriodEndEvent, addList, updateList);
         }
+        /// <summary>
+        /// Adds or updates the events
+        /// </summary>
+        /// <typeparam name="T">The event type</typeparam>
+        /// <param name="dbSet">the db object to use</param>
+        /// <param name="addList">List of events to add</param>
+        /// <param name="updateList">List of events to update</param>
+        /// <returns>None</returns>
+        private async Task AddOrUpdateEvents<T>(DbSet<T> dbSet, IEnumerable<IDbGameEvent> addList, IEnumerable<IDbGameEvent> updateList) where T : class, IDbGameEvent
+        {
+            var typedAdd = addList.OfType<T>().ToList();
+            var typedUpdate = updateList.OfType<T>().ToList();
 
-        private async Task SaveGameEvents(IEnumerable<IDbGameEvent> addList, IEnumerable<IDbGameEvent> updateList)
-        {   
-            foreach (var kvp in _dbSetEventMap)
+            if (typedAdd.Any())
             {
-                var type = kvp.Key;
-                var dbSet = kvp.Value;
+                await dbSet.AddRangeAsync(typedAdd);
+            }
 
-                var addItems = addList.Where(e => type.IsInstanceOfType(e)).ToList();
-                var updateItems = updateList.Where(e => type.IsInstanceOfType(e)).ToList();
-
-                await dbSet.AddRangeAsync(addItems);
-                dbSet.UpdateRange(updateItems);
+            if (typedUpdate.Any())
+            {
+                dbSet.UpdateRange(typedUpdate);
             }
         }
 

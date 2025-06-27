@@ -14,14 +14,11 @@ namespace Entities.Types.Enums
         TvTimeout,
         PuckIntoBenches,
         OfficialStoppage,
-        SkaterFrozePuck
-    }
-    public enum StoppageDetails
-    {
-        None,
-        TvTimeout,
-        PlayerInjury,
-        OfficialInjury,
+        SkaterFrozePuck,
+        NetOff,
+        VideoReview,
+        HandPass,
+        HighStick,
     }
     public static class StoppageTypeParser
     {
@@ -55,10 +52,25 @@ namespace Entities.Types.Enums
                     return StoppageType.OfficialStoppage;
                 case "skater-puck-frozen":
                     return StoppageType.SkaterFrozePuck;
+                case "net-off":
+                    return StoppageType.NetOff;
+                case "video-review":
+                    return StoppageType.VideoReview;
+                case "hand-pass":
+                    return StoppageType.HandPass;
+                case "high-stick":
+                    return StoppageType.HighStick;
                 default:
                     throw new ArgumentException($"Invalid StoppageType value: {stoppageType}", nameof(stoppageType));
             }
         }
+    }
+    public enum StoppageDetails
+    {
+        None,
+        TvTimeout,
+        PlayerInjury,
+        OfficialInjury,
     }
     public static class StoppageDetailsParser
     {

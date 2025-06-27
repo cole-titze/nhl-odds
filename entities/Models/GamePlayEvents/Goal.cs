@@ -19,10 +19,10 @@ namespace Entities.Models.GamePlayEvents
         public Zone zone { get; set; }
         public ShotType shotType { get; set; }
         public int scoringPlayerTeamId { get; set; }
-        public int assistOnePlayerId { get; set; }
-        public int assistTwoPlayerId { get; set; }
+        public int? assistOnePlayerId { get; set; }
+        public int? assistTwoPlayerId { get; set; }
         public int scoringPlayerId { get; set; }
-        public int goalieId { get; set; }
+        public int? goalieId { get; set; }
         public string highlightClipSharingUrl { get; set; } = string.Empty;
         public int highlightClipId { get; set; }
         public int discreetClipId { get; set; }

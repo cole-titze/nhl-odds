@@ -17,9 +17,9 @@ namespace Entities.DbModels.GamePlayEvents
         public ShotType shotType { get; set; }
         public int secondsIntoPeriod { get; set; }
         public int secondsLeftInPeriod { get; set; }
-        public int shootingPlayerTeamId { get; set; }
+        public int shootingTeamId { get; set; }
         public int shootingPlayerId { get; set; }
-        public int goalieId { get; set; }
+        public int? goalieId { get; set; }
         public int xCoordinate { get; set; }
         public int yCoordinate { get; set; }
         public Zone zone { get; set; }
@@ -48,7 +48,7 @@ namespace Entities.DbModels.GamePlayEvents
                 shotType = missedShotEvent.shotType;
                 secondsIntoPeriod = missedShotEvent.secondsIntoPeriod;
                 secondsLeftInPeriod = missedShotEvent.secondsLeftInPeriod;
-                shootingPlayerTeamId = missedShotEvent.shootingPlayerTeamId;
+                shootingTeamId = missedShotEvent.shootingTeamId;
                 shootingPlayerId = missedShotEvent.shootingPlayerId;
                 goalieId = missedShotEvent.goalieId;
                 xCoordinate = missedShotEvent.xCoordinate;

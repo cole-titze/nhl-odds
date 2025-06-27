@@ -35,7 +35,7 @@ namespace DatabaseAccess
         public virtual DbSet<DbMissedShot> GameMissedShotEvent { get; set; } = null!;
         public virtual DbSet<DbPenalty> GamePenaltyEvent { get; set; } = null!;
         public virtual DbSet<DbPeriodStart> GamePeriodStartEvent { get; set; } = null!;
-        public virtual DbSet<DbPeriodStart> GamePeriodEndEvent { get; set; } = null!;
+        public virtual DbSet<DbPeriodEnd> GamePeriodEndEvent { get; set; } = null!;
         public virtual DbSet<DbShot> GameShotEvent { get; set; } = null!;
         public virtual DbSet<DbStoppage> GameStoppageEvent { get; set; } = null!;
         public virtual DbSet<DbTakeaway> GameTakeawayEvent { get; set; } = null!;

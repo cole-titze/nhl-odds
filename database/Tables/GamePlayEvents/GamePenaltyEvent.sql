@@ -14,6 +14,7 @@ CREATE TABLE [dbo].[GamePenaltyEvent]
     committedByPlayerTeamId INT NOT NULL,
     drawnByPlayerId INT,
     committedByPlayerId INT,
+    servedByPlayerId INT,
     xCoordinate INT NOT NULL,
     yCoordinate INT NOT NULL,
     [zone] INT NOT NULL,
@@ -24,5 +25,6 @@ CREATE TABLE [dbo].[GamePenaltyEvent]
     FOREIGN KEY (gameId) REFERENCES GameRaw(id),
     FOREIGN KEY (committedByPlayerTeamId) REFERENCES Team(id),
     FOREIGN KEY (drawnByPlayerId) REFERENCES Player(id),
-    FOREIGN KEY (committedByPlayerId) REFERENCES Player(id)
+    FOREIGN KEY (committedByPlayerId) REFERENCES Player(id),
+    FOREIGN KEY (servedByPlayerId) REFERENCES Player(id)
 );

@@ -32,6 +32,7 @@ namespace Entities.ServiceModels.Mappers.GameEventMappers
                 penaltySeverity = PenaltySeverityParser.ParseFromString((string)responseGameEvent.details.typeCode),
                 committedByPlayerTeamId = (int)responseGameEvent.details.eventOwnerTeamId,
                 drawnByPlayerId = (int?)responseGameEvent.details.drawnByPlayerId,
+                servedByPlayerId = (int?)responseGameEvent.details.servedByPlayerId,
                 committedByPlayerId = (int?)responseGameEvent.details.committedByPlayerId,
                 zone = ZoneParser.ParseFromString((string)responseGameEvent.details.zoneCode),
                 xCoordinate = (int)responseGameEvent.details.xCoord,

@@ -23,6 +23,7 @@ namespace Entities.DbModels.Mappers.GameEventMappers
                 committedByPlayerTeamId = penaltyEvent.committedByPlayerTeamId,
                 drawnByPlayerId = penaltyEvent.drawnByPlayerId,
                 committedByPlayerId = penaltyEvent.committedByPlayerId,
+                servedByPlayerId = penaltyEvent.servedByPlayerId,
                 xCoordinate = penaltyEvent.xCoordinate,
                 yCoordinate = penaltyEvent.yCoordinate,
                 zone = penaltyEvent.zone,

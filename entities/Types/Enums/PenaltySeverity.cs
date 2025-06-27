@@ -5,12 +5,13 @@ namespace Entities.Types.Enums
         Minor,
         Major,
         Bench,
+        Misconduct,
     }
     public static class PenaltySeverityParser
     {
-        public static PenaltySeverity ParseFromString(string periodType)
+        public static PenaltySeverity ParseFromString(string penaltySeverityType)
         {
-            switch (periodType)
+            switch (penaltySeverityType)
             {
                 case "MIN":
                     return PenaltySeverity.Minor;
@@ -18,8 +19,10 @@ namespace Entities.Types.Enums
                     return PenaltySeverity.Major;
                 case "BEN":
                     return PenaltySeverity.Bench;
+                case "MIS":
+                    return PenaltySeverity.Misconduct;
                 default:
-                    throw new ArgumentException($"Invalid PeriodType value: {periodType}", nameof(periodType));
+                    throw new ArgumentException($"Invalid PenaltySeverity value: {penaltySeverityType}", nameof(penaltySeverityType));
             }
         }
     }

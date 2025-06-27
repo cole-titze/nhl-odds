@@ -371,10 +371,10 @@ CREATE TABLE [dbo].[GameGoalEvent]
     [zone] INT NOT NULL,
     shotType INT NOT NULL,
     scoringPlayerTeamId INT NOT NULL,
-    assistOnePlayerId INT NOT NULL,
-    assistTwoPlayerId INT NOT NULL,
+    assistOnePlayerId INT,
+    assistTwoPlayerId INT,
     scoringPlayerId INT NOT NULL,
-    goalieId INT NOT NULL,
+    goalieId INT,
     highlightClipSharingUrl VARCHAR(255) NOT NULL,
     highlightClipId INT NOT NULL,
     discreetClipId INT NOT NULL,
@@ -428,16 +428,16 @@ CREATE TABLE [dbo].[GameMissedShotEvent]
     shotType INT NOT NULL,
     secondsIntoPeriod INT NOT NULL,
     secondsLeftInPeriod INT NOT NULL,
-    shootingPlayerTeamId INT NOT NULL,
+    shootingTeamId INT NOT NULL,
     shootingPlayerId INT NOT NULL,
-    goalieId INT NOT NULL,
+    goalieId INT,
     xCoordinate INT NOT NULL,
     yCoordinate INT NOT NULL,
     [zone] INT NOT NULL,
     missType INT NOT NULL,
     CONSTRAINT PK_GameMissedShotEvent PRIMARY KEY(gameId, id),
     FOREIGN KEY (gameId) REFERENCES GameRaw(id),
-    FOREIGN KEY (shootingPlayerTeamId) REFERENCES Team(id),
+    FOREIGN KEY (shootingTeamId) REFERENCES Team(id),
     FOREIGN KEY (shootingPlayerId) REFERENCES Player(id),
     FOREIGN KEY (goalieId) REFERENCES Player(id)
 );
@@ -455,9 +455,10 @@ CREATE TABLE [dbo].[GamePenaltyEvent]
     homeTeamDefendingSide INT NOT NULL,
     secondsIntoPeriod INT NOT NULL,
     secondsLeftInPeriod INT NOT NULL,
-    committedByPlayerTeamId INT,
+    committedByPlayerTeamId INT NOT NULL,
+    servedByPlayerId INT NOT NULL,
     drawnByPlayerId INT,
-    committedByPlayerId INT NOT NULL,
+    committedByPlayerId INT,
     xCoordinate INT NOT NULL,
     yCoordinate INT NOT NULL,
     [zone] INT NOT NULL,
@@ -468,10 +469,11 @@ CREATE TABLE [dbo].[GamePenaltyEvent]
     FOREIGN KEY (gameId) REFERENCES GameRaw(id),
     FOREIGN KEY (committedByPlayerTeamId) REFERENCES Team(id),
     FOREIGN KEY (drawnByPlayerId) REFERENCES Player(id),
-    FOREIGN KEY (committedByPlayerId) REFERENCES Player(id)
+    FOREIGN KEY (committedByPlayerId) REFERENCES Player(id),
+    FOREIGN KEY (servedByPlayerId) REFERENCES Player(id)
 );
 
-CREATE TABLE [dbo].[GamePeriodStart]
+CREATE TABLE [dbo].[GamePeriodStartEvent]
 (
     id INT NOT NULL,
     gameId INT NOT NULL,
@@ -484,11 +486,11 @@ CREATE TABLE [dbo].[GamePeriodStart]
     homeTeamDefendingSide INT NOT NULL,
     secondsIntoPeriod INT NOT NULL,
     secondsLeftInPeriod INT NOT NULL,
-    CONSTRAINT PK_GamePeriodStart PRIMARY KEY(gameId, id),
+    CONSTRAINT PK_GamePeriodStartEvent PRIMARY KEY(gameId, id),
     FOREIGN KEY (gameId) REFERENCES GameRaw(id)
 );
 
-CREATE TABLE [dbo].[GamePeriodEnd]
+CREATE TABLE [dbo].[GamePeriodEndEvent]
 (
     id INT NOT NULL,
     gameId INT NOT NULL,
@@ -501,7 +503,7 @@ CREATE TABLE [dbo].[GamePeriodEnd]
     homeTeamDefendingSide INT NOT NULL,
     secondsIntoPeriod INT NOT NULL,
     secondsLeftInPeriod INT NOT NULL,
-    CONSTRAINT PK_GamePeriodEnd PRIMARY KEY(gameId, id),
+    CONSTRAINT PK_GamePeriodEndEvent PRIMARY KEY(gameId, id),
     FOREIGN KEY (gameId) REFERENCES GameRaw(id)
 );
 

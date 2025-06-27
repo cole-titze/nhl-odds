@@ -24,17 +24,17 @@ namespace Entities.ServiceModels.Mappers.GameEventMappers
                 situationCode = int.Parse((string)responseGameEvent.situationCode),
                 periodNumber = (int)responseGameEvent.periodDescriptor.number,
                 periodType = PeriodTypeParser.ParseFromString((string)responseGameEvent.periodDescriptor.periodType),
-                eventTypeName = responseGameEvent.typeDescKey,
+                eventTypeName = (string)responseGameEvent.typeDescKey,
                 homeTeamDefendingSide = HomeTeamDefendingSideParser.ParseFromString((string)responseGameEvent.homeTeamDefendingSide),
                 secondsIntoPeriod = timeInPeriod.ParseIceTimeToSeconds(),
                 secondsLeftInPeriod = timeLeftInPeriod.ParseIceTimeToSeconds(),
                 shotType = ShotTypeParser.ParseFromString((string)responseGameEvent.details.shotType),
-                shootingPlayerTeamId = (int)responseGameEvent.details.eventOwnerTeamId,
+                shootingTeamId = (int)responseGameEvent.details.eventOwnerTeamId,
                 shootingPlayerId = (int)responseGameEvent.details.shootingPlayerId,
-                goalieId = (int)responseGameEvent.details.goalieInNetId,
+                goalieId = (int?)responseGameEvent.details.goalieInNetId,
                 zone = ZoneParser.ParseFromString((string)responseGameEvent.details.zoneCode),
-                xCoordinate = (int)responseGameEvent.details.xCoord,
-                yCoordinate = (int)responseGameEvent.details.yCoord,
+                xCoordinate = (int?)responseGameEvent.details.xCoord ?? 0,
+                yCoordinate = (int?)responseGameEvent.details.yCoord ?? 0,
                 missType = MissedShotTypeParser.ParseFromString((string)responseGameEvent.details.reason)
             };
         }

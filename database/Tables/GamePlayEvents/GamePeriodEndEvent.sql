@@ -1,4 +1,4 @@
-CREATE TABLE [dbo].[GamePeriodEnd]
+CREATE TABLE [dbo].[GamePeriodEndEvent]
 (
     id INT NOT NULL,
     gameId INT NOT NULL,
@@ -11,6 +11,6 @@ CREATE TABLE [dbo].[GamePeriodEnd]
     homeTeamDefendingSide INT NOT NULL,
     secondsIntoPeriod INT NOT NULL,
     secondsLeftInPeriod INT NOT NULL,
-    CONSTRAINT PK_GamePeriodEnd PRIMARY KEY(gameId, id),
+    CONSTRAINT PK_GamePeriodEndEvent PRIMARY KEY(gameId, id),
     FOREIGN KEY (gameId) REFERENCES GameRaw(id)
 );

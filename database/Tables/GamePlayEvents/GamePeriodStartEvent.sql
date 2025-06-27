@@ -1,4 +1,4 @@
-CREATE TABLE [dbo].[GamePeriodStart]
+CREATE TABLE [dbo].[GamePeriodStartEvent]
 (
     id INT NOT NULL,
     gameId INT NOT NULL,

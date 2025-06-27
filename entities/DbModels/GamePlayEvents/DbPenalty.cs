@@ -19,6 +19,7 @@ namespace Entities.DbModels.GamePlayEvents
         public int committedByPlayerTeamId { get; set; }
         public int? drawnByPlayerId { get; set; }
         public int? committedByPlayerId { get; set; }
+        public int? servedByPlayerId { get; set; }
         public int xCoordinate { get; set; }
         public int yCoordinate { get; set; }
         public Zone zone { get; set; }
@@ -56,6 +57,7 @@ namespace Entities.DbModels.GamePlayEvents
                 committedByPlayerTeamId = penaltyEvent.committedByPlayerTeamId;
                 drawnByPlayerId = penaltyEvent.drawnByPlayerId;
                 committedByPlayerId = penaltyEvent.committedByPlayerId;
+                servedByPlayerId = penaltyEvent.servedByPlayerId;
                 xCoordinate = penaltyEvent.xCoordinate;
                 yCoordinate = penaltyEvent.yCoordinate;
                 zone = penaltyEvent.zone;

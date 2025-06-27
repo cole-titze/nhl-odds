@@ -21,7 +21,7 @@ namespace Entities.DbModels.Mappers.GameEventMappers
                 shotType = missedShotEvent.shotType,
                 secondsIntoPeriod = missedShotEvent.secondsIntoPeriod,
                 secondsLeftInPeriod = missedShotEvent.secondsLeftInPeriod,
-                shootingPlayerTeamId = missedShotEvent.shootingPlayerTeamId,
+                shootingTeamId = missedShotEvent.shootingTeamId,
                 shootingPlayerId = missedShotEvent.shootingPlayerId,
                 goalieId = missedShotEvent.goalieId,
                 xCoordinate = missedShotEvent.xCoordinate,

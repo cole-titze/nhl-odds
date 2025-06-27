@@ -12,6 +12,7 @@ namespace Entities.Types.Enums
         Interference,
         TooManyMen,
         HighStick,
+        HighStickDoubleMinor,
         Fighting,
         Holding,
         Boarding,
@@ -19,6 +20,9 @@ namespace Entities.Types.Enums
         HoldingTheStick,
         CrossCheck,
         GoaltenderInterfence,
+        Elbow,
+        FightInstigator,
+        Misconduct,
     }
     public static class PenaltyTypeParser
     {
@@ -60,6 +64,14 @@ namespace Entities.Types.Enums
                     return PenaltyType.CrossCheck;
                 case "interference-goalkeeper":
                     return PenaltyType.GoaltenderInterfence;
+                case "high-sticking-double-minor":
+                    return PenaltyType.HighStickDoubleMinor;
+                case "elbowing":
+                    return PenaltyType.Elbow;
+                case "instigator":
+                    return PenaltyType.FightInstigator;
+                case "misconduct":
+                    return PenaltyType.Misconduct;
                 default:
                     throw new ArgumentException($"Invalid PenaltyType value: {penaltyType}", nameof(penaltyType));
             }

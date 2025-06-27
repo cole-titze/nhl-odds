@@ -2,23 +2,27 @@ namespace Entities.Types.Enums
 {
     public enum MissedShotType
     {
-        // Wide was used in older years before having more specific left and right
-        Wide,
-        WideLeft,
-        HighWideLeft,
-        High,
-        HighWideRight,
-        WideRight,
-        LeftPost,
-        RightPost,
-        Crossbar,
-        Short
+        #region Older Years Shot Types
+        Unknown = -1,
+        Wide = 0,
+        GoalPost = 1,
+        #endregion
+
+        WideLeft = 2,
+        HighWideLeft = 3,
+        High = 4,
+        HighWideRight = 5,
+        WideRight = 6,
+        LeftPost = 7,
+        RightPost = 8,
+        Crossbar = 9,
+        Short = 10,
     }
     public static class MissedShotTypeParser
     {
-        public static MissedShotType ParseFromString(string periodType)
+        public static MissedShotType ParseFromString(string missedShotType)
         {
-            switch (periodType)
+            switch (missedShotType)
             {
                 case "wide-of-net":
                     return MissedShotType.Wide;
@@ -39,8 +43,12 @@ namespace Entities.Types.Enums
                     return MissedShotType.Short;
                 case "hit-crossbar":
                     return MissedShotType.Crossbar;
+                case "goalpost":
+                    return MissedShotType.GoalPost;
+                case null:
+                    return MissedShotType.Unknown;
                 default:
-                    throw new ArgumentException($"Invalid PeriodType value: {periodType}", nameof(periodType));
+                    throw new ArgumentException($"Invalid MissedShot value: {missedShotType}", nameof(missedShotType));
             }
         }
     }
