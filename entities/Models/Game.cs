@@ -1,5 +1,6 @@
 using Entities.Models.GamePlayEvents;
 using Entities.Types;
+using Entities.Types.Enums;
 
 namespace Entities.Models
 {
@@ -18,6 +19,7 @@ namespace Entities.Models
         public int homeGoals { get; set; }
         public int awayGoals { get; set; }
         public Winner winner { get; set; }
+        public PeriodType endPeriod { get; set; }
         public int homeSOG { get; set; }
         public int awaySOG { get; set; }
         public int homePPG { get; set; }

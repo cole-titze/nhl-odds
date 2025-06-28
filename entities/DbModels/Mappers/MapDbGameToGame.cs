@@ -34,6 +34,7 @@ namespace DataAccess.GameRepository.Mappers
                 homeGoals = game.homeGoals,
                 awayGoals = game.awayGoals,
                 winner = game.winner,
+                endPeriod = game.endPeriod,
                 homeSOG = game.homeSOG,
                 awaySOG = game.awaySOG,
                 homePPG = game.homePPG,

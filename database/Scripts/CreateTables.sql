@@ -48,6 +48,7 @@ CREATE TABLE [dbo].[GameRaw]
     homeGiveaways INT NOT NULL,
     awayGiveaways INT NOT NULL,
     winner INT NOT NULL,
+    endPeriod INT NOT NULL,
     hasBeenPlayed BIT NOT NULL,
     gameSummary VARCHAR(MAX) NULL,
     eventSummary VARCHAR(MAX) NULL,

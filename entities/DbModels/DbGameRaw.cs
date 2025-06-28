@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Types;
+using Entities.Types.Enums;
 
 namespace Entities.DbModels
 {
@@ -13,6 +14,7 @@ namespace Entities.DbModels
         public int homeGoals { get; set; }
         public int awayGoals { get; set; }
         public Winner winner { get; set; }
+        public PeriodType endPeriod { get; set; }
         public int homeSOG { get; set; }
         public int awaySOG { get; set; }
         public int homePPG { get; set; }
@@ -60,6 +62,7 @@ namespace Entities.DbModels
             homeGoals = game.homeGoals;
             awayGoals = game.awayGoals;
             winner = game.winner;
+            endPeriod = game.endPeriod;
             homeSOG = game.homeSOG;
             awaySOG = game.awaySOG;
             homePPG = game.homePPG;

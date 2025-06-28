@@ -1,5 +1,6 @@
 ﻿using Entities.Models;
 using Entities.Types;
+using Entities.Types.Enums;
 
 namespace Entities.ServiceModels.Mappers
 {
@@ -30,6 +31,7 @@ namespace Entities.ServiceModels.Mappers
             game.homeGoals = homeGoals;
             game.awayGoals = awayGoals;
             game.winner = GetWinner(homeGoals, awayGoals);
+            game.endPeriod = PeriodTypeParser.ParseFromString((string)messageGameSummary.periodDescriptor.periodType);
             foreach (dynamic statCategory in messageGamesStats.teamGameStats)
             {
                 game = BuildGameStat(statCategory, game);
