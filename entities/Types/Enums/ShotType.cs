@@ -2,13 +2,14 @@ namespace Entities.Types.Enums
 {
     public enum ShotType
     {
-        Wrist,
-        Slap,
-        Snap,
-        Tip,
-        Backhand,
-        WrapAround,
-        Deflected
+        Unknown = -1,
+        Wrist = 0,
+        Slap = 1,
+        Snap = 2,
+        Tip = 3,
+        Backhand = 4,
+        WrapAround = 5,
+        Deflected = 6
     }
     public static class ShotTypeParser
     {
@@ -30,6 +31,8 @@ namespace Entities.Types.Enums
                     return ShotType.WrapAround;
                 case "deflected":
                     return ShotType.Deflected;
+                case null:
+                    return ShotType.Unknown;
             default:
                 throw new ArgumentException($"Invalid PeriodType value: {shotType}", nameof(shotType));
             }

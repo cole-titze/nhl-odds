@@ -12,14 +12,14 @@ namespace Entities.Types.Enums
         {
             switch (blockType)
             {
-            case "teammate-blocked":
-                return BlockType.Teammate;
-            case "blocked":
-                return BlockType.Opponent;
-            case null:
-                return BlockType.Unknown;
-            default:
-                throw new ArgumentException($"Invalid BlockType value: {blockType}", nameof(blockType));
+                case "teammate-blocked":
+                    return BlockType.Teammate;
+                case "blocked":
+                    return BlockType.Opponent;
+                case null:
+                    return BlockType.Unknown;
+                default:
+                    throw new ArgumentException($"Invalid BlockType value: {blockType}", nameof(blockType));
             }
         }
     }

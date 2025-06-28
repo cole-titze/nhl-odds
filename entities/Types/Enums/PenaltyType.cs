@@ -1,3 +1,5 @@
+using System.ComponentModel;
+
 namespace Entities.Types.Enums
 {
     public enum PenaltyType
@@ -23,7 +25,32 @@ namespace Entities.Types.Enums
         Elbow,
         FightInstigator,
         Misconduct,
-        IllegalGoaliePlay
+        IllegalGoaliePlay,
+        Charging,
+        GameMisconduct,
+        Kneeing,
+        Diving,
+        FightInstigatorWithFaceShield, // Keeping on visor for a fight is additional penalty time
+        HandPuck,
+        PenaltyShotTripOnBreakaway,
+        DelayOfGame,
+        PenaltyShotHookOnBreakaway,
+        AbuseOfOfficials,
+        ThrowingEquipment,
+        Clipping,
+        InstigatorMisconduct,
+        CheckingFromBehind,
+        InterferenceWithOfficial,
+        Spearing,
+        Aggressor,
+        DelayOfGameSmotheringPuck,
+        MatchPenalty,
+        BrokenStick,
+        IllegalSubstitution,
+        HeadButt,
+        PenaltyShotSlashOnBreakaway,
+        GoalieLeftCrease,
+        IllegalStick
     }
     public static class PenaltyTypeParser
     {
@@ -75,6 +102,56 @@ namespace Entities.Types.Enums
                     return PenaltyType.Misconduct;
                 case "delaying-game-illegal-play-by-goalie":
                     return PenaltyType.IllegalGoaliePlay;
+                case "charging":
+                    return PenaltyType.Charging;
+                case "game-misconduct":
+                    return PenaltyType.GameMisconduct;
+                case "kneeing":
+                    return PenaltyType.Kneeing;
+                case "diving":
+                    return PenaltyType.Diving;
+                case "instigator-face-shield":
+                    return PenaltyType.FightInstigatorWithFaceShield;
+                case "closing-hand-on-puck":
+                    return PenaltyType.HandPuck;
+                case "ps-tripping-on-breakaway":
+                    return PenaltyType.PenaltyShotTripOnBreakaway;
+                case "ps-hooking-on-breakaway":
+                    return PenaltyType.PenaltyShotHookOnBreakaway;
+                case "delaying-game":
+                    return PenaltyType.DelayOfGame;
+                case "abuse-of-officials":
+                    return PenaltyType.AbuseOfOfficials;
+                case "throwing-equipment":
+                    return PenaltyType.ThrowingEquipment;
+                case "clipping":
+                    return PenaltyType.Clipping;
+                case "instigator-misconduct":
+                    return PenaltyType.InstigatorMisconduct;
+                case "checking-from-behind":
+                    return PenaltyType.CheckingFromBehind;
+                case "interference-with-official":
+                    return PenaltyType.InterferenceWithOfficial;
+                case "spearing":
+                    return PenaltyType.Spearing;
+                case "aggressor":
+                    return PenaltyType.Aggressor;
+                case "delaying-game-smothering-puck":
+                    return PenaltyType.DelayOfGameSmotheringPuck;
+                case "match-penatly-10-minutes":
+                    return PenaltyType.MatchPenalty;
+                case "broken-stick":
+                    return PenaltyType.BrokenStick;
+                case "illegal-substitution":
+                    return PenaltyType.IllegalSubstitution;
+                case "head-butting":
+                    return PenaltyType.HeadButt;
+                case "ps-slash-on-breakaway":
+                    return PenaltyType.PenaltyShotSlashOnBreakaway;
+                case "goalie-leave-crease":
+                    return PenaltyType.GoalieLeftCrease;
+                case "illegal-stick":
+                    return PenaltyType.IllegalStick;
                 default:
                     throw new ArgumentException($"Invalid PenaltyType value: {penaltyType}", nameof(penaltyType));
             }

@@ -21,7 +21,7 @@ namespace Entities.ServiceModels.Mappers.GameEventMappers
                 id = (int)responseGameEvent.eventId,
                 typeCode = (int)responseGameEvent.typeCode,
                 sortOrder = (int)responseGameEvent.sortOrder,
-                situationCode = int.Parse((string)responseGameEvent.situationCode),
+                situationCode = int.Parse((string)responseGameEvent.situationCode ?? "1551"),
                 periodNumber = (int)responseGameEvent.periodDescriptor.number,
                 periodType = PeriodTypeParser.ParseFromString((string)responseGameEvent.periodDescriptor.periodType),
                 eventTypeName = (string)responseGameEvent.typeDescKey,
@@ -32,9 +32,9 @@ namespace Entities.ServiceModels.Mappers.GameEventMappers
                 zone = ZoneParser.ParseFromString((string)responseGameEvent.details.zoneCode),
                 shooterTeamId = responseGameEvent.details.eventOwnerTeamId,
                 shooterPlayerId = responseGameEvent.details.shootingPlayerId,
-                goalieId = responseGameEvent.details.goalieInNetId,
-                xCoordinate = responseGameEvent.details.xCoord,
-                yCoordinate = responseGameEvent.details.yCoord,
+                goalieId = (int?)responseGameEvent.details.goalieInNetId,
+                xCoordinate = (int?)responseGameEvent.details.xCoord,
+                yCoordinate = (int?)responseGameEvent.details.yCoord,
             };
         }
     }

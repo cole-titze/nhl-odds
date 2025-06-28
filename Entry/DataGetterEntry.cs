@@ -26,14 +26,14 @@ namespace Entry
         /// <summary>
         /// Gets and stores all new games and player values.
         /// </summary>
-        /// <param name="gamesConnectionString">db connection string</param>
+        /// <param name="modeSettings">db connection string and mode</param>
         /// <returns>None</returns>
-        public async Task Main(string gamesConnectionString)
+        public async Task Main(ModeSettings modeSettings)
         {
             var watch = Stopwatch.StartNew();
             Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
 
-            var nhlDbContext = new NhlDbContext(gamesConnectionString);
+            var nhlDbContext = new NhlDbContext(modeSettings.connectionString);
             var playerRepo = new PlayerRepository(nhlDbContext);
             var gameRepo = new GameRepository(nhlDbContext, _loggerFactory);
             var teamRepo = new TeamRepository(nhlDbContext);
@@ -50,7 +50,7 @@ namespace Entry
 
             _logger.LogTrace("Starting Game Getter");
             var gameGetter = new NhlDataManager(gameRepo, playerRepo, nhlRequestMaker, _loggerFactory);
-            await gameGetter.GetData(yearRange);
+            await gameGetter.GetData(yearRange, modeSettings.mode);
             _logger.LogTrace("Completed Game Getter");
 
             watch.Stop();

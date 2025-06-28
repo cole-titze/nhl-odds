@@ -21,7 +21,7 @@ namespace Entities.ServiceModels.Mappers.GameEventMappers
                 id = (int)responseGameEvent.eventId,
                 typeCode = (int)responseGameEvent.typeCode,
                 sortOrder = (int)responseGameEvent.sortOrder,
-                situationCode = int.Parse((string)responseGameEvent.situationCode),
+                situationCode = SituationCodeParser.ParseFromString((string)responseGameEvent.situationCode),
                 periodNumber = (int)responseGameEvent.periodDescriptor.number,
                 periodType = PeriodTypeParser.ParseFromString((string)responseGameEvent.periodDescriptor.periodType),
                 eventTypeName = responseGameEvent.typeDescKey,
@@ -31,8 +31,8 @@ namespace Entities.ServiceModels.Mappers.GameEventMappers
                 takeawayPlayerTeamId = (int)responseGameEvent.details.eventOwnerTeamId,
                 takeawayPlayerId = (int)responseGameEvent.details.playerId,
                 zone = ZoneParser.ParseFromString((string)responseGameEvent.details.zoneCode),
-                xCoordinate = (int)responseGameEvent.details.xCoord,
-                yCoordinate = (int)responseGameEvent.details.yCoord,
+                xCoordinate = (int?)responseGameEvent.details.xCoord,
+                yCoordinate = (int?)responseGameEvent.details.yCoord,
             };
         }
     }

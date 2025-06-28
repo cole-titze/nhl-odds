@@ -21,6 +21,13 @@ namespace Entities.Types.Enums
         HighStick,
         IceProblem,
         VisitorTimeout,
+        HomeTimeout,
+        RinkRepair,
+        ClockProblem,
+        PlayerEquipment,
+        ObjectsOnIce,
+        PrematureSubstitution,
+        OfficialInjury
     }
     public static class StoppageTypeParser
     {
@@ -66,6 +73,20 @@ namespace Entities.Types.Enums
                     return StoppageType.IceProblem;
                 case "visitor-timeout":
                     return StoppageType.VisitorTimeout;
+                case "home-timeout":
+                    return StoppageType.HomeTimeout;
+                case "rink-repair":
+                    return StoppageType.RinkRepair;
+                case "clock-problem":
+                    return StoppageType.ClockProblem;
+                case "player-equipment":
+                    return StoppageType.PlayerEquipment;
+                case "objects-on-ice":
+                    return StoppageType.ObjectsOnIce;
+                case "premature-substitution":
+                    return StoppageType.PrematureSubstitution;
+                case "official-injury":
+                    return StoppageType.OfficialInjury;
                 default:
                     throw new ArgumentException($"Invalid StoppageType value: {stoppageType}", nameof(stoppageType));
             }

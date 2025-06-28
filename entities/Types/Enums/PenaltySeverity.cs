@@ -6,6 +6,9 @@ namespace Entities.Types.Enums
         Major,
         Bench,
         Misconduct,
+        GameMisconduct,
+        PenaltyShot,
+        Match
     }
     public static class PenaltySeverityParser
     {
@@ -21,6 +24,12 @@ namespace Entities.Types.Enums
                     return PenaltySeverity.Bench;
                 case "MIS":
                     return PenaltySeverity.Misconduct;
+                case "GAM":
+                    return PenaltySeverity.GameMisconduct;
+                case "PS":
+                    return PenaltySeverity.PenaltyShot;
+                case "MAT":
+                    return PenaltySeverity.Match;
                 default:
                     throw new ArgumentException($"Invalid PenaltySeverity value: {penaltySeverityType}", nameof(penaltySeverityType));
             }

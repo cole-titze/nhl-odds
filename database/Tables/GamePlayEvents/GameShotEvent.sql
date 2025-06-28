@@ -13,7 +13,7 @@ CREATE TABLE [dbo].[GameShotEvent]
     secondsLeftInPeriod INT NOT NULL,
     shootingTeamId INT NOT NULL,
     shootingPlayerId INT NOT NULL,
-    goalieId INT NOT NULL,
+    goalieId INT,
     xCoordinate INT,
     yCoordinate INT,
     [zone] INT NOT NULL,

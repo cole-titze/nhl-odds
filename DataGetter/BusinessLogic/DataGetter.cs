@@ -2,6 +2,7 @@ using DatabaseAccess.GameRepository;
 using DatabaseAccess.PlayerRepository;
 using Entities.Models;
 using Entities.Types;
+using Entities.Types.Enums;
 using Microsoft.Extensions.Logging;
 using Services.NhlData;
 
@@ -25,15 +26,16 @@ namespace DataGetter.BusinessLogic
         /// </summary>
         /// <param name="seasonYearRange">The years to get data for</param>
         /// <returns>None</returns>
-        public async Task GetData(YearRange seasonYearRange)
+        public async Task GetData(YearRange seasonYearRange, ModeType mode)
         {
             int totalGamesAdded = 0;
             for (int seasonStartYear = seasonYearRange.StartYear; seasonStartYear <= seasonYearRange.EndYear; seasonStartYear++)
             {
                 // Determines if data is already found and season can be skipped
+                // If update mode then always rerun games to get new data fields
                 var isCurrentYear = seasonStartYear == seasonYearRange.EndYear;
                 var hasAllSeasonGames = await HasAllSeasonGames(seasonStartYear);
-                if (hasAllSeasonGames && !isCurrentYear)
+                if (hasAllSeasonGames && !isCurrentYear && mode != ModeType.Update)
                 {
                     _logger.LogInformation("All game data for season " + seasonStartYear.ToString() + " already exists. Skipping...");
                     continue;
@@ -109,7 +111,7 @@ namespace DataGetter.BusinessLogic
             var seasonGames = new List<Game>();
             Game? game;
             // game ids start at 1
-            for (int count = 1; count <= gameCount; count++)
+            for (int count = 786; count <= gameCount; count++)
             {
                 var gameId = NhlDataGetter.GetGameId(seasonStartYear, count);
                 var existingGame = await _gameRepo.GetGame(gameId);
