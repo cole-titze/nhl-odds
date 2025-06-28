@@ -1,11 +1,10 @@
-namespace Entities.Models
+namespace Entities.Models;
+
+public class PlayerDraftDetails
 {
-    public class PlayerDraftDetails
-    {
-        public int year { get; set; }
-        public string teamAbbrev { get; set; } = string.Empty;
-        public int round { get; set; }
-        public int pickInRound { get; set; }
-        public int overallPick { get; set; }
-    }
+    public int Year { get; set; }
+    public string TeamAbbrev { get; set; } = string.Empty;
+    public int Round { get; set; }
+    public int PickInRound { get; set; }
+    public int OverallPick { get; set; }
 }

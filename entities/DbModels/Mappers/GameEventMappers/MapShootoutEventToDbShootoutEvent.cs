@@ -1,37 +1,36 @@
 using Entities.DbModels.GamePlayEvents;
 using Entities.Models.GamePlayEvents;
 
-namespace Entities.DbModels.Mappers.GameEventMappers
+namespace Entities.DbModels.Mappers.GameEventMappers;
+
+public static class MapShootoutCompleteEventToDbShootoutCompleteEvent
 {
-    public static class MapShootoutCompleteEventToDbShootoutCompleteEvent
+    public static DbShootoutComplete Map(ShootoutComplete periodEndEvent, int gameId)
     {
-        public static DbShootoutComplete Map(ShootoutComplete periodEndEvent, int gameId)
+        return new DbShootoutComplete
         {
-            return new DbShootoutComplete
-            {
-                id = periodEndEvent.id,
-                gameId = gameId,
-                typeCode = periodEndEvent.typeCode,
-                sortOrder = periodEndEvent.sortOrder,
-                situationCode = periodEndEvent.situationCode,
-                periodNumber = periodEndEvent.periodNumber,
-                periodType = periodEndEvent.periodType,
-                eventTypeName = periodEndEvent.eventTypeName,
-                homeTeamDefendingSide = periodEndEvent.homeTeamDefendingSide,
-                secondsIntoPeriod = periodEndEvent.secondsIntoPeriod,
-                secondsLeftInPeriod = periodEndEvent.secondsLeftInPeriod
-            };
+            Id = periodEndEvent.Id,
+            GameId = gameId,
+            TypeCode = periodEndEvent.TypeCode,
+            SortOrder = periodEndEvent.SortOrder,
+            SituationCode = periodEndEvent.SituationCode,
+            PeriodNumber = periodEndEvent.PeriodNumber,
+            PeriodType = periodEndEvent.PeriodType,
+            EventTypeName = periodEndEvent.EventTypeName,
+            HomeTeamDefendingSide = periodEndEvent.HomeTeamDefendingSide,
+            SecondsIntoPeriod = periodEndEvent.SecondsIntoPeriod,
+            SecondsLeftInPeriod = periodEndEvent.SecondsLeftInPeriod
+        };
+    }
+
+    public static IEnumerable<DbShootoutComplete> MapList(IEnumerable<ShootoutComplete> periodEndEvents, int gameId)
+    {
+        var dbEvents = new List<DbShootoutComplete>();
+        foreach (var periodEndEvent in periodEndEvents)
+        {
+            dbEvents.Add(Map(periodEndEvent, gameId));
         }
 
-        public static IEnumerable<DbShootoutComplete> MapList(IEnumerable<ShootoutComplete> periodEndEvents, int gameId)
-        {
-            var dbEvents = new List<DbShootoutComplete>();
-            foreach (var periodEndEvent in periodEndEvents)
-            {
-                dbEvents.Add(Map(periodEndEvent, gameId));
-            }
-
-            return dbEvents;
-        }
+        return dbEvents;
     }
 }

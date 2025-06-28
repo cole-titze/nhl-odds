@@ -1,11 +1,10 @@
 ﻿using Entities.Models;
 
-namespace Services.NhlData
+namespace Services.NhlData;
+
+public interface INhlPlayerGetter
 {
-    public interface INhlPlayerGetter
-    {
-        Task<GameRosterStats?> BuildGameRosterStats(Game game);
-        Task<Player?> GetPlayer(int playerId);
-    }
+    Task<GameRosterStats?> BuildGameRosterStats(Game game);
+    Task<Player?> GetPlayer(int playerId);
 }
 

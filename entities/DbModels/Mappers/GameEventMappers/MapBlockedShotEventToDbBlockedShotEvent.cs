@@ -1,44 +1,43 @@
 using Entities.DbModels.GamePlayEvents;
 using Entities.Models.GamePlayEvents;
 
-namespace Entities.DbModels.Mappers.GameEventMappers
+namespace Entities.DbModels.Mappers.GameEventMappers;
+
+public static class MapBlockedShotEventToDbBlockedShotEvent
 {
-    public static class MapBlockedShotEventToDbBlockedShotEvent
+    public static DbBlockedShot Map(BlockedShot blockedShotEvent, int gameId)
     {
-        public static DbBlockedShot Map(BlockedShot blockedShotEvent, int gameId)
+        return new DbBlockedShot
         {
-            return new DbBlockedShot
-            {
-                id = blockedShotEvent.id,
-                gameId = gameId,
-                typeCode = blockedShotEvent.typeCode,
-                sortOrder = blockedShotEvent.sortOrder,
-                situationCode = blockedShotEvent.situationCode,
-                periodNumber = blockedShotEvent.periodNumber,
-                periodType = blockedShotEvent.periodType,
-                eventTypeName = blockedShotEvent.eventTypeName,
-                homeTeamDefendingSide = blockedShotEvent.homeTeamDefendingSide,
-                secondsIntoPeriod = blockedShotEvent.secondsIntoPeriod,
-                secondsLeftInPeriod = blockedShotEvent.secondsLeftInPeriod,
-                blockingPlayerTeamId = blockedShotEvent.blockingPlayerTeamId,
-                blockingPlayerId = blockedShotEvent.blockingPlayerId,
-                shooterPlayerId = blockedShotEvent.shooterPlayerId,
-                xCoordinate = blockedShotEvent.xCoordinate,
-                yCoordinate = blockedShotEvent.yCoordinate,
-                zone = blockedShotEvent.zone,
-                blockType = blockedShotEvent.blockType
-            };
+            Id = blockedShotEvent.Id,
+            GameId = gameId,
+            TypeCode = blockedShotEvent.TypeCode,
+            SortOrder = blockedShotEvent.SortOrder,
+            SituationCode = blockedShotEvent.SituationCode,
+            PeriodNumber = blockedShotEvent.PeriodNumber,
+            PeriodType = blockedShotEvent.PeriodType,
+            EventTypeName = blockedShotEvent.EventTypeName,
+            HomeTeamDefendingSide = blockedShotEvent.HomeTeamDefendingSide,
+            SecondsIntoPeriod = blockedShotEvent.SecondsIntoPeriod,
+            SecondsLeftInPeriod = blockedShotEvent.SecondsLeftInPeriod,
+            BlockingPlayerTeamId = blockedShotEvent.BlockingPlayerTeamId,
+            BlockingPlayerId = blockedShotEvent.BlockingPlayerId,
+            ShooterPlayerId = blockedShotEvent.ShooterPlayerId,
+            XCoordinate = blockedShotEvent.XCoordinate,
+            YCoordinate = blockedShotEvent.YCoordinate,
+            Zone = blockedShotEvent.Zone,
+            BlockType = blockedShotEvent.BlockType
+        };
+    }
+
+    public static IEnumerable<DbBlockedShot> MapList(IEnumerable<BlockedShot> blockedShotEvents, int gameId)
+    {
+        var dbEvents = new List<DbBlockedShot>();
+        foreach (var blockedShotEvent in blockedShotEvents)
+        {
+            dbEvents.Add(Map(blockedShotEvent, gameId));
         }
 
-        public static IEnumerable<DbBlockedShot> MapList(IEnumerable<BlockedShot> blockedShotEvents, int gameId)
-        {
-            var dbEvents = new List<DbBlockedShot>();
-            foreach (var blockedShotEvent in blockedShotEvents)
-            {
-                dbEvents.Add(Map(blockedShotEvent, gameId));
-            }
-
-            return dbEvents;
-        }
+        return dbEvents;
     }
 }

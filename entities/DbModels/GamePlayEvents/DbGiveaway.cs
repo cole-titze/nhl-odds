@@ -1,60 +1,59 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Types.Enums;
 
-namespace Entities.DbModels.GamePlayEvents
+namespace Entities.DbModels.GamePlayEvents;
+
+public class DbGiveaway : IDbGameEvent
 {
-    public class DbGiveaway : IDbGameEvent
+    public int Id { get; set; }
+    public int GameId { get; set; }
+    public int TypeCode { get; set; }
+    public int SortOrder { get; set; }
+    public int SituationCode { get; set; }
+    public int PeriodNumber { get; set; }
+    public PeriodType PeriodType { get; set; }
+    public string EventTypeName { get; set; } = string.Empty;
+    public HomeTeamDefendingSide HomeTeamDefendingSide { get; set; }
+    public int SecondsIntoPeriod { get; set; }
+    public int SecondsLeftInPeriod { get; set; }
+    public int GiveawayPlayerTeamId { get; set; }
+    public int GiveawayPlayerId { get; set; }
+    public int? XCoordinate { get; set; }
+    public int? YCoordinate { get; set; }
+    public Zone Zone { get; set; }
+    [ForeignKey(nameof(GiveawayPlayerId))]
+    public DbPlayer? GiveawayPlayer { get; set; }
+    [ForeignKey(nameof(GameId))]
+    public DbGameRaw? Game { get; set; }
+    [ForeignKey(nameof(GiveawayPlayerTeamId))]
+    public DbTeam? GiveawayPlayerTeam { get; set; }
+    public void Clone(IDbGameEvent gameEvent)
     {
-        public int id { get; set; }
-        public int gameId { get; set; }
-        public int typeCode { get; set; }
-        public int sortOrder { get; set; }
-        public int situationCode { get; set; }
-        public int periodNumber { get; set; }
-        public PeriodType periodType { get; set; }
-        public string eventTypeName { get; set; } = string.Empty;
-        public HomeTeamDefendingSide homeTeamDefendingSide { get; set; }
-        public int secondsIntoPeriod { get; set; }
-        public int secondsLeftInPeriod { get; set; }
-        public int giveawayPlayerTeamId { get; set; }
-        public int giveawayPlayerId { get; set; }
-        public int? xCoordinate { get; set; }
-        public int? yCoordinate { get; set; }
-        public Zone zone { get; set; }
-        [ForeignKey(nameof(giveawayPlayerId))]
-        public DbPlayer? giveawayPlayer { get; set; }
-        [ForeignKey(nameof(gameId))]
-        public DbGameRaw? game { get; set; }
-        [ForeignKey(nameof(giveawayPlayerTeamId))]
-        public DbTeam? giveawayPlayerTeam { get; set; }
-        public void Clone(IDbGameEvent gameEvent)
+        if (gameEvent is DbGiveaway giveawayEvent)
         {
-            if (gameEvent is DbGiveaway giveawayEvent)
-            {
-                id = giveawayEvent.id;
-                gameId = giveawayEvent.gameId;
-                typeCode = giveawayEvent.typeCode;
-                sortOrder = giveawayEvent.sortOrder;
-                situationCode = giveawayEvent.situationCode;
-                periodNumber = giveawayEvent.periodNumber;
-                periodType = giveawayEvent.periodType;
-                eventTypeName = giveawayEvent.eventTypeName;
-                homeTeamDefendingSide = giveawayEvent.homeTeamDefendingSide;
-                secondsIntoPeriod = giveawayEvent.secondsIntoPeriod;
-                secondsLeftInPeriod = giveawayEvent.secondsLeftInPeriod;
-                giveawayPlayerTeamId = giveawayEvent.giveawayPlayerTeamId;
-                giveawayPlayerId = giveawayEvent.giveawayPlayerId;
-                xCoordinate = giveawayEvent.xCoordinate;
-                yCoordinate = giveawayEvent.yCoordinate;
-                zone = giveawayEvent.zone;
-                giveawayPlayer = giveawayEvent.giveawayPlayer;
-                game = giveawayEvent.game;
-                giveawayPlayerTeam = giveawayEvent.giveawayPlayerTeam;
-            }
-            else
-            {
-                throw new InvalidOperationException("Invalid type passed to Clone.");
-            }
+            Id = giveawayEvent.Id;
+            GameId = giveawayEvent.GameId;
+            TypeCode = giveawayEvent.TypeCode;
+            SortOrder = giveawayEvent.SortOrder;
+            SituationCode = giveawayEvent.SituationCode;
+            PeriodNumber = giveawayEvent.PeriodNumber;
+            PeriodType = giveawayEvent.PeriodType;
+            EventTypeName = giveawayEvent.EventTypeName;
+            HomeTeamDefendingSide = giveawayEvent.HomeTeamDefendingSide;
+            SecondsIntoPeriod = giveawayEvent.SecondsIntoPeriod;
+            SecondsLeftInPeriod = giveawayEvent.SecondsLeftInPeriod;
+            GiveawayPlayerTeamId = giveawayEvent.GiveawayPlayerTeamId;
+            GiveawayPlayerId = giveawayEvent.GiveawayPlayerId;
+            XCoordinate = giveawayEvent.XCoordinate;
+            YCoordinate = giveawayEvent.YCoordinate;
+            Zone = giveawayEvent.Zone;
+            GiveawayPlayer = giveawayEvent.GiveawayPlayer;
+            Game = giveawayEvent.Game;
+            GiveawayPlayerTeam = giveawayEvent.GiveawayPlayerTeam;
+        }
+        else
+        {
+            throw new InvalidOperationException("Invalid type passed to Clone.");
         }
     }
 }

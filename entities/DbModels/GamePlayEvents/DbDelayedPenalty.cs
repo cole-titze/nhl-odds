@@ -1,49 +1,49 @@
 using System.ComponentModel.DataAnnotations.Schema;
+
 using Entities.Types.Enums;
 
-namespace Entities.DbModels.GamePlayEvents
+namespace Entities.DbModels.GamePlayEvents;
+
+public class DbDelayedPenalty : IDbGameEvent
 {
-    public class DbDelayedPenalty : IDbGameEvent
+    public int Id { get; set; }
+    public int GameId { get; set; }
+    public int TypeCode { get; set; }
+    public int SortOrder { get; set; }
+    public int SituationCode { get; set; }
+    public int PeriodNumber { get; set; }
+    public PeriodType PeriodType { get; set; }
+    public string EventTypeName { get; set; } = string.Empty;
+    public HomeTeamDefendingSide HomeTeamDefendingSide { get; set; }
+    public int SecondsIntoPeriod { get; set; }
+    public int SecondsLeftInPeriod { get; set; }
+    public int PenaltyTeamId { get; set; }
+    [ForeignKey(nameof(PenaltyTeamId))]
+    public DbTeam? PenaltyTeam { get; set; }
+    [ForeignKey(nameof(GameId))]
+    public DbGameRaw? Game { get; set; }
+    public void Clone(IDbGameEvent gameEvent)
     {
-        public int id { get; set; }
-        public int gameId { get; set; }
-        public int typeCode { get; set; }
-        public int sortOrder { get; set; }
-        public int situationCode { get; set; }
-        public int periodNumber { get; set; }
-        public PeriodType periodType { get; set; }
-        public string eventTypeName { get; set; } = string.Empty;
-        public HomeTeamDefendingSide homeTeamDefendingSide { get; set; }
-        public int secondsIntoPeriod { get; set; }
-        public int secondsLeftInPeriod { get; set; }
-        public int penaltyTeamId { get; set; }
-        [ForeignKey(nameof(penaltyTeamId))]
-        public DbTeam? penaltyTeam { get; set; }
-        [ForeignKey(nameof(gameId))]
-        public DbGameRaw? game { get; set; }
-        public void Clone(IDbGameEvent gameEvent)
+        if (gameEvent is DbDelayedPenalty delayedPenaltyEvent)
         {
-            if (gameEvent is DbDelayedPenalty delayedPenaltyEvent)
-            {
-                id = delayedPenaltyEvent.id;
-                gameId = delayedPenaltyEvent.gameId;
-                typeCode = delayedPenaltyEvent.typeCode;
-                sortOrder = delayedPenaltyEvent.sortOrder;
-                situationCode = delayedPenaltyEvent.situationCode;
-                periodNumber = delayedPenaltyEvent.periodNumber;
-                periodType = delayedPenaltyEvent.periodType;
-                eventTypeName = delayedPenaltyEvent.eventTypeName;
-                homeTeamDefendingSide = delayedPenaltyEvent.homeTeamDefendingSide;
-                secondsIntoPeriod = delayedPenaltyEvent.secondsIntoPeriod;
-                secondsLeftInPeriod = delayedPenaltyEvent.secondsLeftInPeriod;
-                penaltyTeamId = delayedPenaltyEvent.penaltyTeamId;
-                penaltyTeam = delayedPenaltyEvent.penaltyTeam;
-                game = delayedPenaltyEvent.game;
-            }
-            else
-            {
-                throw new InvalidOperationException("Invalid type passed to Clone.");
-            }
+            Id = delayedPenaltyEvent.Id;
+            GameId = delayedPenaltyEvent.GameId;
+            TypeCode = delayedPenaltyEvent.TypeCode;
+            SortOrder = delayedPenaltyEvent.SortOrder;
+            SituationCode = delayedPenaltyEvent.SituationCode;
+            PeriodNumber = delayedPenaltyEvent.PeriodNumber;
+            PeriodType = delayedPenaltyEvent.PeriodType;
+            EventTypeName = delayedPenaltyEvent.EventTypeName;
+            HomeTeamDefendingSide = delayedPenaltyEvent.HomeTeamDefendingSide;
+            SecondsIntoPeriod = delayedPenaltyEvent.SecondsIntoPeriod;
+            SecondsLeftInPeriod = delayedPenaltyEvent.SecondsLeftInPeriod;
+            PenaltyTeamId = delayedPenaltyEvent.PenaltyTeamId;
+            PenaltyTeam = delayedPenaltyEvent.PenaltyTeam;
+            Game = delayedPenaltyEvent.Game;
+        }
+        else
+        {
+            throw new InvalidOperationException("Invalid type passed to Clone.");
         }
     }
 }

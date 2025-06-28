@@ -25,7 +25,7 @@ insert_final_newline = false
 [*.{cs,vb}]
 
 # Organize usings
-dotnet_separate_import_directive_groups = true
+dotnet_separate_import_directive_groups = false
 dotnet_sort_system_directives_first = true
 file_header_template = unset
 
@@ -115,8 +115,8 @@ csharp_style_prefer_readonly_struct_member = true:suggestion
 
 # Code-block preferences
 csharp_prefer_braces = true:silent
-csharp_prefer_simple_using_statement = true:suggestion
-csharp_style_namespace_declarations = file_scoped:suggestion
+csharp_prefer_simple_using_statement = true:warning
+csharp_style_namespace_declarations = file_scoped:warning
 csharp_style_prefer_method_group_conversion = true:silent
 csharp_style_prefer_primary_constructors = true:suggestion
 csharp_style_prefer_top_level_statements = true:silent
@@ -207,7 +207,7 @@ dotnet_naming_rule.methods_should_be_pascalcase.severity = suggestion
 dotnet_naming_rule.methods_should_be_pascalcase.symbols = methods
 dotnet_naming_rule.methods_should_be_pascalcase.style = pascalcase
 
-dotnet_naming_rule.properties_should_be_pascalcase.severity = suggestion
+dotnet_naming_rule.properties_should_be_pascalcase.severity = warning
 dotnet_naming_rule.properties_should_be_pascalcase.symbols = properties
 dotnet_naming_rule.properties_should_be_pascalcase.style = pascalcase
 

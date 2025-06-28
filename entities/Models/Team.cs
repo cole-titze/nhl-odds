@@ -1,13 +1,12 @@
-namespace Entities.Models
-{
-    public class Team
-    {
-        public int id { get; set; }
-        public string abbreviation { get; set; } = string.Empty;
-        public string locationName { get; set; } = string.Empty;
-        public string teamName { get; set; } = string.Empty;
-        public string logoUri { get; set; } = string.Empty;
+namespace Entities.Models;
 
-    }
+public class Team
+{
+    public int Id { get; set; }
+    public string Abbreviation { get; set; } = string.Empty;
+    public string LocationName { get; set; } = string.Empty;
+    public string TeamName { get; set; } = string.Empty;
+    public string LogoUri { get; set; } = string.Empty;
+
 }
 

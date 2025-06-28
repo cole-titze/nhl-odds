@@ -1,8 +1,10 @@
 using Entities.Types.Enums;
 
+namespace Entry;
+
 public class ModeSettings
 {
-    public ModeType mode { get; set; } = ModeType.Add;
-    public string connectionString { get; set; } = string.Empty;
-    public int throttleTimeMs { get; set; }
+    public ModeType Mode { get; set; } = ModeType.Add;
+    public string ConnectionString { get; set; } = string.Empty;
+    public int ThrottleTimeMs { get; set; }
 }

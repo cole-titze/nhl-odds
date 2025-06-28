@@ -1,10 +1,9 @@
 ﻿using Entities.DbModels;
 
-namespace DatabaseAccess.TeamRepository
+namespace DatabaseAccess.TeamRepository;
+
+public interface ITeamRepository
 {
-    public interface ITeamRepository
-    {
-        Task<DbTeam> GetTeam(int teamId);
-    }
+    Task<DbTeam> GetTeam(int teamId);
 }
 

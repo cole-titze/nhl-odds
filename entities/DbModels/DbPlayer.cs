@@ -1,74 +1,73 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Entities.DbModels
-{
-    public class DbPlayer : IEquatable<DbPlayer>
-    {
-        public int id { get; set; }
-        public string firstName { get; set; } = string.Empty;
-        public string lastName { get; set; } = string.Empty;
-        public bool isActive { get; set; }
-        public int currentTeamId { get; set; }
-        public string headShot { get; set; } = string.Empty;
-        public string heroImage { get; set; } = string.Empty;
-        public int heightInInches { get; set; }
-        public int weightInPounds { get; set; }
-        public DateTime birthDate { get; set; }
-        public string birthCity { get; set; } = string.Empty;
-        public string birthStateProvince { get; set; } = string.Empty;
-        public bool isInTopOneHundredAllTime { get; set; }
-        public bool isInHallOfFame { get; set; }
-        public string shopLink { get; set; } = string.Empty;
-        public string twitterLink { get; set; } = string.Empty;
-        public string watchLink { get; set; } = string.Empty;
-        public string playerSlug { get; set; } = string.Empty;
-        [ForeignKey(nameof(currentTeamId))]
-        public DbTeam? team { get; set; }
-        public void Clone(DbPlayer player)
-        {
-            id = player.id;
-            firstName = player.firstName;
-            lastName = player.lastName;
-            isActive = player.isActive;
-            currentTeamId = player.currentTeamId;
-            headShot = player.headShot;
-            heroImage = player.heroImage;
-            heightInInches = player.heightInInches;
-            weightInPounds = player.weightInPounds;
-            birthDate = player.birthDate;
-            birthCity = player.birthCity;
-            birthStateProvince = player.birthStateProvince;
-            isInTopOneHundredAllTime = player.isInTopOneHundredAllTime;
-            isInHallOfFame = player.isInHallOfFame;
-            shopLink = player.shopLink;
-            twitterLink = player.twitterLink;
-            watchLink = player.watchLink;
-            playerSlug = player.playerSlug;
-            team = player.team;
-        }
-        public bool Equals(DbPlayer? other)
-        {
-            if (other == null)
-                return false;
+namespace Entities.DbModels;
 
-            return id == other.id
-                && firstName == other.firstName
-                && lastName == other.lastName
-                && isActive == other.isActive
-                && currentTeamId == other.currentTeamId
-                && headShot == other.headShot
-                && heroImage == other.heroImage
-                && heightInInches == other.heightInInches
-                && weightInPounds == other.weightInPounds
-                && birthDate == other.birthDate
-                && birthCity == other.birthCity
-                && birthStateProvince == other.birthStateProvince
-                && isInTopOneHundredAllTime == other.isInTopOneHundredAllTime
-                && isInHallOfFame == other.isInHallOfFame
-                && shopLink == other.shopLink
-                && twitterLink == other.twitterLink
-                && watchLink == other.watchLink
-                && playerSlug == other.playerSlug;
-        }
+public class DbPlayer
+{
+    public int Id { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
+    public int CurrentTeamId { get; set; }
+    public string HeadShot { get; set; } = string.Empty;
+    public string HeroImage { get; set; } = string.Empty;
+    public int HeightInInches { get; set; }
+    public int WeightInPounds { get; set; }
+    public DateTime BirthDate { get; set; }
+    public string BirthCity { get; set; } = string.Empty;
+    public string BirthStateProvince { get; set; } = string.Empty;
+    public bool IsInTopOneHundredAllTime { get; set; }
+    public bool IsInHallOfFame { get; set; }
+    public string ShopLink { get; set; } = string.Empty;
+    public string TwitterLink { get; set; } = string.Empty;
+    public string WatchLink { get; set; } = string.Empty;
+    public string PlayerSlug { get; set; } = string.Empty;
+    [ForeignKey(nameof(CurrentTeamId))]
+    public DbTeam? Team { get; set; }
+    public void Clone(DbPlayer player)
+    {
+        Id = player.Id;
+        FirstName = player.FirstName;
+        LastName = player.LastName;
+        IsActive = player.IsActive;
+        CurrentTeamId = player.CurrentTeamId;
+        HeadShot = player.HeadShot;
+        HeroImage = player.HeroImage;
+        HeightInInches = player.HeightInInches;
+        WeightInPounds = player.WeightInPounds;
+        BirthDate = player.BirthDate;
+        BirthCity = player.BirthCity;
+        BirthStateProvince = player.BirthStateProvince;
+        IsInTopOneHundredAllTime = player.IsInTopOneHundredAllTime;
+        IsInHallOfFame = player.IsInHallOfFame;
+        ShopLink = player.ShopLink;
+        TwitterLink = player.TwitterLink;
+        WatchLink = player.WatchLink;
+        PlayerSlug = player.PlayerSlug;
+        Team = player.Team;
+    }
+    public bool Equals(DbPlayer? other)
+    {
+        if (other == null)
+            return false;
+
+        return Id == other.Id
+            && FirstName == other.FirstName
+            && LastName == other.LastName
+            && IsActive == other.IsActive
+            && CurrentTeamId == other.CurrentTeamId
+            && HeadShot == other.HeadShot
+            && HeroImage == other.HeroImage
+            && HeightInInches == other.HeightInInches
+            && WeightInPounds == other.WeightInPounds
+            && BirthDate == other.BirthDate
+            && BirthCity == other.BirthCity
+            && BirthStateProvince == other.BirthStateProvince
+            && IsInTopOneHundredAllTime == other.IsInTopOneHundredAllTime
+            && IsInHallOfFame == other.IsInHallOfFame
+            && ShopLink == other.ShopLink
+            && TwitterLink == other.TwitterLink
+            && WatchLink == other.WatchLink
+            && PlayerSlug == other.PlayerSlug;
     }
 }

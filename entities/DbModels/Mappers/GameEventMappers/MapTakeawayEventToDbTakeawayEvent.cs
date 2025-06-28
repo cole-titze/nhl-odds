@@ -1,42 +1,41 @@
 using Entities.DbModels.GamePlayEvents;
 using Entities.Models.GamePlayEvents;
 
-namespace Entities.DbModels.Mappers.GameEventMappers
+namespace Entities.DbModels.Mappers.GameEventMappers;
+
+public static class MapTakeawayEventToDbTakeawayEvent
 {
-    public static class MapTakeawayEventToDbTakeawayEvent
+    public static DbTakeaway Map(Takeaway takeawayEvent, int gameId)
     {
-        public static DbTakeaway Map(Takeaway takeawayEvent, int gameId)
+        return new DbTakeaway
         {
-            return new DbTakeaway
-            {
-                id = takeawayEvent.id,
-                gameId = gameId,
-                typeCode = takeawayEvent.typeCode,
-                sortOrder = takeawayEvent.sortOrder,
-                situationCode = takeawayEvent.situationCode,
-                periodNumber = takeawayEvent.periodNumber,
-                periodType = takeawayEvent.periodType,
-                eventTypeName = takeawayEvent.eventTypeName,
-                homeTeamDefendingSide = takeawayEvent.homeTeamDefendingSide,
-                secondsIntoPeriod = takeawayEvent.secondsIntoPeriod,
-                secondsLeftInPeriod = takeawayEvent.secondsLeftInPeriod,
-                takeawayPlayerTeamId = takeawayEvent.takeawayPlayerTeamId,
-                takeawayPlayerId = takeawayEvent.takeawayPlayerId,
-                xCoordinate = takeawayEvent.xCoordinate,
-                yCoordinate = takeawayEvent.yCoordinate,
-                zone = takeawayEvent.zone
-            };
+            Id = takeawayEvent.Id,
+            GameId = gameId,
+            TypeCode = takeawayEvent.TypeCode,
+            SortOrder = takeawayEvent.SortOrder,
+            SituationCode = takeawayEvent.SituationCode,
+            PeriodNumber = takeawayEvent.PeriodNumber,
+            PeriodType = takeawayEvent.PeriodType,
+            EventTypeName = takeawayEvent.EventTypeName,
+            HomeTeamDefendingSide = takeawayEvent.HomeTeamDefendingSide,
+            SecondsIntoPeriod = takeawayEvent.SecondsIntoPeriod,
+            SecondsLeftInPeriod = takeawayEvent.SecondsLeftInPeriod,
+            TakeawayPlayerTeamId = takeawayEvent.TakeawayPlayerTeamId,
+            TakeawayPlayerId = takeawayEvent.TakeawayPlayerId,
+            XCoordinate = takeawayEvent.XCoordinate,
+            YCoordinate = takeawayEvent.YCoordinate,
+            Zone = takeawayEvent.Zone
+        };
+    }
+
+    public static IEnumerable<DbTakeaway> MapList(IEnumerable<Takeaway> takeawayEvents, int gameId)
+    {
+        var dbEvents = new List<DbTakeaway>();
+        foreach (var takeawayEvent in takeawayEvents)
+        {
+            dbEvents.Add(Map(takeawayEvent, gameId));
         }
 
-        public static IEnumerable<DbTakeaway> MapList(IEnumerable<Takeaway> takeawayEvents, int gameId)
-        {
-            var dbEvents = new List<DbTakeaway>();
-            foreach (var takeawayEvent in takeawayEvents)
-            {
-                dbEvents.Add(Map(takeawayEvent, gameId));
-            }
-
-            return dbEvents;
-        }
+        return dbEvents;
     }
 }

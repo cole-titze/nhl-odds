@@ -1,22 +1,21 @@
-﻿namespace Entities.ServiceModels.Mappers
+﻿namespace Entities.ServiceModels.Mappers;
+
+public static class MapScheduleResponseToGameCount
 {
-    public static class MapScheduleResponseToGameCount
+    /// <summary>
+    /// Gets the number of games from a schedule response
+    /// </summary>
+    /// <param name="scheduleResponse">Response from Nhl api</param>
+    /// <returns>Number of games in the season</returns>
+    public static int Map(dynamic scheduleResponse, int seasonId)
     {
-        /// <summary>
-        /// Gets the number of games from a schedule response
-        /// </summary>
-        /// <param name="scheduleResponse">Response from Nhl api</param>
-        /// <returns>Number of games in the season</returns>
-        public static int Map(dynamic scheduleResponse, int seasonId)
+        int seasonGameCount = 0;
+        foreach (var season in scheduleResponse.data)
         {
-            int seasonGameCount = 0;
-            foreach (var season in scheduleResponse.data)
-            {
-                if (season.id == seasonId)
-                    seasonGameCount = (int)season.totalRegularSeasonGames;
-            }
-            return seasonGameCount;
+            if (season.id == seasonId)
+                seasonGameCount = (int)season.totalRegularSeasonGames;
         }
+        return seasonGameCount;
     }
 }
 

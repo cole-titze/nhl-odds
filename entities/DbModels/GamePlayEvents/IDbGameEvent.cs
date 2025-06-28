@@ -1,21 +1,20 @@
 using Entities.Types.Enums;
 
-namespace Entities.DbModels
+namespace Entities.DbModels;
+
+public interface IDbGameEvent
 {
-    public interface IDbGameEvent
-    {
-        public int id { get; set; }
-        public int gameId { get; set; }
-        public int periodNumber { get; set; }
-        public PeriodType periodType { get; set; }
-        // Players on ice (Ex. "1551" means 1 goalie 5 players on both sides)
-        public int situationCode { get; set; }
-        public int typeCode { get; set; }
-        public int sortOrder { get; set; }
-        public string eventTypeName { get; set; }
-        public HomeTeamDefendingSide homeTeamDefendingSide { get; set; }
-        public int secondsIntoPeriod { get; set; }
-        public int secondsLeftInPeriod { get; set; }
-        public void Clone(IDbGameEvent gameOdds);
-    }
+    public int Id { get; set; }
+    public int GameId { get; set; }
+    public int PeriodNumber { get; set; }
+    public PeriodType PeriodType { get; set; }
+    // Players on ice (Ex. "1551" means 1 goalie 5 players on both sides)
+    public int SituationCode { get; set; }
+    public int TypeCode { get; set; }
+    public int SortOrder { get; set; }
+    public string EventTypeName { get; set; }
+    public HomeTeamDefendingSide HomeTeamDefendingSide { get; set; }
+    public int SecondsIntoPeriod { get; set; }
+    public int SecondsLeftInPeriod { get; set; }
+    public void Clone(IDbGameEvent gameOdds);
 }

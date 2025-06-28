@@ -1,10 +1,9 @@
-﻿namespace Services.NhlData
+﻿namespace Services.NhlData;
+
+public interface INhlScheduleGetter
 {
-    public interface INhlScheduleGetter
-    {
-        Task<int> GetGameCountInSeason(int year);
-        IDictionary<int, int> GetSeasonGameCounts();
-        //Task<List<int>> GetTeamsForSeason(int seasonStartYear);
-    }
+    Task<int> GetGameCountInSeason(int year);
+    IDictionary<int, int> GetSeasonGameCounts();
+    //Task<List<int>> GetTeamsForSeason(int seasonStartYear);
 }
 

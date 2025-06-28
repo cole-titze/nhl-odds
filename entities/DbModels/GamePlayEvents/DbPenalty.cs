@@ -1,81 +1,80 @@
-using Entities.Types.Enums;
 using System.ComponentModel.DataAnnotations.Schema;
+using Entities.Types.Enums;
 
-namespace Entities.DbModels.GamePlayEvents
+namespace Entities.DbModels.GamePlayEvents;
+
+public class DbPenalty : IDbGameEvent
 {
-    public class DbPenalty : IDbGameEvent
+    public int Id { get; set; }
+    public int GameId { get; set; }
+    public int TypeCode { get; set; }
+    public int SortOrder { get; set; }
+    public int SituationCode { get; set; }
+    public int PeriodNumber { get; set; }
+    public PeriodType PeriodType { get; set; }
+    public string EventTypeName { get; set; } = string.Empty;
+    public HomeTeamDefendingSide HomeTeamDefendingSide { get; set; }
+    public int SecondsIntoPeriod { get; set; }
+    public int SecondsLeftInPeriod { get; set; }
+    public int CommittedByPlayerTeamId { get; set; }
+    public int? DrawnByPlayerId { get; set; }
+    public int? CommittedByPlayerId { get; set; }
+    public int? ServedByPlayerId { get; set; }
+    public int? XCoordinate { get; set; }
+    public int? YCoordinate { get; set; }
+    public Zone Zone { get; set; }
+    public int Duration { get; set; }
+    public PenaltyType PenaltyType { get; set; }
+    public PenaltySeverity PenaltySeverity { get; set; }
+
+    [ForeignKey(nameof(GameId))]
+    public DbGameRaw? Game { get; set; }
+
+    [ForeignKey(nameof(DrawnByPlayerId))]
+    public DbPlayer? DrawnByPlayer { get; set; }
+
+    [ForeignKey(nameof(CommittedByPlayerId))]
+    public DbPlayer? CommittedByPlayer { get; set; }
+
+    [ForeignKey(nameof(CommittedByPlayerTeamId))]
+    public DbTeam? CommittedByPlayerTeam { get; set; }
+    [ForeignKey(nameof(ServedByPlayerId))]
+    public DbTeam? ServedByPlayer { get; set; }
+
+    public void Clone(IDbGameEvent gameEvent)
     {
-        public int id { get; set; }
-        public int gameId { get; set; }
-        public int typeCode { get; set; }
-        public int sortOrder { get; set; }
-        public int situationCode { get; set; }
-        public int periodNumber { get; set; }
-        public PeriodType periodType { get; set; }
-        public string eventTypeName { get; set; } = string.Empty;
-        public HomeTeamDefendingSide homeTeamDefendingSide { get; set; }
-        public int secondsIntoPeriod { get; set; }
-        public int secondsLeftInPeriod { get; set; }
-        public int committedByPlayerTeamId { get; set; }
-        public int? drawnByPlayerId { get; set; }
-        public int? committedByPlayerId { get; set; }
-        public int? servedByPlayerId { get; set; }
-        public int? xCoordinate { get; set; }
-        public int? yCoordinate { get; set; }
-        public Zone zone { get; set; }
-        public int duration { get; set; }
-        public PenaltyType penaltyType { get; set; }
-        public PenaltySeverity penaltySeverity { get; set; }
-
-        [ForeignKey(nameof(gameId))]
-        public DbGameRaw? game { get; set; }
-
-        [ForeignKey(nameof(drawnByPlayerId))]
-        public DbPlayer? drawnByPlayer { get; set; }
-
-        [ForeignKey(nameof(committedByPlayerId))]
-        public DbPlayer? committedByPlayer { get; set; }
-
-        [ForeignKey(nameof(committedByPlayerTeamId))]
-        public DbTeam? committedByPlayerTeam { get; set; }
-        [ForeignKey(nameof(servedByPlayerId))]
-        public DbTeam? servedByPlayer { get; set; }
-
-        public void Clone(IDbGameEvent gameEvent)
+        if (gameEvent is DbPenalty penaltyEvent)
         {
-            if (gameEvent is DbPenalty penaltyEvent)
-            {
-                id = penaltyEvent.id;
-                gameId = penaltyEvent.gameId;
-                typeCode = penaltyEvent.typeCode;
-                sortOrder = penaltyEvent.sortOrder;
-                situationCode = penaltyEvent.situationCode;
-                periodNumber = penaltyEvent.periodNumber;
-                periodType = penaltyEvent.periodType;
-                eventTypeName = penaltyEvent.eventTypeName;
-                homeTeamDefendingSide = penaltyEvent.homeTeamDefendingSide;
-                secondsIntoPeriod = penaltyEvent.secondsIntoPeriod;
-                secondsLeftInPeriod = penaltyEvent.secondsLeftInPeriod;
-                committedByPlayerTeamId = penaltyEvent.committedByPlayerTeamId;
-                drawnByPlayerId = penaltyEvent.drawnByPlayerId;
-                committedByPlayerId = penaltyEvent.committedByPlayerId;
-                servedByPlayerId = penaltyEvent.servedByPlayerId;
-                xCoordinate = penaltyEvent.xCoordinate;
-                yCoordinate = penaltyEvent.yCoordinate;
-                zone = penaltyEvent.zone;
-                duration = penaltyEvent.duration;
-                penaltyType = penaltyEvent.penaltyType;
-                penaltySeverity = penaltyEvent.penaltySeverity;
-                game = penaltyEvent.game;
-                drawnByPlayer = penaltyEvent.drawnByPlayer;
-                committedByPlayer = penaltyEvent.committedByPlayer;
-                committedByPlayerTeam = penaltyEvent.committedByPlayerTeam;
-                servedByPlayer = penaltyEvent.servedByPlayer;
-            }
-            else
-            {
-                throw new InvalidOperationException("Invalid type passed to Clone.");
-            }
+            Id = penaltyEvent.Id;
+            GameId = penaltyEvent.GameId;
+            TypeCode = penaltyEvent.TypeCode;
+            SortOrder = penaltyEvent.SortOrder;
+            SituationCode = penaltyEvent.SituationCode;
+            PeriodNumber = penaltyEvent.PeriodNumber;
+            PeriodType = penaltyEvent.PeriodType;
+            EventTypeName = penaltyEvent.EventTypeName;
+            HomeTeamDefendingSide = penaltyEvent.HomeTeamDefendingSide;
+            SecondsIntoPeriod = penaltyEvent.SecondsIntoPeriod;
+            SecondsLeftInPeriod = penaltyEvent.SecondsLeftInPeriod;
+            CommittedByPlayerTeamId = penaltyEvent.CommittedByPlayerTeamId;
+            DrawnByPlayerId = penaltyEvent.DrawnByPlayerId;
+            CommittedByPlayerId = penaltyEvent.CommittedByPlayerId;
+            ServedByPlayerId = penaltyEvent.ServedByPlayerId;
+            XCoordinate = penaltyEvent.XCoordinate;
+            YCoordinate = penaltyEvent.YCoordinate;
+            Zone = penaltyEvent.Zone;
+            Duration = penaltyEvent.Duration;
+            PenaltyType = penaltyEvent.PenaltyType;
+            PenaltySeverity = penaltyEvent.PenaltySeverity;
+            Game = penaltyEvent.Game;
+            DrawnByPlayer = penaltyEvent.DrawnByPlayer;
+            CommittedByPlayer = penaltyEvent.CommittedByPlayer;
+            CommittedByPlayerTeam = penaltyEvent.CommittedByPlayerTeam;
+            ServedByPlayer = penaltyEvent.ServedByPlayer;
+        }
+        else
+        {
+            throw new InvalidOperationException("Invalid type passed to Clone.");
         }
     }
 }

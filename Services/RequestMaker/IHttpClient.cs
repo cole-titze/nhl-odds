@@ -1,7 +1,6 @@
-﻿namespace Services.RequestMaker
+﻿namespace Services.RequestMaker;
+
+public interface IHttpClient
 {
-    public interface IHttpClient
-    {
-        Task<HttpResponseMessage> SendAsync(HttpRequestMessage message);
-    }
+    Task<HttpResponseMessage> SendAsync(HttpRequestMessage message);
 }

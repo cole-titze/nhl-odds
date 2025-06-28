@@ -1,43 +1,42 @@
 using Entities.DbModels.GamePlayEvents;
 using Entities.Models.GamePlayEvents;
 
-namespace Entities.DbModels.Mappers.GameEventMappers
+namespace Entities.DbModels.Mappers.GameEventMappers;
+
+public static class MapHitEventToDbHitEvent
 {
-    public static class MapHitEventToDbHitEvent
+    public static DbHit Map(Hit hitEvent, int gameId)
     {
-        public static DbHit Map(Hit hitEvent, int gameId)
+        return new DbHit
         {
-            return new DbHit
-            {
-                id = hitEvent.id,
-                gameId = gameId,
-                typeCode = hitEvent.typeCode,
-                sortOrder = hitEvent.sortOrder,
-                situationCode = hitEvent.situationCode,
-                periodNumber = hitEvent.periodNumber,
-                periodType = hitEvent.periodType,
-                eventTypeName = hitEvent.eventTypeName,
-                homeTeamDefendingSide = hitEvent.homeTeamDefendingSide,
-                secondsIntoPeriod = hitEvent.secondsIntoPeriod,
-                secondsLeftInPeriod = hitEvent.secondsLeftInPeriod,
-                hittingPlayerTeamId = hitEvent.hittingPlayerTeamId,
-                hittingPlayerId = hitEvent.hittingPlayerId,
-                hitteePlayerId = hitEvent.hitteePlayerId,
-                xCoordinate = hitEvent.xCoordinate,
-                yCoordinate = hitEvent.yCoordinate,
-                zone = hitEvent.zone
-            };
+            Id = hitEvent.Id,
+            GameId = gameId,
+            TypeCode = hitEvent.TypeCode,
+            SortOrder = hitEvent.SortOrder,
+            SituationCode = hitEvent.SituationCode,
+            PeriodNumber = hitEvent.PeriodNumber,
+            PeriodType = hitEvent.PeriodType,
+            EventTypeName = hitEvent.EventTypeName,
+            HomeTeamDefendingSide = hitEvent.HomeTeamDefendingSide,
+            SecondsIntoPeriod = hitEvent.SecondsIntoPeriod,
+            SecondsLeftInPeriod = hitEvent.SecondsLeftInPeriod,
+            HittingPlayerTeamId = hitEvent.HittingPlayerTeamId,
+            HittingPlayerId = hitEvent.HittingPlayerId,
+            HitteePlayerId = hitEvent.HitteePlayerId,
+            XCoordinate = hitEvent.XCoordinate,
+            YCoordinate = hitEvent.YCoordinate,
+            Zone = hitEvent.Zone
+        };
+    }
+
+    public static IEnumerable<DbHit> MapList(IEnumerable<Hit> hitEvents, int gameId)
+    {
+        var dbEvents = new List<DbHit>();
+        foreach (var hitEvent in hitEvents)
+        {
+            dbEvents.Add(Map(hitEvent, gameId));
         }
 
-        public static IEnumerable<DbHit> MapList(IEnumerable<Hit> hitEvents, int gameId)
-        {
-            var dbEvents = new List<DbHit>();
-            foreach (var hitEvent in hitEvents)
-            {
-                dbEvents.Add(Map(hitEvent, gameId));
-            }
-
-            return dbEvents;
-        }
+        return dbEvents;
     }
 }

@@ -2,46 +2,45 @@ using Entities.Models.GamePlayEvents;
 using Entities.Types;
 using Entities.Types.Enums;
 
-namespace Entities.ServiceModels.Mappers.GameEventMappers
-{
-    public static class MapGoalEvent
-    {
-        /// <summary>
-        /// Maps a goal event
-        /// </summary>
-        /// <param name="responseGameEvent">The event response from the NHL api</param>
-        /// <returns>The goal event</returns>
-        public static Goal Map(dynamic responseGameEvent)
-        {
-            string timeInPeriod = responseGameEvent.timeInPeriod;
-            string timeLeftInPeriod = responseGameEvent.timeRemaining;
+namespace Entities.ServiceModels.Mappers.GameEventMappers;
 
-            return new Goal
-            {
-                id = (int)responseGameEvent.eventId,
-                typeCode = (int)responseGameEvent.typeCode,
-                sortOrder = (int)responseGameEvent.sortOrder,
-                situationCode = SituationCodeParser.ParseFromString((string)responseGameEvent.situationCode),
-                periodNumber = (int)responseGameEvent.periodDescriptor.number,
-                periodType = PeriodTypeParser.ParseFromString((string)responseGameEvent.periodDescriptor.periodType),
-                eventTypeName = responseGameEvent.typeDescKey,
-                homeTeamDefendingSide = HomeTeamDefendingSideParser.ParseFromString((string)responseGameEvent.homeTeamDefendingSide),
-                secondsIntoPeriod = timeInPeriod.ParseIceTimeToSeconds(),
-                secondsLeftInPeriod = timeLeftInPeriod.ParseIceTimeToSeconds(),
-                shotType = ShotTypeParser.ParseFromString((string)responseGameEvent.details.shotType),
-                scoringPlayerTeamId = (int)responseGameEvent.details.eventOwnerTeamId,
-                scoringPlayerId = (int)responseGameEvent.details.scoringPlayerId,
-                goalieId = (int?)responseGameEvent.details.goalieInNetId,
-                assistOnePlayerId = (int?)responseGameEvent.details.assist1PlayerId,
-                assistTwoPlayerId = (int?)responseGameEvent.details.assist2PlayerId,
-                zone = ZoneParser.ParseFromString((string)responseGameEvent.details.zoneCode),
-                xCoordinate = (int?)responseGameEvent.details.xCoord,
-                yCoordinate = (int?)responseGameEvent.details.yCoord,
-                highlightClipSharingUrl = (string)responseGameEvent.details.highlightClipSharingUrl ?? "",
-                highlightClipId = (int?)responseGameEvent.details.highlightClip ?? -1,
-                discreetClipId = (int?)responseGameEvent.details.discreteClip ?? -1,
-                pptReplayUrl = (string)responseGameEvent.pptReplayUrl ?? "",
-            };
-        }
+public static class MapGoalEvent
+{
+    /// <summary>
+    /// Maps a goal event
+    /// </summary>
+    /// <param name="responseGameEvent">The event response from the NHL api</param>
+    /// <returns>The goal event</returns>
+    public static Goal Map(dynamic responseGameEvent)
+    {
+        string timeInPeriod = responseGameEvent.timeInPeriod;
+        string timeLeftInPeriod = responseGameEvent.timeRemaining;
+
+        return new Goal
+        {
+            Id = (int)responseGameEvent.eventId,
+            TypeCode = (int)responseGameEvent.typeCode,
+            SortOrder = (int)responseGameEvent.sortOrder,
+            SituationCode = SituationCodeParser.ParseFromString((string)responseGameEvent.situationCode),
+            PeriodNumber = (int)responseGameEvent.periodDescriptor.number,
+            PeriodType = PeriodTypeParser.ParseFromString((string)responseGameEvent.periodDescriptor.periodType),
+            EventTypeName = responseGameEvent.typeDescKey,
+            HomeTeamDefendingSide = HomeTeamDefendingSideParser.ParseFromString((string)responseGameEvent.homeTeamDefendingSide),
+            SecondsIntoPeriod = timeInPeriod.ParseIceTimeToSeconds(),
+            SecondsLeftInPeriod = timeLeftInPeriod.ParseIceTimeToSeconds(),
+            ShotType = ShotTypeParser.ParseFromString((string)responseGameEvent.details.shotType),
+            ScoringPlayerTeamId = (int)responseGameEvent.details.eventOwnerTeamId,
+            ScoringPlayerId = (int)responseGameEvent.details.scoringPlayerId,
+            GoalieId = (int?)responseGameEvent.details.goalieInNetId,
+            AssistOnePlayerId = (int?)responseGameEvent.details.assist1PlayerId,
+            AssistTwoPlayerId = (int?)responseGameEvent.details.assist2PlayerId,
+            Zone = ZoneParser.ParseFromString((string)responseGameEvent.details.zoneCode),
+            XCoordinate = (int?)responseGameEvent.details.xCoord,
+            YCoordinate = (int?)responseGameEvent.details.yCoord,
+            HighlightClipSharingUrl = (string)responseGameEvent.details.highlightClipSharingUrl ?? "",
+            HighlightClipId = (int?)responseGameEvent.details.highlightClip ?? -1,
+            DiscreetClipId = (int?)responseGameEvent.details.discreteClip ?? -1,
+            PptReplayUrl = (string)responseGameEvent.pptReplayUrl ?? "",
+        };
     }
 }

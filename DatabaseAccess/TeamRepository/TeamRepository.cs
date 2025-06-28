@@ -1,43 +1,42 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Entities.DbModels;
+﻿using Entities.DbModels;
+using Microsoft.EntityFrameworkCore;
 
-namespace DatabaseAccess.TeamRepository
+namespace DatabaseAccess.TeamRepository;
+
+public class TeamRepository : ITeamRepository
 {
-    public class TeamRepository : ITeamRepository
+    private readonly NhlDbContext _dbContext;
+    public TeamRepository(NhlDbContext dbContext)
     {
-        private readonly NhlDbContext _dbContext;
-        public TeamRepository(NhlDbContext dbContext)
-        {
-            _dbContext = dbContext;
-        }
+        _dbContext = dbContext;
+    }
 
-        /// <summary>
-        /// Gets all teams from the database
-        /// </summary>
-        /// <returns>Query to get all teams</returns>
-        private IQueryable<DbTeam> GetAllTeamsQuery()
-        {
-            return _dbContext.Team.AsQueryable();
-        }
+    /// <summary>
+    /// Gets all teams from the database
+    /// </summary>
+    /// <returns>Query to get all teams</returns>
+    private IQueryable<DbTeam> GetAllTeamsQuery()
+    {
+        return _dbContext.Team.AsQueryable();
+    }
 
-        /// <summary>
-        /// Gets a single team stats
-        /// </summary>
-        /// <param name="teamId">The team to get stats for</param>
-        /// <returns>The team stats</returns>
-        public async Task<DbTeam> GetTeam(int teamId)
-        {
-            return await GetAllTeamsQuery().Where(x => x.id == teamId).FirstAsync();
-        }
-        /// <summary>
-        /// Gets a dictionary mapping team abbreviations to team ids. The NHL API often
-        /// only returns a teams abbreviation
-        /// </summary>
-        /// <returns>Team abbreviation to id map</returns>
-        public async Task<IDictionary<string, int>> GetTeamAbbrevToIdMap()
-        {
-            var teams = await GetAllTeamsQuery().ToListAsync();
-            return teams.ToDictionary(team => team.abbreviation, team => team.id);
-        }
+    /// <summary>
+    /// Gets a single team stats
+    /// </summary>
+    /// <param name="teamId">The team to get stats for</param>
+    /// <returns>The team stats</returns>
+    public async Task<DbTeam> GetTeam(int teamId)
+    {
+        return await GetAllTeamsQuery().Where(x => x.Id == teamId).FirstAsync();
+    }
+    /// <summary>
+    /// Gets a dictionary mapping team abbreviations to team ids. The NHL API often
+    /// only returns a teams abbreviation
+    /// </summary>
+    /// <returns>Team abbreviation to id map</returns>
+    public async Task<IDictionary<string, int>> GetTeamAbbrevToIdMap()
+    {
+        var teams = await GetAllTeamsQuery().ToListAsync();
+        return teams.ToDictionary(team => team.Abbreviation, team => team.Id);
     }
 }

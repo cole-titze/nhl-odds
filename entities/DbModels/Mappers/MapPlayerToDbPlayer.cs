@@ -1,44 +1,43 @@
 using Entities.DbModels;
 using Entities.Models;
 
-namespace DataAccess.PlayerRepository.Mappers
-{
-    public static class MapPlayerToDbPlayer
-    {
-        public static DbPlayer Map(Player player)
-        {
-            return new DbPlayer()
-            {
-                id = player.id,
-                firstName = player.firstName,
-                lastName = player.lastName,
-                isActive = player.isActive,
-                currentTeamId = player.currentTeamId,
-                headShot = player.headShot,
-                heroImage = player.heroImage,
-                heightInInches = player.heightInInches,
-                weightInPounds = player.weightInPounds,
-                birthDate = player.birthDate,
-                birthCity = player.birthCity,
-                birthStateProvince = player.birthStateProvince,
-                isInTopOneHundredAllTime = player.isInTopOneHundredAllTime,
-                isInHallOfFame = player.isInHallOfFame,
-                shopLink = player.shopLink,
-                twitterLink = player.twitterLink,
-                watchLink = player.watchLink,
-                playerSlug = player.playerSlug,
+namespace DataAccess.PlayerRepository.Mappers;
 
-            };
-        }
-        public static IEnumerable<DbPlayer> Map(IEnumerable<Player> players)
+public static class MapPlayerToDbPlayer
+{
+    public static DbPlayer Map(Player player)
+    {
+        return new DbPlayer()
         {
-            var dbPlayers = new List<DbPlayer>();
-            foreach (var player in players)
-            {
-                dbPlayers.Add(Map(player));
-            }
-            return dbPlayers;
+            Id = player.Id,
+            FirstName = player.FirstName,
+            LastName = player.LastName,
+            IsActive = player.IsActive,
+            CurrentTeamId = player.CurrentTeamId,
+            HeadShot = player.HeadShot,
+            HeroImage = player.HeroImage,
+            HeightInInches = player.HeightInInches,
+            WeightInPounds = player.WeightInPounds,
+            BirthDate = player.BirthDate,
+            BirthCity = player.BirthCity,
+            BirthStateProvince = player.BirthStateProvince,
+            IsInTopOneHundredAllTime = player.IsInTopOneHundredAllTime,
+            IsInHallOfFame = player.IsInHallOfFame,
+            ShopLink = player.ShopLink,
+            TwitterLink = player.TwitterLink,
+            WatchLink = player.WatchLink,
+            PlayerSlug = player.PlayerSlug,
+
+        };
+    }
+    public static IEnumerable<DbPlayer> Map(IEnumerable<Player> players)
+    {
+        var dbPlayers = new List<DbPlayer>();
+        foreach (var player in players)
+        {
+            dbPlayers.Add(Map(player));
         }
+        return dbPlayers;
     }
 }
 

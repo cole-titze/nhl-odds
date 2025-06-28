@@ -9,11 +9,23 @@
                 "build"
             ],
             "problemMatcher": "$msCompile",
+            "detail": "Builds the .NET Core project"
+        },
+        {
+            "label": "check-formatting",
+            "type": "process",
+            "command": "dotnet",
+            "args": ["format", "style", "--verify-no-changes"],
+            "problemMatcher": []
+        },
+        {
+            "label": "build-and-check-format",
+            "dependsOn": ["build", "check-formatting"],
+            "dependsOrder": "sequence",
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "detail": "Builds the .NET Core project"
         }
     ]
 }

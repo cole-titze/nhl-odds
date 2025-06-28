@@ -2,113 +2,112 @@
 using Entities.Types;
 using Entities.Types.Enums;
 
-namespace Entities.DbModels
+namespace Entities.DbModels;
+
+public class DbGameRaw
 {
-    public class DbGameRaw
+    public int Id { get; set; }
+    public int HomeTeamId { get; set; }
+    public int AwayTeamId { get; set; }
+    public int SeasonStartYear { get; set; }
+    public DateTime GameDateUTC { get; set; }
+    public int HomeGoals { get; set; }
+    public int AwayGoals { get; set; }
+    public Winner Winner { get; set; }
+    public PeriodType EndPeriod { get; set; }
+    public int HomeSOG { get; set; }
+    public int AwaySOG { get; set; }
+    public int HomePPG { get; set; }
+    public int AwayPPG { get; set; }
+    public int HomePIM { get; set; }
+    public int AwayPIM { get; set; }
+    public double HomeFaceOffWinPercent { get; set; }
+    public double AwayFaceOffWinPercent { get; set; }
+    public int HomeBlockedShots { get; set; }
+    public int AwayBlockedShots { get; set; }
+    public int HomeHits { get; set; }
+    public int AwayHits { get; set; }
+    public int HomeTakeaways { get; set; }
+    public int AwayTakeaways { get; set; }
+    public int HomeGiveaways { get; set; }
+    public int AwayGiveaways { get; set; }
+    public bool HasBeenPlayed { get; set; }
+    public string GameSummary { get; set; } = string.Empty;
+    public string EventSummary { get; set; } = string.Empty;
+    public string PlayByPlaySummary { get; set; } = string.Empty;
+    public string FaceoffSummary { get; set; } = string.Empty;
+    public string FaceoffComparisonSummary { get; set; } = string.Empty;
+    public string RosterSummary { get; set; } = string.Empty;
+    public string ShotSummary { get; set; } = string.Empty;
+    public string ShiftChartSummary { get; set; } = string.Empty;
+    public string ToiAwaySummary { get; set; } = string.Empty;
+    public string ToiHomeSummary { get; set; } = string.Empty;
+    public int ThreeMinuteRecapVideoId { get; set; }
+    public int CondensedGameVideoId { get; set; }
+    public string VenueName { get; set; } = string.Empty;
+    public string VenueLocation { get; set; } = string.Empty;
+
+    [ForeignKey(nameof(HomeTeamId))]
+    public DbTeam? HomeTeam { get; set; }
+    [ForeignKey(nameof(AwayTeamId))]
+    public DbTeam? AwayTeam { get; set; }
+
+    public void Clone(DbGameRaw game)
     {
-        public int id { get; set; }
-        public int homeTeamId { get; set; }
-        public int awayTeamId { get; set; }
-        public int seasonStartYear { get; set; }
-        public DateTime gameDateUTC { get; set; }
-        public int homeGoals { get; set; }
-        public int awayGoals { get; set; }
-        public Winner winner { get; set; }
-        public PeriodType endPeriod { get; set; }
-        public int homeSOG { get; set; }
-        public int awaySOG { get; set; }
-        public int homePPG { get; set; }
-        public int awayPPG { get; set; }
-        public int homePIM { get; set; }
-        public int awayPIM { get; set; }
-        public double homeFaceOffWinPercent { get; set; }
-        public double awayFaceOffWinPercent { get; set; }
-        public int homeBlockedShots { get; set; }
-        public int awayBlockedShots { get; set; }
-        public int homeHits { get; set; }
-        public int awayHits { get; set; }
-        public int homeTakeaways { get; set; }
-        public int awayTakeaways { get; set; }
-        public int homeGiveaways { get; set; }
-        public int awayGiveaways { get; set; }
-        public bool hasBeenPlayed { get; set; }
-        public string gameSummary { get; set; } = string.Empty;
-        public string eventSummary { get; set; } = string.Empty;
-        public string playByPlaySummary { get; set; } = string.Empty;
-        public string faceoffSummary { get; set; } = string.Empty;
-        public string faceoffComparisonSummary { get; set; } = string.Empty;
-        public string rosterSummary { get; set; } = string.Empty;
-        public string shotSummary { get; set; } = string.Empty;
-        public string shiftChartSummary { get; set; } = string.Empty;
-        public string toiAwaySummary { get; set; } = string.Empty;
-        public string toiHomeSummary { get; set; } = string.Empty;
-        public int threeMinuteRecapVideoId { get; set; }
-        public int condensedGameVideoId { get; set; }
-        public string venueName { get; set; } = string.Empty;
-        public string venueLocation { get; set; } = string.Empty;
+        Id = game.Id;
+        HomeTeamId = game.HomeTeamId;
+        AwayTeamId = game.AwayTeamId;
+        SeasonStartYear = game.SeasonStartYear;
+        GameDateUTC = game.GameDateUTC;
+        HomeGoals = game.HomeGoals;
+        AwayGoals = game.AwayGoals;
+        Winner = game.Winner;
+        EndPeriod = game.EndPeriod;
+        HomeSOG = game.HomeSOG;
+        AwaySOG = game.AwaySOG;
+        HomePPG = game.HomePPG;
+        AwayPPG = game.AwayPPG;
+        HomePIM = game.HomePIM;
+        AwayPIM = game.AwayPIM;
+        HomeFaceOffWinPercent = game.HomeFaceOffWinPercent;
+        AwayFaceOffWinPercent = game.AwayFaceOffWinPercent;
+        HomeBlockedShots = game.HomeBlockedShots;
+        AwayBlockedShots = game.AwayBlockedShots;
+        HomeHits = game.HomeHits;
+        AwayHits = game.AwayHits;
+        HomeTakeaways = game.HomeTakeaways;
+        AwayTakeaways = game.AwayTakeaways;
+        HomeGiveaways = game.HomeGiveaways;
+        AwayGiveaways = game.AwayGiveaways;
+        HasBeenPlayed = game.HasBeenPlayed;
+        HomeTeam = game.HomeTeam;
+        AwayTeam = game.AwayTeam;
+        GameSummary = game.GameSummary;
+        EventSummary = game.EventSummary;
+        PlayByPlaySummary = game.PlayByPlaySummary;
+        FaceoffSummary = game.FaceoffSummary;
+        FaceoffComparisonSummary = game.FaceoffComparisonSummary;
+        RosterSummary = game.RosterSummary;
+        ShotSummary = game.ShotSummary;
+        ShiftChartSummary = game.ShiftChartSummary;
+        ToiAwaySummary = game.ToiAwaySummary;
+        ToiHomeSummary = game.ToiHomeSummary;
+        ThreeMinuteRecapVideoId = game.ThreeMinuteRecapVideoId;
+        CondensedGameVideoId = game.CondensedGameVideoId;
+        VenueName = game.VenueName;
+        VenueLocation = game.VenueLocation;
+    }
+    /// <summary>
+    /// Gets the abbreviation for the team
+    /// </summary>
+    /// <returns>Three letter abbreviation</returns>
+    public string GetTeamAbbr(int teamId)
+    {
+        if (teamId == HomeTeamId)
+            return HomeTeam?.Abbreviation ?? "";
+        if (teamId == AwayTeamId)
+            return AwayTeam?.Abbreviation ?? "";
 
-        [ForeignKey(nameof(homeTeamId))]
-        public DbTeam? homeTeam { get; set; }
-        [ForeignKey(nameof(awayTeamId))]
-        public DbTeam? awayTeam { get; set; }
-
-        public void Clone(DbGameRaw game)
-        {
-            id = game.id;
-            homeTeamId = game.homeTeamId;
-            awayTeamId = game.awayTeamId;
-            seasonStartYear = game.seasonStartYear;
-            gameDateUTC = game.gameDateUTC;
-            homeGoals = game.homeGoals;
-            awayGoals = game.awayGoals;
-            winner = game.winner;
-            endPeriod = game.endPeriod;
-            homeSOG = game.homeSOG;
-            awaySOG = game.awaySOG;
-            homePPG = game.homePPG;
-            awayPPG = game.awayPPG;
-            homePIM = game.homePIM;
-            awayPIM = game.awayPIM;
-            homeFaceOffWinPercent = game.homeFaceOffWinPercent;
-            awayFaceOffWinPercent = game.awayFaceOffWinPercent;
-            homeBlockedShots = game.homeBlockedShots;
-            awayBlockedShots = game.awayBlockedShots;
-            homeHits = game.homeHits;
-            awayHits = game.awayHits;
-            homeTakeaways = game.homeTakeaways;
-            awayTakeaways = game.awayTakeaways;
-            homeGiveaways = game.homeGiveaways;
-            awayGiveaways = game.awayGiveaways;
-            hasBeenPlayed = game.hasBeenPlayed;
-            homeTeam = game.homeTeam;
-            awayTeam = game.awayTeam;
-            gameSummary = game.gameSummary;
-            eventSummary = game.eventSummary;
-            playByPlaySummary = game.playByPlaySummary;
-            faceoffSummary = game.faceoffSummary;
-            faceoffComparisonSummary = game.faceoffComparisonSummary;
-            rosterSummary = game.rosterSummary;
-            shotSummary = game.shotSummary;
-            shiftChartSummary = game.shiftChartSummary;
-            toiAwaySummary = game.toiAwaySummary;
-            toiHomeSummary = game.toiHomeSummary;
-            threeMinuteRecapVideoId = game.threeMinuteRecapVideoId;
-            condensedGameVideoId = game.condensedGameVideoId;
-            venueName = game.venueName;
-            venueLocation = game.venueLocation;
-        }
-        /// <summary>
-        /// Gets the abbreviation for the team
-        /// </summary>
-        /// <returns>Three letter abbreviation</returns>
-        public string GetTeamAbbr(int teamId)
-        {
-            if (teamId == homeTeamId)
-                return homeTeam?.abbreviation ?? "";
-            if (teamId == awayTeamId)
-                return awayTeam?.abbreviation ?? "";
-
-            return "";
-        }
+        return "";
     }
 }

@@ -1,11 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Entities.DbModels
+namespace Entities.DbModels;
+
+public class DbSeasonGameCount
 {
-    public class DbSeasonGameCount
-    {
-        [Key]
-        public int seasonId { get; set; }
-        public int gameCount { get; set; }
-    }
+    [Key]
+    public int SeasonId { get; set; }
+    public int GameCount { get; set; }
 }

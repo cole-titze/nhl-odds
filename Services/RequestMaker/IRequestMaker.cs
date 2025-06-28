@@ -1,10 +1,9 @@
-﻿namespace Services.RequestMaker
-{
-    public interface IRequestMaker
-    {
-        public Task<dynamic?> MakeRequest(string url, string query, int throttleTime);
-        public Task<dynamic?> MakeRequest(string url, string query);
+﻿namespace Services.RequestMaker;
 
-    }
+public interface IRequestMaker
+{
+    public Task<dynamic?> MakeRequest(string url, string query, int throttleTime);
+    public Task<dynamic?> MakeRequest(string url, string query);
+
 }
 

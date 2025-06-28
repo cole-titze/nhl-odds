@@ -1,7 +1,6 @@
-namespace Entities.Models
+namespace Entities.Models;
+
+public interface IOfficial
 {
-    public interface IOfficial
-    {
-        string name { get; set; }
-    }
+    string Name { get; set; }
 }

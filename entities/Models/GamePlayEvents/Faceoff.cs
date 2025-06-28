@@ -1,24 +1,23 @@
 using Entities.Types.Enums;
 
-namespace Entities.Models.GamePlayEvents
+namespace Entities.Models.GamePlayEvents;
+
+public class Faceoff : IGameEvent
 {
-    public class Faceoff : IGameEvent
-    {
-        public int id { get; set; }
-        public int typeCode { get; set; }
-        public int sortOrder { get; set; }
-        public int situationCode { get; set; }
-        public int periodNumber { get; set; }
-        public PeriodType periodType { get; set; }
-        public string eventTypeName { get; set; } = string.Empty;
-        public HomeTeamDefendingSide homeTeamDefendingSide { get; set; }
-        public int secondsIntoPeriod { get; set; }
-        public int secondsLeftInPeriod { get; set; }
-        public int winningTeamId { get; set; }
-        public int winningPlayerId { get; set; }
-        public int losingPlayerId { get; set; }
-        public int? xCoordinate { get; set; }
-        public int? yCoordinate { get; set; }
-        public Zone zone { get; set; }
-    }
+    public int Id { get; set; }
+    public int TypeCode { get; set; }
+    public int SortOrder { get; set; }
+    public int SituationCode { get; set; }
+    public int PeriodNumber { get; set; }
+    public PeriodType PeriodType { get; set; }
+    public string EventTypeName { get; set; } = string.Empty;
+    public HomeTeamDefendingSide HomeTeamDefendingSide { get; set; }
+    public int SecondsIntoPeriod { get; set; }
+    public int SecondsLeftInPeriod { get; set; }
+    public int WinningTeamId { get; set; }
+    public int WinningPlayerId { get; set; }
+    public int LosingPlayerId { get; set; }
+    public int? XCoordinate { get; set; }
+    public int? YCoordinate { get; set; }
+    public Zone Zone { get; set; }
 }

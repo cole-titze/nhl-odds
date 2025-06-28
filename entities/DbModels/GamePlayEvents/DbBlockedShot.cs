@@ -1,67 +1,67 @@
 using System.ComponentModel.DataAnnotations.Schema;
+
 using Entities.Types.Enums;
 
-namespace Entities.DbModels.GamePlayEvents
+namespace Entities.DbModels.GamePlayEvents;
+
+public class DbBlockedShot : IDbGameEvent
 {
-    public class DbBlockedShot : IDbGameEvent
+    public int Id { get; set; }
+    public int GameId { get; set; }
+    public int TypeCode { get; set; }
+    public int SortOrder { get; set; }
+    public int SituationCode { get; set; }
+    public int PeriodNumber { get; set; }
+    public PeriodType PeriodType { get; set; }
+    public string EventTypeName { get; set; } = string.Empty;
+    public HomeTeamDefendingSide HomeTeamDefendingSide { get; set; }
+    public int SecondsIntoPeriod { get; set; }
+    public int SecondsLeftInPeriod { get; set; }
+    public int BlockingPlayerTeamId { get; set; }
+    public int BlockingPlayerId { get; set; }
+    public int ShooterPlayerId { get; set; }
+    public int? XCoordinate { get; set; }
+    public int? YCoordinate { get; set; }
+    public Zone Zone { get; set; }
+    public BlockType BlockType { get; set; }
+    [ForeignKey(nameof(ShooterPlayerId))]
+    public DbPlayer? ShooterPlayer { get; set; }
+    [ForeignKey(nameof(BlockingPlayerId))]
+    public DbPlayer? BlockingPlayer { get; set; }
+    [ForeignKey(nameof(GameId))]
+    public DbGameRaw? Game { get; set; }
+    [ForeignKey(nameof(BlockingPlayerTeamId))]
+    public DbTeam? BlockingTeam { get; set; }
+    public void Clone(IDbGameEvent gameEvent)
     {
-        public int id { get; set; }
-        public int gameId { get; set; }
-        public int typeCode { get; set; }
-        public int sortOrder { get; set; }
-        public int situationCode { get; set; }
-        public int periodNumber { get; set; }
-        public PeriodType periodType { get; set; }
-        public string eventTypeName { get; set; } = string.Empty;
-        public HomeTeamDefendingSide homeTeamDefendingSide { get; set; }
-        public int secondsIntoPeriod { get; set; }
-        public int secondsLeftInPeriod { get; set; }
-        public int blockingPlayerTeamId { get; set; }
-        public int blockingPlayerId { get; set; }
-        public int shooterPlayerId { get; set; }
-        public int? xCoordinate { get; set; }
-        public int? yCoordinate { get; set; }
-        public Zone zone { get; set; }
-        public BlockType blockType { get; set; }
-        [ForeignKey(nameof(shooterPlayerId))]
-        public DbPlayer? shooterPlayer { get; set; }
-        [ForeignKey(nameof(blockingPlayerId))]
-        public DbPlayer? blockingPlayer { get; set; }
-        [ForeignKey(nameof(gameId))]
-        public DbGameRaw? game { get; set; }
-        [ForeignKey(nameof(blockingPlayerTeamId))]
-        public DbTeam? blockingTeam { get; set; }
-        public void Clone(IDbGameEvent gameEvent)
+        if (gameEvent is DbBlockedShot blockedShotEvent)
         {
-            if (gameEvent is DbBlockedShot blockedShotEvent)
-            {
-                id = blockedShotEvent.id;
-                gameId = blockedShotEvent.gameId;
-                typeCode = blockedShotEvent.typeCode;
-                sortOrder = blockedShotEvent.typeCode;
-                situationCode = blockedShotEvent.situationCode;
-                periodNumber = blockedShotEvent.periodNumber;
-                periodType = blockedShotEvent.periodType;
-                eventTypeName = blockedShotEvent.eventTypeName;
-                homeTeamDefendingSide = blockedShotEvent.homeTeamDefendingSide;
-                secondsIntoPeriod = blockedShotEvent.secondsIntoPeriod;
-                secondsLeftInPeriod = blockedShotEvent.secondsLeftInPeriod;
-                blockingPlayerTeamId = blockedShotEvent.blockingPlayerTeamId;
-                blockingPlayerId = blockedShotEvent.blockingPlayerId;
-                shooterPlayerId = blockedShotEvent.shooterPlayerId;
-                xCoordinate = blockedShotEvent.xCoordinate;
-                yCoordinate = blockedShotEvent.yCoordinate;
-                zone = blockedShotEvent.zone;
-                blockType = blockedShotEvent.blockType;
-                shooterPlayer = blockedShotEvent.shooterPlayer;
-                blockingPlayer = blockedShotEvent.blockingPlayer;
-                game = blockedShotEvent.game;
-                blockingTeam = blockedShotEvent.blockingTeam;
-            }
-            else
-            {
-                throw new InvalidOperationException("Invalid type passed to Clone.");
-            }
+            Id = blockedShotEvent.Id;
+            GameId = blockedShotEvent.GameId;
+            TypeCode = blockedShotEvent.TypeCode;
+            SortOrder = blockedShotEvent.TypeCode;
+            SituationCode = blockedShotEvent.SituationCode;
+            PeriodNumber = blockedShotEvent.PeriodNumber;
+            PeriodType = blockedShotEvent.PeriodType;
+            EventTypeName = blockedShotEvent.EventTypeName;
+            HomeTeamDefendingSide = blockedShotEvent.HomeTeamDefendingSide;
+            SecondsIntoPeriod = blockedShotEvent.SecondsIntoPeriod;
+            SecondsLeftInPeriod = blockedShotEvent.SecondsLeftInPeriod;
+            BlockingPlayerTeamId = blockedShotEvent.BlockingPlayerTeamId;
+            BlockingPlayerId = blockedShotEvent.BlockingPlayerId;
+            ShooterPlayerId = blockedShotEvent.ShooterPlayerId;
+            XCoordinate = blockedShotEvent.XCoordinate;
+            YCoordinate = blockedShotEvent.YCoordinate;
+            Zone = blockedShotEvent.Zone;
+            BlockType = blockedShotEvent.BlockType;
+            ShooterPlayer = blockedShotEvent.ShooterPlayer;
+            BlockingPlayer = blockedShotEvent.BlockingPlayer;
+            Game = blockedShotEvent.Game;
+            BlockingTeam = blockedShotEvent.BlockingTeam;
+        }
+        else
+        {
+            throw new InvalidOperationException("Invalid type passed to Clone.");
         }
     }
 }

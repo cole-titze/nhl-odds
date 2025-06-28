@@ -1,10 +1,9 @@
 ﻿using Entities.Models;
 
-namespace Services.NhlData
+namespace Services.NhlData;
+
+public interface INhlGameGetter
 {
-    public interface INhlGameGetter
-    {
-        Task<Game?> GetGame(int gameId);
-    }
+    Task<Game?> GetGame(int gameId);
 }
 

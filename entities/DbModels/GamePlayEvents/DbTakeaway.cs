@@ -1,58 +1,57 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Types.Enums;
 
-namespace Entities.DbModels.GamePlayEvents
-{
-    public class DbTakeaway : IDbGameEvent
-    {
-        public int id { get; set; }
-        public int gameId { get; set; }
-        public int typeCode { get; set; }
-        public int sortOrder { get; set; }
-        public int situationCode { get; set; }
-        public int periodNumber { get; set; }
-        public PeriodType periodType { get; set; }
-        public string eventTypeName { get; set; } = string.Empty;
-        public HomeTeamDefendingSide homeTeamDefendingSide { get; set; }
-        public int secondsIntoPeriod { get; set; }
-        public int secondsLeftInPeriod { get; set; }
-        public int takeawayPlayerTeamId { get; set; }
-        public int takeawayPlayerId { get; set; }
-        public int? xCoordinate { get; set; }
-        public int? yCoordinate { get; set; }
-        public Zone zone { get; set; }
-        [ForeignKey(nameof(takeawayPlayerTeamId))]
-        public DbTeam? takeawayPlayerTeam { get; set; }
-        [ForeignKey(nameof(takeawayPlayerId))]
-        public DbPlayer? takeawayPlayer { get; set; }
-        [ForeignKey(nameof(gameId))]
-        public DbGameRaw? game { get; set; }
+namespace Entities.DbModels.GamePlayEvents;
 
-        public void Clone(IDbGameEvent gameEvent)
+public class DbTakeaway : IDbGameEvent
+{
+    public int Id { get; set; }
+    public int GameId { get; set; }
+    public int TypeCode { get; set; }
+    public int SortOrder { get; set; }
+    public int SituationCode { get; set; }
+    public int PeriodNumber { get; set; }
+    public PeriodType PeriodType { get; set; }
+    public string EventTypeName { get; set; } = string.Empty;
+    public HomeTeamDefendingSide HomeTeamDefendingSide { get; set; }
+    public int SecondsIntoPeriod { get; set; }
+    public int SecondsLeftInPeriod { get; set; }
+    public int TakeawayPlayerTeamId { get; set; }
+    public int TakeawayPlayerId { get; set; }
+    public int? XCoordinate { get; set; }
+    public int? YCoordinate { get; set; }
+    public Zone Zone { get; set; }
+    [ForeignKey(nameof(TakeawayPlayerTeamId))]
+    public DbTeam? TakeawayPlayerTeam { get; set; }
+    [ForeignKey(nameof(TakeawayPlayerId))]
+    public DbPlayer? TakeawayPlayer { get; set; }
+    [ForeignKey(nameof(GameId))]
+    public DbGameRaw? Game { get; set; }
+
+    public void Clone(IDbGameEvent gameEvent)
+    {
+        if (gameEvent is DbTakeaway takeawayEvent)
         {
-            if (gameEvent is DbTakeaway takeawayEvent)
-            {
-                id = takeawayEvent.id;
-                gameId = takeawayEvent.gameId;
-                typeCode = takeawayEvent.typeCode;
-                sortOrder = takeawayEvent.sortOrder;
-                situationCode = takeawayEvent.situationCode;
-                periodNumber = takeawayEvent.periodNumber;
-                periodType = takeawayEvent.periodType;
-                eventTypeName = takeawayEvent.eventTypeName;
-                homeTeamDefendingSide = takeawayEvent.homeTeamDefendingSide;
-                secondsIntoPeriod = takeawayEvent.secondsIntoPeriod;
-                secondsLeftInPeriod = takeawayEvent.secondsLeftInPeriod;
-                takeawayPlayerTeamId = takeawayEvent.takeawayPlayerTeamId;
-                takeawayPlayerId = takeawayEvent.takeawayPlayerId;
-                xCoordinate = takeawayEvent.xCoordinate;
-                yCoordinate = takeawayEvent.yCoordinate;
-                zone = takeawayEvent.zone;
-            }
-            else
-            {
-                throw new InvalidOperationException("Invalid type passed to Clone.");
-            }
+            Id = takeawayEvent.Id;
+            GameId = takeawayEvent.GameId;
+            TypeCode = takeawayEvent.TypeCode;
+            SortOrder = takeawayEvent.SortOrder;
+            SituationCode = takeawayEvent.SituationCode;
+            PeriodNumber = takeawayEvent.PeriodNumber;
+            PeriodType = takeawayEvent.PeriodType;
+            EventTypeName = takeawayEvent.EventTypeName;
+            HomeTeamDefendingSide = takeawayEvent.HomeTeamDefendingSide;
+            SecondsIntoPeriod = takeawayEvent.SecondsIntoPeriod;
+            SecondsLeftInPeriod = takeawayEvent.SecondsLeftInPeriod;
+            TakeawayPlayerTeamId = takeawayEvent.TakeawayPlayerTeamId;
+            TakeawayPlayerId = takeawayEvent.TakeawayPlayerId;
+            XCoordinate = takeawayEvent.XCoordinate;
+            YCoordinate = takeawayEvent.YCoordinate;
+            Zone = takeawayEvent.Zone;
+        }
+        else
+        {
+            throw new InvalidOperationException("Invalid type passed to Clone.");
         }
     }
 }

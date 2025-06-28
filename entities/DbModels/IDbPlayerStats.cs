@@ -1,13 +1,12 @@
 using Entities.Types;
 
-namespace Entities.DbModels
+namespace Entities.DbModels;
+
+public interface IDbGamePlayerStats
 {
-    public interface IDbGamePlayerStats
-    {
-        public int playerId { get; set; }
-        public int gameId { get; set; }
-        public int timeOnIceSeconds { get; set; }
-        public POSITION position { get; set; }
-        public void Clone(IDbGamePlayerStats gamePlayerStats);
-    }
+    public int PlayerId { get; set; }
+    public int GameId { get; set; }
+    public int TimeOnIceSeconds { get; set; }
+    public POSITION Position { get; set; }
+    public void Clone(IDbGamePlayerStats gamePlayerStats);
 }

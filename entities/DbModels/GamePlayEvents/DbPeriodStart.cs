@@ -1,44 +1,43 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Types.Enums;
 
-namespace Entities.DbModels.GamePlayEvents
+namespace Entities.DbModels.GamePlayEvents;
+
+public class DbPeriodStart : IDbGameEvent
 {
-    public class DbPeriodStart : IDbGameEvent
+    public int Id { get; set; }
+    public int GameId { get; set; }
+    public int TypeCode { get; set; }
+    public int SortOrder { get; set; }
+    public int SituationCode { get; set; }
+    public int PeriodNumber { get; set; }
+    public PeriodType PeriodType { get; set; }
+    public string EventTypeName { get; set; } = string.Empty;
+    public HomeTeamDefendingSide HomeTeamDefendingSide { get; set; }
+    public int SecondsIntoPeriod { get; set; }
+    public int SecondsLeftInPeriod { get; set; }
+    [ForeignKey(nameof(GameId))]
+    public DbGameRaw? Game { get; set; }
+    public void Clone(IDbGameEvent gameEvent)
     {
-        public int id { get; set; }
-        public int gameId { get; set; }
-        public int typeCode { get; set; }
-        public int sortOrder { get; set; }
-        public int situationCode { get; set; }
-        public int periodNumber { get; set; }
-        public PeriodType periodType { get; set; }
-        public string eventTypeName { get; set; } = string.Empty;
-        public HomeTeamDefendingSide homeTeamDefendingSide { get; set; }
-        public int secondsIntoPeriod { get; set; }
-        public int secondsLeftInPeriod { get; set; }
-        [ForeignKey(nameof(gameId))]
-        public DbGameRaw? game { get; set; }
-        public void Clone(IDbGameEvent gameEvent)
+        if (gameEvent is DbPeriodStart periodStartEvent)
         {
-            if (gameEvent is DbPeriodStart periodStartEvent)
-            {
-                id = periodStartEvent.id;
-                gameId = periodStartEvent.gameId;
-                typeCode = periodStartEvent.typeCode;
-                sortOrder = periodStartEvent.sortOrder;
-                situationCode = periodStartEvent.situationCode;
-                periodNumber = periodStartEvent.periodNumber;
-                periodType = periodStartEvent.periodType;
-                eventTypeName = periodStartEvent.eventTypeName;
-                homeTeamDefendingSide = periodStartEvent.homeTeamDefendingSide;
-                secondsIntoPeriod = periodStartEvent.secondsIntoPeriod;
-                secondsLeftInPeriod = periodStartEvent.secondsLeftInPeriod;
-                game = periodStartEvent.game;
-            }
-            else
-            {
-                throw new InvalidOperationException("Invalid type passed to Clone.");
-            }
+            Id = periodStartEvent.Id;
+            GameId = periodStartEvent.GameId;
+            TypeCode = periodStartEvent.TypeCode;
+            SortOrder = periodStartEvent.SortOrder;
+            SituationCode = periodStartEvent.SituationCode;
+            PeriodNumber = periodStartEvent.PeriodNumber;
+            PeriodType = periodStartEvent.PeriodType;
+            EventTypeName = periodStartEvent.EventTypeName;
+            HomeTeamDefendingSide = periodStartEvent.HomeTeamDefendingSide;
+            SecondsIntoPeriod = periodStartEvent.SecondsIntoPeriod;
+            SecondsLeftInPeriod = periodStartEvent.SecondsLeftInPeriod;
+            Game = periodStartEvent.Game;
+        }
+        else
+        {
+            throw new InvalidOperationException("Invalid type passed to Clone.");
         }
     }
 }

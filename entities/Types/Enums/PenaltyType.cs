@@ -1,173 +1,172 @@
-namespace Entities.Types.Enums
+namespace Entities.Types.Enums;
+
+public enum PenaltyType
 {
-    public enum PenaltyType
+    Tripping,
+    Slashing,
+    Hooking,
+    Roughing,
+    RoughingRemovingOpponentsHelmet,
+    DelayOfGamePuckOverGlass,
+    DelayOfGameFailedChallenge,
+    Interference,
+    TooManyMen,
+    HighStick,
+    HighStickDoubleMinor,
+    Fighting,
+    Holding,
+    Boarding,
+    UnsportsmanlikeConduct,
+    HoldingTheStick,
+    CrossCheck,
+    GoaltenderInterfence,
+    Elbow,
+    FightInstigator,
+    Misconduct,
+    IllegalGoaliePlay,
+    Charging,
+    GameMisconduct,
+    Kneeing,
+    Diving,
+    FightInstigatorWithFaceShield, // Keeping on visor for a fight is additional penalty time
+    HandPuck,
+    PenaltyShotTripOnBreakaway,
+    DelayOfGame,
+    PenaltyShotHookOnBreakaway,
+    AbuseOfOfficials,
+    ThrowingEquipment,
+    Clipping,
+    InstigatorMisconduct,
+    CheckingFromBehind,
+    InterferenceWithOfficial,
+    Spearing,
+    Aggressor,
+    DelayOfGameSmotheringPuck,
+    MatchPenalty,
+    BrokenStick,
+    IllegalSubstitution,
+    HeadButt,
+    PenaltyShotSlashOnBreakaway,
+    GoalieLeftCrease,
+    IllegalStick,
+    AbusiveLanguage,
+    SpearingDoubleMinor,
+    CrossCheckDoubleMinor,
+    IllegalEquipment,
+    PenaltyShotHoldingOnBreakaway
+}
+public static class PenaltyTypeParser
+{
+    public static PenaltyType ParseFromString(string penaltyType)
     {
-        Tripping,
-        Slashing,
-        Hooking,
-        Roughing,
-        RoughingRemovingOpponentsHelmet,
-        DelayOfGamePuckOverGlass,
-        DelayOfGameFailedChallenge,
-        Interference,
-        TooManyMen,
-        HighStick,
-        HighStickDoubleMinor,
-        Fighting,
-        Holding,
-        Boarding,
-        UnsportsmanlikeConduct,
-        HoldingTheStick,
-        CrossCheck,
-        GoaltenderInterfence,
-        Elbow,
-        FightInstigator,
-        Misconduct,
-        IllegalGoaliePlay,
-        Charging,
-        GameMisconduct,
-        Kneeing,
-        Diving,
-        FightInstigatorWithFaceShield, // Keeping on visor for a fight is additional penalty time
-        HandPuck,
-        PenaltyShotTripOnBreakaway,
-        DelayOfGame,
-        PenaltyShotHookOnBreakaway,
-        AbuseOfOfficials,
-        ThrowingEquipment,
-        Clipping,
-        InstigatorMisconduct,
-        CheckingFromBehind,
-        InterferenceWithOfficial,
-        Spearing,
-        Aggressor,
-        DelayOfGameSmotheringPuck,
-        MatchPenalty,
-        BrokenStick,
-        IllegalSubstitution,
-        HeadButt,
-        PenaltyShotSlashOnBreakaway,
-        GoalieLeftCrease,
-        IllegalStick,
-        AbusiveLanguage,
-        SpearingDoubleMinor,
-        CrossCheckDoubleMinor,
-        IllegalEquipment,
-        PenaltyShotHoldingOnBreakaway
-    }
-    public static class PenaltyTypeParser
-    {
-        public static PenaltyType ParseFromString(string penaltyType)
+        switch (penaltyType)
         {
-            switch (penaltyType)
-            {
-                case "tripping":
-                    return PenaltyType.Tripping;
-                case "delaying-game-puck-over-glass":
-                    return PenaltyType.DelayOfGamePuckOverGlass;
-                case "hooking":
-                    return PenaltyType.Hooking;
-                case "roughing":
-                    return PenaltyType.Roughing;
-                case "interference":
-                    return PenaltyType.Interference;
-                case "slashing":
-                    return PenaltyType.Slashing;
-                case "too-many-men-on-the-ice":
-                    return PenaltyType.TooManyMen;
-                case "high-sticking":
-                    return PenaltyType.HighStick;
-                case "fighting":
-                    return PenaltyType.Fighting;
-                case "holding":
-                    return PenaltyType.Holding;
-                case "boarding":
-                    return PenaltyType.Boarding;
-                case "roughing-removing-opponents-helmet":
-                    return PenaltyType.RoughingRemovingOpponentsHelmet;
-                case "unsportsmanlike-conduct":
-                    return PenaltyType.UnsportsmanlikeConduct;
-                case "delaying-game-unsuccessful-challenge":
-                    return PenaltyType.DelayOfGameFailedChallenge;
-                case "holding-the-stick":
-                    return PenaltyType.HoldingTheStick;
-                case "cross-checking":
-                    return PenaltyType.CrossCheck;
-                case "interference-goalkeeper":
-                    return PenaltyType.GoaltenderInterfence;
-                case "high-sticking-double-minor":
-                    return PenaltyType.HighStickDoubleMinor;
-                case "elbowing":
-                    return PenaltyType.Elbow;
-                case "instigator":
-                    return PenaltyType.FightInstigator;
-                case "misconduct":
-                    return PenaltyType.Misconduct;
-                case "delaying-game-illegal-play-by-goalie":
-                    return PenaltyType.IllegalGoaliePlay;
-                case "charging":
-                    return PenaltyType.Charging;
-                case "game-misconduct":
-                    return PenaltyType.GameMisconduct;
-                case "kneeing":
-                    return PenaltyType.Kneeing;
-                case "diving":
-                    return PenaltyType.Diving;
-                case "instigator-face-shield":
-                    return PenaltyType.FightInstigatorWithFaceShield;
-                case "closing-hand-on-puck":
-                    return PenaltyType.HandPuck;
-                case "ps-tripping-on-breakaway":
-                    return PenaltyType.PenaltyShotTripOnBreakaway;
-                case "ps-hooking-on-breakaway":
-                    return PenaltyType.PenaltyShotHookOnBreakaway;
-                case "delaying-game":
-                    return PenaltyType.DelayOfGame;
-                case "abuse-of-officials":
-                    return PenaltyType.AbuseOfOfficials;
-                case "throwing-equipment":
-                    return PenaltyType.ThrowingEquipment;
-                case "clipping":
-                    return PenaltyType.Clipping;
-                case "instigator-misconduct":
-                    return PenaltyType.InstigatorMisconduct;
-                case "checking-from-behind":
-                    return PenaltyType.CheckingFromBehind;
-                case "interference-with-official":
-                    return PenaltyType.InterferenceWithOfficial;
-                case "spearing":
-                    return PenaltyType.Spearing;
-                case "aggressor":
-                    return PenaltyType.Aggressor;
-                case "delaying-game-smothering-puck":
-                    return PenaltyType.DelayOfGameSmotheringPuck;
-                case "match-penatly-10-minutes":
-                    return PenaltyType.MatchPenalty;
-                case "broken-stick":
-                    return PenaltyType.BrokenStick;
-                case "illegal-substitution":
-                    return PenaltyType.IllegalSubstitution;
-                case "head-butting":
-                    return PenaltyType.HeadButt;
-                case "ps-slash-on-breakaway":
-                    return PenaltyType.PenaltyShotSlashOnBreakaway;
-                case "goalie-leave-crease":
-                    return PenaltyType.GoalieLeftCrease;
-                case "illegal-stick":
-                    return PenaltyType.IllegalStick;
-                case "abusive-language":
-                    return PenaltyType.AbusiveLanguage;
-                case "spearing-double-minor":
-                    return PenaltyType.SpearingDoubleMinor;
-                case "cross-checking-double-minor":
-                    return PenaltyType.CrossCheckDoubleMinor;
-                case "illegal-equipment":
-                    return PenaltyType.IllegalEquipment;
-                case "ps-holding-on-breakaway":
-                    return PenaltyType.PenaltyShotHoldingOnBreakaway;
-                default:
-                    throw new ArgumentException($"Invalid PenaltyType value: {penaltyType}", nameof(penaltyType));
-            }
+            case "tripping":
+                return PenaltyType.Tripping;
+            case "delaying-game-puck-over-glass":
+                return PenaltyType.DelayOfGamePuckOverGlass;
+            case "hooking":
+                return PenaltyType.Hooking;
+            case "roughing":
+                return PenaltyType.Roughing;
+            case "interference":
+                return PenaltyType.Interference;
+            case "slashing":
+                return PenaltyType.Slashing;
+            case "too-many-men-on-the-ice":
+                return PenaltyType.TooManyMen;
+            case "high-sticking":
+                return PenaltyType.HighStick;
+            case "fighting":
+                return PenaltyType.Fighting;
+            case "holding":
+                return PenaltyType.Holding;
+            case "boarding":
+                return PenaltyType.Boarding;
+            case "roughing-removing-opponents-helmet":
+                return PenaltyType.RoughingRemovingOpponentsHelmet;
+            case "unsportsmanlike-conduct":
+                return PenaltyType.UnsportsmanlikeConduct;
+            case "delaying-game-unsuccessful-challenge":
+                return PenaltyType.DelayOfGameFailedChallenge;
+            case "holding-the-stick":
+                return PenaltyType.HoldingTheStick;
+            case "cross-checking":
+                return PenaltyType.CrossCheck;
+            case "interference-goalkeeper":
+                return PenaltyType.GoaltenderInterfence;
+            case "high-sticking-double-minor":
+                return PenaltyType.HighStickDoubleMinor;
+            case "elbowing":
+                return PenaltyType.Elbow;
+            case "instigator":
+                return PenaltyType.FightInstigator;
+            case "misconduct":
+                return PenaltyType.Misconduct;
+            case "delaying-game-illegal-play-by-goalie":
+                return PenaltyType.IllegalGoaliePlay;
+            case "charging":
+                return PenaltyType.Charging;
+            case "game-misconduct":
+                return PenaltyType.GameMisconduct;
+            case "kneeing":
+                return PenaltyType.Kneeing;
+            case "diving":
+                return PenaltyType.Diving;
+            case "instigator-face-shield":
+                return PenaltyType.FightInstigatorWithFaceShield;
+            case "closing-hand-on-puck":
+                return PenaltyType.HandPuck;
+            case "ps-tripping-on-breakaway":
+                return PenaltyType.PenaltyShotTripOnBreakaway;
+            case "ps-hooking-on-breakaway":
+                return PenaltyType.PenaltyShotHookOnBreakaway;
+            case "delaying-game":
+                return PenaltyType.DelayOfGame;
+            case "abuse-of-officials":
+                return PenaltyType.AbuseOfOfficials;
+            case "throwing-equipment":
+                return PenaltyType.ThrowingEquipment;
+            case "clipping":
+                return PenaltyType.Clipping;
+            case "instigator-misconduct":
+                return PenaltyType.InstigatorMisconduct;
+            case "checking-from-behind":
+                return PenaltyType.CheckingFromBehind;
+            case "interference-with-official":
+                return PenaltyType.InterferenceWithOfficial;
+            case "spearing":
+                return PenaltyType.Spearing;
+            case "aggressor":
+                return PenaltyType.Aggressor;
+            case "delaying-game-smothering-puck":
+                return PenaltyType.DelayOfGameSmotheringPuck;
+            case "match-penatly-10-minutes":
+                return PenaltyType.MatchPenalty;
+            case "broken-stick":
+                return PenaltyType.BrokenStick;
+            case "illegal-substitution":
+                return PenaltyType.IllegalSubstitution;
+            case "head-butting":
+                return PenaltyType.HeadButt;
+            case "ps-slash-on-breakaway":
+                return PenaltyType.PenaltyShotSlashOnBreakaway;
+            case "goalie-leave-crease":
+                return PenaltyType.GoalieLeftCrease;
+            case "illegal-stick":
+                return PenaltyType.IllegalStick;
+            case "abusive-language":
+                return PenaltyType.AbusiveLanguage;
+            case "spearing-double-minor":
+                return PenaltyType.SpearingDoubleMinor;
+            case "cross-checking-double-minor":
+                return PenaltyType.CrossCheckDoubleMinor;
+            case "illegal-equipment":
+                return PenaltyType.IllegalEquipment;
+            case "ps-holding-on-breakaway":
+                return PenaltyType.PenaltyShotHoldingOnBreakaway;
+            default:
+                throw new ArgumentException($"Invalid PenaltyType value: {penaltyType}", nameof(penaltyType));
         }
     }
 }

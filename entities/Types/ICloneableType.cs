@@ -1,7 +1,6 @@
-namespace Entities.Types
+namespace Entities.Types;
+
+public interface ICloneableType<T>
 {
-    public interface ICloneableType<T>
-    {
-        T Clone();
-    }
+    T Clone();
 }

@@ -1,70 +1,69 @@
 using Entities.DbModels;
 using Entities.Models;
 
-namespace DataAccess.GameRepository.Mappers
-{
-    public static class MapGameToDbGame
-    {
-        public static DbGameRaw Map(Game game)
-        {
-            if (game.extendedInfo == null)
-            {
-                throw new ArgumentNullException(nameof(game.extendedInfo), "Game extended info cannot be null");
-            }
+namespace DataAccess.GameRepository.Mappers;
 
-            return new DbGameRaw()
-            {
-                id = game.id,
-                homeTeamId = game.homeTeamId,
-                awayTeamId = game.awayTeamId,
-                seasonStartYear = game.seasonStartYear,
-                gameDateUTC = game.gameDateUTC,
-                homeGoals = game.homeGoals,
-                awayGoals = game.awayGoals,
-                winner = game.winner,
-                endPeriod = game.endPeriod,
-                homeSOG = game.homeSOG,
-                awaySOG = game.awaySOG,
-                homePPG = game.homePPG,
-                awayPPG = game.awayPPG,
-                homePIM = game.homePIM,
-                awayPIM = game.awayPIM,
-                homeFaceOffWinPercent = game.homeFaceOffWinPercent,
-                awayFaceOffWinPercent = game.awayFaceOffWinPercent,
-                homeBlockedShots = game.homeBlockedShots,
-                awayBlockedShots = game.awayBlockedShots,
-                homeHits = game.homeHits,
-                awayHits = game.awayHits,
-                homeTakeaways = game.homeTakeaways,
-                awayTakeaways = game.awayTakeaways,
-                homeGiveaways = game.homeGiveaways,
-                awayGiveaways = game.awayGiveaways,
-                hasBeenPlayed = game.hasBeenPlayed,
-                gameSummary = game.extendedInfo.gameSummary,
-                eventSummary = game.extendedInfo.eventSummary,
-                playByPlaySummary = game.extendedInfo.playByPlaySummary,
-                faceoffSummary = game.extendedInfo.faceoffSummary,
-                faceoffComparisonSummary = game.extendedInfo.faceoffComparisonSummary,
-                rosterSummary = game.extendedInfo.rosterSummary,
-                shotSummary = game.extendedInfo.shotSummary,
-                shiftChartSummary = game.extendedInfo.shiftChartSummary,
-                toiAwaySummary = game.extendedInfo.toiAwaySummary,
-                toiHomeSummary = game.extendedInfo.toiHomeSummary,
-                threeMinuteRecapVideoId = game.extendedInfo.threeMinuteRecapVideoId,
-                condensedGameVideoId = game.extendedInfo.condensedGameVideoId,
-                venueName = game.extendedInfo.venueName,
-                venueLocation = game.extendedInfo.venueLocation,
-            };
-        }
-        public static IEnumerable<DbGameRaw> Map(IEnumerable<Game> games)
+public static class MapGameToDbGame
+{
+    public static DbGameRaw Map(Game game)
+    {
+        if (game.ExtendedInfo == null)
         {
-            var dbGames = new List<DbGameRaw>();
-            foreach (var game in games)
-            {
-                dbGames.Add(Map(game));
-            }
-            return dbGames;
+            throw new ArgumentNullException(nameof(game.ExtendedInfo), "Game extended info cannot be null");
         }
+
+        return new DbGameRaw()
+        {
+            Id = game.Id,
+            HomeTeamId = game.HomeTeamId,
+            AwayTeamId = game.AwayTeamId,
+            SeasonStartYear = game.SeasonStartYear,
+            GameDateUTC = game.GameDateUTC,
+            HomeGoals = game.HomeGoals,
+            AwayGoals = game.AwayGoals,
+            Winner = game.Winner,
+            EndPeriod = game.EndPeriod,
+            HomeSOG = game.HomeSOG,
+            AwaySOG = game.AwaySOG,
+            HomePPG = game.HomePPG,
+            AwayPPG = game.AwayPPG,
+            HomePIM = game.HomePIM,
+            AwayPIM = game.AwayPIM,
+            HomeFaceOffWinPercent = game.HomeFaceOffWinPercent,
+            AwayFaceOffWinPercent = game.AwayFaceOffWinPercent,
+            HomeBlockedShots = game.HomeBlockedShots,
+            AwayBlockedShots = game.AwayBlockedShots,
+            HomeHits = game.HomeHits,
+            AwayHits = game.AwayHits,
+            HomeTakeaways = game.HomeTakeaways,
+            AwayTakeaways = game.AwayTakeaways,
+            HomeGiveaways = game.HomeGiveaways,
+            AwayGiveaways = game.AwayGiveaways,
+            HasBeenPlayed = game.HasBeenPlayed,
+            GameSummary = game.ExtendedInfo.GameSummary,
+            EventSummary = game.ExtendedInfo.EventSummary,
+            PlayByPlaySummary = game.ExtendedInfo.PlayByPlaySummary,
+            FaceoffSummary = game.ExtendedInfo.FaceoffSummary,
+            FaceoffComparisonSummary = game.ExtendedInfo.FaceoffComparisonSummary,
+            RosterSummary = game.ExtendedInfo.RosterSummary,
+            ShotSummary = game.ExtendedInfo.ShotSummary,
+            ShiftChartSummary = game.ExtendedInfo.ShiftChartSummary,
+            ToiAwaySummary = game.ExtendedInfo.ToiAwaySummary,
+            ToiHomeSummary = game.ExtendedInfo.ToiHomeSummary,
+            ThreeMinuteRecapVideoId = game.ExtendedInfo.ThreeMinuteRecapVideoId,
+            CondensedGameVideoId = game.ExtendedInfo.CondensedGameVideoId,
+            VenueName = game.ExtendedInfo.VenueName,
+            VenueLocation = game.ExtendedInfo.VenueLocation,
+        };
+    }
+    public static IEnumerable<DbGameRaw> Map(IEnumerable<Game> games)
+    {
+        var dbGames = new List<DbGameRaw>();
+        foreach (var game in games)
+        {
+            dbGames.Add(Map(game));
+        }
+        return dbGames;
     }
 }
 

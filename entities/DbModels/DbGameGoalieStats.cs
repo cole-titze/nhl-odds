@@ -1,50 +1,50 @@
 using System.ComponentModel.DataAnnotations.Schema;
+
 using Entities.Types;
 
-namespace Entities.DbModels
+namespace Entities.DbModels;
+
+public class DbGameGoalieStats : IDbGamePlayerStats
 {
-    public class DbGameGoalieStats : IDbGamePlayerStats
+    public int GameId { get; set; }
+    public int PlayerId { get; set; }
+    public int TeamId { get; set; }
+    public int EvenStrengthShotsSaved { get; set; }
+    public int PowerPlayShotsSaved { get; set; }
+    public int ShortHandedShotsSaved { get; set; }
+    public int EvenStrengthGoalsAllowed { get; set; }
+    public int PowerPlayGoalsAllowed { get; set; }
+    public int ShortHandedGoalsAllowed { get; set; }
+    public int TimeOnIceSeconds { get; set; }
+    public bool IsStarter { get; set; }
+    public POSITION Position { get; set; } = POSITION.Goalie;
+    [ForeignKey(nameof(PlayerId))]
+    public DbPlayer? Player { get; set; }
+    [ForeignKey(nameof(GameId))]
+    public DbGameRaw? Game { get; set; }
+    [ForeignKey(nameof(TeamId))]
+    public DbTeam? Team { get; set; }
+    public void Clone(IDbGamePlayerStats gamePlayerStats)
     {
-        public int gameId { get; set; }
-        public int playerId { get; set; }
-        public int teamId { get; set; }
-        public int evenStrengthShotsSaved { get; set; }
-        public int powerPlayShotsSaved { get; set; }
-        public int shortHandedShotsSaved { get; set; }
-        public int evenStrengthGoalsAllowed { get; set; }
-        public int powerPlayGoalsAllowed { get; set; }
-        public int shortHandedGoalsAllowed { get; set; }
-        public int timeOnIceSeconds { get; set; }
-        public bool isStarter { get; set; }
-        public POSITION position { get; set; } = POSITION.Goalie;
-        [ForeignKey(nameof(playerId))]
-        public DbPlayer? player { get; set; }
-        [ForeignKey(nameof(gameId))]
-        public DbGameRaw? game { get; set; }
-        [ForeignKey(nameof(teamId))]
-        public DbTeam? team { get; set; }
-        public void Clone(IDbGamePlayerStats gamePlayerStats)
+        if (gamePlayerStats is DbGameGoalieStats goalieStats)
         {
-            if (gamePlayerStats is DbGameGoalieStats goalieStats)
-            {
-                gameId = goalieStats.gameId;
-                teamId = goalieStats.teamId;
-                playerId = goalieStats.playerId;
-                evenStrengthShotsSaved = goalieStats.evenStrengthShotsSaved;
-                powerPlayShotsSaved = goalieStats.powerPlayShotsSaved;
-                evenStrengthGoalsAllowed = goalieStats.evenStrengthGoalsAllowed;
-                powerPlayGoalsAllowed = goalieStats.powerPlayGoalsAllowed;
-                timeOnIceSeconds = goalieStats.timeOnIceSeconds;
-                isStarter = goalieStats.isStarter;
-                position = goalieStats.position;
-                player = goalieStats.player;
-                game = goalieStats.game;
-                team = goalieStats.team;
-            }
-            else
-            {
-                throw new InvalidOperationException("Invalid type passed to CloneFrom.");
-            }
+            GameId = goalieStats.GameId;
+            TeamId = goalieStats.TeamId;
+            PlayerId = goalieStats.PlayerId;
+            EvenStrengthShotsSaved = goalieStats.EvenStrengthShotsSaved;
+            PowerPlayShotsSaved = goalieStats.PowerPlayShotsSaved;
+            EvenStrengthGoalsAllowed = goalieStats.EvenStrengthGoalsAllowed;
+            PowerPlayGoalsAllowed = goalieStats.PowerPlayGoalsAllowed;
+            TimeOnIceSeconds = goalieStats.TimeOnIceSeconds;
+            IsStarter = goalieStats.IsStarter;
+            Position = goalieStats.Position;
+            Player = goalieStats.Player;
+            Game = goalieStats.Game;
+            Team = goalieStats.Team;
+        }
+        else
+        {
+            throw new InvalidOperationException("Invalid type passed to CloneFrom.");
         }
     }
 }

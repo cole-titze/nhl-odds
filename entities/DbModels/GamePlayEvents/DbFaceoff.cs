@@ -1,65 +1,65 @@
 using System.ComponentModel.DataAnnotations.Schema;
+
 using Entities.Types.Enums;
 
-namespace Entities.DbModels.GamePlayEvents
+namespace Entities.DbModels.GamePlayEvents;
+
+public class DbFaceoff : IDbGameEvent
 {
-    public class DbFaceoff : IDbGameEvent
+    public int Id { get; set; }
+    public int GameId { get; set; }
+    public int TypeCode { get; set; }
+    public int SortOrder { get; set; }
+    public int SituationCode { get; set; }
+    public int PeriodNumber { get; set; }
+    public PeriodType PeriodType { get; set; }
+    public string EventTypeName { get; set; } = string.Empty;
+    public HomeTeamDefendingSide HomeTeamDefendingSide { get; set; }
+    public int SecondsIntoPeriod { get; set; }
+    public int SecondsLeftInPeriod { get; set; }
+    public int WinningTeamId { get; set; }
+    public int WinningPlayerId { get; set; }
+    public int LosingPlayerId { get; set; }
+    public int? XCoordinate { get; set; }
+    public int? YCoordinate { get; set; }
+    public Zone Zone { get; set; }
+    [ForeignKey(nameof(WinningPlayerId))]
+    public DbPlayer? WinningPlayer { get; set; }
+    [ForeignKey(nameof(LosingPlayerId))]
+    public DbPlayer? LosingPlayer { get; set; }
+    [ForeignKey(nameof(GameId))]
+    public DbGameRaw? Game { get; set; }
+    [ForeignKey(nameof(WinningTeamId))]
+    public DbTeam? WinningTeam { get; set; }
+    public void Clone(IDbGameEvent gameEvent)
     {
-        public int id { get; set; }
-        public int gameId { get; set; }
-        public int typeCode { get; set; }
-        public int sortOrder { get; set; }
-        public int situationCode { get; set; }
-        public int periodNumber { get; set; }
-        public PeriodType periodType { get; set; }
-        public string eventTypeName { get; set; } = string.Empty;
-        public HomeTeamDefendingSide homeTeamDefendingSide { get; set; }
-        public int secondsIntoPeriod { get; set; }
-        public int secondsLeftInPeriod { get; set; }
-        public int winningTeamId { get; set; }
-        public int winningPlayerId { get; set; }
-        public int losingPlayerId { get; set; }
-        public int? xCoordinate { get; set; }
-        public int? yCoordinate { get; set; }
-        public Zone zone { get; set; }
-        [ForeignKey(nameof(winningPlayerId))]
-        public DbPlayer? winningPlayer { get; set; }
-        [ForeignKey(nameof(losingPlayerId))]
-        public DbPlayer? losingPlayer { get; set; }
-        [ForeignKey(nameof(gameId))]
-        public DbGameRaw? game { get; set; }
-        [ForeignKey(nameof(winningTeamId))]
-        public DbTeam? winningTeam { get; set; }
-        public void Clone(IDbGameEvent gameEvent)
+        if (gameEvent is DbFaceoff faceoffEvent)
         {
-            if (gameEvent is DbFaceoff faceoffEvent)
-            {
-                id = faceoffEvent.id;
-                gameId = faceoffEvent.gameId;
-                typeCode = faceoffEvent.typeCode;
-                sortOrder = faceoffEvent.sortOrder;
-                situationCode = faceoffEvent.situationCode;
-                periodNumber = faceoffEvent.periodNumber;
-                periodType = faceoffEvent.periodType;
-                eventTypeName = faceoffEvent.eventTypeName;
-                homeTeamDefendingSide = faceoffEvent.homeTeamDefendingSide;
-                secondsIntoPeriod = faceoffEvent.secondsIntoPeriod;
-                secondsLeftInPeriod = faceoffEvent.secondsLeftInPeriod;
-                winningTeamId = faceoffEvent.winningTeamId;
-                winningPlayerId = faceoffEvent.winningPlayerId;
-                losingPlayerId = faceoffEvent.losingPlayerId;
-                xCoordinate = faceoffEvent.xCoordinate;
-                yCoordinate = faceoffEvent.yCoordinate;
-                zone = faceoffEvent.zone;
-                winningPlayer = faceoffEvent.winningPlayer;
-                losingPlayer = faceoffEvent.losingPlayer;
-                game = faceoffEvent.game;
-                winningTeam = faceoffEvent.winningTeam;
-            }
-            else
-            {
-                throw new InvalidOperationException("Invalid type passed to Clone.");
-            }
+            Id = faceoffEvent.Id;
+            GameId = faceoffEvent.GameId;
+            TypeCode = faceoffEvent.TypeCode;
+            SortOrder = faceoffEvent.SortOrder;
+            SituationCode = faceoffEvent.SituationCode;
+            PeriodNumber = faceoffEvent.PeriodNumber;
+            PeriodType = faceoffEvent.PeriodType;
+            EventTypeName = faceoffEvent.EventTypeName;
+            HomeTeamDefendingSide = faceoffEvent.HomeTeamDefendingSide;
+            SecondsIntoPeriod = faceoffEvent.SecondsIntoPeriod;
+            SecondsLeftInPeriod = faceoffEvent.SecondsLeftInPeriod;
+            WinningTeamId = faceoffEvent.WinningTeamId;
+            WinningPlayerId = faceoffEvent.WinningPlayerId;
+            LosingPlayerId = faceoffEvent.LosingPlayerId;
+            XCoordinate = faceoffEvent.XCoordinate;
+            YCoordinate = faceoffEvent.YCoordinate;
+            Zone = faceoffEvent.Zone;
+            WinningPlayer = faceoffEvent.WinningPlayer;
+            LosingPlayer = faceoffEvent.LosingPlayer;
+            Game = faceoffEvent.Game;
+            WinningTeam = faceoffEvent.WinningTeam;
+        }
+        else
+        {
+            throw new InvalidOperationException("Invalid type passed to Clone.");
         }
     }
 }

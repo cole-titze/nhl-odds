@@ -1,95 +1,94 @@
 using Entities.Models;
 
-namespace Entities.DbModels.Mappers
+namespace Entities.DbModels.Mappers;
+
+public static class MapGameToDbGamePlayerStats
 {
-    public static class MapGameToDbGamePlayerStats
+    public static IEnumerable<IDbGamePlayerStats> Map(Game game)
     {
-        public static IEnumerable<IDbGamePlayerStats> Map(Game game)
+        if (game.RosterStats == null)
+            throw new ArgumentNullException(nameof(game.RosterStats), "Game roster stats can not be null.");
+
+        var dbGamePlayerStats = new List<IDbGamePlayerStats>();
+        var gameRosterStats = game.RosterStats;
+        dbGamePlayerStats.AddRange(MapGameSkaterStatsToDbGameSkaterStats(gameRosterStats.AllPlayers.OfType<GameSkaterStats>(), game.Id));
+        dbGamePlayerStats.AddRange(MapGameGoalieStatsToDbGameGoalieStats(gameRosterStats.AllPlayers.OfType<GameGoalieStats>(), game.Id));
+
+        return dbGamePlayerStats;
+    }
+
+    public static IEnumerable<IDbGamePlayerStats> MapList(IEnumerable<Game> games)
+    {
+        var gamesPlayerStats = new List<IDbGamePlayerStats>();
+        foreach (var game in games)
         {
-            if (game.rosterStats == null)
-                throw new ArgumentNullException(nameof(game.rosterStats), "Game roster stats can not be null.");
-
-            var dbGamePlayerStats = new List<IDbGamePlayerStats>();
-            var gameRosterStats = game.rosterStats;
-            dbGamePlayerStats.AddRange(MapGameSkaterStatsToDbGameSkaterStats(gameRosterStats.AllPlayers.OfType<GameSkaterStats>(), game.id));
-            dbGamePlayerStats.AddRange(MapGameGoalieStatsToDbGameGoalieStats(gameRosterStats.AllPlayers.OfType<GameGoalieStats>(), game.id));
-
-            return dbGamePlayerStats;
+            var gamePlayerStats = Map(game);
+            gamesPlayerStats.AddRange(gamePlayerStats);
         }
 
-        public static IEnumerable<IDbGamePlayerStats> MapList(IEnumerable<Game> games)
-        {
-            var gamesPlayerStats = new List<IDbGamePlayerStats>();
-            foreach (var game in games)
-            {
-                var gamePlayerStats = Map(game);
-                gamesPlayerStats.AddRange(gamePlayerStats);
-            }
+        return gamesPlayerStats;
+    }
 
-            return gamesPlayerStats;
-        }
-
-        private static IEnumerable<IDbGamePlayerStats> MapGameGoalieStatsToDbGameGoalieStats(IEnumerable<GameGoalieStats> goalieStats, int gameId)
+    private static IEnumerable<IDbGamePlayerStats> MapGameGoalieStatsToDbGameGoalieStats(IEnumerable<GameGoalieStats> goalieStats, int gameId)
+    {
+        var dbGameStats = new List<DbGameGoalieStats>();
+        foreach (var goalieStat in goalieStats)
         {
-            var dbGameStats = new List<DbGameGoalieStats>();
-            foreach (var goalieStat in goalieStats)
-            {
-                dbGameStats.Add(MapSingleGameGoalieStatToDbGameGoalieStat(goalieStat, gameId));
-            }
-            return dbGameStats;
+            dbGameStats.Add(MapSingleGameGoalieStatToDbGameGoalieStat(goalieStat, gameId));
         }
+        return dbGameStats;
+    }
 
-        private static DbGameGoalieStats MapSingleGameGoalieStatToDbGameGoalieStat(GameGoalieStats goalieStat, int gameId)
+    private static DbGameGoalieStats MapSingleGameGoalieStatToDbGameGoalieStat(GameGoalieStats goalieStat, int gameId)
+    {
+        return new DbGameGoalieStats
         {
-            return new DbGameGoalieStats
-            {
-                gameId = gameId,
-                playerId = goalieStat.playerId,
-                teamId = goalieStat.teamId,
-                evenStrengthShotsSaved = goalieStat.evenStrengthShotsSaved,
-                powerPlayShotsSaved = goalieStat.powerPlayShotsSaved,
-                shortHandedShotsSaved = goalieStat.shortHandedShotsSaved,
-                timeOnIceSeconds = goalieStat.timeOnIceSeconds,
-                shortHandedGoalsAllowed = goalieStat.shortHandedGoalsAllowed,
-                evenStrengthGoalsAllowed = goalieStat.evenStrengthGoalsAllowed,
-                powerPlayGoalsAllowed = goalieStat.powerPlayGoalsAllowed,
-                isStarter = goalieStat.isStarter,
-                position = goalieStat.position,
-            };
-        }
+            GameId = gameId,
+            PlayerId = goalieStat.PlayerId,
+            TeamId = goalieStat.TeamId,
+            EvenStrengthShotsSaved = goalieStat.EvenStrengthShotsSaved,
+            PowerPlayShotsSaved = goalieStat.PowerPlayShotsSaved,
+            ShortHandedShotsSaved = goalieStat.ShortHandedShotsSaved,
+            TimeOnIceSeconds = goalieStat.TimeOnIceSeconds,
+            ShortHandedGoalsAllowed = goalieStat.ShortHandedGoalsAllowed,
+            EvenStrengthGoalsAllowed = goalieStat.EvenStrengthGoalsAllowed,
+            PowerPlayGoalsAllowed = goalieStat.PowerPlayGoalsAllowed,
+            IsStarter = goalieStat.IsStarter,
+            Position = goalieStat.Position,
+        };
+    }
 
-        private static IEnumerable<IDbGamePlayerStats> MapGameSkaterStatsToDbGameSkaterStats(IEnumerable<GameSkaterStats> skaterStats, int gameId)
+    private static IEnumerable<IDbGamePlayerStats> MapGameSkaterStatsToDbGameSkaterStats(IEnumerable<GameSkaterStats> skaterStats, int gameId)
+    {
+        var dbGameStats = new List<DbGameSkaterStats>();
+        foreach (var skaterStat in skaterStats)
         {
-            var dbGameStats = new List<DbGameSkaterStats>();
-            foreach (var skaterStat in skaterStats)
-            {
-                dbGameStats.Add(MapSingleGameSkaterStatToDbGameSkaterStat(skaterStat, gameId));
-            }
-            return dbGameStats;
+            dbGameStats.Add(MapSingleGameSkaterStatToDbGameSkaterStat(skaterStat, gameId));
         }
+        return dbGameStats;
+    }
 
-        private static DbGameSkaterStats MapSingleGameSkaterStatToDbGameSkaterStat(GameSkaterStats skaterStat, int gameId)
+    private static DbGameSkaterStats MapSingleGameSkaterStatToDbGameSkaterStat(GameSkaterStats skaterStat, int gameId)
+    {
+        return new DbGameSkaterStats()
         {
-            return new DbGameSkaterStats()
-            {
-                gameId = gameId,
-                playerId = skaterStat.playerId,
-                teamId = skaterStat.TeamId,
-                goals = skaterStat.Goals,
-                assists = skaterStat.Assists,
-                plusMinus = skaterStat.PlusMinus,
-                penaltyMinutes = skaterStat.PenaltyMinutes,
-                hits = skaterStat.Hits,
-                powerPlayGoals = skaterStat.PowerPlayGoals,
-                shotsOnGoal = skaterStat.ShotsOnGoal,
-                faceOffWinningPctg = skaterStat.FaceOffWinningPctg,
-                blockedShots = skaterStat.BlockedShots,
-                giveaways = skaterStat.Giveaways,
-                takeaways = skaterStat.Takeaways,
-                timeOnIceSeconds = skaterStat.TimeOnIceSeconds,
-                position = skaterStat.Position,
-            };
-        }
+            GameId = gameId,
+            PlayerId = skaterStat.PlayerId,
+            TeamId = skaterStat.TeamId,
+            Goals = skaterStat.Goals,
+            Assists = skaterStat.Assists,
+            PlusMinus = skaterStat.PlusMinus,
+            PenaltyMinutes = skaterStat.PenaltyMinutes,
+            Hits = skaterStat.Hits,
+            PowerPlayGoals = skaterStat.PowerPlayGoals,
+            ShotsOnGoal = skaterStat.ShotsOnGoal,
+            FaceOffWinningPctg = skaterStat.FaceOffWinningPctg,
+            BlockedShots = skaterStat.BlockedShots,
+            Giveaways = skaterStat.Giveaways,
+            Takeaways = skaterStat.Takeaways,
+            TimeOnIceSeconds = skaterStat.TimeOnIceSeconds,
+            Position = skaterStat.Position,
+        };
     }
 }
 

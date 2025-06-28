@@ -1,44 +1,43 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Types.Enums;
 
-namespace Entities.DbModels.GamePlayEvents
+namespace Entities.DbModels.GamePlayEvents;
+
+public class DbShootoutComplete : IDbGameEvent
 {
-    public class DbShootoutComplete : IDbGameEvent
+    public int Id { get; set; }
+    public int GameId { get; set; }
+    public int TypeCode { get; set; }
+    public int SortOrder { get; set; }
+    public int SituationCode { get; set; }
+    public int PeriodNumber { get; set; }
+    public PeriodType PeriodType { get; set; }
+    public string EventTypeName { get; set; } = string.Empty;
+    public HomeTeamDefendingSide HomeTeamDefendingSide { get; set; }
+    public int SecondsIntoPeriod { get; set; }
+    public int SecondsLeftInPeriod { get; set; }
+    [ForeignKey(nameof(GameId))]
+    public DbGameRaw? Game { get; set; }
+    public void Clone(IDbGameEvent gameEvent)
     {
-        public int id { get; set; }
-        public int gameId { get; set; }
-        public int typeCode { get; set; }
-        public int sortOrder { get; set; }
-        public int situationCode { get; set; }
-        public int periodNumber { get; set; }
-        public PeriodType periodType { get; set; }
-        public string eventTypeName { get; set; } = string.Empty;
-        public HomeTeamDefendingSide homeTeamDefendingSide { get; set; }
-        public int secondsIntoPeriod { get; set; }
-        public int secondsLeftInPeriod { get; set; }
-        [ForeignKey(nameof(gameId))]
-        public DbGameRaw? game { get; set; }
-        public void Clone(IDbGameEvent gameEvent)
+        if (gameEvent is DbPeriodStart shootoutCompleteEvent)
         {
-            if (gameEvent is DbPeriodStart shootoutCompleteEvent)
-            {
-                id = shootoutCompleteEvent.id;
-                gameId = shootoutCompleteEvent.gameId;
-                typeCode = shootoutCompleteEvent.typeCode;
-                sortOrder = shootoutCompleteEvent.sortOrder;
-                situationCode = shootoutCompleteEvent.situationCode;
-                periodNumber = shootoutCompleteEvent.periodNumber;
-                periodType = shootoutCompleteEvent.periodType;
-                eventTypeName = shootoutCompleteEvent.eventTypeName;
-                homeTeamDefendingSide = shootoutCompleteEvent.homeTeamDefendingSide;
-                secondsIntoPeriod = shootoutCompleteEvent.secondsIntoPeriod;
-                secondsLeftInPeriod = shootoutCompleteEvent.secondsLeftInPeriod;
-                game = shootoutCompleteEvent.game;
-            }
-            else
-            {
-                throw new InvalidOperationException("Invalid type passed to Clone.");
-            }
+            Id = shootoutCompleteEvent.Id;
+            GameId = shootoutCompleteEvent.GameId;
+            TypeCode = shootoutCompleteEvent.TypeCode;
+            SortOrder = shootoutCompleteEvent.SortOrder;
+            SituationCode = shootoutCompleteEvent.SituationCode;
+            PeriodNumber = shootoutCompleteEvent.PeriodNumber;
+            PeriodType = shootoutCompleteEvent.PeriodType;
+            EventTypeName = shootoutCompleteEvent.EventTypeName;
+            HomeTeamDefendingSide = shootoutCompleteEvent.HomeTeamDefendingSide;
+            SecondsIntoPeriod = shootoutCompleteEvent.SecondsIntoPeriod;
+            SecondsLeftInPeriod = shootoutCompleteEvent.SecondsLeftInPeriod;
+            Game = shootoutCompleteEvent.Game;
+        }
+        else
+        {
+            throw new InvalidOperationException("Invalid type passed to Clone.");
         }
     }
 }

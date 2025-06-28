@@ -1,21 +1,20 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Entities.DbModels
+namespace Entities.DbModels;
+
+public class DbGameTvBroadcaster
 {
-    public class DbGameTvBroadcaster
+    [Key]
+    public int BroadcasterId { get; set; }
+    public int GameId { get; set; }
+    [ForeignKey(nameof(GameId))]
+    public DbGameRaw? Game { get; set; }
+    [ForeignKey(nameof(BroadcasterId))]
+    public DbTvBroadcaster? Broadcaster { get; set; }
+    public void Clone(DbGameTvBroadcaster gameTvBroadcaster)
     {
-        [Key]
-        public int broadcasterId { get; set; }
-        public int gameId { get; set; }
-        [ForeignKey(nameof(gameId))]
-        public DbGameRaw? game { get; set; }
-        [ForeignKey(nameof(broadcasterId))]
-        public DbTvBroadcaster? broadcaster { get; set; }
-        public void Clone(DbGameTvBroadcaster gameTvBroadcaster)
-        {
-            broadcasterId = gameTvBroadcaster.broadcasterId;
-            gameId = gameTvBroadcaster.gameId;
-        }
+        BroadcasterId = gameTvBroadcaster.BroadcasterId;
+        GameId = gameTvBroadcaster.GameId;
     }
 }

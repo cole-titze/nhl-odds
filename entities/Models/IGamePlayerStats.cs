@@ -1,7 +1,6 @@
-﻿namespace Entities.Models
+﻿namespace Entities.Models;
+
+public interface IGamePlayerStats
 {
-    public interface IGamePlayerStats
-    {
-        int playerId { get; set; }
-    }
+    int PlayerId { get; set; }
 }

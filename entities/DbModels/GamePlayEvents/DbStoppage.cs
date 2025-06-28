@@ -1,48 +1,47 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Entities.Types.Enums;
 
-namespace Entities.DbModels.GamePlayEvents
+namespace Entities.DbModels.GamePlayEvents;
+
+public class DbStoppage : IDbGameEvent
 {
-    public class DbStoppage : IDbGameEvent
+    public int Id { get; set; }
+    public int GameId { get; set; }
+    public int TypeCode { get; set; }
+    public int SortOrder { get; set; }
+    public int SituationCode { get; set; }
+    public int PeriodNumber { get; set; }
+    public PeriodType PeriodType { get; set; }
+    public string EventTypeName { get; set; } = string.Empty;
+    public HomeTeamDefendingSide HomeTeamDefendingSide { get; set; }
+    public int SecondsIntoPeriod { get; set; }
+    public int SecondsLeftInPeriod { get; set; }
+    public StoppageType StoppageType { get; set; }
+    public StoppageDetails StoppageDetails { get; set; }
+    [ForeignKey(nameof(GameId))]
+    public DbGameRaw? Game { get; set; }
+    public void Clone(IDbGameEvent gameEvent)
     {
-        public int id { get; set; }
-        public int gameId { get; set; }
-        public int typeCode { get; set; }
-        public int sortOrder { get; set; }
-        public int situationCode { get; set; }
-        public int periodNumber { get; set; }
-        public PeriodType periodType { get; set; }
-        public string eventTypeName { get; set; } = string.Empty;
-        public HomeTeamDefendingSide homeTeamDefendingSide { get; set; }
-        public int secondsIntoPeriod { get; set; }
-        public int secondsLeftInPeriod { get; set; }
-        public StoppageType stoppageType { get; set; }
-        public StoppageDetails stoppageDetails { get; set; }
-        [ForeignKey(nameof(gameId))]
-        public DbGameRaw? game { get; set; }
-        public void Clone(IDbGameEvent gameEvent)
+        if (gameEvent is DbStoppage stoppageEvent)
         {
-            if (gameEvent is DbStoppage stoppageEvent)
-            {
-                id = stoppageEvent.id;
-                gameId = stoppageEvent.gameId;
-                typeCode = stoppageEvent.typeCode;
-                sortOrder = stoppageEvent.sortOrder;
-                situationCode = stoppageEvent.situationCode;
-                periodNumber = stoppageEvent.periodNumber;
-                periodType = stoppageEvent.periodType;
-                eventTypeName = stoppageEvent.eventTypeName;
-                homeTeamDefendingSide = stoppageEvent.homeTeamDefendingSide;
-                secondsIntoPeriod = stoppageEvent.secondsIntoPeriod;
-                secondsLeftInPeriod = stoppageEvent.secondsLeftInPeriod;
-                stoppageType = stoppageEvent.stoppageType;
-                stoppageDetails = stoppageEvent.stoppageDetails;
-                game = stoppageEvent.game;
-            }
-            else
-            {
-                throw new InvalidOperationException("Invalid type passed to Clone.");
-            }
+            Id = stoppageEvent.Id;
+            GameId = stoppageEvent.GameId;
+            TypeCode = stoppageEvent.TypeCode;
+            SortOrder = stoppageEvent.SortOrder;
+            SituationCode = stoppageEvent.SituationCode;
+            PeriodNumber = stoppageEvent.PeriodNumber;
+            PeriodType = stoppageEvent.PeriodType;
+            EventTypeName = stoppageEvent.EventTypeName;
+            HomeTeamDefendingSide = stoppageEvent.HomeTeamDefendingSide;
+            SecondsIntoPeriod = stoppageEvent.SecondsIntoPeriod;
+            SecondsLeftInPeriod = stoppageEvent.SecondsLeftInPeriod;
+            StoppageType = stoppageEvent.StoppageType;
+            StoppageDetails = stoppageEvent.StoppageDetails;
+            Game = stoppageEvent.Game;
+        }
+        else
+        {
+            throw new InvalidOperationException("Invalid type passed to Clone.");
         }
     }
 }

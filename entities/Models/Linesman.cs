@@ -1,11 +1,10 @@
-namespace Entities.Models
+namespace Entities.Models;
+
+/// <summary>
+/// Represents a linesman in the NHL.
+/// Currently only contains the name, but may expand in the future.
+/// </summary>
+public class Linesman : IOfficial
 {
-    /// <summary>
-    /// Represents a linesman in the NHL.
-    /// Currently only contains the name, but may expand in the future.
-    /// </summary>
-    public class Linesman : IOfficial
-    {
-        public string name { get; set; } = string.Empty;
-    }
+    public string Name { get; set; } = string.Empty;
 }

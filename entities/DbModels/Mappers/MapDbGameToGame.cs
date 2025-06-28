@@ -1,70 +1,69 @@
 ﻿using Entities.DbModels;
 using Entities.Models;
 
-namespace DataAccess.GameRepository.Mappers
-{
-    public static class MapDbGameToGame
-    {
-        public static Game Map(DbGameRaw game)
-        {
-            var extendedInfo = new GameExtendedInfo()
-            {
-                gameSummary = game.gameSummary,
-                eventSummary = game.eventSummary,
-                playByPlaySummary = game.playByPlaySummary,
-                faceoffSummary = game.faceoffSummary,
-                faceoffComparisonSummary = game.faceoffComparisonSummary,
-                rosterSummary = game.rosterSummary,
-                shotSummary = game.shotSummary,
-                shiftChartSummary = game.shiftChartSummary,
-                toiAwaySummary = game.toiAwaySummary,
-                toiHomeSummary = game.toiHomeSummary,
-                threeMinuteRecapVideoId = game.threeMinuteRecapVideoId,
-                condensedGameVideoId = game.condensedGameVideoId,
-                venueName = game.venueName,
-                venueLocation = game.venueLocation,
-            };
-            return new Game()
-            {
-                id = game.id,
-                homeTeamId = game.homeTeamId,
-                awayTeamId = game.awayTeamId,
-                seasonStartYear = game.seasonStartYear,
-                gameDateUTC = game.gameDateUTC,
-                homeGoals = game.homeGoals,
-                awayGoals = game.awayGoals,
-                winner = game.winner,
-                endPeriod = game.endPeriod,
-                homeSOG = game.homeSOG,
-                awaySOG = game.awaySOG,
-                homePPG = game.homePPG,
-                awayPPG = game.awayPPG,
-                homePIM = game.homePIM,
-                awayPIM = game.awayPIM,
-                homeFaceOffWinPercent = game.homeFaceOffWinPercent,
-                awayFaceOffWinPercent = game.awayFaceOffWinPercent,
-                homeBlockedShots = game.homeBlockedShots,
-                awayBlockedShots = game.awayBlockedShots,
-                homeHits = game.homeHits,
-                awayHits = game.awayHits,
-                homeTakeaways = game.homeTakeaways,
-                awayTakeaways = game.awayTakeaways,
-                homeGiveaways = game.homeGiveaways,
-                awayGiveaways = game.awayGiveaways,
-                hasBeenPlayed = game.hasBeenPlayed,
-                extendedInfo = extendedInfo,
-            };
-        }
-        public static IEnumerable<Game> Map(IEnumerable<DbGameRaw> games)
-        {
-            var gameList = new List<Game>();
-            foreach (var game in games)
-            {
-                gameList.Add(Map(game));
-            }
+namespace DataAccess.GameRepository.Mappers;
 
-            return gameList;
+public static class MapDbGameToGame
+{
+    public static Game Map(DbGameRaw game)
+    {
+        var extendedInfo = new GameExtendedInfo()
+        {
+            GameSummary = game.GameSummary,
+            EventSummary = game.EventSummary,
+            PlayByPlaySummary = game.PlayByPlaySummary,
+            FaceoffSummary = game.FaceoffSummary,
+            FaceoffComparisonSummary = game.FaceoffComparisonSummary,
+            RosterSummary = game.RosterSummary,
+            ShotSummary = game.ShotSummary,
+            ShiftChartSummary = game.ShiftChartSummary,
+            ToiAwaySummary = game.ToiAwaySummary,
+            ToiHomeSummary = game.ToiHomeSummary,
+            ThreeMinuteRecapVideoId = game.ThreeMinuteRecapVideoId,
+            CondensedGameVideoId = game.CondensedGameVideoId,
+            VenueName = game.VenueName,
+            VenueLocation = game.VenueLocation,
+        };
+        return new Game()
+        {
+            Id = game.Id,
+            HomeTeamId = game.HomeTeamId,
+            AwayTeamId = game.AwayTeamId,
+            SeasonStartYear = game.SeasonStartYear,
+            GameDateUTC = game.GameDateUTC,
+            HomeGoals = game.HomeGoals,
+            AwayGoals = game.AwayGoals,
+            Winner = game.Winner,
+            EndPeriod = game.EndPeriod,
+            HomeSOG = game.HomeSOG,
+            AwaySOG = game.AwaySOG,
+            HomePPG = game.HomePPG,
+            AwayPPG = game.AwayPPG,
+            HomePIM = game.HomePIM,
+            AwayPIM = game.AwayPIM,
+            HomeFaceOffWinPercent = game.HomeFaceOffWinPercent,
+            AwayFaceOffWinPercent = game.AwayFaceOffWinPercent,
+            HomeBlockedShots = game.HomeBlockedShots,
+            AwayBlockedShots = game.AwayBlockedShots,
+            HomeHits = game.HomeHits,
+            AwayHits = game.AwayHits,
+            HomeTakeaways = game.HomeTakeaways,
+            AwayTakeaways = game.AwayTakeaways,
+            HomeGiveaways = game.HomeGiveaways,
+            AwayGiveaways = game.AwayGiveaways,
+            HasBeenPlayed = game.HasBeenPlayed,
+            ExtendedInfo = extendedInfo,
+        };
+    }
+    public static IEnumerable<Game> Map(IEnumerable<DbGameRaw> games)
+    {
+        var gameList = new List<Game>();
+        foreach (var game in games)
+        {
+            gameList.Add(Map(game));
         }
+
+        return gameList;
     }
 }
 

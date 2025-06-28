@@ -1,28 +1,27 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Entities.DbModels
+namespace Entities.DbModels;
+
+public class DbGameOdds
 {
-    public class DbGameOdds
+    public int GameId { get; set; }
+    public string ModelName { get; set; } = string.Empty;
+    public DateTime RunDateUTC { get; set; }
+    public double HomeOdds { get; set; }
+    public double AwayOdds { get; set; }
+    public double LogLoss { get; set; }
+    public string Notes { get; set; } = string.Empty;
+    [ForeignKey(nameof(GameId))]
+    public DbGameRaw? Game { get; set; }
+    public void Clone(DbGameOdds gameOdds)
     {
-        public int gameId { get; set; }
-        public string modelName { get; set; } = string.Empty;
-        public DateTime runDateUTC { get; set; }
-        public double homeOdds { get; set; }
-        public double awayOdds { get; set; }
-        public double logLoss { get; set; }
-        public string notes { get; set; } = string.Empty;
-        [ForeignKey(nameof(gameId))]
-        public DbGameRaw? game { get; set; }
-        public void Clone(DbGameOdds gameOdds)
-        {
-            gameId = gameOdds.gameId;
-            modelName = gameOdds.modelName;
-            runDateUTC = gameOdds.runDateUTC;
-            homeOdds = gameOdds.homeOdds;
-            awayOdds = gameOdds.awayOdds;
-            logLoss = gameOdds.logLoss;
-            notes = gameOdds.notes;
-            game = gameOdds.game;
-        }
+        GameId = gameOdds.GameId;
+        ModelName = gameOdds.ModelName;
+        RunDateUTC = gameOdds.RunDateUTC;
+        HomeOdds = gameOdds.HomeOdds;
+        AwayOdds = gameOdds.AwayOdds;
+        LogLoss = gameOdds.LogLoss;
+        Notes = gameOdds.Notes;
+        Game = gameOdds.Game;
     }
 }
