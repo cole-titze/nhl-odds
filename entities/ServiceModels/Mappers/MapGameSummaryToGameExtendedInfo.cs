@@ -7,7 +7,7 @@ namespace Entities.ServiceModels.Mappers
         public static GameExtendedInfo Map(dynamic messageGameSummary)
         {
             var tvBroadcasters = new List<TvBroadcaster>();
-            foreach(var broadcaster in messageGameSummary.tvBroadcasts)
+            foreach (var broadcaster in messageGameSummary.tvBroadcasts)
             {
                 tvBroadcasters.Add(new TvBroadcaster()
                 {

@@ -1,7 +1,7 @@
 ﻿namespace Entities.Types.Mappers
 {
-	public static class MapPositionToPositionStr
-	{
+    public static class MapPositionToPositionStr
+    {
         public static string Map(POSITION position)
         {
             string positionStr = "L";

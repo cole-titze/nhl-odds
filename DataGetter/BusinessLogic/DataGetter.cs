@@ -84,7 +84,7 @@ namespace DataGetter.BusinessLogic
 
             // Save all data to the database
             await _gameRepo.Commit();
-                
+
             return seasonGames;
         }
 

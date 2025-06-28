@@ -7,7 +7,7 @@ using static Services.NhlData.NhlDataGetter;
 namespace Services.NhlData
 {
     public class NhlGameGetter : INhlGameGetter
-	{
+    {
         private readonly IRequestMaker _requestMaker;
         private readonly ILogger<NhlGameGetter> _logger;
 

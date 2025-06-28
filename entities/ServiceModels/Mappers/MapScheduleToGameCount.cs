@@ -10,9 +10,9 @@
         public static int Map(dynamic scheduleResponse, int seasonId)
         {
             int seasonGameCount = 0;
-            foreach(var season in scheduleResponse.data)
+            foreach (var season in scheduleResponse.data)
             {
-                if(season.id == seasonId)
+                if (season.id == seasonId)
                     seasonGameCount = (int)season.totalRegularSeasonGames;
             }
             return seasonGameCount;

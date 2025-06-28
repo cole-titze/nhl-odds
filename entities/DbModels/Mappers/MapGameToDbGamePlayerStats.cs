@@ -5,7 +5,7 @@ namespace Entities.DbModels.Mappers
     public static class MapGameToDbGamePlayerStats
     {
         public static IEnumerable<IDbGamePlayerStats> Map(Game game)
-		{
+        {
             if (game.rosterStats == null)
                 throw new ArgumentNullException(nameof(game.rosterStats), "Game roster stats can not be null.");
 
@@ -15,7 +15,7 @@ namespace Entities.DbModels.Mappers
             dbGamePlayerStats.AddRange(MapGameGoalieStatsToDbGameGoalieStats(gameRosterStats.AllPlayers.OfType<GameGoalieStats>(), game.id));
 
             return dbGamePlayerStats;
-		}
+        }
 
         public static IEnumerable<IDbGamePlayerStats> MapList(IEnumerable<Game> games)
         {
@@ -74,20 +74,20 @@ namespace Entities.DbModels.Mappers
             {
                 gameId = gameId,
                 playerId = skaterStat.playerId,
-                teamId = skaterStat.teamId,
-                goals = skaterStat.goals,
-                assists = skaterStat.assists,
-                plusMinus = skaterStat.plusMinus,
-                penaltyMinutes = skaterStat.penaltyMinutes,
-                hits = skaterStat.hits,
-                powerPlayGoals = skaterStat.powerPlayGoals,
-                shotsOnGoal = skaterStat.shotsOnGoal,
-                faceOffWinningPctg = skaterStat.faceOffWinningPctg,
-                blockedShots = skaterStat.blockedShots,
-                giveaways = skaterStat.giveaways,
-                takeaways = skaterStat.takeaways,
-                timeOnIceSeconds = skaterStat.timeOnIceSeconds,
-                position = skaterStat.position,
+                teamId = skaterStat.TeamId,
+                goals = skaterStat.Goals,
+                assists = skaterStat.Assists,
+                plusMinus = skaterStat.PlusMinus,
+                penaltyMinutes = skaterStat.PenaltyMinutes,
+                hits = skaterStat.Hits,
+                powerPlayGoals = skaterStat.PowerPlayGoals,
+                shotsOnGoal = skaterStat.ShotsOnGoal,
+                faceOffWinningPctg = skaterStat.FaceOffWinningPctg,
+                blockedShots = skaterStat.BlockedShots,
+                giveaways = skaterStat.Giveaways,
+                takeaways = skaterStat.Takeaways,
+                timeOnIceSeconds = skaterStat.TimeOnIceSeconds,
+                position = skaterStat.Position,
             };
         }
     }

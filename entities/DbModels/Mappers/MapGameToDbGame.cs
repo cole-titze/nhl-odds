@@ -11,7 +11,7 @@ namespace DataAccess.GameRepository.Mappers
             {
                 throw new ArgumentNullException(nameof(game.extendedInfo), "Game extended info cannot be null");
             }
-            
+
             return new DbGameRaw()
             {
                 id = game.id,
@@ -57,14 +57,14 @@ namespace DataAccess.GameRepository.Mappers
             };
         }
         public static IEnumerable<DbGameRaw> Map(IEnumerable<Game> games)
-		{
-			var dbGames = new List<DbGameRaw>();
+        {
+            var dbGames = new List<DbGameRaw>();
             foreach (var game in games)
             {
                 dbGames.Add(Map(game));
             }
             return dbGames;
-		}
-	}
+        }
+    }
 }
 

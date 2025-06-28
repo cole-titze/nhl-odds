@@ -7,7 +7,7 @@ namespace Entities.DbModels.Mappers
     public static class MapGameToDbGameEvent
     {
         public static IEnumerable<IDbGameEvent> MapList(IEnumerable<Game> seasonGames)
-		{
+        {
             var dbGameEvents = new List<IDbGameEvent>();
             foreach (var game in seasonGames)
             {
@@ -31,7 +31,7 @@ namespace Entities.DbModels.Mappers
             }
 
             return dbGameEvents;
-		}
+        }
     }
 }
 

@@ -33,8 +33,8 @@ namespace Entities.Types.Enums
                     return ShotType.Deflected;
                 case null:
                     return ShotType.Unknown;
-            default:
-                throw new ArgumentException($"Invalid PeriodType value: {shotType}", nameof(shotType));
+                default:
+                    throw new ArgumentException($"Invalid PeriodType value: {shotType}", nameof(shotType));
             }
         }
     }

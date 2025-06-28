@@ -6,6 +6,6 @@ namespace Entities.Models
     /// </summary>
     public class Coach
     {
-        public string name { get; set; } = "To Be Determined";
+        public string Name { get; set; } = "To Be Determined";
     }
 }

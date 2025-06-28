@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 namespace Services.RequestMaker
 {
     public class RequestMaker : IRequestMaker
-	{
+    {
         private readonly IHttpClient _client;
         private readonly ILogger<RequestMaker> _logger;
         private readonly Dictionary<string, dynamic> _cachedResponses = new Dictionary<string, dynamic>();

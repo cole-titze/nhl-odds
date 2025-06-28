@@ -51,7 +51,7 @@ namespace Entities.ServiceModels.Mappers
         /// <returns>game</returns>
         private static Game BuildGameStat(dynamic statCategory, Game game)
         {
-            string categoryName = (string)statCategory.category;   
+            string categoryName = (string)statCategory.category;
             switch (categoryName)
             {
                 case "sog":
@@ -93,7 +93,7 @@ namespace Entities.ServiceModels.Mappers
                 default:
                     break;
             }
-            
+
             return game;
         }
 

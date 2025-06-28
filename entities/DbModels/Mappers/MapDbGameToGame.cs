@@ -65,6 +65,6 @@ namespace DataAccess.GameRepository.Mappers
 
             return gameList;
         }
-	}
+    }
 }
 

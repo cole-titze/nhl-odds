@@ -5,7 +5,7 @@ using Services.RequestMaker;
 namespace Services.NhlData
 {
     public class NhlScheduleGetter : INhlScheduleGetter
-	{
+    {
         private readonly IRequestMaker _requestMaker;
         private readonly ILogger<NhlGameGetter> _logger;
         private IDictionary<int, int> _seasonGameCountCache = new Dictionary<int, int>();

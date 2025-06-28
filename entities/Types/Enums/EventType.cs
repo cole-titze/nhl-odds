@@ -18,7 +18,8 @@ namespace Entities.Types.Enums
         PeriodEnd = 14,
         ShootoutComplete = 15
     }
-    public static class EventTypeParser {
+    public static class EventTypeParser
+    {
         public static EventType Parse(string eventType)
         {
             switch (eventType)

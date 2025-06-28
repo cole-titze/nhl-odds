@@ -20,8 +20,8 @@ namespace Entities.ServiceModels.Mappers
 
             var gameRosterStats = new GameRosterStats()
             {
-                homeTeamCoach = new Coach() { name = (string)gamePlayerStatResponse.gameInfo.homeTeam.headCoach.@default },
-                awayTeamCoach = new Coach() { name = (string)gamePlayerStatResponse.gameInfo.awayTeam.headCoach.@default },
+                homeTeamCoach = new Coach() { Name = (string)gamePlayerStatResponse.gameInfo.homeTeam.headCoach.@default },
+                awayTeamCoach = new Coach() { Name = (string)gamePlayerStatResponse.gameInfo.awayTeam.headCoach.@default },
                 homeTeamForwards = GetGameSkaters(gameSummaryResponse.playerByGameStats.homeTeam.forwards, homeTeamId),
                 awayTeamForwards = GetGameSkaters(gameSummaryResponse.playerByGameStats.awayTeam.forwards, awayTeamId),
                 homeTeamDefensemen = GetGameSkaters(gameSummaryResponse.playerByGameStats.homeTeam.defense, homeTeamId),
@@ -79,20 +79,20 @@ namespace Entities.ServiceModels.Mappers
                 var playerStats = new GameSkaterStats()
                 {
                     playerId = (int)player.playerId,
-                    teamId = teamId,
-                    goals = (int)player.goals,
-                    assists = (int)player.assists,
-                    shotsOnGoal = (int)player.sog,
-                    blockedShots = (int)player.blockedShots,
-                    penaltyMinutes = (int)player.pim,
-                    powerPlayGoals = (int)player.powerPlayGoals,
-                    plusMinus = (int)player.plusMinus,
-                    faceOffWinningPctg = (double)player.faceoffWinningPctg,
-                    hits = (int)player.hits,
-                    giveaways = (int)player.giveaways,
-                    takeaways = (int)player.takeaways,
-                    timeOnIceSeconds = ((string)player.toi).ParseIceTimeToSeconds(),
-                    position = MapPositionStrToPosition.Map((string)player.position)
+                    TeamId = teamId,
+                    Goals = (int)player.goals,
+                    Assists = (int)player.assists,
+                    ShotsOnGoal = (int)player.sog,
+                    BlockedShots = (int)player.blockedShots,
+                    PenaltyMinutes = (int)player.pim,
+                    PowerPlayGoals = (int)player.powerPlayGoals,
+                    PlusMinus = (int)player.plusMinus,
+                    FaceOffWinningPctg = (double)player.faceoffWinningPctg,
+                    Hits = (int)player.hits,
+                    Giveaways = (int)player.giveaways,
+                    Takeaways = (int)player.takeaways,
+                    TimeOnIceSeconds = ((string)player.toi).ParseIceTimeToSeconds(),
+                    Position = MapPositionStrToPosition.Map((string)player.position)
                 };
                 gamePlayers.Add(playerStats);
             }

@@ -130,7 +130,7 @@ namespace DatabaseAccess.PlayerRepository
                 .Include(x => x.game)
                 .Where(y => y.game != null && y.game.seasonStartYear == seasonStartYear)
                 .CountAsync();
-                
+
             await Task.WhenAll(skaterCountTask, goalieCountTask);
 
             return skaterCountTask.Result + goalieCountTask.Result;

@@ -31,14 +31,14 @@ namespace DataAccess.PlayerRepository.Mappers
             };
         }
         public static IEnumerable<DbPlayer> Map(IEnumerable<Player> players)
-		{
-			var dbPlayers = new List<DbPlayer>();
+        {
+            var dbPlayers = new List<DbPlayer>();
             foreach (var player in players)
             {
                 dbPlayers.Add(Map(player));
             }
             return dbPlayers;
-		}
-	}
+        }
+    }
 }
 
