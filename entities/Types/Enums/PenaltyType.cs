@@ -50,7 +50,12 @@ namespace Entities.Types.Enums
         HeadButt,
         PenaltyShotSlashOnBreakaway,
         GoalieLeftCrease,
-        IllegalStick
+        IllegalStick,
+        AbusiveLanguage,
+        SpearingDoubleMinor,
+        CrossCheckDoubleMinor,
+        IllegalEquipment,
+        PenaltyShotHoldingOnBreakaway
     }
     public static class PenaltyTypeParser
     {
@@ -152,6 +157,16 @@ namespace Entities.Types.Enums
                     return PenaltyType.GoalieLeftCrease;
                 case "illegal-stick":
                     return PenaltyType.IllegalStick;
+                case "abusive-language":
+                    return PenaltyType.AbusiveLanguage;
+                case "spearing-double-minor":
+                    return PenaltyType.SpearingDoubleMinor;
+                case "cross-checking-double-minor":
+                    return PenaltyType.CrossCheckDoubleMinor;
+                case "illegal-equipment":
+                    return PenaltyType.IllegalEquipment;
+                case "ps-holding-on-breakaway":
+                    return PenaltyType.PenaltyShotHoldingOnBreakaway;
                 default:
                     throw new ArgumentException($"Invalid PenaltyType value: {penaltyType}", nameof(penaltyType));
             }

@@ -45,9 +45,9 @@ namespace Entities.DbModels
         public string venueName { get; set; } = string.Empty;
         public string venueLocation { get; set; } = string.Empty;
 
-        [ForeignKey("homeTeamId")]
+        [ForeignKey(nameof(homeTeamId))]
         public DbTeam? homeTeam { get; set; }
-        [ForeignKey("awayTeamId")]
+        [ForeignKey(nameof(awayTeamId))]
         public DbTeam? awayTeam { get; set; }
 
         public void Clone(DbGameRaw game)

@@ -11,7 +11,7 @@ namespace Entities.DbModels
         public double awayOdds { get; set; }
         public double logLoss { get; set; }
         public string notes { get; set; } = string.Empty;
-        [ForeignKey("gameId")]
+        [ForeignKey(nameof(gameId))]
         public DbGameRaw? game { get; set; }
         public void Clone(DbGameOdds gameOdds)
         {

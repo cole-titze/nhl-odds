@@ -22,7 +22,7 @@ namespace Entities.DbModels
         public string twitterLink { get; set; } = string.Empty;
         public string watchLink { get; set; } = string.Empty;
         public string playerSlug { get; set; } = string.Empty;
-        [ForeignKey("currentTeamId")]
+        [ForeignKey(nameof(currentTeamId))]
         public DbTeam? team { get; set; }
         public void Clone(DbPlayer player)
         {

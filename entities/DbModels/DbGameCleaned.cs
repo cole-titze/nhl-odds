@@ -51,7 +51,7 @@ namespace Entities.DbModels
         public double awayRosterGoalieValue { get; set; }
         public double awayHoursSinceLastGame { get; set; }
 
-        [ForeignKey("gameId")]
+        [ForeignKey(nameof(gameId))]
         public DbGameRaw? game { get; set; } = new DbGameRaw();
 
         /// <summary>

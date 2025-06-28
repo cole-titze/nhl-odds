@@ -16,7 +16,7 @@ namespace Entities.DbModels.GamePlayEvents
         public HomeTeamDefendingSide homeTeamDefendingSide { get; set; }
         public int secondsIntoPeriod { get; set; }
         public int secondsLeftInPeriod { get; set; }
-        [ForeignKey("gameId")]
+        [ForeignKey(nameof(gameId))]
         public DbGameRaw? game { get; set; }
         public void Clone(IDbGameEvent gameEvent)
         {

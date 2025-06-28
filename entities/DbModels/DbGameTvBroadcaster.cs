@@ -8,9 +8,9 @@ namespace Entities.DbModels
         [Key]
         public int broadcasterId { get; set; }
         public int gameId { get; set; }
-        [ForeignKey("gameId")]
+        [ForeignKey(nameof(gameId))]
         public DbGameRaw? game { get; set; }
-        [ForeignKey("broadcasterId")]
+        [ForeignKey(nameof(broadcasterId))]
         public DbTvBroadcaster? broadcaster { get; set; }
         public void Clone(DbGameTvBroadcaster gameTvBroadcaster)
         {

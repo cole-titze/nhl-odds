@@ -111,7 +111,7 @@ namespace DataGetter.BusinessLogic
             var seasonGames = new List<Game>();
             Game? game;
             // game ids start at 1
-            for (int count = 786; count <= gameCount; count++)
+            for (int count = 1213; count <= gameCount; count++)
             {
                 var gameId = NhlDataGetter.GetGameId(seasonStartYear, count);
                 var existingGame = await _gameRepo.GetGame(gameId);

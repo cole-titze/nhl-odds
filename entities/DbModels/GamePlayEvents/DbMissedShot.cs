@@ -24,13 +24,13 @@ namespace Entities.DbModels.GamePlayEvents
         public int? yCoordinate { get; set; }
         public Zone zone { get; set; }
         public MissedShotType missType { get; set; }
-        [ForeignKey("shootingPlayerId")]
+        [ForeignKey(nameof(shootingPlayerId))]
         public DbPlayer? shootingPlayer { get; set; }
-        [ForeignKey("goalieId")]
+        [ForeignKey(nameof(goalieId))]
         public DbPlayer? goaliePlayer { get; set; }
-        [ForeignKey("gameId")]
+        [ForeignKey(nameof(gameId))]
         public DbGameRaw? game { get; set; }
-        [ForeignKey("shootingTeamId")]
+        [ForeignKey(nameof(shootingTeamId))]
         public DbTeam? shootingTeam { get; set; }
         public void Clone(IDbGameEvent gameEvent)
         {

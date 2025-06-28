@@ -21,11 +21,11 @@ namespace Entities.DbModels.GamePlayEvents
         public int? xCoordinate { get; set; }
         public int? yCoordinate { get; set; }
         public Zone zone { get; set; }
-        [ForeignKey("giveawayPlayerId")]
+        [ForeignKey(nameof(giveawayPlayerId))]
         public DbPlayer? giveawayPlayer { get; set; }
-        [ForeignKey("gameId")]
+        [ForeignKey(nameof(gameId))]
         public DbGameRaw? game { get; set; }
-        [ForeignKey("giveawayPlayerTeamId")]
+        [ForeignKey(nameof(giveawayPlayerTeamId))]
         public DbTeam? giveawayPlayerTeam { get; set; }
         public void Clone(IDbGameEvent gameEvent)
         {

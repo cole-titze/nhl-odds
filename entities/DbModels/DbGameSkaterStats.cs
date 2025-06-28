@@ -22,11 +22,11 @@ namespace Entities.DbModels
         public int timeOnIceSeconds { get; set; }
         public POSITION position { get; set; } = POSITION.LeftWing;
 
-        [ForeignKey("playerId")]
+        [ForeignKey(nameof(playerId))]
         public DbPlayer? player { get; set; }
-        [ForeignKey("gameId")]
+        [ForeignKey(nameof(gameId))]
         public DbGameRaw? game { get; set; }
-        [ForeignKey("teamId")]
+        [ForeignKey(nameof(teamId))]
         public DbTeam? team { get; set; }
         public void Clone(IDbGamePlayerStats gamePlayerStats)
         {

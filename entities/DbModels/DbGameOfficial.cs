@@ -13,7 +13,7 @@ namespace Entities.DbModels
         public int gameId { get; set; }
         public string name { get; set; } = string.Empty;
         public Role role { get; set; } = Role.Referee;
-        [ForeignKey("gameId")]
+        [ForeignKey(nameof(gameId))]
         public DbGameRaw? game { get; set; }
 
         public void Clone(DbGameOfficial gameOfficial)
