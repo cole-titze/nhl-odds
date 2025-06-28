@@ -23,9 +23,9 @@ namespace Entities.ServiceModels
         /// Converts the current roster response to game roster stats.
         /// </summary>
         /// <returns>The mapped game player stats</returns>
-        public GameRosterStats CurentRosterResponseToGameRosterStats(int gameId, int homeTeamId, int awayTeamId)
+        public GameRosterStats CurentRosterResponseToGameRosterStats(int homeTeamId, int awayTeamId)
         {
-            return MapCurrentRosterResponseToGamePlayerStats.Map(homeResponse, awayResponse, gameId, homeTeamId, awayTeamId);
+            return MapCurrentRosterResponseToGamePlayerStats.Map(homeResponse, awayResponse, homeTeamId, awayTeamId);
         }
     }
 }

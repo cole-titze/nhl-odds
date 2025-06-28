@@ -44,11 +44,11 @@ namespace DatabaseAccess.PlayerRepository
         /// <summary>
         /// Add Players stats per game to database if they don't exist, otherwise update them
         /// </summary>
-        /// <param name="playersWithValues">List of players to store</param>
+        /// <param name="games">List of games to store player stats for</param>
         /// <returns>None</returns>
-        public async Task AddUpdateGameRosterStats(IEnumerable<GameRosterStats> seasonGameRosterStats)
+        public async Task AddUpdateGameRosterStats(IEnumerable<Game> games)
         {
-            var dbGamePlayerStats = MapGamePlayerStatsToDbGamePlayerStats.Map(seasonGameRosterStats);
+            var dbGamePlayerStats = MapGameToDbGamePlayerStats.MapList(games);
 
             var addList = new List<IDbGamePlayerStats>();
             var updateList = new List<IDbGamePlayerStats>();

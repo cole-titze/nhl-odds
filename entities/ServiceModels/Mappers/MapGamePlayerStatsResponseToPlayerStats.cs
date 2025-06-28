@@ -15,7 +15,6 @@ namespace Entities.ServiceModels.Mappers
         /// <returns>Player stats object</returns>
 		public static GameRosterStats Map(dynamic gameSummaryResponse, dynamic gamePlayerStatResponse)
         {
-            var gameId = (int)gameSummaryResponse.id;
             var homeTeamId = (int)gameSummaryResponse.homeTeam.id;
             var awayTeamId = (int)gameSummaryResponse.awayTeam.id;
 
@@ -23,12 +22,12 @@ namespace Entities.ServiceModels.Mappers
             {
                 homeTeamCoach = new Coach() { name = (string)gamePlayerStatResponse.gameInfo.homeTeam.headCoach.@default },
                 awayTeamCoach = new Coach() { name = (string)gamePlayerStatResponse.gameInfo.awayTeam.headCoach.@default },
-                homeTeamForwards = GetGameSkaters(gameSummaryResponse.playerByGameStats.homeTeam.forwards, gameId, homeTeamId),
-                awayTeamForwards = GetGameSkaters(gameSummaryResponse.playerByGameStats.awayTeam.forwards, gameId, awayTeamId),
-                homeTeamDefensemen = GetGameSkaters(gameSummaryResponse.playerByGameStats.homeTeam.defense, gameId, homeTeamId),
-                awayTeamDefensemen = GetGameSkaters(gameSummaryResponse.playerByGameStats.awayTeam.defense, gameId, awayTeamId),
-                homeTeamGoalies = GetGameGoalies(gameSummaryResponse.playerByGameStats.homeTeam.goalies, gameId, homeTeamId),
-                awayTeamGoalies = GetGameGoalies(gameSummaryResponse.playerByGameStats.awayTeam.goalies, gameId, awayTeamId)
+                homeTeamForwards = GetGameSkaters(gameSummaryResponse.playerByGameStats.homeTeam.forwards, homeTeamId),
+                awayTeamForwards = GetGameSkaters(gameSummaryResponse.playerByGameStats.awayTeam.forwards, awayTeamId),
+                homeTeamDefensemen = GetGameSkaters(gameSummaryResponse.playerByGameStats.homeTeam.defense, homeTeamId),
+                awayTeamDefensemen = GetGameSkaters(gameSummaryResponse.playerByGameStats.awayTeam.defense, awayTeamId),
+                homeTeamGoalies = GetGameGoalies(gameSummaryResponse.playerByGameStats.homeTeam.goalies, homeTeamId),
+                awayTeamGoalies = GetGameGoalies(gameSummaryResponse.playerByGameStats.awayTeam.goalies, awayTeamId)
             };
 
             BuildOfficials(gameRosterStats, gamePlayerStatResponse);
@@ -36,7 +35,7 @@ namespace Entities.ServiceModels.Mappers
             return gameRosterStats;
         }
 
-        private static IEnumerable<IGamePlayerStats> GetGameGoalies(dynamic goalies, int gameId, int homeTeamId)
+        private static IEnumerable<IGamePlayerStats> GetGameGoalies(dynamic goalies, int homeTeamId)
         {
             var gameGoalies = new List<IGamePlayerStats>();
             foreach (var goalie in goalies)
@@ -55,7 +54,6 @@ namespace Entities.ServiceModels.Mappers
                 var goalieStats = new GameGoalieStats()
                 {
                     playerId = (int)goalie.playerId,
-                    gameId = gameId,
                     teamId = homeTeamId,
                     evenStrengthShotsSaved = evenStrengthShotsSaved,
                     powerPlayShotsSaved = powerPlayShotsSaved,
@@ -73,7 +71,7 @@ namespace Entities.ServiceModels.Mappers
             return gameGoalies;
         }
 
-        private static IEnumerable<IGamePlayerStats> GetGameSkaters(dynamic players, int gameId, int teamId)
+        private static IEnumerable<IGamePlayerStats> GetGameSkaters(dynamic players, int teamId)
         {
             var gamePlayers = new List<IGamePlayerStats>();
             foreach (var player in players)
@@ -81,7 +79,6 @@ namespace Entities.ServiceModels.Mappers
                 var playerStats = new GameSkaterStats()
                 {
                     playerId = (int)player.playerId,
-                    gameId = gameId,
                     teamId = teamId,
                     goals = (int)player.goals,
                     assists = (int)player.assists,

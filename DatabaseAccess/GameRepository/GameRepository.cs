@@ -4,7 +4,6 @@ using Entities.DbModels.GamePlayEvents;
 using Entities.DbModels.Mappers;
 using Entities.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace DatabaseAccess.GameRepository
 {

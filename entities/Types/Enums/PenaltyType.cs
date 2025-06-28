@@ -1,5 +1,3 @@
-using System.ComponentModel;
-
 namespace Entities.Types.Enums
 {
     public enum PenaltyType

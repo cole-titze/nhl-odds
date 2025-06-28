@@ -1,4 +1,3 @@
-using Entities.Models;
 using Entities.Models.GamePlayEvents;
 using Entities.ServiceModels.Mappers;
 

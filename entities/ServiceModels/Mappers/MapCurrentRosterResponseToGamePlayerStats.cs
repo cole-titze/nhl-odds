@@ -13,16 +13,16 @@ namespace Entities.ServiceModels.Mappers
 		/// <param name="rosterResponse">Nhl response that contains a teams roster</param>
 		/// <param name="playerResponse">Player response in the roster response</param>
 		/// <returns>List of player game stats</returns>
-		public static GameRosterStats Map(dynamic homeRosterResponse, dynamic awayRosterResponse, int gameId, int homeTeamId, int awayTeamId)
+		public static GameRosterStats Map(dynamic homeRosterResponse, dynamic awayRosterResponse, int homeTeamId, int awayTeamId)
 		{
 			var gameRosterStats = new GameRosterStats()
 			{
-				homeTeamForwards = GetTeamForwards(homeRosterResponse, gameId, homeTeamId),
-				homeTeamDefensemen = GetTeamDefensemen(homeRosterResponse, gameId, homeTeamId),
-				homeTeamGoalies = GetTeamGoalies(homeRosterResponse, gameId, homeTeamId),
-				awayTeamForwards = GetTeamForwards(awayRosterResponse, gameId, awayTeamId),
-				awayTeamDefensemen = GetTeamDefensemen(awayRosterResponse, gameId, awayTeamId),
-				awayTeamGoalies = GetTeamGoalies(awayRosterResponse, gameId, awayTeamId),
+				homeTeamForwards = GetTeamForwards(homeRosterResponse, homeTeamId),
+				homeTeamDefensemen = GetTeamDefensemen(homeRosterResponse, homeTeamId),
+				homeTeamGoalies = GetTeamGoalies(homeRosterResponse, homeTeamId),
+				awayTeamForwards = GetTeamForwards(awayRosterResponse, awayTeamId),
+				awayTeamDefensemen = GetTeamDefensemen(awayRosterResponse, awayTeamId),
+				awayTeamGoalies = GetTeamGoalies(awayRosterResponse, awayTeamId),
 			};
 
 			return gameRosterStats;
@@ -31,15 +31,14 @@ namespace Entities.ServiceModels.Mappers
 		/// Gets the goalies for a team from the roster response.
 		/// </summary>
 		/// <param name="teamRosterResponse">The roster response from the NHL api</param>
-		/// <param name="gameId">The game id</param>
 		/// <param name="teamId">The team id</param>
 		/// <returns>List of goalie stats for the game</returns>
-		private static IEnumerable<IGamePlayerStats> GetTeamGoalies(dynamic teamRosterResponse, int gameId, int teamId)
+		private static IEnumerable<IGamePlayerStats> GetTeamGoalies(dynamic teamRosterResponse, int teamId)
         {
             var gameGoalieStats = new List<IGamePlayerStats>();
 			foreach (dynamic forwardsResponse in teamRosterResponse.goalies)
 			{
-				var gamePlayer = GetGoalie(forwardsResponse, gameId, teamId);
+				var gamePlayer = GetGoalie(forwardsResponse, teamId);
 				gameGoalieStats.Add(gamePlayer);
 			}
 			
@@ -49,15 +48,14 @@ namespace Entities.ServiceModels.Mappers
 		/// Gets the defensemen for a team from the roster response.
 		/// </summary>
 		/// <param name="teamRosterResponse">The roster response from the nhl api</param>
-		/// <param name="gameId">The game id</param>
 		/// <param name="teamId">The team id</param>
 		/// <returns>List of defensemen stats for the game</returns>
-        private static IEnumerable<IGamePlayerStats> GetTeamDefensemen(dynamic teamRosterResponse, int gameId, int teamId)
+        private static IEnumerable<IGamePlayerStats> GetTeamDefensemen(dynamic teamRosterResponse, int teamId)
 		{
 			var gameDefensemenStats = new List<IGamePlayerStats>();
 			foreach (dynamic forwardsResponse in teamRosterResponse.defensemen)
 			{
-				var gamePlayer = GetSkater(forwardsResponse, gameId, teamId);
+				var gamePlayer = GetSkater(forwardsResponse, teamId);
 				gameDefensemenStats.Add(gamePlayer);
 			}
 
@@ -67,15 +65,14 @@ namespace Entities.ServiceModels.Mappers
 		/// Gets the forwards for a team from the roster response.
 		/// </summary>
 		/// <param name="teamRosterResponse">The roster response from the nhl api</param>
-		/// <param name="gameId">The game id</param>
 		/// <param name="teamId">The team id</param>
 		/// <returns>List of forwards stats for the game</returns>
-        private static IEnumerable<IGamePlayerStats> GetTeamForwards(dynamic teamRosterResponse, int gameId, int teamId)
+        private static IEnumerable<IGamePlayerStats> GetTeamForwards(dynamic teamRosterResponse, int teamId)
 		{
 			var gameForwardsStats = new List<IGamePlayerStats>();
 			foreach (dynamic forwardsResponse in teamRosterResponse.forwards)
 			{
-				var gamePlayer = GetSkater(forwardsResponse, gameId, teamId);
+				var gamePlayer = GetSkater(forwardsResponse, teamId);
 				gameForwardsStats.Add(gamePlayer);
 			}
 			
@@ -86,14 +83,12 @@ namespace Entities.ServiceModels.Mappers
         /// Creates a GameGoalieStats object from the roster and player response.
         /// </summary>
         /// <param name="goalieResponse">Nhl response for a goalie</param>
-        /// <param name="gameId">The game id</param>
         /// <param name="teamId">The team id</param>
         /// <returns>The game goalie stats</returns>
-        private static IGamePlayerStats GetGoalie(dynamic goalieResponse, int gameId, int teamId)
+        private static IGamePlayerStats GetGoalie(dynamic goalieResponse, int teamId)
         {
             return new GameGoalieStats()
 			{
-				gameId = gameId,
 				playerId = (int)goalieResponse.id,
 				teamId = teamId,
 				evenStrengthShotsSaved = 0,
@@ -109,14 +104,12 @@ namespace Entities.ServiceModels.Mappers
 		/// Creates a GameSkaterStats object from the roster and player response.
 		/// </summary>
 		/// <param name="skaterResponse">Response for a skater on a roster</param>
-		/// <param name="gameId">The game id</param>
 		/// <param name="teamId">The team id</param>
 		/// <returns>The empty game skater stats</returns>
-        private static GameSkaterStats GetSkater(dynamic skaterResponse, int gameId, int teamId)
+        private static GameSkaterStats GetSkater(dynamic skaterResponse, int teamId)
         {
             return new GameSkaterStats()
             {
-                gameId = gameId,
                 playerId = (int)skaterResponse.id,
                 teamId = teamId,
                 goals = 0,

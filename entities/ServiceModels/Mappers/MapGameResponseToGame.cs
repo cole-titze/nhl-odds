@@ -1,5 +1,4 @@
 ﻿using Entities.Models;
-using Entities.Models.GamePlayEvents;
 using Entities.Types;
 
 namespace Entities.ServiceModels.Mappers

@@ -68,7 +68,7 @@ namespace Services.NhlData
             }
             var rosterResponse = new ServiceRosterResponse(homeResponse, awayResponse);
 
-            var gameRoster = rosterResponse.CurentRosterResponseToGameRosterStats(game.id, game.homeTeamId, game.awayTeamId);
+            var gameRoster = rosterResponse.CurentRosterResponseToGameRosterStats(game.homeTeamId, game.awayTeamId);
             game.rosterStats = gameRoster;
 
             return gameRoster;

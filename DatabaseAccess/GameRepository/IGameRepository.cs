@@ -1,8 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using Entities.DbModels;
-using Entities.Models;
-using Entities.Models.GamePlayEvents;
-using Microsoft.VisualBasic;
+﻿using Entities.Models;
 
 namespace DatabaseAccess.GameRepository
 {

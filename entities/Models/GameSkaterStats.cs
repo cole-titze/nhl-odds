@@ -5,7 +5,6 @@ namespace Entities.Models
     public class GameSkaterStats : IGamePlayerStats
     {
         public int playerId { get; set; }
-        public int gameId { get; set; }
         public int teamId { get; set; }
         public int goals { get; set; }
         public int assists { get; set; }

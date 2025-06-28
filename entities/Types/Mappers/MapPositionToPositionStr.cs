@@ -1,6 +1,4 @@
-﻿using Entities.Models;
-
-namespace Entities.Types.Mappers
+﻿namespace Entities.Types.Mappers
 {
 	public static class MapPositionToPositionStr
 	{

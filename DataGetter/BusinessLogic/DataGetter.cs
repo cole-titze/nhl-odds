@@ -72,7 +72,7 @@ namespace DataGetter.BusinessLogic
 
             // Gets player stats for the game
             var gameRosterStats = await BuildGameRosterStats(seasonGames);
-            await _playerRepo.AddUpdateGameRosterStats(gameRosterStats);
+            await _playerRepo.AddUpdateGameRosterStats(seasonGames);
 
             // Gets player data for the players who have game stats
             var players = await GetPlayers(gameRosterStats);

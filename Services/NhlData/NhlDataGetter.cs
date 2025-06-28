@@ -1,6 +1,4 @@
-﻿using Entities.Models;
-
-namespace Services.NhlData
+﻿namespace Services.NhlData
 {
     public class NhlDataGetter
     {

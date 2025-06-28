@@ -1,4 +1,3 @@
-using Entities.Models;
 using Entities.ServiceModels.Mappers;
 
 namespace Entities.ServiceModels
