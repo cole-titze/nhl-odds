@@ -24,8 +24,9 @@ var settings = new ModeSettings()
 if (settings.connectionString.IsNullOrEmpty())
 {
     var config = new ConfigurationBuilder().AddJsonFile("appsettings.Local.json").Build();
-    settings = config.GetSection("ModeSettings").Get<ModeSettings>() ?? new ModeSettings();
-    settings.connectionString = config.GetConnectionString("NHL_DATABASE") ?? string.Empty;
+    settings.mode = ModeTypeParser.ParseFromString(config["ModeSettings:RUN_MODE"]);
+    settings.throttleTimeMs = int.Parse(config["ModeSettings:THROTTLE_TIME_MS"] ?? "0");
+    settings.connectionString = config.GetConnectionString("ModeSettings:NHL_DATABASE") ?? string.Empty;
 }
 
 if (settings.connectionString.IsNullOrEmpty())
