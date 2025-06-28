@@ -71,11 +71,11 @@ namespace DataGetter.BusinessLogic
             await _gameRepo.AddUpdateGameEvents(seasonGames);
 
             // Gets player stats for the game
-            var gameRosterStats = await BuildGameRosterStats(seasonGames);
+            await BuildGameRosterStats(seasonGames);
             await _playerRepo.AddUpdateGameRosterStats(seasonGames);
 
             // Gets player data for the players who have game stats
-            var players = await GetPlayers(gameRosterStats);
+            var players = await GetPlayers(seasonGames);
             await _playerRepo.AddUpdatePlayers(players);
             await _playerRepo.AddUpdatePlayerDraftDetails(players);
 
@@ -150,13 +150,14 @@ namespace DataGetter.BusinessLogic
 
         /// Gets a seasons worth of players. Only returns players that are active
         /// </summary>
-        /// <param name="seasonStartYear">year of games to get</param>
+        /// <param name="seasonGames">years worth of games</param>
         /// <returns>List of games from the start year</returns>
-        private async Task<IEnumerable<Player>> GetPlayers(IEnumerable<GameRosterStats> seasonGameRosterStats)
+        private async Task<IEnumerable<Player>> GetPlayers(IEnumerable<Game> seasonGames)
         {
             var uniquePlayerIds = new HashSet<int>();
-            foreach (var gameRosterStats in seasonGameRosterStats)
+            foreach (var game in seasonGames)
             {
+                var gameRosterStats = game.rosterStats ?? new GameRosterStats();
                 foreach (var playerStats in gameRosterStats.AllPlayers)
                 {
                     uniquePlayerIds.Add(playerStats.playerId);
