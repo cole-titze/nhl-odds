@@ -13,12 +13,10 @@ namespace DatabaseAccess.GameRepository
         private Dictionary<int, List<DbGameRaw>> _cachedSeasonsGames = new Dictionary<int, List<DbGameRaw>>();
         private Dictionary<int, int> _seasonGameCountCache = new Dictionary<int, int>();
         private readonly NhlDbContext _dbContext;
-        private readonly ILogger<GameRepository> _logger;
         private readonly IDictionary<Type, dynamic> _dbSetEventMap;
-        public GameRepository(NhlDbContext dbContext, ILoggerFactory loggerFactory)
+        public GameRepository(NhlDbContext dbContext)
         {
             _dbContext = dbContext;
-            _logger = loggerFactory.CreateLogger<GameRepository>();
             _dbSetEventMap = new Dictionary<Type, dynamic>
             {
                 { typeof(DbBlockedShot), _dbContext.GameBlockedShotEvent },

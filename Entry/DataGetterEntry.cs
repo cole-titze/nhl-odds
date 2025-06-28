@@ -35,7 +35,7 @@ namespace Entry
 
             var nhlDbContext = new NhlDbContext(modeSettings.connectionString);
             var playerRepo = new PlayerRepository(nhlDbContext);
-            var gameRepo = new GameRepository(nhlDbContext, _loggerFactory);
+            var gameRepo = new GameRepository(nhlDbContext);
             var teamRepo = new TeamRepository(nhlDbContext);
             var requestMaker = new RequestMaker(new HttpClientWrapper(), _loggerFactory, modeSettings.throttleTimeMs);
 
