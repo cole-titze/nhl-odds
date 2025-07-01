@@ -46,7 +46,6 @@ public class DbGameRaw
     public int CondensedGameVideoId { get; set; }
     public string VenueName { get; set; } = string.Empty;
     public string VenueLocation { get; set; } = string.Empty;
-
     [ForeignKey(nameof(HomeTeamId))]
     public DbTeam? HomeTeam { get; set; }
     [ForeignKey(nameof(AwayTeamId))]

@@ -1,8 +1,6 @@
-﻿using DataAccess.GameRepository.Mappers;
-
-using Entities.DbModels;
+﻿using Entities.DbModels;
 using Entities.DbModels.GamePlayEvents;
-using Entities.DbModels.Mappers;
+using Entities.Mappers.GameMappers;
 using Entities.Models;
 
 using Microsoft.EntityFrameworkCore;

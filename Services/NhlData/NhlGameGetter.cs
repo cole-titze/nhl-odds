@@ -43,7 +43,10 @@ public class NhlGameGetter : INhlGameGetter
             return null;
         }
         if (gameSummaryResponse.IsGameInProgress())
+        {
+            _logger.LogWarning("Game with id: " + gameId.ToString() + " is in progress, cannot get game data.");
             return null;
+        }
 
         return gameSummaryResponse.GameSummaryResponseToGame(gameStatResponse, gameEventResponse);
     }

@@ -14,6 +14,7 @@ public partial class NhlDbContext : DbContext
     }
     public virtual DbSet<DbGameRaw> GameRaw { get; set; } = null!;
     public virtual DbSet<DbTeam> Team { get; set; } = null!;
+    public virtual DbSet<DbSeasonTeam> SeasonTeam { get; set; } = null!;
     public virtual DbSet<DbGameOfficial> GameOfficial { get; set; } = null!;
     public virtual DbSet<DbGameSkaterStats> GameSkaterStats { get; set; } = null!;
     public virtual DbSet<DbGameGoalieStats> GameGoalieStats { get; set; } = null!;
@@ -58,6 +59,8 @@ public partial class NhlDbContext : DbContext
             .HasKey(c => new { c.GameId, c.ModelName, c.RunDateUTC });
         modelBuilder.Entity<DbGameOfficial>()
             .HasKey(c => new { c.GameId, c.Name });
+        modelBuilder.Entity<DbSeasonTeam>()
+            .HasKey(c => new { c.TeamId, c.SeasonStartYear });
     }
     private void SetEventIds(ModelBuilder modelBuilder)
     {

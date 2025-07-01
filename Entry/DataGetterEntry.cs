@@ -48,9 +48,14 @@ public class DataGetterEntry
         var nhlRequestMaker = new NhlDataGetter(gameDataGetter, playerDataGetter, scheduleDataGetter);
         var yearRange = new YearRange(START_YEAR, DateTime.Now);
 
+        _logger.LogTrace("Starting Team Getter");
+        var teamGetter = new NhlDataManager(gameRepo, playerRepo, teamRepo, nhlRequestMaker, _loggerFactory);
+        await teamGetter.GetTeamData(yearRange, modeSettings.Mode);
+        _logger.LogTrace("Completed Team Getter");
+
         _logger.LogTrace("Starting Game Getter");
-        var gameGetter = new NhlDataManager(gameRepo, playerRepo, nhlRequestMaker, _loggerFactory);
-        await gameGetter.GetData(yearRange, modeSettings.Mode);
+        var gameGetter = new NhlDataManager(gameRepo, playerRepo, teamRepo, nhlRequestMaker, _loggerFactory);
+        await gameGetter.GetGameData(yearRange, modeSettings.Mode);
         _logger.LogTrace("Completed Game Getter");
 
         watch.Stop();

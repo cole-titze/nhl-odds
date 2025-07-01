@@ -1,4 +1,6 @@
 ﻿using Entities.DbModels;
+using Entities.Mappers.TeamMappers;
+using Entities.Models.Teams;
 using Microsoft.EntityFrameworkCore;
 
 namespace DatabaseAccess.TeamRepository;
@@ -12,22 +14,35 @@ public class TeamRepository : ITeamRepository
     }
 
     /// <summary>
-    /// Gets all teams from the database
-    /// </summary>
-    /// <returns>Query to get all teams</returns>
-    private IQueryable<DbTeam> GetAllTeamsQuery()
-    {
-        return _dbContext.Team.AsQueryable();
-    }
-
-    /// <summary>
-    /// Gets a single team stats
+    /// Gets a single team for a given season
     /// </summary>
     /// <param name="teamId">The team to get stats for</param>
-    /// <returns>The team stats</returns>
-    public async Task<DbTeam> GetTeam(int teamId)
+    /// <returns>The team</returns>
+    public async Task<Team> GetTeam(int teamId)
     {
-        return await GetAllTeamsQuery().Where(x => x.Id == teamId).FirstAsync();
+        var dbTeam = await GetDbTeam(teamId);
+
+        return MapDbTeamToTeam.Map(dbTeam);
+    }
+    /// <summary>
+    /// Gets a single database team
+    /// </summary>
+    /// <param name="teamId">The team to get</param>
+    /// <param name="seasonStartYear">The season start year</param>
+    /// <returns>The team for the given season</returns>
+    public async Task<DbSeasonTeam> GetDbSeasonTeam(int teamId, int seasonStartYear)
+    {
+        return await _dbContext.SeasonTeam.Where(x => x.TeamId == teamId && x.SeasonStartYear == seasonStartYear).FirstAsync();
+    }
+    /// <summary>
+    /// Gets a single team for a given season
+    /// </summary>
+    /// <param name="teamId">The team to get</param>
+    /// <param name="seasonStartYear">The season start year</param>
+    /// <returns>The team for the given season</returns>
+    public async Task<DbTeam> GetDbTeam(int teamId)
+    {
+        return await _dbContext.Team.Where(x => x.Id == teamId).FirstAsync();
     }
     /// <summary>
     /// Gets a dictionary mapping team abbreviations to team ids. The NHL API often
@@ -36,7 +51,73 @@ public class TeamRepository : ITeamRepository
     /// <returns>Team abbreviation to id map</returns>
     public async Task<IDictionary<string, int>> GetTeamAbbrevToIdMap()
     {
-        var teams = await GetAllTeamsQuery().ToListAsync();
+        var teams = await _dbContext.Team.ToListAsync();
         return teams.ToDictionary(team => team.Abbreviation, team => team.Id);
+    }
+
+    /// <summary>
+    /// Adds teams if they do not exist, or updates them if they do.
+    /// </summary>
+    /// <param name="teams">The teams to add</param>
+    public async Task AddUpdateSeasonTeams(IEnumerable<SeasonTeam> teams)
+    {
+        var dbSeasonTeams = MapSeasonTeamToDbSeasonTeam.MapList(teams);
+
+        var addList = new List<DbSeasonTeam>();
+        var updateList = new List<DbSeasonTeam>();
+        foreach (var seasonTeam in dbSeasonTeams)
+        {
+            var dbSeasonTeam = await GetDbSeasonTeam(seasonTeam.TeamId, seasonTeam.SeasonStartYear);
+            if (dbSeasonTeam == null)
+            {
+                addList.Add(seasonTeam);
+            }
+            else
+            {
+                dbSeasonTeam.Clone(seasonTeam);
+                updateList.Add(dbSeasonTeam);
+            }
+        }
+
+        await _dbContext.SeasonTeam.AddRangeAsync(addList);
+        _dbContext.SeasonTeam.UpdateRange(updateList);
+    }
+
+    /// <summary>
+    /// Adds teams if they do not exist, or updates them if they do.
+    /// </summary>
+    /// <param name="teams">The teams to add</param>
+    public async Task AddUpdateTeams(IEnumerable<Team> teams)
+    {
+        var dbTeams = MapTeamToDbTeam.MapList(teams);
+
+        var addList = new List<DbTeam>();
+        var updateList = new List<DbTeam>();
+        foreach (var team in dbTeams)
+        {
+            var dbTeam = await GetDbTeam(team.Id);
+            if (dbTeam == null)
+            {
+                addList.Add(team);
+            }
+            else
+            {
+                dbTeam.Clone(team);
+                updateList.Add(dbTeam);
+            }
+        }
+
+        await _dbContext.Team.AddRangeAsync(addList);
+        _dbContext.Team.UpdateRange(updateList);
+    }
+
+    /// <summary>
+    /// Checks if a season has teams already found in the database.
+    /// </summary>
+    /// <param name="seasonStartYear">The year to check</param>
+    /// <returns>True if the teams have been found, otherwise false</returns>
+    public async Task<bool> HasSeasonTeams(int seasonStartYear)
+    {
+        return await _dbContext.SeasonTeam.AnyAsync(x => x.SeasonStartYear == seasonStartYear);
     }
 }

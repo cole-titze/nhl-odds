@@ -2,23 +2,37 @@ CREATE TABLE [dbo].[ClassificationModel]
 (
     id INT NOT NULL,
     modelFile varchar(MAX) NULL
-    PRIMARY KEY(id),
+        PRIMARY KEY(id),
 );
 
 CREATE TABLE [dbo].[Team]
 (
-    id INT NOT NULL,
-    abbreviation VARCHAR(MAX) NOT NULL,
-    locationName VARCHAR(MAX) NOT NULL,
-    teamName VARCHAR(MAX) NOT NULL,
-    logoUri VARCHAR(MAX) NOT NULL,
-    PRIMARY KEY(id),
+    Id INT NOT NULL,
+    Abbreviation VARCHAR(MAX) NOT NULL,
+    PRIMARY KEY(Id),
+);
+
+CREATE TABLE [dbo].[SeasonTeam]
+(
+    TeamId INT NOT NULL,
+    Abbreviation VARCHAR(MAX) NOT NULL,
+    SeasonStartYear INT NOT NULL,
+    [Name] VARCHAR(MAX) NOT NULL,
+    CommonName VARCHAR(MAX) NOT NULL,
+    PlaceName VARCHAR(MAX) NOT NULL,
+    LogoUri VARCHAR(MAX) NOT NULL,
+    Division VARCHAR(MAX) NOT NULL,
+    Conference VARCHAR(MAX) NOT NULL,
+    DivisionAbbreviation VARCHAR(5) NOT NULL,
+    ConferenceAbbreviation VARCHAR(5) NOT NULL,
+    FOREIGN KEY(TeamId) REFERENCES Team(Id),
+    PRIMARY KEY(TeamId, SeasonStartYear),
 );
 
 CREATE TABLE [dbo].[SeasonGameCount]
 (
-	[seasonId] INT NOT NULL,
-	[gameCount] INT NOT NULL,
+    [seasonId] INT NOT NULL,
+    [gameCount] INT NOT NULL,
     PRIMARY KEY(seasonId),
 );
 

@@ -1,4 +1,5 @@
-﻿using Entities.ServiceModels;
+﻿using Entities.Models.Teams;
+using Entities.ServiceModels;
 using Microsoft.Extensions.Logging;
 using Services.RequestMaker;
 
@@ -51,25 +52,49 @@ public class NhlScheduleGetter : INhlScheduleGetter
     {
         return _seasonGameCountCache;
     }
-    // /// <summary>
-    // /// Gets a list of team ids from the season start year
-    // /// </summary>
-    // /// <param name="seasonStartYear">Year to get teams from</param>
-    // /// <returns>List of team ids</returns>
-    // /// Ex. https://api.nhle.com/stats/rest/en/team/summary?cayenneExp=gameTypeId=2%20and%20seasonId=20202021
-    // public async Task<List<int>> GetTeamsForSeason(int seasonStartYear)
-    // {
-    //     int seasonId = NhlDataGetter.GetFullSeasonId(seasonStartYear);
-    //     string url = "https://api.nhle.com/stats/rest/en/team/summary";
-    //     string query = "?cayenneExp=gameTypeId=2%20and%20seasonId=" + seasonId.ToString();
-    //     var teamResponse = await _requestMaker.MakeRequest(url, query);
-    //     if (teamResponse == null)
-    //     {
-    //         _logger.LogWarning("Failed to get teams for season: " + seasonStartYear.ToString());
-    //         return new List<int>();
-    //     }
+    /// <summary>
+    /// Gets teams for the given season
+    /// Example Request:
+    /// https://api-web.nhle.com/v1/standings/2025-01-01
+    /// </summary>
+    /// <param name="seasonStartYear">The season start year</param>
+    /// <returns>The teams active for the season</returns>
+    public async Task<IEnumerable<SeasonTeam>?> GetTeamsForSeason(int seasonStartYear)
+    {
+        string url = "http://api-web.nhle.com/v1/standings/" + seasonStartYear + "-01-01";
 
-    //     return MapTeamResponseToTeamIds.Map(teamResponse);
-    // }
+        var standingsServiceResponse = new ServiceStandingsResponse(await _requestMaker.MakeRequest(url, ""));
+
+        if (standingsServiceResponse.response == null)
+        {
+            _logger.LogWarning("Failed to get team standings for season: " + seasonStartYear.ToString());
+            return null;
+        }
+
+        return standingsServiceResponse.StandingsResponseToSeasonTeams();
+    }
+
+    /// <summary>
+    /// Gets teams from the abbreviations provided.
+    /// Example Request:
+    /// https://api.nhle.com/stats/rest/en/team
+    /// </summary>
+    /// <param name="abbreviations">List of team abbreviations</param>
+    /// <returns>The teams for the abbreviations</returns>
+    public Task<IEnumerable<Team>?> GetAllTeams()
+    {
+        // TODO: Update querying and mapping
+        string url = "http://api-web.nhle.com/v1/standings/" + seasonStartYear + "-01-01";
+
+        var standingsServiceResponse = new ServiceStandingsResponse(await _requestMaker.MakeRequest(url, ""));
+
+        if (standingsServiceResponse.response == null)
+        {
+            _logger.LogWarning("Failed to get team standings for season: " + seasonStartYear.ToString());
+            return null;
+        }
+
+        return standingsServiceResponse.StandingsResponseToSeasonTeams();
+    }
 }
 

@@ -1,9 +1,11 @@
-﻿using Entities.DbModels;
+﻿using Entities.Models;
+using Entities.Models.Teams;
 
 namespace DatabaseAccess.TeamRepository;
 
 public interface ITeamRepository
 {
-    Task<DbTeam> GetTeam(int teamId);
+    Task AddUpdateSeasonTeams(IEnumerable<SeasonTeam> teams);
+    Task AddUpdateTeams(IEnumerable<Team> teams);
+    Task<bool> HasSeasonTeams(int seasonStartYear);
 }
-
