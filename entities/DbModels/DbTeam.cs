@@ -13,4 +13,14 @@ public class DbTeam
         FranchiseId = team.FranchiseId;
         LeagueId = team.LeagueId;
     }
+    public bool IsEquivalentTo(DbTeam? other)
+    {
+        if (other == null)
+            return false;
+
+        return Id == other.Id
+            && Abbreviation == other.Abbreviation
+            && FranchiseId == other.FranchiseId
+            && LeagueId == other.LeagueId;
+    }
 }

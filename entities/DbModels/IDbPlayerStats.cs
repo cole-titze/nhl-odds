@@ -9,4 +9,5 @@ public interface IDbGamePlayerStats
     public int TimeOnIceSeconds { get; set; }
     public POSITION Position { get; set; }
     public void Clone(IDbGamePlayerStats gamePlayerStats);
+    public bool IsEquivalentTo(IDbGamePlayerStats? other);
 }

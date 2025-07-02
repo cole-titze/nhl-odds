@@ -44,4 +44,23 @@ public class DbStoppage : IDbGameEvent
             throw new InvalidOperationException("Invalid type passed to Clone.");
         }
     }
+    public bool IsEquivalentTo(IDbGameEvent? other)
+    {
+        if (other == null || other is not DbStoppage stoppage)
+            return false;
+
+        return Id == stoppage.Id
+            && GameId == stoppage.GameId
+            && TypeCode == stoppage.TypeCode
+            && SortOrder == stoppage.SortOrder
+            && SituationCode == stoppage.SituationCode
+            && PeriodNumber == stoppage.PeriodNumber
+            && PeriodType == stoppage.PeriodType
+            && EventTypeName == stoppage.EventTypeName
+            && HomeTeamDefendingSide == stoppage.HomeTeamDefendingSide
+            && SecondsIntoPeriod == stoppage.SecondsIntoPeriod
+            && SecondsLeftInPeriod == stoppage.SecondsLeftInPeriod
+            && StoppageType == stoppage.StoppageType
+            && StoppageDetails == stoppage.StoppageDetails;
+    }
 }

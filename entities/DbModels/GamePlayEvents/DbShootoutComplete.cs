@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using Entities.Models.GamePlayEvents;
 using Entities.Types.Enums;
 
 namespace Entities.DbModels.GamePlayEvents;
@@ -39,5 +40,22 @@ public class DbShootoutComplete : IDbGameEvent
         {
             throw new InvalidOperationException("Invalid type passed to Clone.");
         }
+    }
+    public bool IsEquivalentTo(IDbGameEvent? other)
+    {
+        if (other == null || other is not DbShootoutComplete)
+            return false;
+
+        return Id == other.Id
+            && GameId == other.GameId
+            && TypeCode == other.TypeCode
+            && SortOrder == other.SortOrder
+            && SituationCode == other.SituationCode
+            && PeriodNumber == other.PeriodNumber
+            && PeriodType == other.PeriodType
+            && EventTypeName == other.EventTypeName
+            && HomeTeamDefendingSide == other.HomeTeamDefendingSide
+            && SecondsIntoPeriod == other.SecondsIntoPeriod
+            && SecondsLeftInPeriod == other.SecondsLeftInPeriod;
     }
 }

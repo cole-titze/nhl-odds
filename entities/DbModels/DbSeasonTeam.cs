@@ -32,4 +32,21 @@ public class DbSeasonTeam
         SeasonStartYear = team.SeasonStartYear;
         Team = team.Team;
     }
+    public bool IsEquivalentTo(DbSeasonTeam? other)
+    {
+        if (other == null)
+            return false;
+
+        return TeamId == other.TeamId
+            && SeasonStartYear == other.SeasonStartYear
+            && Name == other.Name
+            && Abbreviation == other.Abbreviation
+            && CommonName == other.CommonName
+            && LogoUri == other.LogoUri
+            && Division == other.Division
+            && DivisionAbbreviation == other.DivisionAbbreviation
+            && Conference == other.Conference
+            && ConferenceAbbreviation == other.ConferenceAbbreviation
+            && PlaceName == other.PlaceName;
+    }
 }

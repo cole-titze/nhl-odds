@@ -85,4 +85,34 @@ public class DbGoal : IDbGameEvent
             throw new InvalidOperationException("Invalid type passed to Clone.");
         }
     }
+    public bool IsEquivalentTo(IDbGameEvent? other)
+    {
+        if (other == null || other is not DbGoal goal)
+            return false;
+
+        return Id == goal.Id
+            && GameId == goal.GameId
+            && TypeCode == goal.TypeCode
+            && SortOrder == goal.SortOrder
+            && SituationCode == goal.SituationCode
+            && PeriodNumber == goal.PeriodNumber
+            && PeriodType == goal.PeriodType
+            && EventTypeName == goal.EventTypeName
+            && HomeTeamDefendingSide == goal.HomeTeamDefendingSide
+            && SecondsIntoPeriod == goal.SecondsIntoPeriod
+            && SecondsLeftInPeriod == goal.SecondsLeftInPeriod
+            && XCoordinate == goal.XCoordinate
+            && YCoordinate == goal.YCoordinate
+            && Zone == goal.Zone
+            && ShotType == goal.ShotType
+            && ScoringPlayerTeamId == goal.ScoringPlayerTeamId
+            && AssistOnePlayerId == goal.AssistOnePlayerId
+            && AssistTwoPlayerId == goal.AssistTwoPlayerId
+            && ScoringPlayerId == goal.ScoringPlayerId
+            && GoalieId == goal.GoalieId
+            && HighlightClipSharingUrl == goal.HighlightClipSharingUrl
+            && HighlightClipId == goal.HighlightClipId
+            && DiscreetClipId == goal.DiscreetClipId
+            && PptReplayUrl == goal.PptReplayUrl;
+    }
 }

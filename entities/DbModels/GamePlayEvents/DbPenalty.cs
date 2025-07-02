@@ -77,4 +77,31 @@ public class DbPenalty : IDbGameEvent
             throw new InvalidOperationException("Invalid type passed to Clone.");
         }
     }
+    public bool IsEquivalentTo(IDbGameEvent? other)
+    {
+        if (other == null || other is not DbPenalty penalty)
+            return false;
+
+        return Id == penalty.Id
+            && GameId == penalty.GameId
+            && TypeCode == penalty.TypeCode
+            && SortOrder == penalty.SortOrder
+            && SituationCode == penalty.SituationCode
+            && PeriodNumber == penalty.PeriodNumber
+            && PeriodType == penalty.PeriodType
+            && EventTypeName == penalty.EventTypeName
+            && HomeTeamDefendingSide == penalty.HomeTeamDefendingSide
+            && SecondsIntoPeriod == penalty.SecondsIntoPeriod
+            && SecondsLeftInPeriod == penalty.SecondsLeftInPeriod
+            && CommittedByPlayerTeamId == penalty.CommittedByPlayerTeamId
+            && DrawnByPlayerId == penalty.DrawnByPlayerId
+            && CommittedByPlayerId == penalty.CommittedByPlayerId
+            && ServedByPlayerId == penalty.ServedByPlayerId
+            && XCoordinate == penalty.XCoordinate
+            && YCoordinate == penalty.YCoordinate
+            && Zone == penalty.Zone
+            && Duration == penalty.Duration
+            && PenaltyType == penalty.PenaltyType
+            && PenaltySeverity == penalty.PenaltySeverity;
+    }
 }

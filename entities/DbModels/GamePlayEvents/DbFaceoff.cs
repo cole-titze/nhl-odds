@@ -62,4 +62,21 @@ public class DbFaceoff : IDbGameEvent
             throw new InvalidOperationException("Invalid type passed to Clone.");
         }
     }
+    public bool IsEquivalentTo(IDbGameEvent? other)
+    {
+        if (other == null || other is not DbFaceoff faceoff)
+            return false;
+
+        return Id == faceoff.Id
+            && GameId == faceoff.GameId
+            && TypeCode == faceoff.TypeCode
+            && SortOrder == faceoff.SortOrder
+            && SituationCode == faceoff.SituationCode
+            && PeriodNumber == faceoff.PeriodNumber
+            && PeriodType == faceoff.PeriodType
+            && EventTypeName == faceoff.EventTypeName
+            && HomeTeamDefendingSide == faceoff.HomeTeamDefendingSide
+            && SecondsIntoPeriod == faceoff.SecondsIntoPeriod
+            && SecondsLeftInPeriod == faceoff.SecondsLeftInPeriod;
+    }
 }

@@ -18,4 +18,15 @@ public class DbTvBroadcaster
         SequenceNumber = dbTvBroadcaster.SequenceNumber;
         CountryCode = dbTvBroadcaster.CountryCode;
     }
+    public bool IsEquivalentTo(DbTvBroadcaster? other)
+    {
+        if (other == null)
+            return false;
+
+        return Id == other.Id
+            && NetworkName == other.NetworkName
+            && MarketAbbreviation == other.MarketAbbreviation
+            && SequenceNumber == other.SequenceNumber
+            && CountryCode == other.CountryCode;
+    }
 }

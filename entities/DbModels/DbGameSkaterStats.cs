@@ -55,4 +55,26 @@ public class DbGameSkaterStats : IDbGamePlayerStats
             throw new InvalidOperationException("Invalid type passed to Clone.");
         }
     }
+    public bool IsEquivalentTo(IDbGamePlayerStats? other)
+    {
+        if (other == null || other is not DbGameSkaterStats skaterStats)
+            return false;
+
+        return GameId == skaterStats.GameId
+            && PlayerId == skaterStats.PlayerId
+            && TeamId == skaterStats.TeamId
+            && Goals == skaterStats.Goals
+            && Assists == skaterStats.Assists
+            && PlusMinus == skaterStats.PlusMinus
+            && PenaltyMinutes == skaterStats.PenaltyMinutes
+            && Hits == skaterStats.Hits
+            && PowerPlayGoals == skaterStats.PowerPlayGoals
+            && ShotsOnGoal == skaterStats.ShotsOnGoal
+            && FaceOffWinningPctg.Equals(skaterStats.FaceOffWinningPctg)
+            && BlockedShots == skaterStats.BlockedShots
+            && Giveaways == skaterStats.Giveaways
+            && Takeaways == skaterStats.Takeaways
+            && TimeOnIceSeconds == skaterStats.TimeOnIceSeconds
+            && Position == skaterStats.Position;
+    }
 }

@@ -63,4 +63,28 @@ public class DbShot : IDbGameEvent
             throw new InvalidOperationException("Invalid type passed to Clone.");
         }
     }
+    public bool IsEquivalentTo(IDbGameEvent? other)
+    {
+        if (other == null || other is not DbShot shot)
+            return false;
+
+        return Id == shot.Id
+            && GameId == shot.GameId
+            && TypeCode == shot.TypeCode
+            && SortOrder == shot.SortOrder
+            && SituationCode == shot.SituationCode
+            && PeriodNumber == shot.PeriodNumber
+            && PeriodType == shot.PeriodType
+            && EventTypeName == shot.EventTypeName
+            && HomeTeamDefendingSide == shot.HomeTeamDefendingSide
+            && SecondsIntoPeriod == shot.SecondsIntoPeriod
+            && SecondsLeftInPeriod == shot.SecondsLeftInPeriod
+            && ShootingTeamId == shot.ShootingTeamId
+            && ShootingPlayerId == shot.ShootingPlayerId
+            && GoalieId == shot.GoalieId
+            && XCoordinate == shot.XCoordinate
+            && YCoordinate == shot.YCoordinate
+            && Zone == shot.Zone
+            && ShotType == shot.ShotType;
+    }
 }

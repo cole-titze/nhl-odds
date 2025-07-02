@@ -23,4 +23,16 @@ public class DbPlayerDraftDetails
         PickInRound = playerDraftDetails.PickInRound;
         OverallPick = playerDraftDetails.OverallPick;
     }
+    public bool IsEquivalentTo(DbPlayerDraftDetails? other)
+    {
+        if (other == null)
+            return false;
+
+        return PlayerId == other.PlayerId
+            && Year == other.Year
+            && TeamAbbrev == other.TeamAbbrev
+            && Round == other.Round
+            && PickInRound == other.PickInRound
+            && OverallPick == other.OverallPick;
+    }
 }

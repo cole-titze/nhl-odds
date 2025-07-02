@@ -47,4 +47,23 @@ public class DbGameGoalieStats : IDbGamePlayerStats
             throw new InvalidOperationException("Invalid type passed to CloneFrom.");
         }
     }
+    public bool IsEquivalentTo(IDbGamePlayerStats? other)
+    {
+        if (other == null || other is not DbGameGoalieStats goalieStats)
+            return false;
+
+        return GameId == goalieStats.GameId
+            && PlayerId == goalieStats.PlayerId
+            && TeamId == goalieStats.TeamId
+            && EvenStrengthShotsSaved == goalieStats.EvenStrengthShotsSaved
+            && PowerPlayShotsSaved == goalieStats.PowerPlayShotsSaved
+            && ShortHandedShotsSaved == goalieStats.ShortHandedShotsSaved
+            && EvenStrengthGoalsAllowed == goalieStats.EvenStrengthGoalsAllowed
+            && PowerPlayGoalsAllowed == goalieStats.PowerPlayGoalsAllowed
+            && ShortHandedGoalsAllowed == goalieStats.ShortHandedGoalsAllowed
+            && TimeOnIceSeconds == goalieStats.TimeOnIceSeconds
+            && IsStarter == goalieStats.IsStarter
+            && Position == goalieStats.Position;
+
+    }
 }

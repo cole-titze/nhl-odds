@@ -31,7 +31,7 @@ public class PlayerRepository : IPlayerRepository
             {
                 addList.Add(player);
             }
-            else
+            else if (!dbPlayer.IsEquivalentTo(player))
             {
                 dbPlayer.Clone(player);
                 updateList.Add(dbPlayer);
@@ -59,7 +59,7 @@ public class PlayerRepository : IPlayerRepository
             {
                 addList.Add(playerStats);
             }
-            else
+            else if (!dbPlayerStats.IsEquivalentTo(playerStats))
             {
                 dbPlayerStats.Clone(playerStats);
                 updateList.Add(dbPlayerStats);
@@ -154,7 +154,7 @@ public class PlayerRepository : IPlayerRepository
             {
                 addList.Add(playerDraftDetails);
             }
-            else
+            else if (!dbPlayerDraftDetails.IsEquivalentTo(playerDraftDetails))
             {
                 dbPlayerDraftDetails.Clone(playerDraftDetails);
                 updateList.Add(dbPlayerDraftDetails);

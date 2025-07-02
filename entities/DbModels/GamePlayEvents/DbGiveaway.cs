@@ -56,4 +56,26 @@ public class DbGiveaway : IDbGameEvent
             throw new InvalidOperationException("Invalid type passed to Clone.");
         }
     }
+    public bool IsEquivalentTo(IDbGameEvent? other)
+    {
+        if (other == null || other is not DbGiveaway giveaway)
+            return false;
+
+        return Id == giveaway.Id
+            && GameId == giveaway.GameId
+            && TypeCode == giveaway.TypeCode
+            && SortOrder == giveaway.SortOrder
+            && SituationCode == giveaway.SituationCode
+            && PeriodNumber == giveaway.PeriodNumber
+            && PeriodType == giveaway.PeriodType
+            && EventTypeName == giveaway.EventTypeName
+            && HomeTeamDefendingSide == giveaway.HomeTeamDefendingSide
+            && SecondsIntoPeriod == giveaway.SecondsIntoPeriod
+            && SecondsLeftInPeriod == giveaway.SecondsLeftInPeriod
+            && GiveawayPlayerTeamId == giveaway.GiveawayPlayerTeamId
+            && GiveawayPlayerId == giveaway.GiveawayPlayerId
+            && XCoordinate == giveaway.XCoordinate
+            && YCoordinate == giveaway.YCoordinate
+            && Zone == giveaway.Zone;
+    }
 }

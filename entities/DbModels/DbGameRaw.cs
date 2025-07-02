@@ -96,17 +96,50 @@ public class DbGameRaw
         VenueName = game.VenueName;
         VenueLocation = game.VenueLocation;
     }
-    /// <summary>
-    /// Gets the abbreviation for the team
-    /// </summary>
-    /// <returns>Three letter abbreviation</returns>
-    public string GetTeamAbbr(int teamId)
+    public bool IsEquivalentTo(DbGameRaw? other)
     {
-        if (teamId == HomeTeamId)
-            return HomeTeam?.Abbreviation ?? "";
-        if (teamId == AwayTeamId)
-            return AwayTeam?.Abbreviation ?? "";
+        if (other == null)
+            return false;
 
-        return "";
+        return Id == other.Id
+            && HomeTeamId == other.HomeTeamId
+            && AwayTeamId == other.AwayTeamId
+            && SeasonStartYear == other.SeasonStartYear
+            && GameDateUTC == other.GameDateUTC
+            && HomeGoals == other.HomeGoals
+            && AwayGoals == other.AwayGoals
+            && Winner == other.Winner
+            && EndPeriod == other.EndPeriod
+            && HomeSOG == other.HomeSOG
+            && AwaySOG == other.AwaySOG
+            && HomePPG == other.HomePPG
+            && AwayPPG == other.AwayPPG
+            && HomePIM == other.HomePIM
+            && AwayPIM == other.AwayPIM
+            && HomeFaceOffWinPercent.Equals(other.HomeFaceOffWinPercent)
+            && AwayFaceOffWinPercent.Equals(other.AwayFaceOffWinPercent)
+            && HomeBlockedShots == other.HomeBlockedShots
+            && AwayBlockedShots == other.AwayBlockedShots
+            && HomeHits == other.HomeHits
+            && AwayHits == other.AwayHits
+            && HomeTakeaways == other.HomeTakeaways
+            && AwayTakeaways == other.AwayTakeaways
+            && HomeGiveaways == other.HomeGiveaways
+            && AwayGiveaways == other.AwayGiveaways
+            && HasBeenPlayed == other.HasBeenPlayed
+            && GameSummary == other.GameSummary
+            && EventSummary == other.EventSummary
+            && PlayByPlaySummary == other.PlayByPlaySummary
+            && FaceoffSummary == other.FaceoffSummary
+            && FaceoffComparisonSummary == other.FaceoffComparisonSummary
+            && RosterSummary == other.RosterSummary
+            && ShotSummary == other.ShotSummary
+            && ShiftChartSummary == other.ShiftChartSummary
+            && ToiAwaySummary == other.ToiAwaySummary
+            && ToiHomeSummary == other.ToiHomeSummary
+            && ThreeMinuteRecapVideoId == other.ThreeMinuteRecapVideoId
+            && CondensedGameVideoId == other.CondensedGameVideoId
+            && VenueName == other.VenueName
+            && VenueLocation == other.VenueLocation;
     }
 }

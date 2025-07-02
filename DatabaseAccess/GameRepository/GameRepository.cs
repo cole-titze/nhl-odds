@@ -62,7 +62,7 @@ public class GameRepository : IGameRepository
             var dbGame = await GetDbGame(game.Id);
             if (dbGame == null)
                 addList.Add(game);
-            else
+            else if (!dbGame.IsEquivalentTo(game))
             {
                 dbGame.Clone(game);
                 updateList.Add(dbGame);
@@ -87,7 +87,7 @@ public class GameRepository : IGameRepository
             var dbGameOfficial = await GetDbGameOfficial(gameOfficial.GameId, gameOfficial.Name);
             if (dbGameOfficial == null)
                 addList.Add(gameOfficial);
-            else
+            else if (!dbGameOfficial.IsEquivalentTo(gameOfficial))
             {
                 dbGameOfficial.Clone(gameOfficial);
                 updateList.Add(dbGameOfficial);
@@ -125,7 +125,7 @@ public class GameRepository : IGameRepository
             var dbTvBroadcaster = await GetDbGameTvBroadcaster(gameBroadcaster.GameId, gameBroadcaster.BroadcasterId);
             if (dbTvBroadcaster == null)
                 addList.Add(gameBroadcaster);
-            else
+            else if (!dbTvBroadcaster.IsEquivalentTo(gameBroadcaster))
             {
                 dbTvBroadcaster.Clone(gameBroadcaster);
                 updateList.Add(dbTvBroadcaster);
@@ -152,7 +152,7 @@ public class GameRepository : IGameRepository
             var dbTvBroadcaster = await GetDbTvBroadcaster(broadcaster.Id);
             if (dbTvBroadcaster == null)
                 addList.Add(broadcaster);
-            else
+            else if (!dbTvBroadcaster.IsEquivalentTo(broadcaster))
             {
                 dbTvBroadcaster.Clone(broadcaster);
                 updateList.Add(dbTvBroadcaster);
@@ -321,7 +321,7 @@ public class GameRepository : IGameRepository
             {
                 addList.Add(gameEvent);
             }
-            else
+            else if (!dbGameEvent.IsEquivalentTo(gameEvent))
             {
                 dbGameEvent.Clone(gameEvent);
                 updateList.Add(dbGameEvent);

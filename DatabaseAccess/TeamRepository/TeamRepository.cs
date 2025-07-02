@@ -61,7 +61,7 @@ public class TeamRepository : ITeamRepository
             {
                 addList.Add(seasonTeam);
             }
-            else
+            else if (!dbSeasonTeam.IsEquivalentTo(seasonTeam))
             {
                 dbSeasonTeam.Clone(seasonTeam);
                 updateList.Add(dbSeasonTeam);
@@ -89,7 +89,7 @@ public class TeamRepository : ITeamRepository
             {
                 addList.Add(team);
             }
-            else
+            else if (!dbTeam.IsEquivalentTo(team))
             {
                 dbTeam.Clone(team);
                 updateList.Add(dbTeam);

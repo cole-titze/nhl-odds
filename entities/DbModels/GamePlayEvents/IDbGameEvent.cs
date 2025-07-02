@@ -17,4 +17,5 @@ public interface IDbGameEvent
     public int SecondsIntoPeriod { get; set; }
     public int SecondsLeftInPeriod { get; set; }
     public void Clone(IDbGameEvent gameOdds);
+    public bool IsEquivalentTo(IDbGameEvent? other);
 }

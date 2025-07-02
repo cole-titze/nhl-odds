@@ -21,4 +21,14 @@ public class DbGameOfficial
         Name = gameOfficial.Name;
         Role = gameOfficial.Role;
     }
+
+    public bool IsEquivalentTo(DbGameOfficial? other)
+    {
+        if (other == null)
+            return false;
+
+        return GameId == other.GameId
+            && Name == other.Name
+            && Role == other.Role;
+    }
 }

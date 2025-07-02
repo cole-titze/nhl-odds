@@ -54,4 +54,26 @@ public class DbTakeaway : IDbGameEvent
             throw new InvalidOperationException("Invalid type passed to Clone.");
         }
     }
+    public bool IsEquivalentTo(IDbGameEvent? other)
+    {
+        if (other == null || other is not DbTakeaway takeaway)
+            return false;
+
+        return Id == takeaway.Id
+            && GameId == takeaway.GameId
+            && TypeCode == takeaway.TypeCode
+            && SortOrder == takeaway.SortOrder
+            && SituationCode == takeaway.SituationCode
+            && PeriodNumber == takeaway.PeriodNumber
+            && PeriodType == takeaway.PeriodType
+            && EventTypeName == takeaway.EventTypeName
+            && HomeTeamDefendingSide == takeaway.HomeTeamDefendingSide
+            && SecondsIntoPeriod == takeaway.SecondsIntoPeriod
+            && SecondsLeftInPeriod == takeaway.SecondsLeftInPeriod
+            && TakeawayPlayerTeamId == takeaway.TakeawayPlayerTeamId
+            && TakeawayPlayerId == takeaway.TakeawayPlayerId
+            && XCoordinate == takeaway.XCoordinate
+            && YCoordinate == takeaway.YCoordinate
+            && Zone == takeaway.Zone;
+    }
 }

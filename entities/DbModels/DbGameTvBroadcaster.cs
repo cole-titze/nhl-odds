@@ -17,4 +17,12 @@ public class DbGameTvBroadcaster
         BroadcasterId = gameTvBroadcaster.BroadcasterId;
         GameId = gameTvBroadcaster.GameId;
     }
+    public bool IsEquivalentTo(DbGameTvBroadcaster? other)
+    {
+        if (other == null)
+            return false;
+
+        return BroadcasterId == other.BroadcasterId
+            && GameId == other.GameId;
+    }
 }

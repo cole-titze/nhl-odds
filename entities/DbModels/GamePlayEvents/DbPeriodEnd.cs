@@ -40,4 +40,21 @@ public class DbPeriodEnd : IDbGameEvent
             throw new InvalidOperationException("Invalid type passed to Clone.");
         }
     }
+    public bool IsEquivalentTo(IDbGameEvent? other)
+    {
+        if (other == null || other is not DbPeriodEnd periodEnd)
+            return false;
+
+        return Id == periodEnd.Id
+            && GameId == periodEnd.GameId
+            && TypeCode == periodEnd.TypeCode
+            && SortOrder == periodEnd.SortOrder
+            && SituationCode == periodEnd.SituationCode
+            && PeriodNumber == periodEnd.PeriodNumber
+            && PeriodType == periodEnd.PeriodType
+            && EventTypeName == periodEnd.EventTypeName
+            && HomeTeamDefendingSide == periodEnd.HomeTeamDefendingSide
+            && SecondsIntoPeriod == periodEnd.SecondsIntoPeriod
+            && SecondsLeftInPeriod == periodEnd.SecondsLeftInPeriod;
+    }
 }

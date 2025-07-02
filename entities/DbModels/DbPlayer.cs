@@ -46,7 +46,7 @@ public class DbPlayer
         PlayerSlug = player.PlayerSlug;
         Team = player.Team;
     }
-    public bool Equals(DbPlayer? other)
+    public bool IsEquivalentTo(DbPlayer? other)
     {
         if (other == null)
             return false;
