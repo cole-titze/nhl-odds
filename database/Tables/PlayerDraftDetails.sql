@@ -1,11 +1,11 @@
 CREATE TABLE [dbo].[PlayerDraftDetails]
 (
-    playerId INT NOT NULL,
-    [year] INT NOT NULL,
-    teamAbbrev VARCHAR(MAX) NOT NULL,
-    round INT NOT NULL,
-    pickInRound INT NOT NULL,
-    overallPick INT NOT NULL,
-    CONSTRAINT PK_PlayerDraftDetails PRIMARY KEY(playerId),
-    FOREIGN KEY (playerId) REFERENCES Player(id),
+    PlayerId INT NOT NULL,
+    [Year] INT NOT NULL,
+    TeamAbbrev VARCHAR(MAX) NOT NULL,
+    Round INT NOT NULL,
+    PickInRound INT NOT NULL,
+    OverallPick INT NOT NULL,
+    CONSTRAINT PK_PlayerDraftDetails PRIMARY KEY(PlayerId),
+    FOREIGN KEY (PlayerId) REFERENCES Player(Id)
 );

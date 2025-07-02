@@ -32,7 +32,7 @@ public class NhlPlayerGetter : INhlPlayerGetter
     public async Task<GameRosterStats?> BuildGameRosterStats(Game game)
     {
         var gameId = game.Id;
-        var url = "http://api-web.nhle.com/v1/gamecenter/";
+        var url = "https://api-web.nhle.com/v1/gamecenter/";
         var summaryQuery = GetGameQuery(gameId, GameRequestType.GameSummary);
 
         var gameSummaryResponse = new ServiceGameSummaryResponse(await _requestMaker.MakeRequest(url, summaryQuery));
@@ -85,7 +85,7 @@ public class NhlPlayerGetter : INhlPlayerGetter
     private async Task<GameRosterStats?> BuildPastGameRosterStats(Game game, ServiceGameSummaryResponse gameSummaryResonse)
     {
         var gameId = game.Id;
-        var url = "http://api-web.nhle.com/v1/gamecenter/";
+        var url = "https://api-web.nhle.com/v1/gamecenter/";
         var statQuery = GetGameQuery(gameId, GameRequestType.GameStats);
         var gameStatResponse = new ServiceGameStatResponse(await _requestMaker.MakeRequest(url, statQuery));
         if (gameStatResponse.response == null)

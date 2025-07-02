@@ -1,18 +1,18 @@
 CREATE TABLE [dbo].[GameStoppageEvent]
 (
-    id INT NOT NULL,
-    gameId INT NOT NULL,
-    typeCode INT NOT NULL,
-    sortOrder INT NOT NULL,
-    situationCode INT NOT NULL,
-    periodNumber INT NOT NULL,
-    periodType INT NOT NULL,
-    eventTypeName VARCHAR(100) NOT NULL,
-    homeTeamDefendingSide INT NOT NULL,
-    secondsIntoPeriod INT NOT NULL,
-    secondsLeftInPeriod INT NOT NULL,
-    stoppageType INT NOT NULL,
-    stoppageDetails INT NOT NULL,
-    CONSTRAINT PK_GameStoppageEvent PRIMARY KEY(gameId, id),
-    FOREIGN KEY (gameId) REFERENCES GameRaw(id)
+    Id INT NOT NULL,
+    GameId INT NOT NULL,
+    TypeCode INT NOT NULL,
+    SortOrder INT NOT NULL,
+    SituationCode INT NOT NULL,
+    PeriodNumber INT NOT NULL,
+    PeriodType INT NOT NULL,
+    EventTypeName VARCHAR(100) NOT NULL,
+    HomeTeamDefendingSide INT NOT NULL,
+    SecondsIntoPeriod INT NOT NULL,
+    SecondsLeftInPeriod INT NOT NULL,
+    StoppageType INT NOT NULL,
+    StoppageDetails INT NOT NULL,
+    CONSTRAINT PK_GameStoppageEvent PRIMARY KEY(GameId, Id),
+    FOREIGN KEY (GameId) REFERENCES GameRaw(Id)
 );

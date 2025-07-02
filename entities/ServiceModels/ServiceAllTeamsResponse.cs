@@ -10,19 +10,20 @@ namespace Entities.ServiceModels;
 /// information from the API. This way all service models are just dynamic objects 
 /// and the mappers handle transforming them into the business logic models.
 /// </summary>
-public class ServiceStandingsResponse
+public class ServiceAllTeamsResponse
 {
     public readonly dynamic? response;
-    public ServiceStandingsResponse(dynamic incomingResponse)
+    public ServiceAllTeamsResponse(dynamic incomingResponse)
     {
         response = incomingResponse;
     }
     /// <summary>
-    /// Converts the standings response to a list of teams.
+    /// Converts the schedule response to a count of games for the given season id.
     /// </summary>
-    /// <returns>Teams</returns>
-    public IEnumerable<SeasonTeam>? StandingsResponseToSeasonTeams()
+    /// <param name="seasonId">The season id (Ex. 20232024)</param>
+    /// <returns>Game count for the season</returns>
+    public IEnumerable<Team> AllTeamsResponseToTeams()
     {
-        return MapStandingsResponseToSeasonTeams.Map(response);
+        return MapAllTeamsResponseToTeams.Map(response);
     }
 }

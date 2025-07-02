@@ -11,6 +11,6 @@ CREATE TABLE [dbo].[SeasonTeam]
     Conference VARCHAR(MAX) NOT NULL,
     DivisionAbbreviation VARCHAR(5) NOT NULL,
     ConferenceAbbreviation VARCHAR(5) NOT NULL,
+    CONSTRAINT PK_SeasonTeam PRIMARY KEY(TeamId, SeasonStartYear),
     FOREIGN KEY(TeamId) REFERENCES Team(Id),
-    PRIMARY KEY(TeamId, SeasonStartYear),
 );

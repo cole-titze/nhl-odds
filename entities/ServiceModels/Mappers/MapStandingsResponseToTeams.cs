@@ -1,9 +1,8 @@
-using Entities.Models;
 using Entities.Models.Teams;
 
 namespace Entities.ServiceModels.Mappers;
 
-public static class MapServiceResponseToSeasonTeams
+public static class MapStandingsResponseToSeasonTeams
 {
     /// <summary>
     /// Maps the standings response to a list of teams.
@@ -19,16 +18,16 @@ public static class MapServiceResponseToSeasonTeams
         {
             var team = new SeasonTeam()
             {
-                SeasonStartYear = (int)teamResponse.seasonStartYear // TODO: Make these real
-                Name = teamResponse.name,
-                Abbreviation = teamResponse.abbreviation,
-                CommonName = teamResponse.commonName,
-                LogoUri = teamResponse.logoUri,
-                Division = teamResponse.division.name,
-                DivisionAbbreviation = teamResponse.division.abbreviation,
-                Conference = teamResponse.conference.name,
-                ConferenceAbbreviation = teamResponse.conference.abbreviation,
-                PlaceName = teamResponse.placeName
+                SeasonStartYear = (int)teamResponse.seasonId / 10000, // Assuming seasonId is in the format YYYYYYYY
+                Name = teamResponse.teamName.@default,
+                Abbreviation = teamResponse.teamAbbrev.@default,
+                CommonName = teamResponse.teamCommonName.@default,
+                LogoUri = teamResponse.teamLogo,
+                Division = teamResponse.divisionName,
+                DivisionAbbreviation = teamResponse.divisionAbbrev,
+                Conference = teamResponse.conferenceName,
+                ConferenceAbbreviation = teamResponse.conferenceAbbrev,
+                PlaceName = teamResponse.placeName.@default,
             };
 
             teamList.Add(team);

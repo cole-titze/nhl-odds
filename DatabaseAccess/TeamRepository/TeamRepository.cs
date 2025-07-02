@@ -14,17 +14,6 @@ public class TeamRepository : ITeamRepository
     }
 
     /// <summary>
-    /// Gets a single team for a given season
-    /// </summary>
-    /// <param name="teamId">The team to get stats for</param>
-    /// <returns>The team</returns>
-    public async Task<Team> GetTeam(int teamId)
-    {
-        var dbTeam = await GetDbTeam(teamId);
-
-        return MapDbTeamToTeam.Map(dbTeam);
-    }
-    /// <summary>
     /// Gets a single database team
     /// </summary>
     /// <param name="teamId">The team to get</param>
@@ -59,9 +48,9 @@ public class TeamRepository : ITeamRepository
     /// Adds teams if they do not exist, or updates them if they do.
     /// </summary>
     /// <param name="teams">The teams to add</param>
-    public async Task AddUpdateSeasonTeams(IEnumerable<SeasonTeam> teams)
+    public async Task AddUpdateSeasonTeams(IEnumerable<Team> teams)
     {
-        var dbSeasonTeams = MapSeasonTeamToDbSeasonTeam.MapList(teams);
+        var dbSeasonTeams = MapTeamToDbSeasonTeam.MapList(teams);
 
         var addList = new List<DbSeasonTeam>();
         var updateList = new List<DbSeasonTeam>();
@@ -119,5 +108,13 @@ public class TeamRepository : ITeamRepository
     public async Task<bool> HasSeasonTeams(int seasonStartYear)
     {
         return await _dbContext.SeasonTeam.AnyAsync(x => x.SeasonStartYear == seasonStartYear);
+    }
+
+    /// <summary>
+    /// Commits the changes to the database.
+    /// </summary>
+    public async Task Commit()
+    {
+        await _dbContext.SaveChangesAsync();
     }
 }

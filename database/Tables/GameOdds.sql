@@ -1,12 +1,12 @@
 ﻿CREATE TABLE [dbo].[GameOdds]
 (
-    gameId INT NOT NULL,
-    modelName INT NOT NULL,
-    runDateUTC DATETIME2 NOT NULL,
-    homeOdds FLOAT NOT NULL,
-    awayOdds FLOAT NOT NULL,
-    logLoss FLOAT NOT NULL DEFAULT 0,
-    notes VARCHAR(MAX),
-    CONSTRAINT PK_GameOdds PRIMARY KEY(gameId, modelName, runDateUTC),
-    FOREIGN KEY (gameId) REFERENCES GameRaw(id),
+    GameId INT NOT NULL,
+    ModelName INT NOT NULL,
+    RunDateUTC DATETIME2 NOT NULL,
+    HomeOdds FLOAT NOT NULL,
+    AwayOdds FLOAT NOT NULL,
+    LogLoss FLOAT NOT NULL DEFAULT 0,
+    Notes VARCHAR(MAX),
+    CONSTRAINT PK_GameOdds PRIMARY KEY(GameId, ModelName, RunDateUTC),
+    FOREIGN KEY (GameId) REFERENCES GameRaw(Id)
 );

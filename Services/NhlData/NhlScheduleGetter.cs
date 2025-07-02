@@ -61,7 +61,7 @@ public class NhlScheduleGetter : INhlScheduleGetter
     /// <returns>The teams active for the season</returns>
     public async Task<IEnumerable<SeasonTeam>?> GetTeamsForSeason(int seasonStartYear)
     {
-        string url = "http://api-web.nhle.com/v1/standings/" + seasonStartYear + "-01-01";
+        string url = "https://api-web.nhle.com/v1/standings/" + seasonStartYear + "-11-11";
 
         var standingsServiceResponse = new ServiceStandingsResponse(await _requestMaker.MakeRequest(url, ""));
 
@@ -81,20 +81,19 @@ public class NhlScheduleGetter : INhlScheduleGetter
     /// </summary>
     /// <param name="abbreviations">List of team abbreviations</param>
     /// <returns>The teams for the abbreviations</returns>
-    public Task<IEnumerable<Team>?> GetAllTeams()
+    public async Task<IEnumerable<Team>?> GetAllTeams()
     {
-        // TODO: Update querying and mapping
-        string url = "http://api-web.nhle.com/v1/standings/" + seasonStartYear + "-01-01";
+        string url = "https://api.nhle.com/stats/rest/en/team";
 
-        var standingsServiceResponse = new ServiceStandingsResponse(await _requestMaker.MakeRequest(url, ""));
+        var standingsServiceResponse = new ServiceAllTeamsResponse(await _requestMaker.MakeRequest(url, ""));
 
         if (standingsServiceResponse.response == null)
         {
-            _logger.LogWarning("Failed to get team standings for season: " + seasonStartYear.ToString());
+            _logger.LogWarning("Failed to get team information from NHL API.");
             return null;
         }
 
-        return standingsServiceResponse.StandingsResponseToSeasonTeams();
+        return standingsServiceResponse.AllTeamsResponseToTeams();
     }
 }
 

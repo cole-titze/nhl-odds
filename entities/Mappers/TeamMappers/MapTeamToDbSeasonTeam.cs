@@ -3,22 +3,41 @@ using Entities.Models.Teams;
 
 namespace Entities.Mappers.TeamMappers;
 
-public static class MapTeamToDbTeam
+public static class MapTeamToDbSeasonTeam
 {
-    public static DbTeam Map(Team team)
+    public static IEnumerable<DbSeasonTeam> Map(Team team)
     {
-        return new DbTeam()
+        var seasonTeams = new List<DbSeasonTeam>();
+
+        foreach (var season in team.SeasonInformation)
         {
-            Id = team.Id,
-            Abbreviation = team.Abbreviation,
-        };
+            var seasonStartYear = season.Key;
+            var teamSeason = season.Value;
+            var dbSeasonTeam = new DbSeasonTeam()
+            {
+                TeamId = team.Id,
+                SeasonStartYear = seasonStartYear,
+                Name = teamSeason.Name,
+                Abbreviation = teamSeason.Abbreviation,
+                CommonName = teamSeason.CommonName,
+                LogoUri = teamSeason.LogoUri,
+                Division = teamSeason.Division,
+                DivisionAbbreviation = teamSeason.DivisionAbbreviation,
+                Conference = teamSeason.Conference,
+                ConferenceAbbreviation = teamSeason.ConferenceAbbreviation,
+                PlaceName = teamSeason.PlaceName,
+            };
+            seasonTeams.Add(dbSeasonTeam);
+        }
+
+        return seasonTeams;
     }
-    public static IEnumerable<DbTeam> MapList(IEnumerable<Team> teams)
+    public static IEnumerable<DbSeasonTeam> MapList(IEnumerable<Team> teams)
     {
-        var teamList = new List<DbTeam>();
+        var teamList = new List<DbSeasonTeam>();
         foreach (var team in teams)
         {
-            teamList.Add(Map(team));
+            teamList.AddRange(Map(team));
         }
 
         return teamList;

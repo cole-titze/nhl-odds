@@ -1,6 +1,8 @@
 ﻿CREATE TABLE [dbo].[Team]
 (
-    id INT NOT NULL,
-    abbreviation VARCHAR(MAX) NOT NULL,
-    PRIMARY KEY(id),
+    Id INT NOT NULL,
+    Abbreviation VARCHAR(MAX) NOT NULL,
+    FranchiseId INT NOT NULL,
+    LeagueId INT NOT NULL,
+    CONSTRAINT PK_Team PRIMARY KEY(Id),
 );

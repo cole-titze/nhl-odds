@@ -1,6 +1,6 @@
 CREATE TABLE [dbo].[ClassificationModel]
 (
-    id INT NOT NULL,
-    modelFile varchar(MAX) NULL
-    PRIMARY KEY(id),
+    Id INT NOT NULL,
+    ModelFile VARCHAR(MAX) NULL,
+    CONSTRAINT PK_ClassificationModel PRIMARY KEY(Id)
 );
