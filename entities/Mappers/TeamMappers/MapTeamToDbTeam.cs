@@ -11,6 +11,8 @@ public static class MapTeamToDbTeam
         {
             Id = team.Id,
             Abbreviation = team.Abbreviation,
+            FranchiseId = team.FranchiseId,
+            LeagueId = team.LeagueId
         };
     }
     public static IEnumerable<DbTeam> MapList(IEnumerable<Team> teams)

@@ -39,12 +39,12 @@ public class NhlTeamManager
             }
 
             var addedTeamCount = await FetchAndSaveNhlTeamData(seasonStartYear);
+            await _teamRepo.Commit();
 
             totalTeamsAdded += addedTeamCount;
             _logger.LogInformation("Number of Teams Added To Season " + seasonStartYear.ToString() + ": " + addedTeamCount.ToString());
         }
 
-        await _teamRepo.Commit();
         _logger.LogInformation("Number of Teams Added: " + totalTeamsAdded.ToString());
     }
 

@@ -13,13 +13,11 @@ public class NhlPlayerGetter : INhlPlayerGetter
 {
     private readonly IRequestMaker _requestMaker;
     private readonly ILogger<NhlPlayerGetter> _logger;
-    private readonly IDictionary<string, int> _teamAbbrevToId;
 
-    public NhlPlayerGetter(IRequestMaker requestMaker, IDictionary<string, int> teamAbbrevToId, ILoggerFactory loggerFactory)
+    public NhlPlayerGetter(IRequestMaker requestMaker, ILoggerFactory loggerFactory)
     {
         _requestMaker = requestMaker;
         _logger = loggerFactory.CreateLogger<NhlPlayerGetter>();
-        _teamAbbrevToId = teamAbbrevToId;
     }
     /// <summary>
     /// Gets the player stats for a game. This will return the players that are on the roster 
@@ -105,8 +103,9 @@ public class NhlPlayerGetter : INhlPlayerGetter
     /// https://api-web.nhle.com/v1/player/8478402/landing
     /// </summary>
     /// <param name="playerId">Id of the player</param>
+    /// <param name="currentGameTeamId">The team id of the most recent game the player played in</param>
     /// <returns>Player object</returns>
-    public async Task<Player?> GetPlayer(int playerId)
+    public async Task<Player?> GetPlayer(int playerId, int currentGameTeamId)
     {
         string url = "https://api-web.nhle.com/v1/player/";
         string summaryQuery = GetPlayerQuery(playerId);
@@ -119,7 +118,7 @@ public class NhlPlayerGetter : INhlPlayerGetter
             return null;
         }
 
-        return playerSummaryResponse.PlayerResponseToPlayer(_teamAbbrevToId);
+        return playerSummaryResponse.PlayerResponseToPlayer(currentGameTeamId);
     }
 }
 

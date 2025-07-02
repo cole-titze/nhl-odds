@@ -19,10 +19,10 @@ public static class MapAllTeamsResponseToTeams
         {
             var team = new Team()
             {
-                Id = teamResponse.id,
-                FranchiseId = teamResponse.franchiseId,
-                LeagueId = teamResponse.leagueId,
-                Abbreviation = teamResponse.triCode,
+                Id = (int)teamResponse.id,
+                FranchiseId = (int?)teamResponse.franchiseId ?? -1,
+                LeagueId = (int)teamResponse.leagueId,
+                Abbreviation = (string)teamResponse.triCode,
             };
 
             teamList.Add(team);

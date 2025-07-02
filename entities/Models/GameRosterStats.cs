@@ -24,10 +24,32 @@ public class GameRosterStats
     {
         get
         {
+            return AllHomeTeamPlayers
+                .Concat(AllAwayTeamPlayers);
+        }
+    }
+    /// <summary>
+    /// Enumerates all players from the home team (forwards, defensemen, goalies).
+    /// </summary>
+    /// <returns>An enumerable collection of all home players in the game.</returns>
+    public IEnumerable<IGamePlayerStats> AllHomeTeamPlayers
+    {
+        get
+        {
             return HomeTeamForwards
                 .Concat(HomeTeamDefensemen)
-                .Concat(HomeTeamGoalies)
-                .Concat(AwayTeamForwards)
+                .Concat(HomeTeamGoalies);
+        }
+    }
+    /// <summary>
+    /// Enumerates all players from the away team (forwards, defensemen, goalies).
+    /// </summary>
+    /// <returns>An enumerable collection of all away players in the game.</returns>
+    public IEnumerable<IGamePlayerStats> AllAwayTeamPlayers
+    {
+        get
+        {
+            return AwayTeamForwards
                 .Concat(AwayTeamDefensemen)
                 .Concat(AwayTeamGoalies);
         }

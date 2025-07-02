@@ -10,11 +10,12 @@ public static class MapPlayerResponseToPlayer
     /// https://api-web.nhle.com/v1/player/8478402/landing
     /// </summary>
     /// <param name="playerResponse">Nhl response that contains a teams roster</param>
+    /// <param name="recentGameTeamId">The team id of the most recent game the player played in</param>
     /// <returns>The player object</returns>
-    public static Player Map(dynamic playerResponse, IDictionary<string, int> teamAbbrevToId)
+    public static Player Map(dynamic playerResponse, int recentGameTeamId)
     {
         var playerDraftDetails = GetPlayerDraftDetails(playerResponse.draftDetails);
-        var currentTeamId = GetFinalTeam(playerResponse, teamAbbrevToId);
+        var currentTeamId = recentGameTeamId;
         var isActive = (bool)playerResponse.isActive;
         var birthStateProvince = playerResponse.birthStateProvince == null ? string.Empty
                                     : (string)playerResponse.birthStateProvince.@default;
@@ -41,22 +42,6 @@ public static class MapPlayerResponseToPlayer
             PlayerSlug = (string)playerResponse.playerSlug,
             PlayerDraftDetails = playerDraftDetails
         };
-    }
-    /// <summary>
-    /// Gets the current or final team id from the player response.
-    /// </summary>
-    /// <param name="playerResponse">The player response from the nhl api</param>
-    /// <returns>The team id</returns>
-    private static int GetFinalTeam(dynamic playerResponse, IDictionary<string, int> teamAbbrevToId)
-    {
-        if (playerResponse.currentTeamId != null)
-            return (int)playerResponse.currentTeamId;
-
-        var finalTeamId = (string)playerResponse.last5Games[0].teamAbbrev;
-        if (teamAbbrevToId.TryGetValue(finalTeamId, out int teamId))
-            return teamId;
-
-        throw new KeyNotFoundException($"Team abbreviation {finalTeamId} not found in teamAbbrevToId dictionary.");
     }
 
     /// <summary>

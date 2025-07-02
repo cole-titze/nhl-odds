@@ -21,8 +21,8 @@ public class ServicePlayerResponse
     /// Converts the player response to a collection of game player stats.
     /// </summary>
     /// <returns>The player</returns>
-    public Player PlayerResponseToPlayer(IDictionary<string, int> teamAbbrevToId)
+    public Player PlayerResponseToPlayer(int gameTeamId)
     {
-        return MapPlayerResponseToPlayer.Map(response, teamAbbrevToId);
+        return MapPlayerResponseToPlayer.Map(response, gameTeamId);
     }
 }

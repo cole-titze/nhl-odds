@@ -19,9 +19,9 @@ public class TeamRepository : ITeamRepository
     /// <param name="teamId">The team to get</param>
     /// <param name="seasonStartYear">The season start year</param>
     /// <returns>The team for the given season</returns>
-    public async Task<DbSeasonTeam> GetDbSeasonTeam(int teamId, int seasonStartYear)
+    private async Task<DbSeasonTeam?> GetDbSeasonTeam(int teamId, int seasonStartYear)
     {
-        return await _dbContext.SeasonTeam.Where(x => x.TeamId == teamId && x.SeasonStartYear == seasonStartYear).FirstAsync();
+        return await _dbContext.SeasonTeam.Where(x => x.TeamId == teamId && x.SeasonStartYear == seasonStartYear).FirstOrDefaultAsync();
     }
     /// <summary>
     /// Gets a single team for a given season
@@ -29,19 +29,9 @@ public class TeamRepository : ITeamRepository
     /// <param name="teamId">The team to get</param>
     /// <param name="seasonStartYear">The season start year</param>
     /// <returns>The team for the given season</returns>
-    public async Task<DbTeam> GetDbTeam(int teamId)
+    private async Task<DbTeam?> GetDbTeam(int teamId)
     {
-        return await _dbContext.Team.Where(x => x.Id == teamId).FirstAsync();
-    }
-    /// <summary>
-    /// Gets a dictionary mapping team abbreviations to team ids. The NHL API often
-    /// only returns a teams abbreviation
-    /// </summary>
-    /// <returns>Team abbreviation to id map</returns>
-    public async Task<IDictionary<string, int>> GetTeamAbbrevToIdMap()
-    {
-        var teams = await _dbContext.Team.ToListAsync();
-        return teams.ToDictionary(team => team.Abbreviation, team => team.Id);
+        return await _dbContext.Team.Where(x => x.Id == teamId).FirstOrDefaultAsync();
     }
 
     /// <summary>

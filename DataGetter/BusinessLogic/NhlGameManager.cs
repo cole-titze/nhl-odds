@@ -155,20 +155,31 @@ public class NhlGameManager
     /// <returns>List of games from the start year</returns>
     private async Task<IEnumerable<Player>> GetPlayers(IEnumerable<Game> seasonGames)
     {
-        var uniquePlayerIds = new HashSet<int>();
+        var uniqueHomePlayerIds = new HashSet<int>();
+        var uniqueAwayPlayerIds = new HashSet<int>();
         foreach (var game in seasonGames)
         {
             var gameRosterStats = game.RosterStats ?? new GameRosterStats();
-            foreach (var playerStats in gameRosterStats.AllPlayers)
+            foreach (var playerStats in gameRosterStats.AllHomeTeamPlayers)
             {
-                uniquePlayerIds.Add(playerStats.PlayerId);
+                uniqueHomePlayerIds.Add(playerStats.PlayerId);
+            }
+            foreach (var playerStats in gameRosterStats.AllAwayTeamPlayers)
+            {
+                uniqueAwayPlayerIds.Add(playerStats.PlayerId);
             }
         }
 
         var players = new List<Player>();
-        foreach (var playerId in uniquePlayerIds)
+        foreach (var playerId in uniqueHomePlayerIds)
         {
-            var player = await _nhlDataGetter.PlayerDataGetter.GetPlayer(playerId);
+            var player = await _nhlDataGetter.PlayerDataGetter.GetPlayer(playerId, seasonGames.First().HomeTeamId);
+            if (player != null)
+                players.Add(player);
+        }
+        foreach (var playerId in uniqueAwayPlayerIds)
+        {
+            var player = await _nhlDataGetter.PlayerDataGetter.GetPlayer(playerId, seasonGames.First().AwayTeamId);
             if (player != null)
                 players.Add(player);
         }
