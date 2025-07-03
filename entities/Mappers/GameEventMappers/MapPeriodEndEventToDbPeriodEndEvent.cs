@@ -5,7 +5,7 @@ namespace Entities.Mappers.GameEventMappers;
 
 public static class MapPeriodEndEventToDbPeriodEndEvent
 {
-    public static DbPeriodEnd Map(PeriodStart periodEndEvent, int gameId)
+    public static DbPeriodEnd Map(PeriodEnd periodEndEvent, int gameId)
     {
         return new DbPeriodEnd
         {
@@ -23,7 +23,7 @@ public static class MapPeriodEndEventToDbPeriodEndEvent
         };
     }
 
-    public static IEnumerable<DbPeriodEnd> MapList(IEnumerable<PeriodStart> periodEndEvents, int gameId)
+    public static IEnumerable<DbPeriodEnd> MapList(IEnumerable<PeriodEnd> periodEndEvents, int gameId)
     {
         var dbEvents = new List<DbPeriodEnd>();
         foreach (var periodEndEvent in periodEndEvents)

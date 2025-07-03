@@ -26,6 +26,7 @@ public static class MapGameToDbGameEvent
             dbGameEvents.AddRange(MapMissedShotEventToDbMissedShotEvent.MapList(game.GameEvents.Events.OfType<MissedShot>(), game.Id));
             dbGameEvents.AddRange(MapPenaltyEventToDbPenaltyEvent.MapList(game.GameEvents.Events.OfType<Penalty>(), game.Id));
             dbGameEvents.AddRange(MapPeriodStartEventToDbPeriodStartEvent.MapList(game.GameEvents.Events.OfType<PeriodStart>(), game.Id));
+            dbGameEvents.AddRange(MapPeriodEndEventToDbPeriodEndEvent.MapList(game.GameEvents.Events.OfType<PeriodEnd>(), game.Id));
             dbGameEvents.AddRange(MapStoppageEventToDbStoppageEvent.MapList(game.GameEvents.Events.OfType<Stoppage>(), game.Id));
             dbGameEvents.AddRange(MapTakeawayEventToDbTakeawayEvent.MapList(game.GameEvents.Events.OfType<Takeaway>(), game.Id));
             dbGameEvents.AddRange(MapShootoutCompleteEventToDbShootoutCompleteEvent.MapList(game.GameEvents.Events.OfType<ShootoutComplete>(), game.Id));
