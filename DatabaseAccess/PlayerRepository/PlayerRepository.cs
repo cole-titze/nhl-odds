@@ -44,11 +44,11 @@ public class PlayerRepository : IPlayerRepository
     /// <summary>
     /// Add Players stats per game to database if they don't exist, otherwise update them
     /// </summary>
-    /// <param name="games">List of games to store player stats for</param>
+    /// <param name="game">Game to store player stats for</param>
     /// <returns>None</returns>
-    public async Task AddUpdateGameRosterStats(IEnumerable<Game> games)
+    public async Task AddUpdateGameRosterStats(Game game)
     {
-        var dbGamePlayerStats = MapGameToDbGamePlayerStats.MapList(games);
+        var dbGamePlayerStats = MapGameToDbGamePlayerStats.Map(game);
 
         var addList = new List<IDbGamePlayerStats>();
         var updateList = new List<IDbGamePlayerStats>();

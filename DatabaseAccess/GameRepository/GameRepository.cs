@@ -49,36 +49,31 @@ public class GameRepository : IGameRepository
     /// <summary>
     /// Updates games to the database and adds them if they don't exist
     /// </summary>
-    /// <param name="games">List of games to add or update</param>
+    /// <param name="game">game to add or update</param>
     /// <returns>None</returns>
-    public async Task AddUpdateGames(IEnumerable<Game> games)
+    public async Task AddUpdateGame(Game game)
     {
-        var dbGames = MapGameToDbGame.Map(games);
+        var dbGameToStore = MapGameToDbGame.Map(game);
 
-        var addList = new List<DbGameRaw>();
-        var updateList = new List<DbGameRaw>();
-        foreach (var game in dbGames)
+        var dbGame = await GetDbGame(game.Id);
+        if (dbGame == null)
         {
-            var dbGame = await GetDbGame(game.Id);
-            if (dbGame == null)
-                addList.Add(game);
-            else if (!dbGame.IsEquivalentTo(game))
-            {
-                dbGame.Clone(game);
-                updateList.Add(dbGame);
-            }
+            await _dbContext.GameRaw.AddAsync(dbGameToStore);
         }
-        await _dbContext.GameRaw.AddRangeAsync(addList);
-        _dbContext.GameRaw.UpdateRange(updateList);
+        else if (!dbGame.IsEquivalentTo(dbGameToStore))
+        {
+            dbGame.Clone(dbGameToStore);
+            _dbContext.GameRaw.Update(dbGameToStore);
+        }
     }
 
     /// <summary>
     /// Adds or updates the officials for the games.
     /// </summary>
-    /// <param name="games">The list of games that contain official info</param>
-    public async Task AddUpdateGameOfficials(IEnumerable<Game> games)
+    /// <param name="game">The game that contains official info</param>
+    public async Task AddUpdateGameOfficials(Game game)
     {
-        var gameOfficials = MapGameToDbGameOfficial.MapList(games);
+        var gameOfficials = MapGameToDbGameOfficial.Map(game);
 
         var addList = new List<DbGameOfficial>();
         var updateList = new List<DbGameOfficial>();
@@ -113,10 +108,10 @@ public class GameRepository : IGameRepository
     /// <summary>
     /// Adds or updates the TV broadcasters for the games.
     /// </summary>
-    /// <param name="games">The list of games that contain broadcaster info</param>
-    public async Task AddUpdateGameTvBroadcasters(IEnumerable<Game> games)
+    /// <param name="game">The game that contains broadcaster info</param>
+    public async Task AddUpdateGameTvBroadcasters(Game game)
     {
-        var gameBroadcasters = MapGameToDbGameTvBroadcasters.MapList(games);
+        var gameBroadcasters = MapGameToDbGameTvBroadcasters.Map(game);
 
         var addList = new List<DbGameTvBroadcaster>();
         var updateList = new List<DbGameTvBroadcaster>();
@@ -139,10 +134,10 @@ public class GameRepository : IGameRepository
     /// <summary>
     /// Adds or updates the TV broadcasters for the games.
     /// </summary>
-    /// <param name="games">The games to add broadcasters for</param>
-    public async Task AddUpdateTvBroadcasters(IEnumerable<Game> games)
+    /// <param name="game">The game to add broadcasters for</param>
+    public async Task AddUpdateTvBroadcasters(Game game)
     {
-        var dbTvBroadcasters = MapGameToDbTvBroadcasters.MapList(games);
+        var dbTvBroadcasters = MapGameToDbTvBroadcasters.Map(game);
         var uniqueTvBroadcasters = dbTvBroadcasters.GroupBy(b => b.Id).Select(g => g.First()).ToList();
 
         var addList = new List<DbTvBroadcaster>();
@@ -306,11 +301,11 @@ public class GameRepository : IGameRepository
     /// <summary>
     /// Adds/updates the game events
     /// </summary>
-    /// <param name="games">List of games to store the events of</param>
+    /// <param name="game">The game to store the events of</param>
     /// <returns>None</returns>
-    public async Task AddUpdateGameEvents(IEnumerable<Game> seasonGames)
+    public async Task AddUpdateGameEvents(Game game)
     {
-        var dbGameEvents = MapGameToDbGameEvent.MapList(seasonGames);
+        var dbGameEvents = MapGameToDbGameEvent.Map(game);
 
         var addList = new List<IDbGameEvent>();
         var updateList = new List<IDbGameEvent>();

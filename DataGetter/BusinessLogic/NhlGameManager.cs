@@ -1,5 +1,6 @@
 using DatabaseAccess.GameRepository;
 using DatabaseAccess.PlayerRepository;
+using Entities.DbModels;
 using Entities.Models;
 using Entities.Types;
 using Entities.Types.Enums;
@@ -62,31 +63,40 @@ public class NhlGameManager
         // Gets basic game information
         var seasonGameCount = await _nhlDataGetter.ScheduleDataGetter.GetGameCountInSeason(seasonStartYear);
         var seasonGames = await GetSeasonGames(seasonStartYear, seasonGameCount, mode);
-        await _gameRepo.AddUpdateGames(seasonGames);
-
-        // Updates tv broadcasters for the games
-        await _gameRepo.AddUpdateTvBroadcasters(seasonGames);
-        await _gameRepo.AddUpdateGameTvBroadcasters(seasonGames);
-
-        // Update game events and save to the db
-        await _gameRepo.AddUpdateGameEvents(seasonGames);
-
-        // Gets player stats for the game
-        await BuildGameRosterStats(seasonGames);
-        await _playerRepo.AddUpdateGameRosterStats(seasonGames);
-
-        // Gets player data for the players who have game stats
         var players = await GetPlayers(seasonGames);
-        await _playerRepo.AddUpdatePlayers(players);
-        await _playerRepo.AddUpdatePlayerDraftDetails(players);
 
-        // Add Officials
-        await _gameRepo.AddUpdateGameOfficials(seasonGames);
+        await SaveGames(seasonGames);
+        await SavePlayers(players);
 
         // Save all data to the database
         await _gameRepo.Commit();
 
         return seasonGames;
+    }
+
+    private async Task SavePlayers(IEnumerable<Player> players)
+    {
+        await _playerRepo.AddUpdatePlayers(players);
+        await _playerRepo.AddUpdatePlayerDraftDetails(players);
+    }
+
+    private async Task SaveGames(IEnumerable<Game> games)
+    {
+        foreach (var game in games)
+        {
+            await _gameRepo.AddUpdateGame(game);
+
+            // Updates tv broadcasters for the games
+            await _gameRepo.AddUpdateTvBroadcasters(game);
+            await _gameRepo.AddUpdateGameTvBroadcasters(game);
+
+            // Update game events and save to the db
+            await _gameRepo.AddUpdateGameEvents(game);
+            await _playerRepo.AddUpdateGameRosterStats(game);
+
+            // Add Officials
+            await _gameRepo.AddUpdateGameOfficials(game);
+        }
     }
 
     /// <summary>
@@ -109,6 +119,7 @@ public class NhlGameManager
     /// <returns>List of games from the start year</returns>
     private async Task<IEnumerable<Game>> GetSeasonGames(int seasonStartYear, int gameCount, ModeType mode)
     {
+        gameCount = 10;
         var seasonGames = new List<Game>();
         Game? game;
         // game ids start at 1
@@ -122,9 +133,12 @@ public class NhlGameManager
             _logger.LogInformation("Getting Game: " + gameId);
             game = await _nhlDataGetter.GameDataGetter.GetGame(gameId);
             if (game != null)
+            {
                 seasonGames.Add(game);
+            }
         }
 
+        await BuildGameRosterStats(seasonGames);
         return seasonGames;
     }
     /// Gets a seasons worth of player stats per game. Only returns games that have not already been found.

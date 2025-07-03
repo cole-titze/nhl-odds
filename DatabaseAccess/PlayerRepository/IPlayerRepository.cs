@@ -4,7 +4,7 @@ namespace DatabaseAccess.PlayerRepository;
 
 public interface IPlayerRepository
 {
-    Task AddUpdateGameRosterStats(IEnumerable<Game> games);
+    Task AddUpdateGameRosterStats(Game game);
     Task AddUpdatePlayerDraftDetails(IEnumerable<Player> players);
     Task AddUpdatePlayers(IEnumerable<Player> players);
     Task<int> GetPlayerStatsCountBySeason(int seasonStartYear);

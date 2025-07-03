@@ -56,7 +56,7 @@ public static class MapGameToDbGame
             VenueLocation = game.ExtendedInfo.VenueLocation,
         };
     }
-    public static IEnumerable<DbGameRaw> Map(IEnumerable<Game> games)
+    public static IEnumerable<DbGameRaw> MapList(IEnumerable<Game> games)
     {
         var dbGames = new List<DbGameRaw>();
         foreach (var game in games)
