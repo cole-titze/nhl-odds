@@ -473,9 +473,9 @@ CREATE TABLE [dbo].[GamePenaltyEvent]
     SecondsIntoPeriod INT NOT NULL,
     SecondsLeftInPeriod INT NOT NULL,
     CommittedByPlayerTeamId INT NOT NULL,
-    ServedByPlayerId INT NOT NULL,
     DrawnByPlayerId INT,
     CommittedByPlayerId INT,
+    ServedByPlayerId INT,
     XCoordinate INT,
     YCoordinate INT,
     [Zone] INT NOT NULL,
@@ -594,7 +594,7 @@ CREATE TABLE [dbo].[GameTakeawayEvent]
     FOREIGN KEY (TakeawayPlayerId) REFERENCES Player(Id)
 );
 
-CREATE TABLE [dbo].[GameShootoutEvent]
+CREATE TABLE [dbo].[GameShootoutCompleteEvent]
 (
     Id INT NOT NULL,
     GameId INT NOT NULL,

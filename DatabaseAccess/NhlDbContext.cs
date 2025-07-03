@@ -61,6 +61,8 @@ public partial class NhlDbContext : DbContext
             .HasKey(c => new { c.GameId, c.Name });
         modelBuilder.Entity<DbSeasonTeam>()
             .HasKey(c => new { c.TeamId, c.SeasonStartYear });
+        modelBuilder.Entity<DbGameTvBroadcaster>()
+            .HasKey(c => new { c.GameId, c.BroadcasterId });
     }
     private void SetEventIds(ModelBuilder modelBuilder)
     {

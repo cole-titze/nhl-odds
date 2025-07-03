@@ -109,10 +109,11 @@ public class NhlGameManager
     /// <returns>List of games from the start year</returns>
     private async Task<IEnumerable<Game>> GetSeasonGames(int seasonStartYear, int gameCount)
     {
+        gameCount = 1; // TODO: Remove
         var seasonGames = new List<Game>();
         Game? game;
         // game ids start at 1
-        for (int count = 1213; count <= gameCount; count++)
+        for (int count = 1; count <= gameCount; count++)
         {
             var gameId = NhlDataGetter.GetGameId(seasonStartYear, count);
             var existingGame = await _gameRepo.GetGame(gameId);

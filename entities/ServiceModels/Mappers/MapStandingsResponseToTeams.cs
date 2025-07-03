@@ -25,8 +25,8 @@ public static class MapStandingsResponseToSeasonTeams
                 LogoUri = teamResponse.teamLogo,
                 Division = teamResponse.divisionName,
                 DivisionAbbreviation = teamResponse.divisionAbbrev,
-                Conference = teamResponse.conferenceName,
-                ConferenceAbbreviation = teamResponse.conferenceAbbrev,
+                Conference = (string?)teamResponse.conferenceName ?? "",
+                ConferenceAbbreviation = (string?)teamResponse.conferenceAbbrev ?? "",
                 PlaceName = teamResponse.placeName.@default,
             };
 

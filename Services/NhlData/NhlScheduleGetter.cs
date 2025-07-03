@@ -61,9 +61,11 @@ public class NhlScheduleGetter : INhlScheduleGetter
     /// <returns>The teams active for the season</returns>
     public async Task<IEnumerable<SeasonTeam>?> GetTeamsForSeason(int seasonStartYear)
     {
-        // Due to Covid, the 2020 season started on January 13th 2021. Jan 15th catches all years
+        // Due to Covid, the 2020 season started on January 13th 2021
+        // 2012 lockout season started on January 19th 2013.
+        // Jan 20th catches all years
         int standingYear = seasonStartYear + 1;
-        string url = "https://api-web.nhle.com/v1/standings/" + standingYear + "-01-15";
+        string url = "https://api-web.nhle.com/v1/standings/" + standingYear + "-01-20";
 
         var standingsServiceResponse = new ServiceStandingsResponse(await _requestMaker.MakeRequest(url, ""));
 
@@ -73,7 +75,6 @@ public class NhlScheduleGetter : INhlScheduleGetter
             return null;
         }
 
-        // TODO: Conferences didn't happen during covid, need to handle this
         return standingsServiceResponse.StandingsResponseToSeasonTeams();
     }
 
