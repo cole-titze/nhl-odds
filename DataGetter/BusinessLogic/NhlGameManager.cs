@@ -65,25 +65,26 @@ public class NhlGameManager
         var seasonGames = await GetSeasonGames(seasonStartYear, seasonGameCount, mode);
         var players = await GetPlayers(seasonGames);
 
-        await SaveGames(seasonGames);
         await SavePlayers(players);
-
-        // Save all data to the database
-        await _gameRepo.Commit();
+        await SaveGames(seasonGames);
 
         return seasonGames;
     }
 
     private async Task SavePlayers(IEnumerable<Player> players)
     {
+        _logger.LogInformation("Saving Players");
         await _playerRepo.AddUpdatePlayers(players);
         await _playerRepo.AddUpdatePlayerDraftDetails(players);
+        // Save all data to the database
+        await _gameRepo.Commit();
     }
 
     private async Task SaveGames(IEnumerable<Game> games)
     {
         foreach (var game in games)
         {
+            _logger.LogInformation("Saving Game: " + game.Id);
             await _gameRepo.AddUpdateGame(game);
 
             // Updates tv broadcasters for the games
@@ -96,6 +97,9 @@ public class NhlGameManager
 
             // Add Officials
             await _gameRepo.AddUpdateGameOfficials(game);
+
+            // Save all data to the database
+            await _gameRepo.Commit();
         }
     }
 
