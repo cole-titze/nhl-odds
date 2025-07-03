@@ -9,7 +9,7 @@ CREATE TABLE [dbo].[GameGoalieStats]
     EvenStrengthGoalsAllowed INT NOT NULL,
     PowerPlayGoalsAllowed INT NOT NULL,
     ShortHandedGoalsAllowed INT NOT NULL,
-    TimeOnIceSeconds FLOAT NOT NULL,
+    TimeOnIceSeconds INT NOT NULL,
     IsStarter BIT NOT NULL,
     Position INT NOT NULL,
     CONSTRAINT PK_GameGoalieStats PRIMARY KEY(GameId, PlayerId),
