@@ -9,7 +9,7 @@ CREATE TABLE [dbo].[Player]
     HeroImage VARCHAR(MAX) NOT NULL,
     HeightInInches INT NOT NULL,
     WeightInPounds INT NOT NULL,
-    BirthDate DATETIME2 NOT NULL,
+    BirthDate DATETIME2,
     BirthCity VARCHAR(MAX),
     BirthStateProvince VARCHAR(MAX),
     BirthCountry VARCHAR(MAX),
