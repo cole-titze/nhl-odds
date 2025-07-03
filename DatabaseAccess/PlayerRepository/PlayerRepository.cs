@@ -104,8 +104,8 @@ public class PlayerRepository : IPlayerRepository
     /// <returns>Desired player</returns>
     private async Task<IDbGamePlayerStats?> GetDbGamePlayerStats(IDbGamePlayerStats gamePlayerStats)
     {
-        var dbGoalieStats = await _dbContext.GameGoalieStats.FirstOrDefaultAsync(x => x.GameId == gamePlayerStats.GameId && x.PlayerId == gamePlayerStats.GameId);
-        var dbSkaterStats = await _dbContext.GameSkaterStats.FirstOrDefaultAsync(x => x.GameId == gamePlayerStats.GameId && x.PlayerId == gamePlayerStats.GameId);
+        var dbGoalieStats = await _dbContext.GameGoalieStats.FirstOrDefaultAsync(x => x.GameId == gamePlayerStats.GameId && x.PlayerId == gamePlayerStats.PlayerId);
+        var dbSkaterStats = await _dbContext.GameSkaterStats.FirstOrDefaultAsync(x => x.GameId == gamePlayerStats.GameId && x.PlayerId == gamePlayerStats.PlayerId);
 
         if (dbGoalieStats != null)
             return dbGoalieStats;
