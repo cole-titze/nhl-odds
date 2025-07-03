@@ -109,7 +109,6 @@ public class NhlGameManager
     /// <returns>List of games from the start year</returns>
     private async Task<IEnumerable<Game>> GetSeasonGames(int seasonStartYear, int gameCount, ModeType mode)
     {
-        gameCount = 1; // TODO: Remove
         var seasonGames = new List<Game>();
         Game? game;
         // game ids start at 1
