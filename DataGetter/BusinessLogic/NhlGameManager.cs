@@ -42,7 +42,7 @@ public class NhlGameManager
                 continue;
             }
 
-            var seasonGames = await GetAndSaveNhlGameData(seasonStartYear);
+            var seasonGames = await GetAndSaveNhlGameData(seasonStartYear, mode);
 
             totalGamesAdded += seasonGames.Count();
             _logger.LogInformation("Number of Games Added To Season " + seasonStartYear.ToString() + ": " + seasonGames.Count().ToString());
@@ -57,11 +57,11 @@ public class NhlGameManager
     /// Gets all game and player data for a given season and stores it to the database
     /// </summary>
     /// <param name="seasonStartYear">Season to get data for</param>
-    private async Task<IEnumerable<Game>> GetAndSaveNhlGameData(int seasonStartYear)
+    private async Task<IEnumerable<Game>> GetAndSaveNhlGameData(int seasonStartYear, ModeType mode)
     {
         // Gets basic game information
         var seasonGameCount = await _nhlDataGetter.ScheduleDataGetter.GetGameCountInSeason(seasonStartYear);
-        var seasonGames = await GetSeasonGames(seasonStartYear, seasonGameCount);
+        var seasonGames = await GetSeasonGames(seasonStartYear, seasonGameCount, mode);
         await _gameRepo.AddUpdateGames(seasonGames);
 
         // Updates tv broadcasters for the games
@@ -107,7 +107,7 @@ public class NhlGameManager
     /// <param name="seasonStartYear">year of games to get</param>
     /// <param name="gameCount">Number of games to get</param>
     /// <returns>List of games from the start year</returns>
-    private async Task<IEnumerable<Game>> GetSeasonGames(int seasonStartYear, int gameCount)
+    private async Task<IEnumerable<Game>> GetSeasonGames(int seasonStartYear, int gameCount, ModeType mode)
     {
         gameCount = 1; // TODO: Remove
         var seasonGames = new List<Game>();
@@ -117,7 +117,7 @@ public class NhlGameManager
         {
             var gameId = NhlDataGetter.GetGameId(seasonStartYear, count);
             var existingGame = await _gameRepo.GetGame(gameId);
-            if (existingGame != null && existingGame.HasBeenPlayed)
+            if (existingGame != null && existingGame.HasBeenPlayed && mode != ModeType.Update)
                 continue;
 
             _logger.LogInformation("Getting Game: " + gameId);
