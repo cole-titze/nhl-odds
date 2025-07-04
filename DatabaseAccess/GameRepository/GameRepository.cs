@@ -41,7 +41,7 @@ public class GameRepository : IGameRepository
     /// </summary>
     /// <param name="seasonStartYear">season start year</param>
     /// <returns>number of games in the season</returns>
-    public async Task<int> GetGameCountInSeason(int seasonStartYear)
+    public async Task<int> GetSavedGameCountForSeason(int seasonStartYear)
     {
         return await _dbContext.GameRaw.Where(s => s.SeasonStartYear == seasonStartYear).CountAsync();
     }
@@ -277,25 +277,25 @@ public class GameRepository : IGameRepository
     /// </summary>
     /// <param name="seasonGameCountCache">The dictionary of seasonGameCounts to add to the database if they don't exist</param>
     /// <returns></returns>
-    public async Task AddSeasonGameCounts(IDictionary<int, int> seasonGameCountCache)
+    public async Task AddUpdateSeasonGameCount(int seasonStartYear, int seasonGameCount)
     {
-        var seasonGameCounts = new List<DbSeasonGameCount>();
-        var dbGameCounts = await _dbContext.SeasonGameCount.ToListAsync();
+        var dbGameCount = await _dbContext.SeasonGameCount.FirstOrDefaultAsync(x => x.SeasonId == seasonGameCount);
 
-        foreach (var key in seasonGameCountCache.Keys)
+        var dbNewSeasonGameCount = new DbSeasonGameCount()
         {
-            var dbGameCount = dbGameCounts.FirstOrDefault(x => x.SeasonId == key);
-            if (dbGameCount == null)
-            {
-                seasonGameCounts.Add(new DbSeasonGameCount()
-                {
-                    SeasonId = key,
-                    GameCount = seasonGameCountCache[key],
-                });
-            }
+            SeasonId = seasonStartYear,
+            GameCount = seasonGameCount
+        };
+        if (dbGameCount == null)
+        {
+            await _dbContext.SeasonGameCount.AddAsync(dbNewSeasonGameCount);
+        }
+        else if (dbGameCount.GameCount != seasonGameCount)
+        {
+            dbGameCount.Clone(dbNewSeasonGameCount);
+            _dbContext.SeasonGameCount.Update(dbNewSeasonGameCount);
         }
 
-        await _dbContext.SeasonGameCount.AddRangeAsync(seasonGameCounts);
     }
 
     /// <summary>

@@ -28,6 +28,8 @@ public class NhlGameGetter : INhlGameGetter
     /// <returns>A game object corresponding to the id passed in</returns>
     public async Task<Game?> GetGame(int gameId)
     {
+        _logger.LogInformation("Getting Game: " + gameId);
+
         string url = "https://api-web.nhle.com/v1/gamecenter/";
         string summaryQuery = GetGameQuery(gameId, GameRequestType.GameSummary);
         string statQuery = GetGameQuery(gameId, GameRequestType.GameStats);

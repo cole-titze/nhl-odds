@@ -42,7 +42,10 @@ public class RequestMaker : IRequestMaker
     {
         string key = url + query;
         if (_cachedResponses.ContainsKey(key))
+        {
+            _logger.LogInformation("Returning cached response for: " + key);
             return _cachedResponses[key];
+        }
 
         await ThrottleRequest(throttleTimeMs);
 

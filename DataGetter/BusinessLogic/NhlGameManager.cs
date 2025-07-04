@@ -1,6 +1,5 @@
 using DatabaseAccess.GameRepository;
 using DatabaseAccess.PlayerRepository;
-using Entities.DbModels;
 using Entities.Models;
 using Entities.Types;
 using Entities.Types.Enums;
@@ -30,47 +29,79 @@ public class NhlGameManager
     /// <param name="seasonYearRange">The years to get data for</param>
     public async Task GetGameData(YearRange seasonYearRange, ModeType mode)
     {
-        int totalGamesAdded = 0;
         for (int seasonStartYear = seasonYearRange.StartYear; seasonStartYear <= seasonYearRange.EndYear; seasonStartYear++)
         {
-            // Determines if data is already found and season can be skipped
-            // If update mode then always rerun games to get new data fields
             var isCurrentYear = seasonStartYear == seasonYearRange.EndYear;
             var hasAllSeasonGames = await HasAllSeasonGames(seasonStartYear);
-            if (hasAllSeasonGames && !isCurrentYear && mode != ModeType.Update)
+            if (CanSkipSeason(mode, isCurrentYear, hasAllSeasonGames))
             {
                 _logger.LogInformation("All game data for season " + seasonStartYear.ToString() + " already exists. Skipping...");
                 continue;
             }
 
-            var seasonGames = await GetAndSaveNhlGameData(seasonStartYear, mode);
-
-            totalGamesAdded += seasonGames.Count();
-            _logger.LogInformation("Number of Games Added To Season " + seasonStartYear.ToString() + ": " + seasonGames.Count().ToString());
+            await FetchAndSaveNhlGameData(seasonStartYear, mode);
         }
-        var seasonGameCountCache = _nhlDataGetter.ScheduleDataGetter.GetSeasonGameCounts();
-        await _gameRepo.AddSeasonGameCounts(seasonGameCountCache);
-        await _gameRepo.Commit();
-        _logger.LogInformation("Number of Total Games Added: " + totalGamesAdded.ToString());
     }
 
     /// <summary>
     /// Gets all game and player data for a given season and stores it to the database
     /// </summary>
     /// <param name="seasonStartYear">Season to get data for</param>
-    private async Task<IEnumerable<Game>> GetAndSaveNhlGameData(int seasonStartYear, ModeType mode)
+    /// <param name="mode">Whether we are adding games, or also updating</param>
+    private async Task FetchAndSaveNhlGameData(int seasonStartYear, ModeType mode)
     {
-        // Gets basic game information
         var seasonGameCount = await _nhlDataGetter.ScheduleDataGetter.GetGameCountInSeason(seasonStartYear);
-        var seasonGames = await GetSeasonGames(seasonStartYear, seasonGameCount, mode);
-        var players = await GetPlayers(seasonGames);
+        await _gameRepo.AddUpdateSeasonGameCount(seasonStartYear, seasonGameCount);
+        await _gameRepo.Commit();
 
-        await SavePlayers(players);
-        await SaveGames(seasonGames);
+        Game? game;
+        // game ids start at 1
+        for (int count = 1; count <= seasonGameCount; count++)
+        {
+            var gameId = NhlDataGetter.GetGameId(seasonStartYear, count);
+            var existingGame = await _gameRepo.GetGame(gameId);
+            if (CanSkipGame(existingGame, mode))
+                continue;
 
-        return seasonGames;
+            game = await _nhlDataGetter.GameDataGetter.GetGame(gameId);
+            if (game != null)
+            {
+                // TODO: Give this one more look
+                await BuildGameRosterStats(game);
+                var gamePlayers = await GetPlayers(game);
+
+                await SavePlayers(gamePlayers);
+                await SaveGame(game);
+            }
+        }
+    }
+    /// <summary>
+    /// Checks if a game can be skipped based on the existing game data and the mode type.
+    /// </summary>
+    /// <param name="existingGame">The game to check</param>
+    /// <param name="mode">Whether we are updating or adding games</param>
+    /// <returns>True if the game can be skipped, otherwise false</returns>
+    private static bool CanSkipGame(Game? existingGame, ModeType mode)
+    {
+        return existingGame != null && existingGame.HasBeenPlayed && mode != ModeType.Update;
     }
 
+    /// <summary>
+    /// Whether we can skip the season or not
+    /// </summary>
+    /// <param name="mode">Whether we are adding games or can also update</param>
+    /// <param name="isCurrentYear">Whether the season is the current year</param>
+    /// <param name="hasAllSeasonGames">Whether all games have been found for a season</param>
+    /// <returns>True if the season can be skipped. Otherwise false</returns>
+    private static bool CanSkipSeason(ModeType mode, bool isCurrentYear, bool hasAllSeasonGames)
+    {
+        return hasAllSeasonGames && !isCurrentYear && mode != ModeType.Update;
+    }
+
+    /// <summary>
+    /// Saves a list of players to the database
+    /// </summary>
+    /// <param name="players">Players to save</param>
     private async Task SavePlayers(IEnumerable<Player> players)
     {
         _logger.LogInformation("Saving Players");
@@ -80,27 +111,28 @@ public class NhlGameManager
         await _gameRepo.Commit();
     }
 
-    private async Task SaveGames(IEnumerable<Game> games)
+    /// <summary>
+    /// Saves the game to the database
+    /// </summary>
+    /// <param name="game">The game to save</param>
+    private async Task SaveGame(Game game)
     {
-        foreach (var game in games)
-        {
-            _logger.LogInformation("Saving Game: " + game.Id);
-            await _gameRepo.AddUpdateGame(game);
+        _logger.LogInformation("Saving Game: " + game.Id);
+        await _gameRepo.AddUpdateGame(game);
 
-            // Updates tv broadcasters for the games
-            await _gameRepo.AddUpdateTvBroadcasters(game);
-            await _gameRepo.AddUpdateGameTvBroadcasters(game);
+        // Updates tv broadcasters for the games
+        await _gameRepo.AddUpdateTvBroadcasters(game);
+        await _gameRepo.AddUpdateGameTvBroadcasters(game);
 
-            // Update game events and save to the db
-            await _gameRepo.AddUpdateGameEvents(game);
-            await _playerRepo.AddUpdateGameRosterStats(game);
+        // Update game events and save to the db
+        await _gameRepo.AddUpdateGameEvents(game);
+        await _playerRepo.AddUpdateGameRosterStats(game);
 
-            // Add Officials
-            await _gameRepo.AddUpdateGameOfficials(game);
+        // Add Officials
+        await _gameRepo.AddUpdateGameOfficials(game);
 
-            // Save all data to the database
-            await _gameRepo.Commit();
-        }
+        // Save all data to the database
+        await _gameRepo.Commit();
     }
 
     /// <summary>
@@ -110,94 +142,61 @@ public class NhlGameManager
     /// <returns>True if all games exist, otherwise False</returns>
     private async Task<bool> HasAllSeasonGames(int seasonStartYear)
     {
-        var gameCount = await _gameRepo.GetGameCountInSeason(seasonStartYear);
+        var gameCount = await _gameRepo.GetSavedGameCountForSeason(seasonStartYear);
         var seasonGameCount = await _nhlDataGetter.ScheduleDataGetter.GetGameCountInSeason(seasonStartYear);
         return gameCount == seasonGameCount;
     }
 
-    /// <summary>
-    /// Gets a seasons worth of games. Only returns games that have not already been found.
-    /// </summary>
-    /// <param name="seasonStartYear">year of games to get</param>
-    /// <param name="gameCount">Number of games to get</param>
-    /// <returns>List of games from the start year</returns>
-    private async Task<IEnumerable<Game>> GetSeasonGames(int seasonStartYear, int gameCount, ModeType mode)
-    {
-        gameCount = 10;
-        var seasonGames = new List<Game>();
-        Game? game;
-        // game ids start at 1
-        for (int count = 1; count <= gameCount; count++)
-        {
-            var gameId = NhlDataGetter.GetGameId(seasonStartYear, count);
-            var existingGame = await _gameRepo.GetGame(gameId);
-            if (existingGame != null && existingGame.HasBeenPlayed && mode != ModeType.Update)
-                continue;
-
-            _logger.LogInformation("Getting Game: " + gameId);
-            game = await _nhlDataGetter.GameDataGetter.GetGame(gameId);
-            if (game != null)
-            {
-                seasonGames.Add(game);
-            }
-        }
-
-        await BuildGameRosterStats(seasonGames);
-        return seasonGames;
-    }
     /// Gets a seasons worth of player stats per game. Only returns games that have not already been found.
     /// </summary>
     /// <param name="seasonGames">Games to get player stats for</param>
     /// <returns>List of player game stats from the start year</returns>
-    private async Task<IEnumerable<GameRosterStats>> BuildGameRosterStats(IEnumerable<Game> seasonGames)
+    private async Task<GameRosterStats> BuildGameRosterStats(Game game)
     {
         var seasonPlayerGameStats = new List<GameRosterStats>();
         GameRosterStats? gameRosterStats;
 
-        foreach (var game in seasonGames)
+        gameRosterStats = await _nhlDataGetter.PlayerDataGetter.BuildGameRosterStats(game);
+        game.RosterStats = gameRosterStats;
+        if (gameRosterStats == null)
         {
-            gameRosterStats = await _nhlDataGetter.PlayerDataGetter.BuildGameRosterStats(game);
-            if (gameRosterStats != null)
-            {
-                seasonPlayerGameStats.Add(gameRosterStats);
-                game.RosterStats = gameRosterStats;
-            }
+            throw new Exception("Failed to get game roster stats for game: " + game.Id);
         }
 
-        return seasonPlayerGameStats;
+        return gameRosterStats;
     }
 
     /// Gets a seasons worth of players. Only returns players that are active
     /// </summary>
-    /// <param name="seasonGames">years worth of games</param>
-    /// <returns>List of games from the start year</returns>
-    private async Task<IEnumerable<Player>> GetPlayers(IEnumerable<Game> seasonGames)
+    /// <param name="game">The game to get players for</param>
+    /// <returns>List of players for the game</returns>
+    // TODO: Combine the for loops (should only need two)
+    private async Task<IEnumerable<Player>> GetPlayers(Game game)
     {
+        _logger.LogInformation("Getting Players for game: " + game.Id.ToString());
+
         var uniqueHomePlayerIds = new HashSet<int>();
         var uniqueAwayPlayerIds = new HashSet<int>();
-        foreach (var game in seasonGames)
+        var gameRosterStats = game.RosterStats ?? new GameRosterStats();
+        foreach (var playerStats in gameRosterStats.AllHomeTeamPlayers)
         {
-            var gameRosterStats = game.RosterStats ?? new GameRosterStats();
-            foreach (var playerStats in gameRosterStats.AllHomeTeamPlayers)
-            {
-                uniqueHomePlayerIds.Add(playerStats.PlayerId);
-            }
-            foreach (var playerStats in gameRosterStats.AllAwayTeamPlayers)
-            {
-                uniqueAwayPlayerIds.Add(playerStats.PlayerId);
-            }
+            uniqueHomePlayerIds.Add(playerStats.PlayerId);
+        }
+        foreach (var playerStats in gameRosterStats.AllAwayTeamPlayers)
+        {
+            uniqueAwayPlayerIds.Add(playerStats.PlayerId);
         }
 
         var players = new List<Player>();
         foreach (var playerId in uniqueHomePlayerIds)
         {
-            var player = await _nhlDataGetter.PlayerDataGetter.GetPlayer(playerId, seasonGames.First().HomeTeamId);
+            var player = await _nhlDataGetter.PlayerDataGetter.GetPlayer(playerId, game.HomeTeamId);
             if (player != null)
                 players.Add(player);
         }
         foreach (var playerId in uniqueAwayPlayerIds)
         {
-            var player = await _nhlDataGetter.PlayerDataGetter.GetPlayer(playerId, seasonGames.First().AwayTeamId);
+            var player = await _nhlDataGetter.PlayerDataGetter.GetPlayer(playerId, game.AwayTeamId);
             if (player != null)
                 players.Add(player);
         }

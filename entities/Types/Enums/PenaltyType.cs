@@ -53,7 +53,10 @@ public enum PenaltyType
     SpearingDoubleMinor,
     CrossCheckDoubleMinor,
     IllegalEquipment,
-    PenaltyShotHoldingOnBreakaway
+    PenaltyShotHoldingOnBreakaway,
+    Embellishment,
+    GameMisconductHeadCoach,
+    CoachOnIce
 }
 public static class PenaltyTypeParser
 {
@@ -165,6 +168,12 @@ public static class PenaltyTypeParser
                 return PenaltyType.IllegalEquipment;
             case "ps-holding-on-breakaway":
                 return PenaltyType.PenaltyShotHoldingOnBreakaway;
+            case "embellishment":
+                return PenaltyType.Embellishment;
+            case "game-misconduct-head-coach":
+                return PenaltyType.GameMisconductHeadCoach;
+            case "coach-or-manager-on-the-ice":
+                return PenaltyType.CoachOnIce;
             default:
                 throw new ArgumentException($"Invalid PenaltyType value: {penaltyType}", nameof(penaltyType));
         }
