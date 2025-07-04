@@ -56,6 +56,7 @@ public class NhlGameManager
 
         Game? game;
         // game ids start at 1
+        seasonGameCount = 10; // TODO: Remove this line
         for (int count = 1; count <= seasonGameCount; count++)
         {
             var gameId = NhlDataGetter.GetGameId(seasonStartYear, count);

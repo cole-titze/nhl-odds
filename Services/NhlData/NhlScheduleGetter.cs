@@ -10,7 +10,6 @@ public class NhlScheduleGetter : INhlScheduleGetter
     private readonly IRequestMaker _requestMaker;
     private readonly ILogger<NhlGameGetter> _logger;
     private readonly IDictionary<int, int> _seasonGameCountCache = new Dictionary<int, int>();
-    private const int DEFAULT_GAME_COUNT = 1400;
 
     public NhlScheduleGetter(IRequestMaker requestMaker, IDictionary<int, int> seasonGameCountCache, ILoggerFactory loggerFactory)
     {
@@ -36,8 +35,7 @@ public class NhlScheduleGetter : INhlScheduleGetter
         var scheduleServiceResponse = new ServiceScheduleResponse(await _requestMaker.MakeRequest(url, ""));
         if (scheduleServiceResponse.response == null)
         {
-            _logger.LogWarning("Schedule request failed, using default game count: " + DEFAULT_GAME_COUNT.ToString());
-            return DEFAULT_GAME_COUNT;
+            throw new Exception("Failed to get schedule response for season: " + seasonStartYear.ToString());
         }
         var seasonId = NhlDataGetter.GetFullSeasonId(seasonStartYear);
         _seasonGameCountCache[seasonStartYear] = scheduleServiceResponse.ScheduleResponseToGameCount(seasonId);

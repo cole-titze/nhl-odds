@@ -279,7 +279,7 @@ public class GameRepository : IGameRepository
     /// <returns></returns>
     public async Task AddUpdateSeasonGameCount(int seasonStartYear, int seasonGameCount)
     {
-        var dbGameCount = await _dbContext.SeasonGameCount.FirstOrDefaultAsync(x => x.SeasonId == seasonGameCount);
+        var dbGameCount = await _dbContext.SeasonGameCount.FirstOrDefaultAsync(x => x.SeasonId == seasonStartYear);
 
         var dbNewSeasonGameCount = new DbSeasonGameCount()
         {

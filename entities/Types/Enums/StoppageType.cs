@@ -27,7 +27,8 @@ public enum StoppageType
     PlayerEquipment,
     ObjectsOnIce,
     PrematureSubstitution,
-    OfficialInjury
+    OfficialInjury,
+    ChallengeHomeTeamGoalInterference
 }
 public static class StoppageTypeParser
 {
@@ -87,6 +88,8 @@ public static class StoppageTypeParser
                 return StoppageType.PrematureSubstitution;
             case "official-injury":
                 return StoppageType.OfficialInjury;
+            case "chlg-hm-goal-interference":
+                return StoppageType.ChallengeHomeTeamGoalInterference;
             default:
                 throw new ArgumentException($"Invalid StoppageType value: {stoppageType}", nameof(stoppageType));
         }
