@@ -28,6 +28,7 @@ public class DataGetterEntry
     /// </summary>
     /// <param name="modeSettings">db connection string and mode</param>
     /// <returns>None</returns>
+    // TODO: Should update mode to be a bool (canUpdateExistingData) or something similar
     public async Task Main(ModeSettings modeSettings)
     {
         var watch = Stopwatch.StartNew();
@@ -40,22 +41,22 @@ public class DataGetterEntry
         var requestMaker = new RequestMaker(new HttpClientWrapper(), _loggerFactory, modeSettings.ThrottleTimeMs);
 
         var seasonGameCountCache = await gameRepo.GetSeasonGameCounts();
-        INhlGameGetter gameDataGetter = new NhlGameGetter(requestMaker, _loggerFactory);
-        INhlScheduleGetter scheduleDataGetter = new NhlScheduleGetter(requestMaker, seasonGameCountCache, _loggerFactory);
-        INhlPlayerGetter playerDataGetter = new NhlPlayerGetter(requestMaker, _loggerFactory);
+        INhlGameGetter gameDataGetter = new NhlApiGameGetter(requestMaker, _loggerFactory);
+        INhlScheduleGetter scheduleDataGetter = new NhlApiScheduleGetter(requestMaker, seasonGameCountCache, _loggerFactory);
+        INhlPlayerGetter playerDataGetter = new NhlApiPlayerGetter(requestMaker, _loggerFactory);
 
-        var nhlRequestMaker = new NhlDataGetter(gameDataGetter, playerDataGetter, scheduleDataGetter);
+        var nhlRequestMaker = new NhlApiDataGetter(gameDataGetter, playerDataGetter, scheduleDataGetter);
         var yearRange = new YearRange(START_YEAR, DateTime.Now);
 
-        _logger.LogTrace("Starting Team Getter");
         var teamGetter = new NhlTeamManager(teamRepo, nhlRequestMaker, _loggerFactory);
-        await teamGetter.GetTeamData(yearRange, modeSettings.Mode);
-        _logger.LogTrace("Completed Team Getter");
-
-        _logger.LogTrace("Starting Game Getter");
         var gameGetter = new NhlGameManager(gameRepo, playerRepo, nhlRequestMaker, _loggerFactory);
-        await gameGetter.GetGameData(yearRange, modeSettings.Mode);
-        _logger.LogTrace("Completed Game Getter");
+        var playerGetter = new NhlPlayerManager(playerRepo, nhlRequestMaker, _loggerFactory);
+
+        var dataManager = new NhlDataManager(gameRepo, playerRepo, teamRepo, gameGetter, playerGetter, teamGetter, _loggerFactory);
+
+        _logger.LogTrace("Starting Data Getter");
+        await dataManager.GetNhlData(yearRange, modeSettings.Mode);
+        _logger.LogTrace("Completed Data Getter");
 
         watch.Stop();
         var elapsedTime = watch.Elapsed;

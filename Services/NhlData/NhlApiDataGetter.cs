@@ -1,11 +1,11 @@
 ﻿namespace Services.NhlData;
 
-public class NhlDataGetter
+public class NhlApiDataGetter
 {
     public INhlGameGetter GameDataGetter;
     public INhlPlayerGetter PlayerDataGetter;
     public INhlScheduleGetter ScheduleDataGetter;
-    public NhlDataGetter(INhlGameGetter gameGetter, INhlPlayerGetter playerGetter, INhlScheduleGetter scheduleGetter)
+    public NhlApiDataGetter(INhlGameGetter gameGetter, INhlPlayerGetter playerGetter, INhlScheduleGetter scheduleGetter)
     {
         GameDataGetter = gameGetter;
         PlayerDataGetter = playerGetter;

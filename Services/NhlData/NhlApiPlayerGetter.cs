@@ -5,19 +5,19 @@ using Microsoft.Extensions.Logging;
 
 using Services.RequestMaker;
 
-using static Services.NhlData.NhlDataGetter;
+using static Services.NhlData.NhlApiDataGetter;
 
 namespace Services.NhlData;
 
-public class NhlPlayerGetter : INhlPlayerGetter
+public class NhlApiPlayerGetter : INhlPlayerGetter
 {
     private readonly IRequestMaker _requestMaker;
-    private readonly ILogger<NhlPlayerGetter> _logger;
+    private readonly ILogger<NhlApiPlayerGetter> _logger;
 
-    public NhlPlayerGetter(IRequestMaker requestMaker, ILoggerFactory loggerFactory)
+    public NhlApiPlayerGetter(IRequestMaker requestMaker, ILoggerFactory loggerFactory)
     {
         _requestMaker = requestMaker;
-        _logger = loggerFactory.CreateLogger<NhlPlayerGetter>();
+        _logger = loggerFactory.CreateLogger<NhlApiPlayerGetter>();
     }
     /// <summary>
     /// Gets the player stats for a game. This will return the players that are on the roster 

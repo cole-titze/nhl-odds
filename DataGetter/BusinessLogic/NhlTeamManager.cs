@@ -11,59 +11,34 @@ namespace DataGetter.BusinessLogic;
 public class NhlTeamManager
 {
     private readonly ITeamRepository _teamRepo;
-    private readonly NhlDataGetter _nhlDataGetter;
-    private readonly ILogger<NhlGameManager> _logger;
-    public NhlTeamManager(ITeamRepository teamRepository, NhlDataGetter nhlDataGetter, ILoggerFactory loggerFactory)
+    private readonly NhlApiDataGetter _nhlDataGetter;
+    private readonly ILogger<NhlTeamManager> _logger;
+    public NhlTeamManager(ITeamRepository teamRepository, NhlApiDataGetter nhlDataGetter, ILoggerFactory loggerFactory)
     {
         _teamRepo = teamRepository;
         _nhlDataGetter = nhlDataGetter;
-        _logger = loggerFactory.CreateLogger<NhlGameManager>();
+        _logger = loggerFactory.CreateLogger<NhlTeamManager>();
     }
     /// <summary>
     /// Gets all nhl teams within the season range and saves them to the database.
     /// </summary>
-    /// <param name="seasonYearRange">Years to get teams for</param>
-    /// <param name="mode">Whether to update existing records</param>
-    public async Task GetTeamData(YearRange seasonYearRange, ModeType mode)
+    /// <param name="seasonStartYear">Year to get season data for</param>
+    /// <param name="mode">Whether to update existing records, or only add new teams</param>
+    public async Task<IEnumerable<Team>> GetTeamData(int seasonStartYear, ModeType mode)
     {
-        int totalTeamsAdded = 0;
-        for (int seasonStartYear = seasonYearRange.StartYear; seasonStartYear <= seasonYearRange.EndYear; seasonStartYear++)
+        var hasAllSeasonTeams = await _teamRepo.HasSeasonTeams(seasonStartYear);
+        var teams = await _teamRepo.GetSeasonTeams(seasonStartYear);
+        if (hasAllSeasonTeams && mode != ModeType.Update)
         {
-            // Determines if data is already found and season can be skipped
-            // If update mode then always rerun games to get new data fields
-            var hasAllSeasonTeams = await _teamRepo.HasSeasonTeams(seasonStartYear);
-            if (hasAllSeasonTeams && mode != ModeType.Update)
-            {
-                _logger.LogInformation("All team data for season " + seasonStartYear.ToString() + " already exists. Skipping...");
-                continue;
-            }
-
-            var addedTeamCount = await FetchAndSaveNhlTeamData(seasonStartYear);
-            await _teamRepo.Commit();
-
-            totalTeamsAdded += addedTeamCount;
-            _logger.LogInformation("Number of Teams Added To Season " + seasonStartYear.ToString() + ": " + addedTeamCount.ToString());
+            _logger.LogInformation("All team data for season " + seasonStartYear.ToString() + " already exists. Skipping...");
+            return teams;
         }
 
-        _logger.LogInformation("Number of Teams Added: " + totalTeamsAdded.ToString());
-    }
-
-    /// <summary>
-    /// Gets all nhl teams within the season range.
-    /// </summary>
-    /// <param name="seasonYearRange">The years to get data for</param>
-    /// <returns>Count saved</returns>
-    private async Task<int> FetchAndSaveNhlTeamData(int seasonStartYear)
-    {
-        var teams = await GetAllTeams();
-        await _teamRepo.AddUpdateTeams(teams);
-
+        teams = await GetAllTeams();
         var seasonTeams = await GetSeasonTeams(seasonStartYear);
         teams = BuildTeams(teams, seasonTeams);
 
-        await _teamRepo.AddUpdateSeasonTeams(teams);
-
-        return teams.Count() + seasonTeams.Count();
+        return teams;
     }
 
     /// <summary>

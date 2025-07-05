@@ -40,10 +40,22 @@ public class GameRepository : IGameRepository
     /// Gets total games for given season in database
     /// </summary>
     /// <param name="seasonStartYear">season start year</param>
-    /// <returns>number of games in the season</returns>
+    /// <returns>Number of games in the season in the database</returns>
     public async Task<int> GetSavedGameCountForSeason(int seasonStartYear)
     {
         return await _dbContext.GameRaw.Where(s => s.SeasonStartYear == seasonStartYear).CountAsync();
+    }
+
+    /// <summary>
+    /// Gets total games for given season
+    /// </summary>
+    /// <param name="seasonStartYear">season start year</param>
+    /// <returns>Number of games in the season</returns>
+    public async Task<int> GetGameCountForSeason(int seasonStartYear)
+    {
+        return await _dbContext.SeasonGameCount.Where(s => s.SeasonId == seasonStartYear)
+            .Select(s => s.GameCount)
+            .FirstOrDefaultAsync();
     }
 
     /// <summary>
@@ -222,6 +234,7 @@ public class GameRepository : IGameRepository
     /// </summary>
     /// <param name="gameId">Id of the game to get</param>
     /// <returns>Desired game</returns>
+    // TODO: Needs to include all the related data such as events, officials, broadcasters, etc.
     public async Task<Game?> GetGame(int gameId)
     {
         // Get the season start year from the game id

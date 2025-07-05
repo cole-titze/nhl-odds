@@ -5,16 +5,16 @@ using Services.RequestMaker;
 
 namespace Services.NhlData;
 
-public class NhlScheduleGetter : INhlScheduleGetter
+public class NhlApiScheduleGetter : INhlScheduleGetter
 {
     private readonly IRequestMaker _requestMaker;
-    private readonly ILogger<NhlGameGetter> _logger;
+    private readonly ILogger<NhlApiScheduleGetter> _logger;
     private readonly IDictionary<int, int> _seasonGameCountCache = new Dictionary<int, int>();
 
-    public NhlScheduleGetter(IRequestMaker requestMaker, IDictionary<int, int> seasonGameCountCache, ILoggerFactory loggerFactory)
+    public NhlApiScheduleGetter(IRequestMaker requestMaker, IDictionary<int, int> seasonGameCountCache, ILoggerFactory loggerFactory)
     {
         _requestMaker = requestMaker;
-        _logger = loggerFactory.CreateLogger<NhlGameGetter>();
+        _logger = loggerFactory.CreateLogger<NhlApiScheduleGetter>();
         _seasonGameCountCache = seasonGameCountCache;
     }
 
@@ -37,7 +37,7 @@ public class NhlScheduleGetter : INhlScheduleGetter
         {
             throw new Exception("Failed to get schedule response for season: " + seasonStartYear.ToString());
         }
-        var seasonId = NhlDataGetter.GetFullSeasonId(seasonStartYear);
+        var seasonId = NhlApiDataGetter.GetFullSeasonId(seasonStartYear);
         _seasonGameCountCache[seasonStartYear] = scheduleServiceResponse.ScheduleResponseToGameCount(seasonId);
 
         return _seasonGameCountCache[seasonStartYear];

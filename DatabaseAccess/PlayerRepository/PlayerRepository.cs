@@ -164,4 +164,26 @@ public class PlayerRepository : IPlayerRepository
         await _dbContext.PlayerDraftDetails.AddRangeAsync(addList);
         _dbContext.PlayerDraftDetails.UpdateRange(updateList);
     }
+
+    /// <summary>
+    /// Gets a player by their id.
+    /// </summary>
+    /// <param name="playerId">Id of the player to get</param>
+    /// <returns>The player</returns>
+    public async Task<Player?> GetPlayer(int playerId)
+    {
+        var dbPlayer = await _dbContext.Player.FirstOrDefaultAsync(x => x.Id == playerId);
+        if (dbPlayer == null)
+            return null;
+
+        return MapDbPlayerToPlayer.Map(dbPlayer);
+    }
+
+    /// <summary>
+    /// Commits the changes to the database.
+    /// </summary>
+    public async Task Commit()
+    {
+        await _dbContext.SaveChangesAsync();
+    }
 }

@@ -39,7 +39,7 @@ public static class MapGoalEvent
             YCoordinate = (int?)responseGameEvent.details.yCoord,
             HighlightClipSharingUrl = (string)responseGameEvent.details.highlightClipSharingUrl ?? "",
             HighlightClipId = (int?)responseGameEvent.details.highlightClip ?? -1,
-            DiscreetClipId = (int?)responseGameEvent.details.discreteClip ?? -1,
+            DiscreetClipId = (int?)responseGameEvent.details.discreteClip ?? -1, // TODO: Discrete clip is too big
             PptReplayUrl = (string)responseGameEvent.pptReplayUrl ?? "",
         };
     }

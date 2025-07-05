@@ -2,19 +2,19 @@
 using Entities.ServiceModels;
 using Microsoft.Extensions.Logging;
 using Services.RequestMaker;
-using static Services.NhlData.NhlDataGetter;
+using static Services.NhlData.NhlApiDataGetter;
 
 namespace Services.NhlData;
 
-public class NhlGameGetter : INhlGameGetter
+public class NhlApiGameGetter : INhlGameGetter
 {
     private readonly IRequestMaker _requestMaker;
-    private readonly ILogger<NhlGameGetter> _logger;
+    private readonly ILogger<NhlApiGameGetter> _logger;
 
-    public NhlGameGetter(IRequestMaker requestMaker, ILoggerFactory loggerFactory)
+    public NhlApiGameGetter(IRequestMaker requestMaker, ILoggerFactory loggerFactory)
     {
         _requestMaker = requestMaker;
-        _logger = loggerFactory.CreateLogger<NhlGameGetter>();
+        _logger = loggerFactory.CreateLogger<NhlApiGameGetter>();
     }
 
     /// <summary>

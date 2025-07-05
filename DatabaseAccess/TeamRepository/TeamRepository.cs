@@ -107,4 +107,19 @@ public class TeamRepository : ITeamRepository
     {
         await _dbContext.SaveChangesAsync();
     }
+
+    /// <summary>
+    /// Gets teams for a given season start year.
+    /// </summary>
+    /// <param name="seasonStartYear">The season start year</param>
+    /// <returns>The list of teams</returns>
+    public async Task<IEnumerable<Team>> GetSeasonTeams(int seasonStartYear)
+    {
+        var seasonTeams = await _dbContext.SeasonTeam
+            .Where(x => x.SeasonStartYear == seasonStartYear)
+            .Include(x => x.Team)
+            .ToListAsync();
+
+        return MapDbSeasonTeamToTeam.MapList(seasonTeams);
+    }
 }

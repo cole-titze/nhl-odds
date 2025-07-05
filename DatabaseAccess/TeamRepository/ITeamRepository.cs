@@ -8,4 +8,5 @@ public interface ITeamRepository
     Task AddUpdateTeams(IEnumerable<Team> teams);
     Task<bool> HasSeasonTeams(int seasonStartYear);
     Task Commit();
+    Task<IEnumerable<Team>> GetSeasonTeams(int seasonStartYear);
 }
