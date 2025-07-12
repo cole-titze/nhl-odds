@@ -55,15 +55,5 @@ public static class MapDbGameToGame
             ExtendedInfo = extendedInfo,
         };
     }
-    public static IEnumerable<Game> Map(IEnumerable<DbGameRaw> games)
-    {
-        var gameList = new List<Game>();
-        foreach (var game in games)
-        {
-            gameList.Add(Map(game));
-        }
-
-        return gameList;
-    }
 }
 

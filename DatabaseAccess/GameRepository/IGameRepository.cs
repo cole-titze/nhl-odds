@@ -9,10 +9,11 @@ public interface IGameRepository
     Task AddUpdateTvBroadcasters(Game game);
     Task AddUpdateGameTvBroadcasters(Game game);
     Task AddUpdateGameOfficials(Game game);
+    Task AddUpdateGameCoaches(Game game);
     Task AddUpdateGameEvents(Game game);
     Task Commit();
     Task<Game?> GetGame(int gameId);
     Task<int> GetSavedGameCountForSeason(int seasonStartYear);
-    Task<int> GetGameCountForSeason(int seasonStartYear);
+    Task<int?> GetGameCountForSeason(int seasonStartYear);
 }
 

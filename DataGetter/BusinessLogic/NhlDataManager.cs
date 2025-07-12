@@ -57,17 +57,15 @@ public class NhlDataManager
     /// </summary>
     /// <param name="seasonStartYear"></param>
     /// <param name="mode"></param>
-    // TODO: Respect mode for updating season game count
     private async Task FetchAndSaveSeasonData(int seasonStartYear, ModeType mode)
     {
         var seasonTeams = await _teamManager.GetTeamData(seasonStartYear, mode);
         await SaveTeamData(seasonTeams);
 
-        var seasonGameCount = await _gameManager.GetSeasonGameCount(seasonStartYear);
+        var seasonGameCount = await _gameManager.GetSeasonGameCount(seasonStartYear, mode);
         await SaveSeasonSchedule(seasonStartYear, seasonGameCount);
 
         // game ids start at 1
-        seasonGameCount = 10; // TODO: Remove this line
         for (int count = 1; count <= seasonGameCount; count++)
         {
             var gameId = NhlApiDataGetter.GetGameId(seasonStartYear, count);

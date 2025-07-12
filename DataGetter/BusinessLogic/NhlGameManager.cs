@@ -55,10 +55,21 @@ public class NhlGameManager
     /// Gets the season game count
     /// </summary>
     /// <param name="seasonStartYear">The season to get the game count for</param>
+    /// <param name="mode">Whether we can update games or only add</param>
     /// <returns>The game count for the season</returns>
-    public async Task<int> GetSeasonGameCount(int seasonStartYear)
+    public async Task<int> GetSeasonGameCount(int seasonStartYear, ModeType mode)
     {
-        return await _nhlDataGetter.ScheduleDataGetter.GetGameCountInSeason(seasonStartYear);
+        var existingGameCount = await _gameRepo.GetGameCountForSeason(seasonStartYear);
+        if (existingGameCount != null && mode != ModeType.Update)
+            return (int)existingGameCount;
+
+        var gameCount = await _nhlDataGetter.ScheduleDataGetter.GetGameCountInSeason(seasonStartYear);
+        if (gameCount == null)
+        {
+            throw new Exception("Failed to get season game count for season: " + seasonStartYear);
+        }
+
+        return (int)gameCount;
     }
 
     /// <summary>

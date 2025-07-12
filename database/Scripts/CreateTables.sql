@@ -256,6 +256,16 @@ CREATE TABLE [dbo].[GameTvBroadcaster]
     FOREIGN KEY (BroadcasterId) REFERENCES TvBroadcaster(Id)
 );
 
+CREATE TABLE [dbo].[GameCoach]
+(
+    GameId INT NOT NULL,
+    [Name] VARCHAR(250) NOT NULL,
+    [TeamId] INT NOT NULL,
+    CONSTRAINT PK_GameCoach PRIMARY KEY(GameId, [Name]),
+    FOREIGN KEY (GameId) REFERENCES GameRaw(Id),
+    FOREIGN KEY (TeamId) REFERENCES Team(Id)
+);
+
 -- Add Game Event Tables
 CREATE TABLE [dbo].[GameBlockedShotEvent]
 (
@@ -394,7 +404,7 @@ CREATE TABLE [dbo].[GameGoalEvent]
     GoalieId INT,
     HighlightClipSharingUrl VARCHAR(255) NOT NULL,
     HighlightClipId INT NOT NULL,
-    DiscreetClipId INT NOT NULL,
+    DiscreetClipId FLOAT NOT NULL,
     PptReplayUrl VARCHAR(255) NOT NULL,
     CONSTRAINT PK_GameGoalEvent PRIMARY KEY(GameId, Id),
     FOREIGN KEY (GameId) REFERENCES GameRaw(Id),

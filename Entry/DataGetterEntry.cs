@@ -28,7 +28,6 @@ public class DataGetterEntry
     /// </summary>
     /// <param name="modeSettings">db connection string and mode</param>
     /// <returns>None</returns>
-    // TODO: Should update mode to be a bool (canUpdateExistingData) or something similar
     public async Task Main(ModeSettings modeSettings)
     {
         var watch = Stopwatch.StartNew();

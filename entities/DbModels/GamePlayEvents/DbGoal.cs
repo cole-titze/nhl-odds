@@ -27,7 +27,7 @@ public class DbGoal : IDbGameEvent
     public int? GoalieId { get; set; }
     public string HighlightClipSharingUrl { get; set; } = string.Empty;
     public int HighlightClipId { get; set; }
-    public int DiscreetClipId { get; set; }
+    public double DiscreetClipId { get; set; }
     public string PptReplayUrl { get; set; } = string.Empty;
     [ForeignKey(nameof(GameId))]
     public DbGameRaw? Game { get; set; }

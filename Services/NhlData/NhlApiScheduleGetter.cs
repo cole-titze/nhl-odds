@@ -26,7 +26,7 @@ public class NhlApiScheduleGetter : INhlScheduleGetter
     /// </summary>
     /// <param name="seasonStartYear">year of season to use</param>
     /// <returns>number of games in the season</returns>
-    public async Task<int> GetGameCountInSeason(int seasonStartYear)
+    public async Task<int?> GetGameCountInSeason(int seasonStartYear)
     {
         if (_seasonGameCountCache.TryGetValue(seasonStartYear, out int value))
             return value;
@@ -35,7 +35,8 @@ public class NhlApiScheduleGetter : INhlScheduleGetter
         var scheduleServiceResponse = new ServiceScheduleResponse(await _requestMaker.MakeRequest(url, ""));
         if (scheduleServiceResponse.response == null)
         {
-            throw new Exception("Failed to get schedule response for season: " + seasonStartYear.ToString());
+            _logger.LogWarning("Failed to get game count for season: " + seasonStartYear.ToString());
+            return null;
         }
         var seasonId = NhlApiDataGetter.GetFullSeasonId(seasonStartYear);
         _seasonGameCountCache[seasonStartYear] = scheduleServiceResponse.ScheduleResponseToGameCount(seasonId);

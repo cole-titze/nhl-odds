@@ -22,7 +22,7 @@ CREATE TABLE [dbo].[GameGoalEvent]
     GoalieId INT,
     HighlightClipSharingUrl VARCHAR(255) NOT NULL,
     HighlightClipId INT NOT NULL,
-    DiscreetClipId INT NOT NULL,
+    DiscreetClipId FLOAT NOT NULL,
     PptReplayUrl VARCHAR(255) NOT NULL,
     CONSTRAINT PK_GameGoalEvent PRIMARY KEY(GameId, Id),
     FOREIGN KEY (GameId) REFERENCES GameRaw(Id),
