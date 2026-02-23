@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Entities.DbModels;
 using Entities.DbModels.GamePlayEvents;
+using Entities.Mappers.GameEventMappers;
 using Entities.Mappers.GameMappers;
 using Entities.Models;
 using Entities.Types;
@@ -281,8 +282,7 @@ public class GameRepository : IGameRepository
         var game = MapDbGameToGame.Map(dbGame);
         game.ExtendedInfo!.TvBroadcasters = await GetTvBroadcasters(gameId);
         game.RosterStats = await GetGameRosterStats(gameId, dbGame);
-        game.GameEvents = MapDbGameEventToGameEvents.Map(await _dbContext.GameEvent.Where(x => x.GameId == gameId).ToListAsync());
-
+        game.GameEvents = MapDbGameEventsToGameEvents.Map(await GetAllDbGameEvents(gameId));
 
         return game;
     }
@@ -300,12 +300,15 @@ public class GameRepository : IGameRepository
         var homeTeamDbPlayerStats = dbGamePlayerStats.Where(x => x.TeamId == game.HomeTeamId).ToList();
         var awayTeamDbPlayerStats = dbGamePlayerStats.Where(x => x.TeamId == game.AwayTeamId).ToList();
 
-        List<GameSkaterStats> homeTeamForwards = homeTeamDbPlayerStats.Where(x => x.Position == POSITION.Center || x.Position == POSITION.RightWing || x.Position == POSITION.LeftWing).ToList();
-        var homeTeamDefensemen = homeTeamDbPlayerStats.Where(x => x.Position == POSITION.Defenseman).ToList();
-        var homeTeamGoalies = homeTeamDbPlayerStats.Where(x => x.Position == POSITION.Goalie).ToList();
-        var awayTeamForwards = awayTeamDbPlayerStats.Where(x => x.Position == POSITION.Center || x.Position == POSITION.RightWing || x.Position == POSITION.LeftWing).ToList();
-        var awayTeamDefensemen = awayTeamDbPlayerStats.Where(x => x.Position == POSITION.Defenseman).ToList();
-        var awayTeamGoalies = awayTeamDbPlayerStats.Where(x => x.Position == POSITION.Goalie).ToList();
+        var homeSkaters = homeTeamDbPlayerStats.OfType<DbGameSkaterStats>().ToList();
+        var homeGoalies = homeTeamDbPlayerStats.OfType<DbGameGoalieStats>().ToList();
+        var awaySkaters = awayTeamDbPlayerStats.OfType<DbGameSkaterStats>().ToList();
+        var awayGoalies = awayTeamDbPlayerStats.OfType<DbGameGoalieStats>().ToList();
+
+        var homeTeamForwards = homeSkaters.Where(x => x.Position == POSITION.Center || x.Position == POSITION.RightWing || x.Position == POSITION.LeftWing).ToList();
+        var homeTeamDefensemen = homeSkaters.Where(x => x.Position == POSITION.Defenseman).ToList();
+        var awayTeamForwards = awaySkaters.Where(x => x.Position == POSITION.Center || x.Position == POSITION.RightWing || x.Position == POSITION.LeftWing).ToList();
+        var awayTeamDefensemen = awaySkaters.Where(x => x.Position == POSITION.Defenseman).ToList();
 
         var dbGameOfficials = await GetDbGameOfficials(gameId);
         if (dbGameOfficials == null)
@@ -325,10 +328,10 @@ public class GameRepository : IGameRepository
             AwayTeamCoach = MapDbGameCoachToCoach.Map(awayTeamCoach),
             HomeTeamForwards = MapDbGamePlayerStatsToGamePlayerStats.MapSkaterStatsList(homeTeamForwards),
             HomeTeamDefensemen = MapDbGamePlayerStatsToGamePlayerStats.MapSkaterStatsList(homeTeamDefensemen),
-            HomeTeamGoalies = MapDbGamePlayerStatsToGamePlayerStats.Map(homeTeamGoalies),
+            HomeTeamGoalies = MapDbGamePlayerStatsToGamePlayerStats.MapGoalieStatsList(homeGoalies),
             AwayTeamForwards = MapDbGamePlayerStatsToGamePlayerStats.MapSkaterStatsList(awayTeamForwards),
             AwayTeamDefensemen = MapDbGamePlayerStatsToGamePlayerStats.MapSkaterStatsList(awayTeamDefensemen),
-            AwayTeamGoalies = MapDbGamePlayerStatsToGamePlayerStats.Map(awayTeamGoalies),
+            AwayTeamGoalies = MapDbGamePlayerStatsToGamePlayerStats.MapGoalieStatsList(awayGoalies),
             Referees = MapDbGameOfficialToReferee.MapList(referees),
             Linesmen = MapDbGameOfficialToLinesmen.MapList(linesmen)
         };
@@ -520,6 +523,23 @@ public class GameRepository : IGameRepository
         {
             dbSet.UpdateRange(typedUpdate);
         }
+    }
+
+    /// <summary>
+    /// Gets all game events for a given game from all event tables
+    /// </summary>
+    /// <param name="gameId">The game to get events for</param>
+    /// <returns>All events for the game</returns>
+    private async Task<IEnumerable<IDbGameEvent>> GetAllDbGameEvents(int gameId)
+    {
+        var events = new List<IDbGameEvent>();
+        foreach (var kvp in _dbSetEventMap)
+        {
+            var dbSet = kvp.Value as IQueryable<IDbGameEvent> ?? ((IQueryable)kvp.Value).Cast<IDbGameEvent>();
+            var gameEvents = await dbSet.Where(x => x.GameId == gameId).ToListAsync();
+            events.AddRange(gameEvents);
+        }
+        return events;
     }
 
     /// <summary>

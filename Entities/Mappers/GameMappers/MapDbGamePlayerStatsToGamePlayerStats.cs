@@ -37,5 +37,34 @@ public static class MapDbGamePlayerStatsToGamePlayerStats
 
         return gameSkaterStatsList;
     }
+
+    public static GameGoalieStats MapGoalieStats(DbGameGoalieStats dbGameGoalieStats)
+    {
+        return new GameGoalieStats
+        {
+            PlayerId = dbGameGoalieStats.PlayerId,
+            TeamId = dbGameGoalieStats.TeamId,
+            EvenStrengthShotsSaved = dbGameGoalieStats.EvenStrengthShotsSaved,
+            PowerPlayShotsSaved = dbGameGoalieStats.PowerPlayShotsSaved,
+            ShortHandedShotsSaved = dbGameGoalieStats.ShortHandedShotsSaved,
+            EvenStrengthGoalsAllowed = dbGameGoalieStats.EvenStrengthGoalsAllowed,
+            PowerPlayGoalsAllowed = dbGameGoalieStats.PowerPlayGoalsAllowed,
+            ShortHandedGoalsAllowed = dbGameGoalieStats.ShortHandedGoalsAllowed,
+            TimeOnIceSeconds = dbGameGoalieStats.TimeOnIceSeconds,
+            IsStarter = dbGameGoalieStats.IsStarter,
+            Position = dbGameGoalieStats.Position
+        };
+    }
+
+    public static IEnumerable<GameGoalieStats> MapGoalieStatsList(IEnumerable<DbGameGoalieStats> dbGameGoalieStats)
+    {
+        var gameGoalieStatsList = new List<GameGoalieStats>();
+        foreach (var dbGameGoalieStat in dbGameGoalieStats)
+        {
+            gameGoalieStatsList.Add(MapGoalieStats(dbGameGoalieStat));
+        }
+
+        return gameGoalieStatsList;
+    }
 }
 
