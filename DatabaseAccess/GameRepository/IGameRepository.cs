@@ -13,6 +13,7 @@ public interface IGameRepository
     Task AddUpdateGameEvents(Game game);
     Task Commit();
     Task<Game?> GetGame(int gameId);
+    Task<bool> IsGamePlayed(int gameId);
     Task<int> GetSavedGameCountForSeason(int seasonStartYear);
     Task<int?> GetGameCountForSeason(int seasonStartYear);
 }

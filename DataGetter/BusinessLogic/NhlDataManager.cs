@@ -76,6 +76,14 @@ public class NhlDataManager
             for (int count = 1; count <= seasonGameCount; count++)
             {
                 gameId = NhlApiDataGetter.GetGameId(seasonStartYear, count);
+
+                // Skip games that already exist and have been played in Add mode
+                if (mode != ModeType.Update && await _gameRepo.IsGamePlayed(gameId.Value))
+                {
+                    _logger.LogInformation("Game {GameId} already exists and has been played. Skipping.", gameId);
+                    continue;
+                }
+
                 var game = await _gameManager.GetGame(gameId.Value, mode);
                 var players = await _playerManager.GetPlayers(game, mode);
 
