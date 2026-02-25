@@ -38,7 +38,8 @@ public class DataGetterEntry
         var playerRepo = new PlayerRepository(nhlDbContext);
         var gameRepo = new GameRepository(nhlDbContext);
         var teamRepo = new TeamRepository(nhlDbContext);
-        var errorRepo = new ErrorRepository(nhlDbContext);
+        var errorDbContext = new NhlDbContext(modeSettings.ConnectionString);
+        var errorRepo = new ErrorRepository(errorDbContext);
         var requestMaker = new RequestMaker(new HttpClientWrapper(), _loggerFactory, modeSettings.ThrottleTimeMs);
 
         var seasonGameCountCache = await gameRepo.GetSeasonGameCounts();
