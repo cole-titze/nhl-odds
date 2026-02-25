@@ -412,8 +412,7 @@ public class GameRepository : IGameRepository
     /// <returns>Desired game</returns>
     private async Task<DbGameRaw?> GetDbGame(int gameId)
     {
-        // Get the season start year from the game id
-        int seasonStartYear = int.Parse(gameId.ToString().Substring(0, 4));
+        int seasonStartYear = gameId / 1_000_000;
         var seasonGames = await GetSeasonDbGames(seasonStartYear);
 
         var game = seasonGames.FirstOrDefault(x => x.Id == gameId);
