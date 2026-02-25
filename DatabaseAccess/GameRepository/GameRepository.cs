@@ -163,10 +163,11 @@ public class GameRepository : IGameRepository
     public async Task AddUpdateGameTvBroadcasters(Game game)
     {
         var gameBroadcasters = MapGameToDbGameTvBroadcasters.Map(game);
+        var uniqueGameBroadcasters = gameBroadcasters.GroupBy(b => new { b.GameId, b.BroadcasterId }).Select(g => g.First()).ToList();
 
         var addList = new List<DbGameTvBroadcaster>();
         var updateList = new List<DbGameTvBroadcaster>();
-        foreach (var gameBroadcaster in gameBroadcasters)
+        foreach (var gameBroadcaster in uniqueGameBroadcasters)
         {
             var dbTvBroadcaster = await GetDbGameTvBroadcaster(gameBroadcaster.GameId, gameBroadcaster.BroadcasterId);
             if (dbTvBroadcaster == null)
