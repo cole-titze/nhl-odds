@@ -1,6 +1,8 @@
+using DatabaseAccess.ErrorRepository;
 using DatabaseAccess.GameRepository;
 using DatabaseAccess.PlayerRepository;
 using DatabaseAccess.TeamRepository;
+using Entities.DbModels;
 using Entities.Models;
 using Entities.Models.Teams;
 using Entities.Types;
@@ -142,7 +144,8 @@ public class NhlDataManager
         await _gameRepo.AddUpdateGameEvents(game);
         await _playerRepo.AddUpdateGameRosterStats(game);
 
-        // Add Officials
+        // Add Coaches and Officials
+        await _gameRepo.AddUpdateGameCoaches(game);
         await _gameRepo.AddUpdateGameOfficials(game);
 
         // Save all data to the database
@@ -158,6 +161,6 @@ public class NhlDataManager
     {
         var gameCount = await _gameRepo.GetSavedGameCountForSeason(seasonStartYear);
         var seasonGameCount = await _gameRepo.GetGameCountForSeason(seasonStartYear);
-        return gameCount == seasonGameCount;
+        return seasonGameCount > 0 && gameCount == seasonGameCount;
     }
 }

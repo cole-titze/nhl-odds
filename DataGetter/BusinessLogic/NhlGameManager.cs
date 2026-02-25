@@ -81,7 +81,10 @@ public class NhlGameManager
     {
         var existingGame = await _gameRepo.GetGame(gameId);
         if (CanSkipGame(existingGame, mode))
+        {
+            _logger.LogInformation("Game {GameId} already exists and has been played. Skipping fetch.", gameId);
             return existingGame!;
+        }
 
         var game = await _nhlDataGetter.GameDataGetter.GetGame(gameId);
         if (game == null)

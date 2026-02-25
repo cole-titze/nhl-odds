@@ -56,7 +56,7 @@ public class GameRepository : IGameRepository
     public async Task<int?> GetGameCountForSeason(int seasonStartYear)
     {
         return await _dbContext.SeasonGameCount.Where(s => s.SeasonId == seasonStartYear)
-            .Select(s => s.GameCount)
+            .Select(s => (int?)s.GameCount)
             .FirstOrDefaultAsync();
     }
 
