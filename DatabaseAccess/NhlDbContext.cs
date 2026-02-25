@@ -26,6 +26,7 @@ public partial class NhlDbContext : DbContext
     public virtual DbSet<DbGameOdds> GameOdds { get; set; } = null!;
     public virtual DbSet<DbTvBroadcaster> TvBroadcaster { get; set; } = null!;
     public virtual DbSet<DbGameTvBroadcaster> GameTvBroadcaster { get; set; } = null!;
+    public virtual DbSet<DbErrorLog> ErrorLog { get; set; } = null!;
 
     // Game Event Tables
     public virtual DbSet<DbBlockedShot> GameBlockedShotEvent { get; set; } = null!;

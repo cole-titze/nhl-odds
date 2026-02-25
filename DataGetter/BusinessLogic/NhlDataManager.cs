@@ -18,15 +18,17 @@ public class NhlDataManager
     private readonly IGameRepository _gameRepo;
     private readonly IPlayerRepository _playerRepo;
     private readonly ITeamRepository _teamRepo;
+    private readonly IErrorRepository _errorRepo;
     private readonly NhlTeamManager _teamManager;
     private readonly NhlGameManager _gameManager;
     private readonly NhlPlayerManager _playerManager;
     private readonly ILogger<NhlDataManager> _logger;
-    public NhlDataManager(IGameRepository gameRepository, IPlayerRepository playerRepository, ITeamRepository teamRepository, NhlGameManager gameManager, NhlPlayerManager playerManager, NhlTeamManager teamManager, ILoggerFactory loggerFactory)
+    public NhlDataManager(IGameRepository gameRepository, IPlayerRepository playerRepository, ITeamRepository teamRepository, IErrorRepository errorRepository, NhlGameManager gameManager, NhlPlayerManager playerManager, NhlTeamManager teamManager, ILoggerFactory loggerFactory)
     {
         _gameRepo = gameRepository;
         _playerRepo = playerRepository;
         _teamRepo = teamRepository;
+        _errorRepo = errorRepository;
         _gameManager = gameManager;
         _teamManager = teamManager;
         _playerManager = playerManager;
@@ -61,22 +63,41 @@ public class NhlDataManager
     /// <param name="mode"></param>
     private async Task FetchAndSaveSeasonData(int seasonStartYear, ModeType mode)
     {
-        var seasonTeams = await _teamManager.GetTeamData(seasonStartYear, mode);
-        await SaveTeamData(seasonTeams);
-
-        var seasonGameCount = await _gameManager.GetSeasonGameCount(seasonStartYear, mode);
-        await SaveSeasonSchedule(seasonStartYear, seasonGameCount);
-
-        // game ids start at 1
-        for (int count = 1; count <= seasonGameCount; count++)
+        int? gameId = null;
+        try
         {
-            var gameId = NhlApiDataGetter.GetGameId(seasonStartYear, count);
-            var game = await _gameManager.GetGame(gameId, mode);
-            var players = await _playerManager.GetPlayers(game, mode);
+            var seasonTeams = await _teamManager.GetTeamData(seasonStartYear, mode);
+            await SaveTeamData(seasonTeams);
 
-            await SavePlayers(players);
-            await SaveGame(game);
-            await _gameRepo.Commit();
+            var seasonGameCount = await _gameManager.GetSeasonGameCount(seasonStartYear, mode);
+            await SaveSeasonSchedule(seasonStartYear, seasonGameCount);
+
+            // game ids start at 1
+            for (int count = 1; count <= seasonGameCount; count++)
+            {
+                gameId = NhlApiDataGetter.GetGameId(seasonStartYear, count);
+                var game = await _gameManager.GetGame(gameId.Value, mode);
+                var players = await _playerManager.GetPlayers(game, mode);
+
+                await SavePlayers(players);
+                await SaveGame(game);
+                await _gameRepo.Commit();
+            }
+        }
+        catch (Exception ex)
+        {
+            var errorLog = new DbErrorLog
+            {
+                TimestampUTC = DateTime.UtcNow,
+                GameId = gameId,
+                SeasonStartYear = seasonStartYear,
+                ExceptionType = ex.GetType().FullName ?? ex.GetType().Name,
+                Message = ex.Message,
+                StackTrace = ex.StackTrace ?? string.Empty,
+                Source = "FetchAndSaveSeasonData"
+            };
+            await _errorRepo.AddError(errorLog);
+            throw;
         }
     }
 

@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using DatabaseAccess;
+using DatabaseAccess.ErrorRepository;
 using DatabaseAccess.GameRepository;
 using DatabaseAccess.PlayerRepository;
 using DatabaseAccess.TeamRepository;
@@ -37,6 +38,7 @@ public class DataGetterEntry
         var playerRepo = new PlayerRepository(nhlDbContext);
         var gameRepo = new GameRepository(nhlDbContext);
         var teamRepo = new TeamRepository(nhlDbContext);
+        var errorRepo = new ErrorRepository(nhlDbContext);
         var requestMaker = new RequestMaker(new HttpClientWrapper(), _loggerFactory, modeSettings.ThrottleTimeMs);
 
         var seasonGameCountCache = await gameRepo.GetSeasonGameCounts();
@@ -51,7 +53,7 @@ public class DataGetterEntry
         var gameGetter = new NhlGameManager(gameRepo, playerRepo, nhlRequestMaker, _loggerFactory);
         var playerGetter = new NhlPlayerManager(playerRepo, nhlRequestMaker, _loggerFactory);
 
-        var dataManager = new NhlDataManager(gameRepo, playerRepo, teamRepo, gameGetter, playerGetter, teamGetter, _loggerFactory);
+        var dataManager = new NhlDataManager(gameRepo, playerRepo, teamRepo, errorRepo, gameGetter, playerGetter, teamGetter, _loggerFactory);
 
         _logger.LogTrace("Starting Data Getter");
         await dataManager.GetNhlData(yearRange, modeSettings.Mode);
