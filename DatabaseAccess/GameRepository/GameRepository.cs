@@ -183,8 +183,17 @@ public class GameRepository : IGameRepository
     /// <returns>Desired game</returns>
     public async Task<bool> IsGamePlayed(int gameId)
     {
+        var game = await GetGameSummary(gameId);
+        return game != null && game.HasBeenPlayed;
+    }
+
+    public async Task<Game?> GetGameSummary(int gameId)
+    {
         var dbGame = await GetDbGame(gameId);
-        return dbGame != null && dbGame.HasBeenPlayed;
+        if (dbGame == null)
+            return null;
+
+        return MapDbGameToGame.Map(dbGame);
     }
 
     public async Task<Game?> GetGame(int gameId)
