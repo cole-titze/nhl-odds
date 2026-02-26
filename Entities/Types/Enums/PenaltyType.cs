@@ -60,7 +60,8 @@ public enum PenaltyType
     IllegalCheckToHead,
     DelayOfGameFacoffViolation,
     DelayOfGameBenchFacoffViolation,
-    PenaltyShotCoveringPuckInCrease
+    PenaltyShotCoveringPuckInCrease,
+    ButtEnding
 }
 public static class PenaltyTypeParser
 {
@@ -186,6 +187,8 @@ public static class PenaltyTypeParser
                 return PenaltyType.DelayOfGameBenchFacoffViolation;
             case "ps-covering-puck-in-crease":
                 return PenaltyType.PenaltyShotCoveringPuckInCrease;
+            case "butt-ending":
+                return PenaltyType.ButtEnding;
             default:
                 throw new ArgumentException($"Invalid PenaltyType value: {penaltyType}", nameof(penaltyType));
         }
