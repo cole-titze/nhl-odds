@@ -148,7 +148,7 @@ public class GameRepository : IGameRepository
         if (_cachedSeasonsGames.ContainsKey(seasonStartYear) && _cachedSeasonsGames[seasonStartYear].Count > 0)
             return;
 
-        _cachedSeasonsGames.Clear();
+        // Seasons accumulate in cache (~20MB for all seasons). Safe for cross-season lookups.
         _cachedSeasonsGames[seasonStartYear] = await _dbContext.GameRaw.Where(s => s.SeasonStartYear == seasonStartYear)
                                     .Include(x => x.AwayTeam)
                                     .Include(x => x.HomeTeam)
