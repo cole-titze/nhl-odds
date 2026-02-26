@@ -69,49 +69,47 @@ public class NhlDataManager
     /// <param name="mode"></param>
     private async Task FetchAndSaveSeasonData(int seasonStartYear, ModeType mode)
     {
-        int? gameId = null;
-        try
+        var seasonTeams = await _teamManager.GetTeamData(seasonStartYear, mode);
+        await SaveTeamData(seasonTeams);
+
+        var seasonGameCount = await _gameManager.GetSeasonGameCount(seasonStartYear, mode);
+        await SaveSeasonSchedule(seasonStartYear, seasonGameCount);
+
+        // game ids start at 1
+        for (int count = 1; count <= seasonGameCount; count++)
         {
-            var seasonTeams = await _teamManager.GetTeamData(seasonStartYear, mode);
-            await SaveTeamData(seasonTeams);
-
-            var seasonGameCount = await _gameManager.GetSeasonGameCount(seasonStartYear, mode);
-            await SaveSeasonSchedule(seasonStartYear, seasonGameCount);
-
-            // game ids start at 1
-            for (int count = 1; count <= seasonGameCount; count++)
+            int gameId = NhlApiDataGetter.GetGameId(seasonStartYear, count);
+            try
             {
-                gameId = NhlApiDataGetter.GetGameId(seasonStartYear, count);
-
                 // Skip games that already exist and have been played in Add mode
-                if (mode != ModeType.Update && await _gameRepo.IsGamePlayed(gameId.Value))
+                if (mode != ModeType.Update && await _gameRepo.IsGamePlayed(gameId))
                 {
                     _logger.LogInformation("Game {GameId} already exists and has been played. Skipping.", gameId);
                     continue;
                 }
 
-                var game = await _gameManager.GetGame(gameId.Value, mode);
+                var game = await _gameManager.GetGame(gameId, mode);
                 var players = await _playerManager.GetPlayers(game, mode);
 
                 await SavePlayers(players);
                 await SaveGame(game);
                 await _gameRepo.Commit();
             }
-        }
-        catch (Exception ex)
-        {
-            var errorLog = new DbErrorLog
+            catch (Exception ex)
             {
-                TimestampUTC = DateTime.UtcNow,
-                GameId = gameId,
-                SeasonStartYear = seasonStartYear,
-                ExceptionType = ex.GetType().FullName ?? ex.GetType().Name,
-                Message = ex.Message,
-                StackTrace = ex.StackTrace ?? string.Empty,
-                Source = "FetchAndSaveSeasonData"
-            };
-            await _errorRepo.AddError(errorLog);
-            throw;
+                _logger.LogError(ex, "Error processing game {GameId} in season {Season}. Skipping.", gameId, seasonStartYear);
+                var errorLog = new DbErrorLog
+                {
+                    TimestampUTC = DateTime.UtcNow,
+                    GameId = gameId,
+                    SeasonStartYear = seasonStartYear,
+                    ExceptionType = ex.GetType().FullName ?? ex.GetType().Name,
+                    Message = ex.Message,
+                    StackTrace = ex.StackTrace ?? string.Empty,
+                    Source = "FetchAndSaveSeasonData"
+                };
+                await _errorRepo.AddError(errorLog);
+            }
         }
     }
 
