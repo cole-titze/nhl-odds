@@ -43,12 +43,17 @@ public class GameEventRepository : IGameEventRepository
     {
         var dbGameEvents = MapGameToDbGameEvent.Map(game);
 
+        // Batch-load all existing events for this game in one pass (one query per event type)
+        var existingEvents = await GetAllDbGameEvents(game.Id);
+        var existingByTypeAndId = existingEvents
+            .ToDictionary(e => (e.GetType(), e.Id));
+
         var addList = new List<IDbGameEvent>();
         var updateList = new List<IDbGameEvent>();
         foreach (var gameEvent in dbGameEvents)
         {
-            var dbGameEvent = await GetDbGameEvent(gameEvent);
-            if (dbGameEvent == null)
+            var key = (gameEvent.GetType(), gameEvent.Id);
+            if (!existingByTypeAndId.TryGetValue(key, out var dbGameEvent))
             {
                 addList.Add(gameEvent);
             }
