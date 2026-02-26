@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
 using DatabaseAccess;
+using DatabaseAccess.BroadcasterRepository;
 using DatabaseAccess.ErrorRepository;
+using DatabaseAccess.GameEventRepository;
 using DatabaseAccess.GameRepository;
 using DatabaseAccess.PlayerRepository;
 using DatabaseAccess.TeamRepository;
@@ -36,7 +38,9 @@ public class DataGetterEntry
 
         var nhlDbContext = new NhlDbContext(modeSettings.ConnectionString);
         var playerRepo = new PlayerRepository(nhlDbContext);
-        var gameRepo = new GameRepository(nhlDbContext);
+        var gameEventRepo = new GameEventRepository(nhlDbContext);
+        var gameRepo = new GameRepository(nhlDbContext, gameEventRepo);
+        var broadcasterRepo = new BroadcasterRepository(nhlDbContext);
         var teamRepo = new TeamRepository(nhlDbContext);
         var errorDbContext = new NhlDbContext(modeSettings.ConnectionString);
         var errorRepo = new ErrorRepository(errorDbContext);
@@ -54,7 +58,7 @@ public class DataGetterEntry
         var gameGetter = new NhlGameManager(gameRepo, playerRepo, nhlRequestMaker, _loggerFactory);
         var playerGetter = new NhlPlayerManager(playerRepo, nhlRequestMaker, _loggerFactory);
 
-        var dataManager = new NhlDataManager(gameRepo, playerRepo, teamRepo, errorRepo, gameGetter, playerGetter, teamGetter, _loggerFactory);
+        var dataManager = new NhlDataManager(gameRepo, playerRepo, teamRepo, errorRepo, broadcasterRepo, gameEventRepo, gameGetter, playerGetter, teamGetter, _loggerFactory);
 
         _logger.LogTrace("Starting Data Getter");
         await dataManager.GetNhlData(yearRange, modeSettings.Mode);

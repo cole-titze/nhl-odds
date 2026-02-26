@@ -1,4 +1,6 @@
+using DatabaseAccess.BroadcasterRepository;
 using DatabaseAccess.ErrorRepository;
+using DatabaseAccess.GameEventRepository;
 using DatabaseAccess.GameRepository;
 using DatabaseAccess.PlayerRepository;
 using DatabaseAccess.TeamRepository;
@@ -19,16 +21,20 @@ public class NhlDataManager
     private readonly IPlayerRepository _playerRepo;
     private readonly ITeamRepository _teamRepo;
     private readonly IErrorRepository _errorRepo;
+    private readonly IBroadcasterRepository _broadcasterRepo;
+    private readonly IGameEventRepository _gameEventRepo;
     private readonly NhlTeamManager _teamManager;
     private readonly NhlGameManager _gameManager;
     private readonly NhlPlayerManager _playerManager;
     private readonly ILogger<NhlDataManager> _logger;
-    public NhlDataManager(IGameRepository gameRepository, IPlayerRepository playerRepository, ITeamRepository teamRepository, IErrorRepository errorRepository, NhlGameManager gameManager, NhlPlayerManager playerManager, NhlTeamManager teamManager, ILoggerFactory loggerFactory)
+    public NhlDataManager(IGameRepository gameRepository, IPlayerRepository playerRepository, ITeamRepository teamRepository, IErrorRepository errorRepository, IBroadcasterRepository broadcasterRepository, IGameEventRepository gameEventRepository, NhlGameManager gameManager, NhlPlayerManager playerManager, NhlTeamManager teamManager, ILoggerFactory loggerFactory)
     {
         _gameRepo = gameRepository;
         _playerRepo = playerRepository;
         _teamRepo = teamRepository;
         _errorRepo = errorRepository;
+        _broadcasterRepo = broadcasterRepository;
+        _gameEventRepo = gameEventRepository;
         _gameManager = gameManager;
         _teamManager = teamManager;
         _playerManager = playerManager;
@@ -166,11 +172,11 @@ public class NhlDataManager
         await _gameRepo.AddUpdateGame(game);
 
         // Updates tv broadcasters for the games
-        await _gameRepo.AddUpdateTvBroadcasters(game);
-        await _gameRepo.AddUpdateGameTvBroadcasters(game);
+        await _broadcasterRepo.AddUpdateTvBroadcasters(game);
+        await _broadcasterRepo.AddUpdateGameTvBroadcasters(game);
 
         // Update game events and save to the db
-        await _gameRepo.AddUpdateGameEvents(game);
+        await _gameEventRepo.AddUpdateGameEvents(game);
         await _playerRepo.AddUpdateGameRosterStats(game);
 
         // Add Coaches and Officials

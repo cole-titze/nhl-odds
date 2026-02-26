@@ -1,7 +1,5 @@
-using DatabaseAccess.GameRepository;
 using DatabaseAccess.PlayerRepository;
 using Entities.Models;
-using Entities.Types;
 using Entities.Types.Enums;
 using Microsoft.Extensions.Logging;
 

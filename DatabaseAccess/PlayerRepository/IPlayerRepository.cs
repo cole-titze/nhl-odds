@@ -1,5 +1,4 @@
 ﻿using Entities.Models;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace DatabaseAccess.PlayerRepository;
 

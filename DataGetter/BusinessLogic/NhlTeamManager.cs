@@ -1,6 +1,5 @@
 using DatabaseAccess.TeamRepository;
 using Entities.Models.Teams;
-using Entities.Types;
 using Entities.Types.Enums;
 using Microsoft.Extensions.Logging;
 

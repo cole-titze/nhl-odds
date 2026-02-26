@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations.Schema;
-using Entities.Models.GamePlayEvents;
 using Entities.Types.Enums;
 
 namespace Entities.DbModels.GamePlayEvents;

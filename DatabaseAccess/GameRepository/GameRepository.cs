@@ -1,10 +1,9 @@
-﻿using System.Threading.Tasks;
 using Entities.DbModels;
-using Entities.DbModels.GamePlayEvents;
 using Entities.Mappers.GameEventMappers;
 using Entities.Mappers.GameMappers;
 using Entities.Models;
 using Entities.Types;
+using DatabaseAccess.GameEventRepository;
 using Microsoft.EntityFrameworkCore;
 
 namespace DatabaseAccess.GameRepository;
@@ -14,28 +13,11 @@ public class GameRepository : IGameRepository
     private readonly Dictionary<int, List<DbGameRaw>> _cachedSeasonsGames = new Dictionary<int, List<DbGameRaw>>();
     private readonly Dictionary<int, int> _seasonGameCountCache = new Dictionary<int, int>();
     private readonly NhlDbContext _dbContext;
-    private readonly IDictionary<Type, dynamic> _dbSetEventMap;
-    public GameRepository(NhlDbContext dbContext)
+    private readonly IGameEventRepository _gameEventRepo;
+    public GameRepository(NhlDbContext dbContext, IGameEventRepository gameEventRepository)
     {
         _dbContext = dbContext;
-        _dbSetEventMap = new Dictionary<Type, dynamic>
-        {
-            { typeof(DbBlockedShot), _dbContext.GameBlockedShotEvent },
-            { typeof(DbGoal), _dbContext.GameGoalEvent },
-            { typeof(DbPenalty), _dbContext.GamePenaltyEvent },
-            { typeof(DbFaceoff), _dbContext.GameFaceoffEvent },
-            { typeof(DbGiveaway), _dbContext.GameGiveawayEvent },
-            { typeof(DbHit), _dbContext.GameHitEvent },
-            { typeof(DbMissedShot), _dbContext.GameMissedShotEvent },
-            { typeof(DbTakeaway), _dbContext.GameTakeawayEvent },
-            { typeof(DbShot), _dbContext.GameShotEvent },
-            { typeof(DbDelayedPenalty), _dbContext.GameDelayedPenaltyEvent },
-            { typeof(DbGameEnd), _dbContext.GameGameEndEvent },
-            { typeof(DbPeriodStart), _dbContext.GamePeriodStartEvent },
-            { typeof(DbStoppage), _dbContext.GameStoppageEvent },
-            { typeof(DbPeriodEnd), _dbContext.GamePeriodEndEvent },
-            { typeof(DbShootoutComplete), _dbContext.GameShootoutCompleteEvent },
-        };
+        _gameEventRepo = gameEventRepository;
     }
 
     /// <summary>
@@ -157,81 +139,6 @@ public class GameRepository : IGameRepository
     }
 
     /// <summary>
-    /// Adds or updates the TV broadcasters for the games.
-    /// </summary>
-    /// <param name="game">The game that contains broadcaster info</param>
-    public async Task AddUpdateGameTvBroadcasters(Game game)
-    {
-        var gameBroadcasters = MapGameToDbGameTvBroadcasters.Map(game);
-        var uniqueGameBroadcasters = gameBroadcasters.GroupBy(b => new { b.GameId, b.BroadcasterId }).Select(g => g.First()).ToList();
-
-        var addList = new List<DbGameTvBroadcaster>();
-        var updateList = new List<DbGameTvBroadcaster>();
-        foreach (var gameBroadcaster in uniqueGameBroadcasters)
-        {
-            var dbTvBroadcaster = await GetDbGameTvBroadcaster(gameBroadcaster.GameId, gameBroadcaster.BroadcasterId);
-            if (dbTvBroadcaster == null)
-                addList.Add(gameBroadcaster);
-            else if (!dbTvBroadcaster.IsEquivalentTo(gameBroadcaster))
-            {
-                dbTvBroadcaster.Clone(gameBroadcaster);
-                updateList.Add(dbTvBroadcaster);
-            }
-        }
-
-        await _dbContext.GameTvBroadcaster.AddRangeAsync(addList);
-        _dbContext.GameTvBroadcaster.UpdateRange(updateList);
-    }
-
-    /// <summary>
-    /// Adds or updates the TV broadcasters for the games.
-    /// </summary>
-    /// <param name="game">The game to add broadcasters for</param>
-    public async Task AddUpdateTvBroadcasters(Game game)
-    {
-        var dbTvBroadcasters = MapGameToDbTvBroadcasters.Map(game);
-        var uniqueTvBroadcasters = dbTvBroadcasters.GroupBy(b => b.Id).Select(g => g.First()).ToList();
-
-        var addList = new List<DbTvBroadcaster>();
-        var updateList = new List<DbTvBroadcaster>();
-        foreach (var broadcaster in uniqueTvBroadcasters)
-        {
-            var dbTvBroadcaster = await GetDbTvBroadcaster(broadcaster.Id);
-            if (dbTvBroadcaster == null)
-                addList.Add(broadcaster);
-            else if (!dbTvBroadcaster.IsEquivalentTo(broadcaster))
-            {
-                dbTvBroadcaster.Clone(broadcaster);
-                updateList.Add(dbTvBroadcaster);
-            }
-        }
-
-        await _dbContext.TvBroadcaster.AddRangeAsync(addList);
-        _dbContext.TvBroadcaster.UpdateRange(updateList);
-    }
-
-    /// <summary>
-    /// Gets a TV broadcaster from the database based on the id
-    /// </summary>
-    /// <param name="id">The tv broadcaster id</param>
-    /// <returns>Tv broadcaster or null if it doesn't exist</returns>
-    private async Task<DbTvBroadcaster?> GetDbTvBroadcaster(int id)
-    {
-        return await _dbContext.TvBroadcaster.FirstOrDefaultAsync(x => x.Id == id);
-    }
-
-    /// <summary>
-    /// Gets a game TV broadcaster from the database based on the game id and tv broadcaster id
-    /// </summary>
-    /// <param name="gameId">The game Id</param>
-    /// <param name="tvBroadcasterId"><The broadcaster id/param>
-    /// <returns>The game broadcaster object, or null if it doesn't exist</returns>
-    private async Task<DbGameTvBroadcaster?> GetDbGameTvBroadcaster(int gameId, int tvBroadcasterId)
-    {
-        return await _dbContext.GameTvBroadcaster.FirstOrDefaultAsync(x => x.GameId == gameId && x.BroadcasterId == tvBroadcasterId);
-    }
-
-    /// <summary>
     /// Gets a seasons worth of games and stores them in the cache variable
     /// </summary>
     /// <param name="seasonStartYear">Season start year</param>
@@ -289,7 +196,7 @@ public class GameRepository : IGameRepository
         var game = MapDbGameToGame.Map(dbGame);
         game.ExtendedInfo!.TvBroadcasters = await GetTvBroadcasters(gameId);
         game.RosterStats = await GetGameRosterStats(gameId, dbGame);
-        game.GameEvents = MapDbGameEventsToGameEvents.Map(await GetAllDbGameEvents(gameId));
+        game.GameEvents = MapDbGameEventsToGameEvents.Map(await _gameEventRepo.GetAllDbGameEvents(gameId));
 
         return game;
     }
@@ -444,7 +351,8 @@ public class GameRepository : IGameRepository
     /// <summary>
     /// Adds the season game counts to the database
     /// </summary>
-    /// <param name="seasonGameCountCache">The dictionary of seasonGameCounts to add to the database if they don't exist</param>
+    /// <param name="seasonStartYear">The season start year</param>
+    /// <param name="seasonGameCount">The game count for the season</param>
     public async Task AddUpdateSeasonGameCount(int seasonStartYear, int seasonGameCount)
     {
         var dbGameCount = await _dbContext.SeasonGameCount.FirstOrDefaultAsync(x => x.SeasonId == seasonStartYear);
@@ -466,112 +374,4 @@ public class GameRepository : IGameRepository
 
     }
 
-    /// <summary>
-    /// Adds/updates the game events
-    /// </summary>
-    /// <param name="game">The game to store the events of</param>
-    /// <returns>None</returns>
-    public async Task AddUpdateGameEvents(Game game)
-    {
-        var dbGameEvents = MapGameToDbGameEvent.Map(game);
-
-        var addList = new List<IDbGameEvent>();
-        var updateList = new List<IDbGameEvent>();
-        foreach (var gameEvent in dbGameEvents)
-        {
-            var dbGameEvent = await GetDbGameEvent(gameEvent);
-            if (dbGameEvent == null)
-            {
-                addList.Add(gameEvent);
-            }
-            else if (!dbGameEvent.IsEquivalentTo(gameEvent))
-            {
-                dbGameEvent.Clone(gameEvent);
-                updateList.Add(dbGameEvent);
-            }
-        }
-
-        // Type-safe, clean, no reflection
-        await AddOrUpdateEvents(_dbContext.GameBlockedShotEvent, addList, updateList);
-        await AddOrUpdateEvents(_dbContext.GameGoalEvent, addList, updateList);
-        await AddOrUpdateEvents(_dbContext.GamePenaltyEvent, addList, updateList);
-        await AddOrUpdateEvents(_dbContext.GameFaceoffEvent, addList, updateList);
-        await AddOrUpdateEvents(_dbContext.GameGiveawayEvent, addList, updateList);
-        await AddOrUpdateEvents(_dbContext.GameHitEvent, addList, updateList);
-        await AddOrUpdateEvents(_dbContext.GameMissedShotEvent, addList, updateList);
-        await AddOrUpdateEvents(_dbContext.GameTakeawayEvent, addList, updateList);
-        await AddOrUpdateEvents(_dbContext.GameShotEvent, addList, updateList);
-        await AddOrUpdateEvents(_dbContext.GameDelayedPenaltyEvent, addList, updateList);
-        await AddOrUpdateEvents(_dbContext.GameGameEndEvent, addList, updateList);
-        await AddOrUpdateEvents(_dbContext.GamePeriodStartEvent, addList, updateList);
-        await AddOrUpdateEvents(_dbContext.GameStoppageEvent, addList, updateList);
-        await AddOrUpdateEvents(_dbContext.GamePeriodEndEvent, addList, updateList);
-    }
-    /// <summary>
-    /// Adds or updates the events
-    /// </summary>
-    /// <typeparam name="T">The event type</typeparam>
-    /// <param name="dbSet">the db object to use</param>
-    /// <param name="addList">List of events to add</param>
-    /// <param name="updateList">List of events to update</param>
-    /// <returns>None</returns>
-    private async Task AddOrUpdateEvents<T>(DbSet<T> dbSet, IEnumerable<IDbGameEvent> addList, IEnumerable<IDbGameEvent> updateList) where T : class, IDbGameEvent
-    {
-        var typedAdd = addList.OfType<T>().ToList();
-        var typedUpdate = updateList.OfType<T>().ToList();
-
-        if (typedAdd.Any())
-        {
-            await dbSet.AddRangeAsync(typedAdd);
-        }
-
-        if (typedUpdate.Any())
-        {
-            dbSet.UpdateRange(typedUpdate);
-        }
-    }
-
-    /// <summary>
-    /// Gets all game events for a given game from all event tables
-    /// </summary>
-    /// <param name="gameId">The game to get events for</param>
-    /// <returns>All events for the game</returns>
-    private async Task<IEnumerable<IDbGameEvent>> GetAllDbGameEvents(int gameId)
-    {
-        var events = new List<IDbGameEvent>();
-        foreach (var kvp in _dbSetEventMap)
-        {
-            var dbSet = kvp.Value as IQueryable<IDbGameEvent> ?? ((IQueryable)kvp.Value).Cast<IDbGameEvent>();
-            var gameEvents = await dbSet.Where(x => x.GameId == gameId).ToListAsync();
-            events.AddRange(gameEvents);
-        }
-        return events;
-    }
-
-    /// <summary>
-    /// Gets a game event from the database
-    /// </summary>
-    /// <param name="gameEvent">The game event to get</param>
-    /// <returns>Desired game event</returns>
-    private async Task<IDbGameEvent?> GetDbGameEvent(IDbGameEvent gameEvent)
-    {
-        int gameId = gameEvent.GameId;
-        int id = gameEvent.Id;
-
-        foreach (var kvp in _dbSetEventMap)
-        {
-            var type = kvp.Key;
-            var dbSet = kvp.Value as IQueryable<IDbGameEvent> ?? ((IQueryable)kvp.Value).Cast<IDbGameEvent>();
-            if (!type.IsInstanceOfType(gameEvent))
-                continue;
-
-            var entity = await dbSet.FirstOrDefaultAsync(x => x.GameId == gameId && x.Id == id);
-
-            if (entity != null)
-                return entity;
-        }
-
-        return null;
-    }
 }
-
