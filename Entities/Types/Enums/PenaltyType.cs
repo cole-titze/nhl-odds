@@ -61,7 +61,14 @@ public enum PenaltyType
     DelayOfGameFacoffViolation,
     DelayOfGameBenchFacoffViolation,
     PenaltyShotCoveringPuckInCrease,
-    ButtEnding
+    ButtEnding,
+    DelayOfGameBench,
+    PenaltyShotThrowingObjectAtPuck,
+    ObjectsOnIce,
+    PenaltyShotNetDisplaced,
+    LeavingPenaltyBench,
+    ConcealingPuck,
+    GameMisconductTeamStaff
 }
 public static class PenaltyTypeParser
 {
@@ -189,6 +196,20 @@ public static class PenaltyTypeParser
                 return PenaltyType.PenaltyShotCoveringPuckInCrease;
             case "butt-ending":
                 return PenaltyType.ButtEnding;
+            case "delaying-game-bench":
+                return PenaltyType.DelayOfGameBench;
+            case "ps-throwing-object-at-puck":
+                return PenaltyType.PenaltyShotThrowingObjectAtPuck;
+            case "objects-on-ice":
+                return PenaltyType.ObjectsOnIce;
+            case "ps-net-displaced":
+                return PenaltyType.PenaltyShotNetDisplaced;
+            case "leaving-players-penalty-bench":
+                return PenaltyType.LeavingPenaltyBench;
+            case "concealing-puck":
+                return PenaltyType.ConcealingPuck;
+            case "game-misconduct-team-staff":
+                return PenaltyType.GameMisconductTeamStaff;
             default:
                 throw new ArgumentException($"Invalid PenaltyType value: {penaltyType}", nameof(penaltyType));
         }
