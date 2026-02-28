@@ -31,7 +31,8 @@ public enum StoppageType
     ChallengeHomeTeamGoalInterference,
     ChallengeVisitingTeamGoalInterference,
     ChallengeLeagueOffside,
-    SwitchSides
+    SwitchSides,
+    GoaliePuckFrozenPlayedFromBeyondCenter
 }
 public static class StoppageTypeParser
 {
@@ -101,6 +102,8 @@ public static class StoppageTypeParser
                 return StoppageType.ChallengeLeagueOffside;
             case "switch-sides":
                 return StoppageType.SwitchSides;
+            case "goalie-puck-frozen-played-from-beyond-center":
+                return StoppageType.GoaliePuckFrozenPlayedFromBeyondCenter;
             default:
                 throw new ArgumentException($"Invalid StoppageType value: {stoppageType}", nameof(stoppageType));
         }
