@@ -13,6 +13,6 @@ CREATE TABLE [dbo].[GameDelayedPenaltyEvent]
     SecondsLeftInPeriod INT NOT NULL,
     PenaltyTeamId INT NOT NULL,
     CONSTRAINT PK_GameDelayedPenaltyEvent PRIMARY KEY(GameId, Id),
-    FOREIGN KEY (GameId) REFERENCES GameRaw(id),
-    FOREIGN KEY (PenaltyTeamId) REFERENCES Team(id)
+    FOREIGN KEY (GameId) REFERENCES GameRaw(Id),
+    FOREIGN KEY (PenaltyTeamId) REFERENCES Team(Id)
 );
