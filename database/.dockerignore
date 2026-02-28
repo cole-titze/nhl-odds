@@ -1,0 +1,4 @@
+bin/
+obj/
+Tables/
+*.sqlproj

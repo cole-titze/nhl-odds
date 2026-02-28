@@ -1,0 +1,5 @@
+**/bin/
+**/obj/
+.git/
+.github/
+Entry/appsettings.Local.json
