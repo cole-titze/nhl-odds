@@ -68,7 +68,13 @@ public enum PenaltyType
     PenaltyShotNetDisplaced,
     LeavingPenaltyBench,
     ConcealingPuck,
-    GameMisconductTeamStaff
+    GameMisconductTeamStaff,
+    PenaltyShotHoldingStickOnBreakaway,
+    Bench,
+    PlayerLeavesBench,
+    LeavingPenaltyBox,
+    Minor,
+    Major
 }
 public static class PenaltyTypeParser
 {
@@ -210,6 +216,18 @@ public static class PenaltyTypeParser
                 return PenaltyType.ConcealingPuck;
             case "game-misconduct-team-staff":
                 return PenaltyType.GameMisconductTeamStaff;
+            case "ps-holding-stick-on-breakaway":
+                return PenaltyType.PenaltyShotHoldingStickOnBreakaway;
+            case "bench":
+                return PenaltyType.Bench;
+            case "player-leaves-bench":
+                return PenaltyType.PlayerLeavesBench;
+            case "leaving-penalty-box":
+                return PenaltyType.LeavingPenaltyBox;
+            case "minor":
+                return PenaltyType.Minor;
+            case "major":
+                return PenaltyType.Major;
             default:
                 throw new ArgumentException($"Invalid PenaltyType value: {penaltyType}", nameof(penaltyType));
         }

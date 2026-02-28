@@ -28,7 +28,10 @@ public enum StoppageType
     ObjectsOnIce,
     PrematureSubstitution,
     OfficialInjury,
-    ChallengeHomeTeamGoalInterference
+    ChallengeHomeTeamGoalInterference,
+    ChallengeVisitingTeamGoalInterference,
+    ChallengeLeagueOffside,
+    SwitchSides
 }
 public static class StoppageTypeParser
 {
@@ -90,6 +93,14 @@ public static class StoppageTypeParser
                 return StoppageType.OfficialInjury;
             case "chlg-hm-goal-interference":
                 return StoppageType.ChallengeHomeTeamGoalInterference;
+            case "chlg-vis-goal-interference":
+                return StoppageType.ChallengeVisitingTeamGoalInterference;
+            case "chlg-hm-off-side":
+                return StoppageType.ChallengeHomeTeamOffside;
+            case "chlg-league-off-side":
+                return StoppageType.ChallengeLeagueOffside;
+            case "switch-sides":
+                return StoppageType.SwitchSides;
             default:
                 throw new ArgumentException($"Invalid StoppageType value: {stoppageType}", nameof(stoppageType));
         }
