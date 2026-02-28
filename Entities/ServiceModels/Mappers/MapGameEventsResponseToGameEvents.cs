@@ -12,7 +12,10 @@ public static class MapGameEventsResponseToGameEvents
         foreach (var responseGameEvent in response.plays)
         {
             var gameEvent = GetGameEvent(responseGameEvent);
-            gameEvents.Add(gameEvent);
+            if (gameEvent != null)
+            {
+                gameEvents.Add(gameEvent);
+            }
         }
 
         return new GameEvents(gameEvents);
@@ -23,9 +26,25 @@ public static class MapGameEventsResponseToGameEvents
     /// </summary>
     /// <param name="responseGameEvent">A game event from the nhl api</param>
     /// <returns>The Game Event</returns>
-    private static IGameEvent GetGameEvent(dynamic responseGameEvent)
+    private static IGameEvent? GetGameEvent(dynamic responseGameEvent)
     {
         var eventType = EventTypeParser.Parse((string)responseGameEvent.typeDescKey);
+
+        // Some event types require details; skip if details is missing
+        if (responseGameEvent.details == null)
+        {
+            switch (eventType)
+            {
+                case EventType.PeriodStart:
+                case EventType.PeriodEnd:
+                case EventType.GameEnd:
+                case EventType.ShootoutComplete:
+                    break; // These don't need details
+                default:
+                    return null; // Skip events that need details but don't have them
+            }
+        }
+
         switch (eventType)
         {
             case EventType.PeriodStart:

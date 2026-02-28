@@ -74,7 +74,10 @@ public enum PenaltyType
     PlayerLeavesBench,
     LeavingPenaltyBox,
     Minor,
-    Major
+    Major,
+    HeadButtDoubleMinor,
+    PenaltyShotGoalkeeperDisplacedNet,
+    ButtEndingDoubleMinor
 }
 public static class PenaltyTypeParser
 {
@@ -228,6 +231,12 @@ public static class PenaltyTypeParser
                 return PenaltyType.Minor;
             case "major":
                 return PenaltyType.Major;
+            case "head-butting-double-minor":
+                return PenaltyType.HeadButtDoubleMinor;
+            case "ps-goalkeeper-displaced-net":
+                return PenaltyType.PenaltyShotGoalkeeperDisplacedNet;
+            case "butt-ending-double-minor":
+                return PenaltyType.ButtEndingDoubleMinor;
             default:
                 throw new ArgumentException($"Invalid PenaltyType value: {penaltyType}", nameof(penaltyType));
         }
