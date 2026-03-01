@@ -21,6 +21,13 @@ sudo docker run --restart=always --cap-add SYS_PTRACE -e 'ACCEPT_EULA=1' -e 'MSS
 1. CreateDatabase.sql
 2. CreateTables.sql
 
+- Or restore from a backup:
+
+```
+docker cp ./nhl.bak azuresqledge:/var/opt/mssql/backup/nhl.bak
+docker exec azuresqledge /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P '<YOUR PASSWORD>' -Q "RESTORE DATABASE [nhl] FROM DISK = N'/var/opt/mssql/backup/nhl.bak' WITH REPLACE"
+```
+
 ### Run Data Collection
 
 - Build
@@ -37,3 +44,10 @@ dotnet run
 ```
 
 ### Run Data Models
+
+### Backup Database
+
+```
+docker exec azuresqledge /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P '<YOUR PASSWORD>' -Q "BACKUP DATABASE [nhl] TO DISK = N'/var/opt/mssql/backup/nhl.bak' WITH FORMAT"
+docker cp azuresqledge:/var/opt/mssql/backup/nhl.bak ./nhl.bak
+```
