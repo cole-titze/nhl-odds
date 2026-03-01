@@ -9,7 +9,8 @@ public enum ShotType
     Tip = 3,
     Backhand = 4,
     WrapAround = 5,
-    Deflected = 6
+    Deflected = 6,
+    Bat = 7
 }
 public static class ShotTypeParser
 {
@@ -31,10 +32,12 @@ public static class ShotTypeParser
                 return ShotType.WrapAround;
             case "deflected":
                 return ShotType.Deflected;
+            case "bat":
+                return ShotType.Bat;
             case null:
                 return ShotType.Unknown;
             default:
-                throw new ArgumentException($"Invalid PeriodType value: {shotType}", nameof(shotType));
+                throw new ArgumentException($"Invalid ShotType value: {shotType}", nameof(shotType));
         }
     }
 }

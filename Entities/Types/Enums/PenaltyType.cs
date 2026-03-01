@@ -81,7 +81,8 @@ public enum PenaltyType
     PlayingWithoutHelmet,
     DelayOfGameFailedChallengeDoubleMinor,
     InterferenceBench,
-    UnsportsmanlikeConductBench
+    UnsportsmanlikeConductBench,
+    GoalieRemovedOwnMask
 }
 public static class PenaltyTypeParser
 {
@@ -249,6 +250,8 @@ public static class PenaltyTypeParser
                 return PenaltyType.InterferenceBench;
             case "unsportsmanlike-conduct-bench":
                 return PenaltyType.UnsportsmanlikeConductBench;
+            case "goalie-removed-own-mask":
+                return PenaltyType.GoalieRemovedOwnMask;
             default:
                 throw new ArgumentException($"Invalid PenaltyType value: {penaltyType}", nameof(penaltyType));
         }
