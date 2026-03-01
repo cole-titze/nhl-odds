@@ -77,7 +77,9 @@ public enum PenaltyType
     Major,
     HeadButtDoubleMinor,
     PenaltyShotGoalkeeperDisplacedNet,
-    ButtEndingDoubleMinor
+    ButtEndingDoubleMinor,
+    PlayingWithoutHelmet,
+    DelayOfGameFailedChallengeDoubleMinor
 }
 public static class PenaltyTypeParser
 {
@@ -237,6 +239,10 @@ public static class PenaltyTypeParser
                 return PenaltyType.PenaltyShotGoalkeeperDisplacedNet;
             case "butt-ending-double-minor":
                 return PenaltyType.ButtEndingDoubleMinor;
+            case "playing-without-a-helmet":
+                return PenaltyType.PlayingWithoutHelmet;
+            case "delaying-game-unsuccessful-challenge-double-minor":
+                return PenaltyType.DelayOfGameFailedChallengeDoubleMinor;
             default:
                 throw new ArgumentException($"Invalid PenaltyType value: {penaltyType}", nameof(penaltyType));
         }

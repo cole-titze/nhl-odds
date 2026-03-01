@@ -36,7 +36,9 @@ public enum StoppageType
     NetDislodgedOffensiveSkater,
     NetDislodgedDefensiveSkater,
     NetDislodgedByGoaltender,
-    ChallengeHomeTeamMissedStoppage
+    ChallengeHomeTeamMissedStoppage,
+    ChallengeVisitingTeamMissedStoppage,
+    ChallengeLeagueMissedStoppage
 }
 public static class StoppageTypeParser
 {
@@ -116,6 +118,10 @@ public static class StoppageTypeParser
                 return StoppageType.NetDislodgedByGoaltender;
             case "chlg-hm-missed-stoppage":
                 return StoppageType.ChallengeHomeTeamMissedStoppage;
+            case "chlg-vis-missed-stoppage":
+                return StoppageType.ChallengeVisitingTeamMissedStoppage;
+            case "chlg-league-missed-stoppage":
+                return StoppageType.ChallengeLeagueMissedStoppage;
             default:
                 throw new ArgumentException($"Invalid StoppageType value: {stoppageType}", nameof(stoppageType));
         }
