@@ -313,6 +313,33 @@ CREATE TABLE [dbo].[GameDelayedPenaltyEvent]
     FOREIGN KEY (PenaltyTeamId) REFERENCES Team(Id)
 );
 
+CREATE TABLE [dbo].[GameFailedShotAttemptEvent]
+(
+    Id INT NOT NULL,
+    GameId INT NOT NULL,
+    TypeCode INT NOT NULL,
+    SortOrder INT NOT NULL,
+    SituationCode INT NOT NULL,
+    PeriodNumber INT NOT NULL,
+    PeriodType INT NOT NULL,
+    EventTypeName VARCHAR(100) NOT NULL,
+    HomeTeamDefendingSide INT NOT NULL,
+    ShotType INT NOT NULL,
+    SecondsIntoPeriod INT NOT NULL,
+    SecondsLeftInPeriod INT NOT NULL,
+    ShootingTeamId INT NOT NULL,
+    ShootingPlayerId INT NOT NULL,
+    GoalieId INT,
+    XCoordinate INT,
+    YCoordinate INT,
+    [Zone] INT NOT NULL,
+    CONSTRAINT PK_GameFailedShotAttemptEvent PRIMARY KEY(GameId, Id),
+    FOREIGN KEY (GameId) REFERENCES GameRaw(Id),
+    FOREIGN KEY (ShootingTeamId) REFERENCES Team(Id),
+    FOREIGN KEY (ShootingPlayerId) REFERENCES Player(Id),
+    FOREIGN KEY (GoalieId) REFERENCES Player(Id)
+);
+
 CREATE TABLE [dbo].[GameFaceoffEvent]
 (
     Id INT NOT NULL,

@@ -16,7 +16,8 @@ public enum EventType
     Stoppage = 12,
     Takeaway = 13,
     PeriodEnd = 14,
-    ShootoutComplete = 15
+    ShootoutComplete = 15,
+    FailedShotAttempt = 16
 }
 public static class EventTypeParser
 {
@@ -54,6 +55,8 @@ public static class EventTypeParser
                 return EventType.PeriodEnd;
             case "shootout-complete":
                 return EventType.ShootoutComplete;
+            case "failed-shot-attempt":
+                return EventType.FailedShotAttempt;
             default:
                 throw new ArgumentException($"Unknown event type: {eventType}", nameof(eventType));
         }

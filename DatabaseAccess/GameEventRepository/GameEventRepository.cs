@@ -31,6 +31,7 @@ public class GameEventRepository : IGameEventRepository
             { typeof(DbStoppage), _dbContext.GameStoppageEvent },
             { typeof(DbPeriodEnd), _dbContext.GamePeriodEndEvent },
             { typeof(DbShootoutComplete), _dbContext.GameShootoutCompleteEvent },
+            { typeof(DbFailedShotAttempt), _dbContext.GameFailedShotAttemptEvent },
         };
     }
 
@@ -79,6 +80,7 @@ public class GameEventRepository : IGameEventRepository
         await AddOrUpdateEvents(_dbContext.GamePeriodStartEvent, addList, updateList);
         await AddOrUpdateEvents(_dbContext.GameStoppageEvent, addList, updateList);
         await AddOrUpdateEvents(_dbContext.GamePeriodEndEvent, addList, updateList);
+        await AddOrUpdateEvents(_dbContext.GameFailedShotAttemptEvent, addList, updateList);
     }
 
     /// <summary>

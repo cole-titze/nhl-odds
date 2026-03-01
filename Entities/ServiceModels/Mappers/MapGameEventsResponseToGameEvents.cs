@@ -69,6 +69,8 @@ public static class MapGameEventsResponseToGameEvents
                 return MapHitEvent.Map(responseGameEvent);
             case EventType.MissedShot:
                 return MapMissedShotEvent.Map(responseGameEvent);
+            case EventType.FailedShotAttempt:
+                return MapFailedShotAttemptEvent.Map(responseGameEvent);
             case EventType.Penalty:
                 return MapPenaltyEvent.Map(responseGameEvent);
             case EventType.Takeaway:

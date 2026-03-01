@@ -28,6 +28,7 @@ public static class MapDbGameEventsToGameEvents
                 DbShootoutComplete e => MapDbShootoutCompleteEventToShootoutCompleteEvent.Map(e),
                 DbStoppage e => MapDbStoppageEventToStoppageEvent.Map(e),
                 DbTakeaway e => MapDbTakeawayEventToTakeawayEvent.Map(e),
+                DbFailedShotAttempt e => MapDbFailedShotAttemptEventToFailedShotAttemptEvent.Map(e),
                 _ => null
             };
             if (mapped != null) events.Add(mapped);

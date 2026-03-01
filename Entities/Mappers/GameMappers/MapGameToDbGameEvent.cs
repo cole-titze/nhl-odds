@@ -28,6 +28,7 @@ public static class MapGameToDbGameEvent
         dbGameEvents.AddRange(MapStoppageEventToDbStoppageEvent.MapList(game.GameEvents.Events.OfType<Stoppage>(), game.Id));
         dbGameEvents.AddRange(MapTakeawayEventToDbTakeawayEvent.MapList(game.GameEvents.Events.OfType<Takeaway>(), game.Id));
         dbGameEvents.AddRange(MapShootoutCompleteEventToDbShootoutCompleteEvent.MapList(game.GameEvents.Events.OfType<ShootoutComplete>(), game.Id));
+        dbGameEvents.AddRange(MapFailedShotAttemptEventToDbFailedShotAttemptEvent.MapList(game.GameEvents.Events.OfType<FailedShotAttempt>(), game.Id));
 
         return dbGameEvents;
     }

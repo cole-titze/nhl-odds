@@ -171,6 +171,7 @@ public static class PenaltyTypeParser
             case "delaying-game-smothering-puck":
                 return PenaltyType.DelayOfGameSmotheringPuck;
             case "match-penatly-10-minutes":
+            case "match-penalty":
                 return PenaltyType.MatchPenalty;
             case "broken-stick":
                 return PenaltyType.BrokenStick;

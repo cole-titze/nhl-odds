@@ -44,6 +44,7 @@ public partial class NhlDbContext : DbContext
     public virtual DbSet<DbStoppage> GameStoppageEvent { get; set; } = null!;
     public virtual DbSet<DbTakeaway> GameTakeawayEvent { get; set; } = null!;
     public virtual DbSet<DbShootoutComplete> GameShootoutCompleteEvent { get; set; } = null!;
+    public virtual DbSet<DbFailedShotAttempt> GameFailedShotAttemptEvent { get; set; } = null!;
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -99,6 +100,8 @@ public partial class NhlDbContext : DbContext
         modelBuilder.Entity<DbTakeaway>()
             .HasKey(c => new { c.Id, c.GameId });
         modelBuilder.Entity<DbShootoutComplete>()
+            .HasKey(c => new { c.Id, c.GameId });
+        modelBuilder.Entity<DbFailedShotAttempt>()
             .HasKey(c => new { c.Id, c.GameId });
     }
 }

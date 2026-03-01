@@ -12,7 +12,8 @@ public enum ShotType
     Deflected = 6,
     Bat = 7,
     Poke = 8,
-    BetweenLegs = 9
+    BetweenLegs = 9,
+    Cradle = 10
 }
 public static class ShotTypeParser
 {
@@ -40,6 +41,8 @@ public static class ShotTypeParser
                 return ShotType.Poke;
             case "between-legs":
                 return ShotType.BetweenLegs;
+            case "cradle":
+                return ShotType.Cradle;
             case null:
                 return ShotType.Unknown;
             default:
