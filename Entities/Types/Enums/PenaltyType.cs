@@ -84,7 +84,8 @@ public enum PenaltyType
     UnsportsmanlikeConductBench,
     GoalieRemovedOwnMask,
     PuckThrownForwardGoalkeeper,
-    DelayOfGameEquipment
+    DelayOfGameEquipment,
+    GoalieParticipationBeyondCenter
 }
 public static class PenaltyTypeParser
 {
@@ -259,6 +260,8 @@ public static class PenaltyTypeParser
                 return PenaltyType.PuckThrownForwardGoalkeeper;
             case "delaying-game-equipment":
                 return PenaltyType.DelayOfGameEquipment;
+            case "goalie-participation-beyond-center":
+                return PenaltyType.GoalieParticipationBeyondCenter;
             default:
                 throw new ArgumentException($"Invalid PenaltyType value: {penaltyType}", nameof(penaltyType));
         }

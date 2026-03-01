@@ -5,6 +5,7 @@ public enum BlockType
     Unknown = -1,
     Teammate = 0,
     Opponent = 1,
+    Other = 2,
 }
 public static class BlockTypeParser
 {
@@ -16,6 +17,8 @@ public static class BlockTypeParser
                 return BlockType.Teammate;
             case "blocked":
                 return BlockType.Opponent;
+            case "other-block":
+                return BlockType.Other;
             case null:
                 return BlockType.Unknown;
             default:
