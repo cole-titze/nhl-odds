@@ -99,7 +99,8 @@ public class NhlDataManager
             {
                 _logger.LogError(ex, "Error processing game {GameId} in season {Season}. Skipping.", gameId, seasonStartYear);
                 var stackTrace = ex.StackTrace ?? string.Empty;
-                var firstFrame = stackTrace.Split('\n', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim() ?? string.Empty;
+                var stackFrames = stackTrace.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                var topFrames = string.Join(" | ", stackFrames.Take(3).Select(f => f.Trim()));
                 var errorLog = new DbErrorLog
                 {
                     TimestampUTC = DateTime.UtcNow,
@@ -107,7 +108,7 @@ public class NhlDataManager
                     SeasonStartYear = seasonStartYear,
                     ExceptionType = ex.GetType().FullName ?? ex.GetType().Name,
                     Message = ex.Message,
-                    StackTrace = firstFrame,
+                    StackTrace = topFrames,
                     Source = "FetchAndSaveSeasonData"
                 };
                 await _errorRepo.AddError(errorLog);

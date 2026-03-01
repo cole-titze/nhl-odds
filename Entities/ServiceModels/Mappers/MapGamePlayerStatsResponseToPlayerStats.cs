@@ -18,10 +18,17 @@ public static class MapGamePlayerStatsResponseToGamePlayerStats
         var homeTeamId = (int)gameSummaryResponse.homeTeam.id;
         var awayTeamId = (int)gameSummaryResponse.awayTeam.id;
 
+        var homeCoachName = gamePlayerStatResponse.gameInfo.homeTeam.headCoach != null
+            ? (string)gamePlayerStatResponse.gameInfo.homeTeam.headCoach.@default
+            : "Unknown";
+        var awayCoachName = gamePlayerStatResponse.gameInfo.awayTeam.headCoach != null
+            ? (string)gamePlayerStatResponse.gameInfo.awayTeam.headCoach.@default
+            : "Unknown";
+
         var gameRosterStats = new GameRosterStats()
         {
-            HomeTeamCoach = new Coach() { Name = (string)gamePlayerStatResponse.gameInfo.homeTeam.headCoach.@default },
-            AwayTeamCoach = new Coach() { Name = (string)gamePlayerStatResponse.gameInfo.awayTeam.headCoach.@default },
+            HomeTeamCoach = new Coach() { Name = homeCoachName },
+            AwayTeamCoach = new Coach() { Name = awayCoachName },
             HomeTeamForwards = GetGameSkaters(gameSummaryResponse.playerByGameStats.homeTeam.forwards, homeTeamId),
             AwayTeamForwards = GetGameSkaters(gameSummaryResponse.playerByGameStats.awayTeam.forwards, awayTeamId),
             HomeTeamDefensemen = GetGameSkaters(gameSummaryResponse.playerByGameStats.homeTeam.defense, homeTeamId),
