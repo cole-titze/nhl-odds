@@ -18,8 +18,8 @@ public class DbBlockedShot : IDbGameEvent
     public int SecondsIntoPeriod { get; set; }
     public int SecondsLeftInPeriod { get; set; }
     public int BlockingPlayerTeamId { get; set; }
-    public int BlockingPlayerId { get; set; }
-    public int ShooterPlayerId { get; set; }
+    public int? BlockingPlayerId { get; set; }
+    public int? ShooterPlayerId { get; set; }
     public int? XCoordinate { get; set; }
     public int? YCoordinate { get; set; }
     public Zone Zone { get; set; }
