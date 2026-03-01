@@ -17,6 +17,7 @@ public enum MissedShotType
     RightPost = 8,
     Crossbar = 9,
     Short = 10,
+    FailedBankAttempt = 11,
 }
 public static class MissedShotTypeParser
 {
@@ -47,6 +48,8 @@ public static class MissedShotTypeParser
                 return MissedShotType.Crossbar;
             case "goalpost":
                 return MissedShotType.GoalPost;
+            case "failed-bank-attempt":
+                return MissedShotType.FailedBankAttempt;
             case null:
                 return MissedShotType.Unknown;
             default:

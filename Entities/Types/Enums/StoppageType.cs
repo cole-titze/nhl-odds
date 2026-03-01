@@ -40,7 +40,8 @@ public enum StoppageType
     ChallengeVisitingTeamMissedStoppage,
     ChallengeLeagueMissedStoppage,
     ChallengeLeagueGoalInterference,
-    PuckInPenaltyBenches
+    PuckInPenaltyBenches,
+    IceScrape
 }
 public static class StoppageTypeParser
 {
@@ -128,6 +129,8 @@ public static class StoppageTypeParser
                 return StoppageType.ChallengeLeagueGoalInterference;
             case "puck-in-penalty-benches":
                 return StoppageType.PuckInPenaltyBenches;
+            case "ice-scrape":
+                return StoppageType.IceScrape;
             default:
                 throw new ArgumentException($"Invalid StoppageType value: {stoppageType}", nameof(stoppageType));
         }
