@@ -30,6 +30,8 @@ public static class MissedShotTypeParser
                 return MissedShotType.WideLeft;
             case "high-and-wide-left":
                 return MissedShotType.HighWideLeft;
+            case "high-and-wide-right":
+                return MissedShotType.HighWideRight;
             case "wide-right":
                 return MissedShotType.WideRight;
             case "hit-left-post":

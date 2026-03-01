@@ -38,8 +38,8 @@ public static class MapGoalEvent
             XCoordinate = (int?)responseGameEvent.details.xCoord,
             YCoordinate = (int?)responseGameEvent.details.yCoord,
             HighlightClipSharingUrl = (string)responseGameEvent.details.highlightClipSharingUrl ?? "",
-            HighlightClipId = (int?)responseGameEvent.details.highlightClip ?? -1,
-            DiscreetClipId = (double?)responseGameEvent.details.discreteClip ?? -1,
+            HighlightClipId = (long?)responseGameEvent.details.highlightClip ?? -1,
+            DiscreetClipId = (long?)responseGameEvent.details.discreteClip ?? -1,
             PptReplayUrl = (string)responseGameEvent.pptReplayUrl ?? "",
         };
     }

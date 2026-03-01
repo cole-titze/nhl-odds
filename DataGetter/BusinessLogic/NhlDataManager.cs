@@ -100,7 +100,7 @@ public class NhlDataManager
                 _logger.LogError(ex, "Error processing game {GameId} in season {Season}. Skipping.", gameId, seasonStartYear);
                 var stackTrace = ex.StackTrace ?? string.Empty;
                 var stackFrames = stackTrace.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-                var topFrames = string.Join(" | ", stackFrames.Take(3).Select(f => f.Trim()));
+                var topFrames = string.Join(" | ", stackFrames.Take(10).Select(f => f.Trim()));
                 var errorLog = new DbErrorLog
                 {
                     TimestampUTC = DateTime.UtcNow,

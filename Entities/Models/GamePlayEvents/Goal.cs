@@ -24,7 +24,7 @@ public class Goal : IGameEvent
     public int ScoringPlayerId { get; set; }
     public int? GoalieId { get; set; }
     public string HighlightClipSharingUrl { get; set; } = string.Empty;
-    public int HighlightClipId { get; set; }
-    public double DiscreetClipId { get; set; }
+    public long HighlightClipId { get; set; }
+    public long DiscreetClipId { get; set; }
     public string PptReplayUrl { get; set; } = string.Empty;
 }
