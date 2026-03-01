@@ -10,7 +10,9 @@ public enum ShotType
     Backhand = 4,
     WrapAround = 5,
     Deflected = 6,
-    Bat = 7
+    Bat = 7,
+    Poke = 8,
+    BetweenLegs = 9
 }
 public static class ShotTypeParser
 {
@@ -34,6 +36,10 @@ public static class ShotTypeParser
                 return ShotType.Deflected;
             case "bat":
                 return ShotType.Bat;
+            case "poke":
+                return ShotType.Poke;
+            case "between-legs":
+                return ShotType.BetweenLegs;
             case null:
                 return ShotType.Unknown;
             default:
