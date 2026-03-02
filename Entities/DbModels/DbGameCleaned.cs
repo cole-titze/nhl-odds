@@ -56,6 +56,50 @@ public class DbGameCleaned
     public double AwayRecentRosterDefenseValue { get; set; }
     public double AwayRecentRosterGoalieValue { get; set; }
     public double AwayHoursSinceLastGame { get; set; }
+    public double HomeIsBackToBack { get; set; }
+    public double AwayIsBackToBack { get; set; }
+    public double RestAdvantage { get; set; }
+    public double HomeRecentShotAttemptsAvg { get; set; }
+    public double AwayRecentShotAttemptsAvg { get; set; }
+    public double HomeGoalDiffAvg { get; set; }
+    public double AwayGoalDiffAvg { get; set; }
+    public double HomeRecentGoalDiffAvg { get; set; }
+    public double AwayRecentGoalDiffAvg { get; set; }
+    public double HomeStreak { get; set; }
+    public double AwayStreak { get; set; }
+    public double HomeWinRatioAtHome { get; set; }
+    public double AwayWinRatioAtAway { get; set; }
+    public double HeadToHeadWinRatio { get; set; }
+    public double HomeSavePct { get; set; }
+    public double AwaySavePct { get; set; }
+    public double HomeRecentSavePct { get; set; }
+    public double AwayRecentSavePct { get; set; }
+    public double HomeSogAvg { get; set; }
+    public double AwaySogAvg { get; set; }
+    public double HomePpgAvg { get; set; }
+    public double AwayPpgAvg { get; set; }
+    public double HomeHitsAvg { get; set; }
+    public double AwayHitsAvg { get; set; }
+    public double HomePimAvg { get; set; }
+    public double AwayPimAvg { get; set; }
+    public double HomeBlockedShotsAvg { get; set; }
+    public double AwayBlockedShotsAvg { get; set; }
+    public double HomeTakeawaysAvg { get; set; }
+    public double AwayTakeawaysAvg { get; set; }
+    public double HomeGiveawaysAvg { get; set; }
+    public double AwayGiveawaysAvg { get; set; }
+    public double HomeFaceOffWinPctAvg { get; set; }
+    public double AwayFaceOffWinPctAvg { get; set; }
+    public double HomeRecentFaceOffWinPctAvg { get; set; }
+    public double AwayRecentFaceOffWinPctAvg { get; set; }
+    public double HomeOvertimeRatio { get; set; }
+    public double AwayOvertimeRatio { get; set; }
+    public double HomeRecentOvertimeRatio { get; set; }
+    public double AwayRecentOvertimeRatio { get; set; }
+    public double HomeRegulationWinRatio { get; set; }
+    public double AwayRegulationWinRatio { get; set; }
+    public double HomeRecentRegulationWinRatio { get; set; }
+    public double AwayRecentRegulationWinRatio { get; set; }
 
     [ForeignKey(nameof(GameId))]
     public DbGameRaw? Game { get; set; } = new DbGameRaw();
@@ -115,6 +159,50 @@ public class DbGameCleaned
         AwayRecentRosterDefenseValue = gameCleaned.AwayRecentRosterDefenseValue;
         AwayRecentRosterGoalieValue = gameCleaned.AwayRecentRosterGoalieValue;
         AwayHoursSinceLastGame = gameCleaned.AwayHoursSinceLastGame;
+        HomeIsBackToBack = gameCleaned.HomeIsBackToBack;
+        AwayIsBackToBack = gameCleaned.AwayIsBackToBack;
+        RestAdvantage = gameCleaned.RestAdvantage;
+        HomeRecentShotAttemptsAvg = gameCleaned.HomeRecentShotAttemptsAvg;
+        AwayRecentShotAttemptsAvg = gameCleaned.AwayRecentShotAttemptsAvg;
+        HomeGoalDiffAvg = gameCleaned.HomeGoalDiffAvg;
+        AwayGoalDiffAvg = gameCleaned.AwayGoalDiffAvg;
+        HomeRecentGoalDiffAvg = gameCleaned.HomeRecentGoalDiffAvg;
+        AwayRecentGoalDiffAvg = gameCleaned.AwayRecentGoalDiffAvg;
+        HomeStreak = gameCleaned.HomeStreak;
+        AwayStreak = gameCleaned.AwayStreak;
+        HomeWinRatioAtHome = gameCleaned.HomeWinRatioAtHome;
+        AwayWinRatioAtAway = gameCleaned.AwayWinRatioAtAway;
+        HeadToHeadWinRatio = gameCleaned.HeadToHeadWinRatio;
+        HomeSavePct = gameCleaned.HomeSavePct;
+        AwaySavePct = gameCleaned.AwaySavePct;
+        HomeRecentSavePct = gameCleaned.HomeRecentSavePct;
+        AwayRecentSavePct = gameCleaned.AwayRecentSavePct;
+        HomeSogAvg = gameCleaned.HomeSogAvg;
+        AwaySogAvg = gameCleaned.AwaySogAvg;
+        HomePpgAvg = gameCleaned.HomePpgAvg;
+        AwayPpgAvg = gameCleaned.AwayPpgAvg;
+        HomeHitsAvg = gameCleaned.HomeHitsAvg;
+        AwayHitsAvg = gameCleaned.AwayHitsAvg;
+        HomePimAvg = gameCleaned.HomePimAvg;
+        AwayPimAvg = gameCleaned.AwayPimAvg;
+        HomeBlockedShotsAvg = gameCleaned.HomeBlockedShotsAvg;
+        AwayBlockedShotsAvg = gameCleaned.AwayBlockedShotsAvg;
+        HomeTakeawaysAvg = gameCleaned.HomeTakeawaysAvg;
+        AwayTakeawaysAvg = gameCleaned.AwayTakeawaysAvg;
+        HomeGiveawaysAvg = gameCleaned.HomeGiveawaysAvg;
+        AwayGiveawaysAvg = gameCleaned.AwayGiveawaysAvg;
+        HomeFaceOffWinPctAvg = gameCleaned.HomeFaceOffWinPctAvg;
+        AwayFaceOffWinPctAvg = gameCleaned.AwayFaceOffWinPctAvg;
+        HomeRecentFaceOffWinPctAvg = gameCleaned.HomeRecentFaceOffWinPctAvg;
+        AwayRecentFaceOffWinPctAvg = gameCleaned.AwayRecentFaceOffWinPctAvg;
+        HomeOvertimeRatio = gameCleaned.HomeOvertimeRatio;
+        AwayOvertimeRatio = gameCleaned.AwayOvertimeRatio;
+        HomeRecentOvertimeRatio = gameCleaned.HomeRecentOvertimeRatio;
+        AwayRecentOvertimeRatio = gameCleaned.AwayRecentOvertimeRatio;
+        HomeRegulationWinRatio = gameCleaned.HomeRegulationWinRatio;
+        AwayRegulationWinRatio = gameCleaned.AwayRegulationWinRatio;
+        HomeRecentRegulationWinRatio = gameCleaned.HomeRecentRegulationWinRatio;
+        AwayRecentRegulationWinRatio = gameCleaned.AwayRecentRegulationWinRatio;
         Game = gameCleaned.Game;
     }
 
@@ -169,6 +257,50 @@ public class DbGameCleaned
             && AwayRecentRosterOffenseValue == other.AwayRecentRosterOffenseValue
             && AwayRecentRosterDefenseValue == other.AwayRecentRosterDefenseValue
             && AwayRecentRosterGoalieValue == other.AwayRecentRosterGoalieValue
-            && AwayHoursSinceLastGame == other.AwayHoursSinceLastGame;
+            && AwayHoursSinceLastGame == other.AwayHoursSinceLastGame
+            && HomeIsBackToBack == other.HomeIsBackToBack
+            && AwayIsBackToBack == other.AwayIsBackToBack
+            && RestAdvantage == other.RestAdvantage
+            && HomeRecentShotAttemptsAvg == other.HomeRecentShotAttemptsAvg
+            && AwayRecentShotAttemptsAvg == other.AwayRecentShotAttemptsAvg
+            && HomeGoalDiffAvg == other.HomeGoalDiffAvg
+            && AwayGoalDiffAvg == other.AwayGoalDiffAvg
+            && HomeRecentGoalDiffAvg == other.HomeRecentGoalDiffAvg
+            && AwayRecentGoalDiffAvg == other.AwayRecentGoalDiffAvg
+            && HomeStreak == other.HomeStreak
+            && AwayStreak == other.AwayStreak
+            && HomeWinRatioAtHome == other.HomeWinRatioAtHome
+            && AwayWinRatioAtAway == other.AwayWinRatioAtAway
+            && HeadToHeadWinRatio == other.HeadToHeadWinRatio
+            && HomeSavePct == other.HomeSavePct
+            && AwaySavePct == other.AwaySavePct
+            && HomeRecentSavePct == other.HomeRecentSavePct
+            && AwayRecentSavePct == other.AwayRecentSavePct
+            && HomeSogAvg == other.HomeSogAvg
+            && AwaySogAvg == other.AwaySogAvg
+            && HomePpgAvg == other.HomePpgAvg
+            && AwayPpgAvg == other.AwayPpgAvg
+            && HomeHitsAvg == other.HomeHitsAvg
+            && AwayHitsAvg == other.AwayHitsAvg
+            && HomePimAvg == other.HomePimAvg
+            && AwayPimAvg == other.AwayPimAvg
+            && HomeBlockedShotsAvg == other.HomeBlockedShotsAvg
+            && AwayBlockedShotsAvg == other.AwayBlockedShotsAvg
+            && HomeTakeawaysAvg == other.HomeTakeawaysAvg
+            && AwayTakeawaysAvg == other.AwayTakeawaysAvg
+            && HomeGiveawaysAvg == other.HomeGiveawaysAvg
+            && AwayGiveawaysAvg == other.AwayGiveawaysAvg
+            && HomeFaceOffWinPctAvg == other.HomeFaceOffWinPctAvg
+            && AwayFaceOffWinPctAvg == other.AwayFaceOffWinPctAvg
+            && HomeRecentFaceOffWinPctAvg == other.HomeRecentFaceOffWinPctAvg
+            && AwayRecentFaceOffWinPctAvg == other.AwayRecentFaceOffWinPctAvg
+            && HomeOvertimeRatio == other.HomeOvertimeRatio
+            && AwayOvertimeRatio == other.AwayOvertimeRatio
+            && HomeRecentOvertimeRatio == other.HomeRecentOvertimeRatio
+            && AwayRecentOvertimeRatio == other.AwayRecentOvertimeRatio
+            && HomeRegulationWinRatio == other.HomeRegulationWinRatio
+            && AwayRegulationWinRatio == other.AwayRegulationWinRatio
+            && HomeRecentRegulationWinRatio == other.HomeRecentRegulationWinRatio
+            && AwayRecentRegulationWinRatio == other.AwayRecentRegulationWinRatio;
     }
 }

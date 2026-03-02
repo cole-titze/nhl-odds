@@ -1,5 +1,6 @@
 using Entities.DbModels;
 using Entities.Models;
+using Entities.Types.Enums;
 
 namespace DataCleaner.Mappers;
 
@@ -23,6 +24,10 @@ public static class MapGameToDbGameCleaned
         // List of recent team games played that match current home/away position
         var homeTeamRecentHomeGames = homeTeamGames.HomeGames.GetGamesBeforeDate(game.GameDateUTC).Take(RECENT_GAMES);
         var awayTeamRecentAwayGames = awayTeamGames.AwayGames.GetGamesBeforeDate(game.GameDateUTC).Take(RECENT_GAMES);
+
+        // Head-to-head games between these two teams this season
+        var headToHeadGames = homeTeamSeasonGames.Where(g =>
+            g.HomeTeamId == game.AwayTeamId || g.AwayTeamId == game.AwayTeamId);
 
         var homeRoster = rosterScorer?.GetTeamRosterValues(game.Id, game.HomeTeamId);
         var awayRoster = rosterScorer?.GetTeamRosterValues(game.Id, game.AwayTeamId);
@@ -81,6 +86,63 @@ public static class MapGameToDbGameCleaned
             AwayRecentRosterDefenseValue = awayRoster?.RecentRosterDefenseValue ?? 0,
             AwayRecentRosterGoalieValue = awayRoster?.RecentRosterGoalieValue ?? 0,
         };
+
+        cleanedGame.HomeIsBackToBack = cleanedGame.HomeHoursSinceLastGame <= 28 ? 1.0 : 0.0;
+        cleanedGame.AwayIsBackToBack = cleanedGame.AwayHoursSinceLastGame <= 28 ? 1.0 : 0.0;
+        cleanedGame.RestAdvantage = cleanedGame.HomeHoursSinceLastGame - cleanedGame.AwayHoursSinceLastGame;
+
+        cleanedGame.HomeRecentShotAttemptsAvg = GetStatAvg(homeTeamRecentGames, game.HomeTeamId,
+            g => g.HomeSOG + g.AwayBlockedShots, g => g.AwaySOG + g.HomeBlockedShots);
+        cleanedGame.AwayRecentShotAttemptsAvg = GetStatAvg(awayTeamRecentGames, game.AwayTeamId,
+            g => g.HomeSOG + g.AwayBlockedShots, g => g.AwaySOG + g.HomeBlockedShots);
+
+        cleanedGame.HomeGoalDiffAvg = GetGoalDiffAvg(homeTeamSeasonGames, game.HomeTeamId);
+        cleanedGame.AwayGoalDiffAvg = GetGoalDiffAvg(awayTeamSeasonGames, game.AwayTeamId);
+        cleanedGame.HomeRecentGoalDiffAvg = GetGoalDiffAvg(homeTeamRecentGames, game.HomeTeamId);
+        cleanedGame.AwayRecentGoalDiffAvg = GetGoalDiffAvg(awayTeamRecentGames, game.AwayTeamId);
+
+        cleanedGame.HomeStreak = GetStreak(homeTeamSeasonGames, game.HomeTeamId);
+        cleanedGame.AwayStreak = GetStreak(awayTeamSeasonGames, game.AwayTeamId);
+
+        cleanedGame.HomeWinRatioAtHome = GetWinRatioOfGames(homeTeamHomeGames, game.HomeTeamId);
+        cleanedGame.AwayWinRatioAtAway = GetWinRatioOfGames(awayTeamAwayGames, game.AwayTeamId);
+        cleanedGame.HeadToHeadWinRatio = GetWinRatioOfGames(headToHeadGames, game.HomeTeamId);
+
+        cleanedGame.HomeSavePct = GetSavePct(homeTeamSeasonGames, game.HomeTeamId);
+        cleanedGame.AwaySavePct = GetSavePct(awayTeamSeasonGames, game.AwayTeamId);
+        cleanedGame.HomeRecentSavePct = GetSavePct(homeTeamRecentGames, game.HomeTeamId);
+        cleanedGame.AwayRecentSavePct = GetSavePct(awayTeamRecentGames, game.AwayTeamId);
+
+        cleanedGame.HomeSogAvg = GetStatAvg(homeTeamSeasonGames, game.HomeTeamId, g => g.HomeSOG, g => g.AwaySOG);
+        cleanedGame.AwaySogAvg = GetStatAvg(awayTeamSeasonGames, game.AwayTeamId, g => g.HomeSOG, g => g.AwaySOG);
+        cleanedGame.HomePpgAvg = GetStatAvg(homeTeamSeasonGames, game.HomeTeamId, g => g.HomePPG, g => g.AwayPPG);
+        cleanedGame.AwayPpgAvg = GetStatAvg(awayTeamSeasonGames, game.AwayTeamId, g => g.HomePPG, g => g.AwayPPG);
+        cleanedGame.HomeHitsAvg = GetStatAvg(homeTeamSeasonGames, game.HomeTeamId, g => g.HomeHits, g => g.AwayHits);
+        cleanedGame.AwayHitsAvg = GetStatAvg(awayTeamSeasonGames, game.AwayTeamId, g => g.HomeHits, g => g.AwayHits);
+        cleanedGame.HomePimAvg = GetStatAvg(homeTeamSeasonGames, game.HomeTeamId, g => g.HomePIM, g => g.AwayPIM);
+        cleanedGame.AwayPimAvg = GetStatAvg(awayTeamSeasonGames, game.AwayTeamId, g => g.HomePIM, g => g.AwayPIM);
+        cleanedGame.HomeBlockedShotsAvg = GetStatAvg(homeTeamSeasonGames, game.HomeTeamId, g => g.HomeBlockedShots, g => g.AwayBlockedShots);
+        cleanedGame.AwayBlockedShotsAvg = GetStatAvg(awayTeamSeasonGames, game.AwayTeamId, g => g.HomeBlockedShots, g => g.AwayBlockedShots);
+        cleanedGame.HomeTakeawaysAvg = GetStatAvg(homeTeamSeasonGames, game.HomeTeamId, g => g.HomeTakeaways, g => g.AwayTakeaways);
+        cleanedGame.AwayTakeawaysAvg = GetStatAvg(awayTeamSeasonGames, game.AwayTeamId, g => g.HomeTakeaways, g => g.AwayTakeaways);
+        cleanedGame.HomeGiveawaysAvg = GetStatAvg(homeTeamSeasonGames, game.HomeTeamId, g => g.HomeGiveaways, g => g.AwayGiveaways);
+        cleanedGame.AwayGiveawaysAvg = GetStatAvg(awayTeamSeasonGames, game.AwayTeamId, g => g.HomeGiveaways, g => g.AwayGiveaways);
+
+        cleanedGame.HomeFaceOffWinPctAvg = GetDoubleStatAvg(homeTeamSeasonGames, game.HomeTeamId, g => g.HomeFaceOffWinPercent, g => g.AwayFaceOffWinPercent);
+        cleanedGame.AwayFaceOffWinPctAvg = GetDoubleStatAvg(awayTeamSeasonGames, game.AwayTeamId, g => g.HomeFaceOffWinPercent, g => g.AwayFaceOffWinPercent);
+        cleanedGame.HomeRecentFaceOffWinPctAvg = GetDoubleStatAvg(homeTeamRecentGames, game.HomeTeamId, g => g.HomeFaceOffWinPercent, g => g.AwayFaceOffWinPercent);
+        cleanedGame.AwayRecentFaceOffWinPctAvg = GetDoubleStatAvg(awayTeamRecentGames, game.AwayTeamId, g => g.HomeFaceOffWinPercent, g => g.AwayFaceOffWinPercent);
+
+        cleanedGame.HomeOvertimeRatio = GetOvertimeRatio(homeTeamSeasonGames);
+        cleanedGame.AwayOvertimeRatio = GetOvertimeRatio(awayTeamSeasonGames);
+        cleanedGame.HomeRecentOvertimeRatio = GetOvertimeRatio(homeTeamRecentGames);
+        cleanedGame.AwayRecentOvertimeRatio = GetOvertimeRatio(awayTeamRecentGames);
+
+        cleanedGame.HomeRegulationWinRatio = GetRegulationWinRatio(homeTeamSeasonGames, game.HomeTeamId);
+        cleanedGame.AwayRegulationWinRatio = GetRegulationWinRatio(awayTeamSeasonGames, game.AwayTeamId);
+        cleanedGame.HomeRecentRegulationWinRatio = GetRegulationWinRatio(homeTeamRecentGames, game.HomeTeamId);
+        cleanedGame.AwayRecentRegulationWinRatio = GetRegulationWinRatio(awayTeamRecentGames, game.AwayTeamId);
+
         return cleanedGame;
     }
 
@@ -116,5 +178,116 @@ public static class MapGameToDbGameCleaned
         if (count > 0)
             total = total / count;
         return total;
+    }
+
+    public static double GetSavePct(IEnumerable<Game> teamGames, int teamId)
+    {
+        int totalShotsAgainst = 0;
+        int totalGoalsAgainst = 0;
+        foreach (var game in teamGames)
+        {
+            if (game.HomeTeamId == teamId)
+            {
+                totalShotsAgainst += game.AwaySOG;
+                totalGoalsAgainst += game.AwayGoals;
+            }
+            else if (game.AwayTeamId == teamId)
+            {
+                totalShotsAgainst += game.HomeSOG;
+                totalGoalsAgainst += game.HomeGoals;
+            }
+        }
+        if (totalShotsAgainst > 0)
+            return (double)(totalShotsAgainst - totalGoalsAgainst) / totalShotsAgainst;
+        return 0;
+    }
+
+    public static double GetGoalDiffAvg(IEnumerable<Game> teamGames, int teamId)
+    {
+        double total = 0;
+        int count = 0;
+        foreach (var game in teamGames)
+        {
+            if (game.HomeTeamId == teamId)
+                total += game.HomeGoals - game.AwayGoals;
+            else if (game.AwayTeamId == teamId)
+                total += game.AwayGoals - game.HomeGoals;
+            count++;
+        }
+        if (count > 0)
+            total = total / count;
+        return total;
+    }
+
+    public static double GetDoubleStatAvg(IEnumerable<Game> teamGames, int teamId,
+        Func<Game, double> homeStat, Func<Game, double> awayStat)
+    {
+        double total = 0;
+        int count = 0;
+        foreach (var game in teamGames)
+        {
+            if (game.HomeTeamId == teamId)
+                total += homeStat(game);
+            else if (game.AwayTeamId == teamId)
+                total += awayStat(game);
+            count++;
+        }
+        if (count > 0)
+            total = total / count;
+        return total;
+    }
+
+    public static double GetOvertimeRatio(IEnumerable<Game> games)
+    {
+        int count = 0;
+        int otCount = 0;
+        foreach (var game in games)
+        {
+            if (game.EndPeriod != PeriodType.Regulation)
+                otCount++;
+            count++;
+        }
+        if (count > 0)
+            return (double)otCount / count;
+        return 0;
+    }
+
+    public static double GetRegulationWinRatio(IEnumerable<Game> teamGames, int teamId)
+    {
+        int count = 0;
+        int regWins = 0;
+        foreach (var game in teamGames)
+        {
+            if (game.IsWinner(teamId) && game.EndPeriod == PeriodType.Regulation)
+                regWins++;
+            count++;
+        }
+        if (count > 0)
+            return (double)regWins / count;
+        return 0;
+    }
+
+    public static double GetStreak(IEnumerable<Game> teamGames, int teamId)
+    {
+        int streak = 0;
+        bool? streakIsWins = null;
+        foreach (var game in teamGames)
+        {
+            bool won = game.IsWinner(teamId);
+            if (streakIsWins == null)
+            {
+                streakIsWins = won;
+                streak = won ? 1 : -1;
+            }
+            else if (won == streakIsWins)
+            {
+                streak += won ? 1 : -1;
+            }
+            else
+            {
+                break;
+            }
+        }
+        return streak;
     }
 }
