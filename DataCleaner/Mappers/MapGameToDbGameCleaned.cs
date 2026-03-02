@@ -7,7 +7,7 @@ public static class MapGameToDbGameCleaned
 {
     private const int RECENT_GAMES = 5;
 
-    public static DbGameCleaned Map(Game game, SeasonGames seasonGames)
+    public static DbGameCleaned Map(Game game, SeasonGames seasonGames, RosterScorer? rosterScorer = null)
     {
         var homeTeamGames = seasonGames.GamesMap[game.HomeTeamId];
         var awayTeamGames = seasonGames.GamesMap[game.AwayTeamId];
@@ -23,6 +23,9 @@ public static class MapGameToDbGameCleaned
         // List of recent team games played that match current home/away position
         var homeTeamRecentHomeGames = homeTeamGames.HomeGames.GetGamesBeforeDate(game.GameDateUTC).Take(RECENT_GAMES);
         var awayTeamRecentAwayGames = awayTeamGames.AwayGames.GetGamesBeforeDate(game.GameDateUTC).Take(RECENT_GAMES);
+
+        var homeRoster = rosterScorer?.GetTeamRosterValues(game.Id, game.HomeTeamId);
+        var awayRoster = rosterScorer?.GetTeamRosterValues(game.Id, game.AwayTeamId);
 
         var cleanedGame = new DbGameCleaned()
         {
@@ -46,9 +49,12 @@ public static class MapGameToDbGameCleaned
             HomeGoalsAvgAtHome = GetStatAvg(homeTeamHomeGames, game.HomeTeamId, g => g.HomeGoals, g => g.AwayGoals),
             HomeRecentGoalsAvgAtHome = GetStatAvg(homeTeamRecentHomeGames, game.HomeTeamId, g => g.HomeGoals, g => g.AwayGoals),
             HomeHoursSinceLastGame = game.GetHoursBetweenGames(homeTeamSeasonGames.FirstOrDefault()),
-            HomeRosterOffenseValue = 0,
-            HomeRosterDefenseValue = 0,
-            HomeRosterGoalieValue = 0,
+            HomeRosterOffenseValue = homeRoster?.RosterOffenseValue ?? 0,
+            HomeRosterDefenseValue = homeRoster?.RosterDefenseValue ?? 0,
+            HomeRosterGoalieValue = homeRoster?.RosterGoalieValue ?? 0,
+            HomeRecentRosterOffenseValue = homeRoster?.RecentRosterOffenseValue ?? 0,
+            HomeRecentRosterDefenseValue = homeRoster?.RecentRosterDefenseValue ?? 0,
+            HomeRecentRosterGoalieValue = homeRoster?.RecentRosterGoalieValue ?? 0,
 
             AwayWinRatio = GetWinRatioOfGames(awayTeamSeasonGames, game.AwayTeamId),
             AwayRecentWinRatio = GetWinRatioOfGames(awayTeamRecentGames, game.AwayTeamId),
@@ -68,9 +74,12 @@ public static class MapGameToDbGameCleaned
             AwayGoalsAvgAtAway = GetStatAvg(awayTeamAwayGames, game.AwayTeamId, g => g.HomeGoals, g => g.AwayGoals),
             AwayRecentGoalsAvgAtAway = GetStatAvg(awayTeamRecentAwayGames, game.AwayTeamId, g => g.HomeGoals, g => g.AwayGoals),
             AwayHoursSinceLastGame = game.GetHoursBetweenGames(awayTeamSeasonGames.FirstOrDefault()),
-            AwayRosterOffenseValue = 0,
-            AwayRosterDefenseValue = 0,
-            AwayRosterGoalieValue = 0,
+            AwayRosterOffenseValue = awayRoster?.RosterOffenseValue ?? 0,
+            AwayRosterDefenseValue = awayRoster?.RosterDefenseValue ?? 0,
+            AwayRosterGoalieValue = awayRoster?.RosterGoalieValue ?? 0,
+            AwayRecentRosterOffenseValue = awayRoster?.RecentRosterOffenseValue ?? 0,
+            AwayRecentRosterDefenseValue = awayRoster?.RecentRosterDefenseValue ?? 0,
+            AwayRecentRosterGoalieValue = awayRoster?.RecentRosterGoalieValue ?? 0,
         };
         return cleanedGame;
     }

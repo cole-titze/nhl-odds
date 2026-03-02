@@ -1,11 +1,15 @@
 ﻿using System.Diagnostics;
 using DatabaseAccess;
 using DatabaseAccess.BroadcasterRepository;
+using DatabaseAccess.CleanedGameRepository;
 using DatabaseAccess.ErrorRepository;
+using DatabaseAccess.GameSeasonRepository;
+using DatabaseAccess.PlayerStatsSeasonRepository;
 using DatabaseAccess.GameEventRepository;
 using DatabaseAccess.GameRepository;
 using DatabaseAccess.PlayerRepository;
 using DatabaseAccess.TeamRepository;
+using DataCleaner;
 using DataGetter.BusinessLogic;
 using Entities.Types;
 using Microsoft.Extensions.Logging;
@@ -63,6 +67,19 @@ public class DataGetterEntry
         _logger.LogTrace("Starting Data Getter");
         await dataManager.GetNhlData(yearRange, modeSettings.Mode);
         _logger.LogTrace("Completed Data Getter");
+
+        // Run data cleaner with a separate DbContext to avoid EF tracking conflicts
+        var cleanerDbContext = new NhlDbContext(modeSettings.ConnectionString);
+        var gameSeasonRepo = new GameSeasonRepository(cleanerDbContext);
+        var cleanedGameRepo = new CleanedGameRepository(cleanerDbContext);
+        var playerStatsRepo = new PlayerStatsSeasonRepository(cleanerDbContext);
+        var cleanerErrorDbContext = new NhlDbContext(modeSettings.ConnectionString);
+        var cleanerErrorRepo = new ErrorRepository(cleanerErrorDbContext);
+        var gameCleaner = new GameCleaner(gameSeasonRepo, cleanedGameRepo, playerStatsRepo, cleanerErrorRepo, _loggerFactory);
+
+        _logger.LogTrace("Starting Data Cleaner");
+        await gameCleaner.CleanGamesInSeasons(yearRange);
+        _logger.LogTrace("Completed Data Cleaner");
 
         watch.Stop();
         var elapsedTime = watch.Elapsed;

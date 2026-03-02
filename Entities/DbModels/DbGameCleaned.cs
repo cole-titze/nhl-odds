@@ -49,6 +49,12 @@ public class DbGameCleaned
     public double AwayRosterOffenseValue { get; set; }
     public double AwayRosterDefenseValue { get; set; }
     public double AwayRosterGoalieValue { get; set; }
+    public double HomeRecentRosterOffenseValue { get; set; }
+    public double HomeRecentRosterDefenseValue { get; set; }
+    public double HomeRecentRosterGoalieValue { get; set; }
+    public double AwayRecentRosterOffenseValue { get; set; }
+    public double AwayRecentRosterDefenseValue { get; set; }
+    public double AwayRecentRosterGoalieValue { get; set; }
     public double AwayHoursSinceLastGame { get; set; }
 
     [ForeignKey(nameof(GameId))]
@@ -102,7 +108,67 @@ public class DbGameCleaned
         AwayRosterOffenseValue = gameCleaned.AwayRosterOffenseValue;
         AwayRosterDefenseValue = gameCleaned.AwayRosterDefenseValue;
         AwayRosterGoalieValue = gameCleaned.AwayRosterGoalieValue;
+        HomeRecentRosterOffenseValue = gameCleaned.HomeRecentRosterOffenseValue;
+        HomeRecentRosterDefenseValue = gameCleaned.HomeRecentRosterDefenseValue;
+        HomeRecentRosterGoalieValue = gameCleaned.HomeRecentRosterGoalieValue;
+        AwayRecentRosterOffenseValue = gameCleaned.AwayRecentRosterOffenseValue;
+        AwayRecentRosterDefenseValue = gameCleaned.AwayRecentRosterDefenseValue;
+        AwayRecentRosterGoalieValue = gameCleaned.AwayRecentRosterGoalieValue;
         AwayHoursSinceLastGame = gameCleaned.AwayHoursSinceLastGame;
         Game = gameCleaned.Game;
+    }
+
+    public bool IsEquivalentTo(DbGameCleaned? other)
+    {
+        if (other == null) return false;
+        return GameId == other.GameId
+            && HomeWinRatio == other.HomeWinRatio
+            && HomeRecentWinRatio == other.HomeRecentWinRatio
+            && HomeRecentGoalsAvg == other.HomeRecentGoalsAvg
+            && HomeRecentConcededGoalsAvg == other.HomeRecentConcededGoalsAvg
+            && HomeRecentSogAvg == other.HomeRecentSogAvg
+            && HomeRecentPpgAvg == other.HomeRecentPpgAvg
+            && HomeRecentHitsAvg == other.HomeRecentHitsAvg
+            && HomeRecentPimAvg == other.HomeRecentPimAvg
+            && HomeRecentBlockedShotsAvg == other.HomeRecentBlockedShotsAvg
+            && HomeRecentTakeawaysAvg == other.HomeRecentTakeawaysAvg
+            && HomeRecentGiveawaysAvg == other.HomeRecentGiveawaysAvg
+            && HomeGoalsAvg == other.HomeGoalsAvg
+            && HomeGoalsAvgAtHome == other.HomeGoalsAvgAtHome
+            && HomeRecentGoalsAvgAtHome == other.HomeRecentGoalsAvgAtHome
+            && HomeConcededGoalsAvg == other.HomeConcededGoalsAvg
+            && HomeConcededGoalsAvgAtHome == other.HomeConcededGoalsAvgAtHome
+            && HomeRecentConcededGoalsAvgAtHome == other.HomeRecentConcededGoalsAvgAtHome
+            && HomeHoursSinceLastGame == other.HomeHoursSinceLastGame
+            && AwayWinRatio == other.AwayWinRatio
+            && AwayRecentWinRatio == other.AwayRecentWinRatio
+            && AwayRecentGoalsAvg == other.AwayRecentGoalsAvg
+            && AwayRecentConcededGoalsAvg == other.AwayRecentConcededGoalsAvg
+            && AwayRecentSogAvg == other.AwayRecentSogAvg
+            && AwayRecentPpgAvg == other.AwayRecentPpgAvg
+            && AwayRecentHitsAvg == other.AwayRecentHitsAvg
+            && AwayRecentPimAvg == other.AwayRecentPimAvg
+            && AwayRecentBlockedShotsAvg == other.AwayRecentBlockedShotsAvg
+            && AwayRecentTakeawaysAvg == other.AwayRecentTakeawaysAvg
+            && AwayRecentGiveawaysAvg == other.AwayRecentGiveawaysAvg
+            && AwayGoalsAvg == other.AwayGoalsAvg
+            && AwayGoalsAvgAtAway == other.AwayGoalsAvgAtAway
+            && AwayRecentGoalsAvgAtAway == other.AwayRecentGoalsAvgAtAway
+            && AwayConcededGoalsAvg == other.AwayConcededGoalsAvg
+            && AwayConcededGoalsAvgAtAway == other.AwayConcededGoalsAvgAtAway
+            && AwayRecentConcededGoalsAvgAtAway == other.AwayRecentConcededGoalsAvgAtAway
+            && HomeRosterOffenseValue == other.HomeRosterOffenseValue
+            && HomeRosterDefenseValue == other.HomeRosterDefenseValue
+            && HomeRosterGoalieValue == other.HomeRosterGoalieValue
+            && AwayRosterOffenseValue == other.AwayRosterOffenseValue
+            && AwayRosterDefenseValue == other.AwayRosterDefenseValue
+            && AwayRosterGoalieValue == other.AwayRosterGoalieValue
+            && HomeRecentRosterOffenseValue == other.HomeRecentRosterOffenseValue
+            && HomeRecentRosterDefenseValue == other.HomeRecentRosterDefenseValue
+            && HomeRecentRosterGoalieValue == other.HomeRecentRosterGoalieValue
+            && AwayRecentRosterOffenseValue == other.AwayRecentRosterOffenseValue
+            && AwayRecentRosterDefenseValue == other.AwayRecentRosterDefenseValue
+            && AwayRecentRosterGoalieValue == other.AwayRecentRosterGoalieValue
+            && AwayHoursSinceLastGame == other.AwayHoursSinceLastGame;
     }
 }
