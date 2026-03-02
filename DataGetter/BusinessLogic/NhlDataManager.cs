@@ -75,6 +75,9 @@ public class NhlDataManager
         var seasonGameCount = await _gameManager.GetSeasonGameCount(seasonStartYear, mode);
         await SaveSeasonSchedule(seasonStartYear, seasonGameCount);
 
+        const int maxConsecutiveSkips = 5;
+        int consecutiveSkips = 0;
+
         // game ids start at 1
         for (int count = 1; count <= seasonGameCount; count++)
         {
@@ -85,6 +88,7 @@ public class NhlDataManager
                 if (mode != ModeType.Update && await _gameRepo.IsGamePlayed(gameId))
                 {
                     _logger.LogInformation("Game {GameId} already exists and has been played. Skipping.", gameId);
+                    consecutiveSkips = 0;
                     continue;
                 }
 
@@ -92,8 +96,15 @@ public class NhlDataManager
                 if (game == null || !game.HasBeenPlayed)
                 {
                     _logger.LogInformation("Game {GameId} is not ready to save. Skipping.", gameId);
+                    consecutiveSkips++;
+                    if (consecutiveSkips >= maxConsecutiveSkips)
+                    {
+                        _logger.LogInformation("Reached {Count} consecutive unplayed games after game {GameId}. Stopping season {Season} early.", maxConsecutiveSkips, gameId, seasonStartYear);
+                        break;
+                    }
                     continue;
                 }
+                consecutiveSkips = 0;
                 var players = await _playerManager.GetPlayers(game, mode);
 
                 await SavePlayers(players);
