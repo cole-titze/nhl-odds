@@ -19,6 +19,8 @@ public static class MapPlayerResponseToPlayer
         var isActive = (bool)playerResponse.isActive;
         var birthStateProvince = playerResponse.birthStateProvince == null ? string.Empty
                                     : (string)playerResponse.birthStateProvince.@default;
+        var birthCity = playerResponse.birthCity == null ? string.Empty
+                                    : (string)playerResponse.birthCity.@default;
         return new Player()
         {
             Id = (int)playerResponse.playerId,
@@ -31,7 +33,7 @@ public static class MapPlayerResponseToPlayer
             HeightInInches = (int?)playerResponse.heightInInches ?? 0,
             WeightInPounds = (int?)playerResponse.weightInPounds ?? 0,
             BirthDate = DateTime.Parse((string)playerResponse.birthDate),
-            BirthCity = (string)playerResponse.birthCity.@default,
+            BirthCity = birthCity,
             BirthStateProvince = birthStateProvince,
             BirthCountry = playerResponse.birthCountry,
             IsInTopOneHundredAllTime = (bool)playerResponse.inTop100AllTime,

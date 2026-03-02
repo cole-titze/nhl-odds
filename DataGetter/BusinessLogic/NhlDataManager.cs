@@ -89,6 +89,11 @@ public class NhlDataManager
                 }
 
                 var game = await _gameManager.GetGame(gameId, mode);
+                if (game == null || !game.HasBeenPlayed)
+                {
+                    _logger.LogInformation("Game {GameId} is not ready to save. Skipping.", gameId);
+                    continue;
+                }
                 var players = await _playerManager.GetPlayers(game, mode);
 
                 await SavePlayers(players);

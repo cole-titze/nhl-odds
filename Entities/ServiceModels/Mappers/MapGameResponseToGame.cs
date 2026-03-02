@@ -25,20 +25,23 @@ public static class MapGameResponseToGame
         game.GameDateUTC = DateTime.Parse((string)messageGameSummary.startTimeUTC);
         game.HasBeenPlayed = (messageGameSummary.gameState == "OFF") ? true : false;
 
-        // Get game stats data
-        int homeGoals = (int)messageGamesStats.linescore.totals.home;
-        int awayGoals = (int)messageGamesStats.linescore.totals.away;
-        game.HomeGoals = homeGoals;
-        game.AwayGoals = awayGoals;
-        game.Winner = GetWinner(homeGoals, awayGoals);
-        game.EndPeriod = PeriodTypeParser.ParseFromString((string)messageGameSummary.periodDescriptor.periodType);
-        foreach (dynamic statCategory in messageGamesStats.teamGameStats)
+        if (game.HasBeenPlayed)
         {
-            game = BuildGameStat(statCategory, game);
-        }
+            // Get game stats data
+            int homeGoals = (int)messageGamesStats.linescore.totals.home;
+            int awayGoals = (int)messageGamesStats.linescore.totals.away;
+            game.HomeGoals = homeGoals;
+            game.AwayGoals = awayGoals;
+            game.Winner = GetWinner(homeGoals, awayGoals);
+            game.EndPeriod = PeriodTypeParser.ParseFromString((string)messageGameSummary.periodDescriptor.periodType);
+            foreach (dynamic statCategory in messageGamesStats.teamGameStats)
+            {
+                game = BuildGameStat(statCategory, game);
+            }
 
-        game.ExtendedInfo = MapGameSummaryToGameExtendedInfo.Map(messageGameSummary);
-        game.GameEvents = MapGameEventsResponseToGameEvents.Map(messageGameEvents);
+            game.ExtendedInfo = MapGameSummaryToGameExtendedInfo.Map(messageGameSummary);
+            game.GameEvents = MapGameEventsResponseToGameEvents.Map(messageGameEvents);
+        }
 
         return game;
     }

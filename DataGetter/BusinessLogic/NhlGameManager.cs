@@ -77,7 +77,7 @@ public class NhlGameManager
     /// </summary>The game id of the game to get</param>
     /// <param name="mode">Whether we are updating the game, or only adding</param>
     /// <returns>The game</returns>
-    public async Task<Game> GetGame(int gameId, ModeType mode)
+    public async Task<Game?> GetGame(int gameId, ModeType mode)
     {
         var existingGame = await _gameRepo.GetGame(gameId);
         if (CanSkipGame(existingGame, mode))
@@ -89,8 +89,15 @@ public class NhlGameManager
         var game = await _nhlDataGetter.GameDataGetter.GetGame(gameId);
         if (game == null)
         {
-            throw new Exception("Failed to get game with id: " + gameId);
+            _logger.LogInformation("Game {GameId} is not available yet. Skipping.", gameId);
+            return null;
         }
+
+        if (!game.HasBeenPlayed)
+        {
+            return game;
+        }
+
         await BuildGameRosterStats(game);
 
         return game;
