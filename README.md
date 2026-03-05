@@ -1,6 +1,7 @@
 # nhl-odds
 
-![Tests](https://github.com/cole-titze/nhl-odds/actions/workflows/docker-build.yml/badge.svg)
+![Unit Tests](https://github.com/cole-titze/nhl-odds/actions/workflows/unit-tests.yml/badge.svg)
+![Database Container](https://github.com/cole-titze/nhl-odds/actions/workflows/docker-build.yml/badge.svg)
 
 The nhl project. This repo collects nhl data from the nhl api, cleans it, and then runs machine learning models on the data to predict outcomes. There is also a full-stack web app to access the information.
 
