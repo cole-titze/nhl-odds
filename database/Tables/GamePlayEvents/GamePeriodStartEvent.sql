@@ -11,6 +11,6 @@ CREATE TABLE [dbo].[GamePeriodStartEvent]
     HomeTeamDefendingSide INT NOT NULL,
     SecondsIntoPeriod INT NOT NULL,
     SecondsLeftInPeriod INT NOT NULL,
-    CONSTRAINT PK_GamePeriodStart PRIMARY KEY(GameId, Id),
+    CONSTRAINT PK_GamePeriodStartEvent PRIMARY KEY(GameId, Id),
     FOREIGN KEY (GameId) REFERENCES GameRaw(Id)
 );

@@ -143,6 +143,16 @@ public static class MapGameToDbGameCleaned
         cleanedGame.HomeRecentRegulationWinRatio = GetRegulationWinRatio(homeTeamRecentGames, game.HomeTeamId);
         cleanedGame.AwayRecentRegulationWinRatio = GetRegulationWinRatio(awayTeamRecentGames, game.AwayTeamId);
 
+        cleanedGame.HomeShootingPct = GetShootingPct(homeTeamSeasonGames, game.HomeTeamId);
+        cleanedGame.AwayShootingPct = GetShootingPct(awayTeamSeasonGames, game.AwayTeamId);
+        cleanedGame.HomeRecentShootingPct = GetShootingPct(homeTeamRecentGames, game.HomeTeamId);
+        cleanedGame.AwayRecentShootingPct = GetShootingPct(awayTeamRecentGames, game.AwayTeamId);
+
+        cleanedGame.HomeStrengthOfSchedule = GetStrengthOfSchedule(homeTeamSeasonGames, game.HomeTeamId, seasonGames);
+        cleanedGame.AwayStrengthOfSchedule = GetStrengthOfSchedule(awayTeamSeasonGames, game.AwayTeamId, seasonGames);
+        cleanedGame.HomeRecentStrengthOfSchedule = GetStrengthOfSchedule(homeTeamRecentGames, game.HomeTeamId, seasonGames);
+        cleanedGame.AwayRecentStrengthOfSchedule = GetStrengthOfSchedule(awayTeamRecentGames, game.AwayTeamId, seasonGames);
+
         return cleanedGame;
     }
 
@@ -289,5 +299,47 @@ public static class MapGameToDbGameCleaned
             }
         }
         return streak;
+    }
+
+    public static double GetShootingPct(IEnumerable<Game> teamGames, int teamId)
+    {
+        int totalGoals = 0;
+        int totalSOG = 0;
+        foreach (var game in teamGames)
+        {
+            if (game.HomeTeamId == teamId)
+            {
+                totalGoals += game.HomeGoals;
+                totalSOG += game.HomeSOG;
+            }
+            else if (game.AwayTeamId == teamId)
+            {
+                totalGoals += game.AwayGoals;
+                totalSOG += game.AwaySOG;
+            }
+        }
+        if (totalSOG == 0)
+            return 0;
+        return (double)totalGoals / totalSOG;
+    }
+
+    public static double GetStrengthOfSchedule(IEnumerable<Game> teamGames, int teamId, SeasonGames seasonGames)
+    {
+        double totalOpponentWinPct = 0;
+        int count = 0;
+        foreach (var game in teamGames)
+        {
+            int opponentId = game.HomeTeamId == teamId ? game.AwayTeamId : game.HomeTeamId;
+
+            if (!seasonGames.GamesMap.TryGetValue(opponentId, out var opponentGames))
+                continue;
+
+            var opponentPriorGames = opponentGames.CurrentSeasonGames.GetGamesBeforeDate(game.GameDateUTC);
+            totalOpponentWinPct += GetWinRatioOfGames(opponentPriorGames, opponentId);
+            count++;
+        }
+        if (count == 0)
+            return 0;
+        return totalOpponentWinPct / count;
     }
 }

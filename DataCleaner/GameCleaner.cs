@@ -74,11 +74,14 @@ public class GameCleaner
             var lastGoals = await _gameEventSeasonRepo.GetSeasonGoals(seasonStartYear - 1);
             var currentFaceoffs = await _gameEventSeasonRepo.GetSeasonFaceoffs(seasonStartYear);
             var lastFaceoffs = await _gameEventSeasonRepo.GetSeasonFaceoffs(seasonStartYear - 1);
+            var currentMissedShots = await _gameEventSeasonRepo.GetSeasonMissedShots(seasonStartYear);
+            var lastMissedShots = await _gameEventSeasonRepo.GetSeasonMissedShots(seasonStartYear - 1);
 
             var eventAggregator = new EventAggregator(
                 currentPenalties.Concat(lastPenalties),
                 currentGoals.Concat(lastGoals),
                 currentFaceoffs.Concat(lastFaceoffs),
+                currentMissedShots.Concat(lastMissedShots),
                 seasonGames.Concat(lastSeasonGames));
 
             var cleanedGames = new List<DbGameCleaned>();

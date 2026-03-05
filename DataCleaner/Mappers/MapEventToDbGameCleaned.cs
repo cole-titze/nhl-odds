@@ -41,5 +41,9 @@ public static class MapEventToDbGameCleaned
         cleanedGame.AwayPenaltyDifferentialAvg = awayValues?.PenaltyDifferentialAvg ?? 0;
         cleanedGame.HomeRecentPenaltyDifferentialAvg = homeValues?.RecentPenaltyDifferentialAvg ?? 0;
         cleanedGame.AwayRecentPenaltyDifferentialAvg = awayValues?.RecentPenaltyDifferentialAvg ?? 0;
+        cleanedGame.HomeCorsiPct = homeValues?.CorsiPct ?? 0;
+        cleanedGame.AwayCorsiPct = awayValues?.CorsiPct ?? 0;
+        cleanedGame.HomeRecentCorsiPct = homeValues?.RecentCorsiPct ?? 0;
+        cleanedGame.AwayRecentCorsiPct = awayValues?.RecentCorsiPct ?? 0;
     }
 }

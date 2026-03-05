@@ -38,4 +38,13 @@ public class GameEventSeasonRepository : IGameEventSeasonRepository
             .Where(f => f.GameId >= minGameId && f.GameId < maxGameId)
             .ToListAsync();
     }
+
+    public async Task<IEnumerable<DbMissedShot>> GetSeasonMissedShots(int seasonStartYear)
+    {
+        int minGameId = seasonStartYear * 1_000_000;
+        int maxGameId = (seasonStartYear + 1) * 1_000_000;
+        return await _dbContext.GameMissedShotEvent
+            .Where(m => m.GameId >= minGameId && m.GameId < maxGameId)
+            .ToListAsync();
+    }
 }

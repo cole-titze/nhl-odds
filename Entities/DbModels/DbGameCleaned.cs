@@ -128,6 +128,18 @@ public class DbGameCleaned
     public double AwayPenaltyDifferentialAvg { get; set; }
     public double HomeRecentPenaltyDifferentialAvg { get; set; }
     public double AwayRecentPenaltyDifferentialAvg { get; set; }
+    public double HomeShootingPct { get; set; }
+    public double AwayShootingPct { get; set; }
+    public double HomeRecentShootingPct { get; set; }
+    public double AwayRecentShootingPct { get; set; }
+    public double HomeCorsiPct { get; set; }
+    public double AwayCorsiPct { get; set; }
+    public double HomeRecentCorsiPct { get; set; }
+    public double AwayRecentCorsiPct { get; set; }
+    public double HomeStrengthOfSchedule { get; set; }
+    public double AwayStrengthOfSchedule { get; set; }
+    public double HomeRecentStrengthOfSchedule { get; set; }
+    public double AwayRecentStrengthOfSchedule { get; set; }
 
     [ForeignKey(nameof(GameId))]
     public DbGameRaw? Game { get; set; } = new DbGameRaw();
@@ -259,6 +271,18 @@ public class DbGameCleaned
         AwayPenaltyDifferentialAvg = gameCleaned.AwayPenaltyDifferentialAvg;
         HomeRecentPenaltyDifferentialAvg = gameCleaned.HomeRecentPenaltyDifferentialAvg;
         AwayRecentPenaltyDifferentialAvg = gameCleaned.AwayRecentPenaltyDifferentialAvg;
+        HomeShootingPct = gameCleaned.HomeShootingPct;
+        AwayShootingPct = gameCleaned.AwayShootingPct;
+        HomeRecentShootingPct = gameCleaned.HomeRecentShootingPct;
+        AwayRecentShootingPct = gameCleaned.AwayRecentShootingPct;
+        HomeCorsiPct = gameCleaned.HomeCorsiPct;
+        AwayCorsiPct = gameCleaned.AwayCorsiPct;
+        HomeRecentCorsiPct = gameCleaned.HomeRecentCorsiPct;
+        AwayRecentCorsiPct = gameCleaned.AwayRecentCorsiPct;
+        HomeStrengthOfSchedule = gameCleaned.HomeStrengthOfSchedule;
+        AwayStrengthOfSchedule = gameCleaned.AwayStrengthOfSchedule;
+        HomeRecentStrengthOfSchedule = gameCleaned.HomeRecentStrengthOfSchedule;
+        AwayRecentStrengthOfSchedule = gameCleaned.AwayRecentStrengthOfSchedule;
         Game = gameCleaned.Game;
     }
 
@@ -385,6 +409,18 @@ public class DbGameCleaned
             && HomePenaltyDifferentialAvg == other.HomePenaltyDifferentialAvg
             && AwayPenaltyDifferentialAvg == other.AwayPenaltyDifferentialAvg
             && HomeRecentPenaltyDifferentialAvg == other.HomeRecentPenaltyDifferentialAvg
-            && AwayRecentPenaltyDifferentialAvg == other.AwayRecentPenaltyDifferentialAvg;
+            && AwayRecentPenaltyDifferentialAvg == other.AwayRecentPenaltyDifferentialAvg
+            && HomeShootingPct == other.HomeShootingPct
+            && AwayShootingPct == other.AwayShootingPct
+            && HomeRecentShootingPct == other.HomeRecentShootingPct
+            && AwayRecentShootingPct == other.AwayRecentShootingPct
+            && HomeCorsiPct == other.HomeCorsiPct
+            && AwayCorsiPct == other.AwayCorsiPct
+            && HomeRecentCorsiPct == other.HomeRecentCorsiPct
+            && AwayRecentCorsiPct == other.AwayRecentCorsiPct
+            && HomeStrengthOfSchedule == other.HomeStrengthOfSchedule
+            && AwayStrengthOfSchedule == other.AwayStrengthOfSchedule
+            && HomeRecentStrengthOfSchedule == other.HomeRecentStrengthOfSchedule
+            && AwayRecentStrengthOfSchedule == other.AwayRecentStrengthOfSchedule;
     }
 }

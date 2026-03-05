@@ -19,7 +19,9 @@ public record TeamEventValues(
     double OffensiveZoneFaceoffWinPct,
     double RecentOffensiveZoneFaceoffWinPct,
     double PenaltyDifferentialAvg,
-    double RecentPenaltyDifferentialAvg
+    double RecentPenaltyDifferentialAvg,
+    double CorsiPct,
+    double RecentCorsiPct
 );
 
 public class EventAggregator
@@ -39,23 +41,30 @@ public class EventAggregator
     private readonly Dictionary<int, List<DbGoal>> _goalsByGame;
     // gameId -> list of faceoffs for that game
     private readonly Dictionary<int, List<DbFaceoff>> _faceoffsByGame;
+    // gameId -> list of missed shots for that game
+    private readonly Dictionary<int, List<DbMissedShot>> _missedShotsByGame;
     // gameId -> (homeTeamId, awayTeamId, gameDate)
     private readonly Dictionary<int, (int HomeTeamId, int AwayTeamId, DateTime GameDate)> _gameTeams;
     // gameId -> (homePPG, awayPPG)
     private readonly Dictionary<int, (int HomePPG, int AwayPPG)> _ppgByGame;
+    // gameId -> (homeSOG, awaySOG, homeBlocked, awayBlocked)
+    private readonly Dictionary<int, (int HomeSOG, int AwaySOG, int HomeBlocked, int AwayBlocked)> _shotStatsByGame;
 
     public EventAggregator(
         IEnumerable<DbPenalty> penalties,
         IEnumerable<DbGoal> goals,
         IEnumerable<DbFaceoff> faceoffs,
+        IEnumerable<DbMissedShot> missedShots,
         IEnumerable<Game> games)
     {
         _gameTeams = new Dictionary<int, (int, int, DateTime)>();
         _ppgByGame = new Dictionary<int, (int, int)>();
+        _shotStatsByGame = new Dictionary<int, (int, int, int, int)>();
         foreach (var game in games)
         {
             _gameTeams[game.Id] = (game.HomeTeamId, game.AwayTeamId, game.GameDateUTC);
             _ppgByGame[game.Id] = (game.HomePPG, game.AwayPPG);
+            _shotStatsByGame[game.Id] = (game.HomeSOG, game.AwaySOG, game.HomeBlockedShots, game.AwayBlockedShots);
         }
 
         _penaltiesByGame = new Dictionary<int, List<DbPenalty>>();
@@ -87,6 +96,16 @@ public class EventAggregator
                 _faceoffsByGame[faceoff.GameId] = new List<DbFaceoff>();
             _faceoffsByGame[faceoff.GameId].Add(faceoff);
         }
+
+        _missedShotsByGame = new Dictionary<int, List<DbMissedShot>>();
+        foreach (var missedShot in missedShots)
+        {
+            if (!_gameTeams.ContainsKey(missedShot.GameId))
+                continue;
+            if (!_missedShotsByGame.ContainsKey(missedShot.GameId))
+                _missedShotsByGame[missedShot.GameId] = new List<DbMissedShot>();
+            _missedShotsByGame[missedShot.GameId].Add(missedShot);
+        }
     }
 
     public TeamEventValues? GetTeamEventValues(int gameId, int teamId)
@@ -114,7 +133,9 @@ public class EventAggregator
             OffensiveZoneFaceoffWinPct: ComputeOffensiveZoneFaceoffWinPct(priorGameIds, teamId),
             RecentOffensiveZoneFaceoffWinPct: ComputeOffensiveZoneFaceoffWinPct(recentGameIds, teamId),
             PenaltyDifferentialAvg: ComputePenaltyDifferentialAvg(priorGameIds, teamId),
-            RecentPenaltyDifferentialAvg: ComputePenaltyDifferentialAvg(recentGameIds, teamId)
+            RecentPenaltyDifferentialAvg: ComputePenaltyDifferentialAvg(recentGameIds, teamId),
+            CorsiPct: ComputeCorsiPct(priorGameIds, teamId),
+            RecentCorsiPct: ComputeCorsiPct(recentGameIds, teamId)
         );
     }
 
@@ -272,5 +293,48 @@ public class EventAggregator
         }
 
         return totalDiff / gameCount;
+    }
+
+    private double ComputeCorsiPct(List<int> gameIds, int teamId)
+    {
+        // Corsi For = team SOG + team missed shots + opponent blocked shots
+        // Corsi Against = opponent SOG + opponent missed shots + team blocked shots
+        int totalCF = 0;
+        int totalCA = 0;
+
+        foreach (var gid in gameIds)
+        {
+            if (!_gameTeams.TryGetValue(gid, out var info))
+                continue;
+
+            bool isHome = info.HomeTeamId == teamId;
+
+            if (_shotStatsByGame.TryGetValue(gid, out var shots))
+            {
+                int teamSOG = isHome ? shots.HomeSOG : shots.AwaySOG;
+                int oppSOG = isHome ? shots.AwaySOG : shots.HomeSOG;
+                // "Blocked shots" in NHL stats = shots blocked by the team (defensive)
+                // So opponent's blocked shots = shots the team attempted that were blocked
+                int oppBlocked = isHome ? shots.AwayBlocked : shots.HomeBlocked;
+                int teamBlocked = isHome ? shots.HomeBlocked : shots.AwayBlocked;
+
+                totalCF += teamSOG + oppBlocked;
+                totalCA += oppSOG + teamBlocked;
+            }
+
+            // Add missed shots from play-by-play events
+            if (_missedShotsByGame.TryGetValue(gid, out var missedShots))
+            {
+                int teamMissed = missedShots.Count(m => m.ShootingTeamId == teamId);
+                int oppMissed = missedShots.Count(m => m.ShootingTeamId != teamId);
+                totalCF += teamMissed;
+                totalCA += oppMissed;
+            }
+        }
+
+        int total = totalCF + totalCA;
+        if (total == 0)
+            return 0;
+        return (double)totalCF / total;
     }
 }
