@@ -100,6 +100,34 @@ public class DbGameCleaned
     public double AwayRegulationWinRatio { get; set; }
     public double HomeRecentRegulationWinRatio { get; set; }
     public double AwayRecentRegulationWinRatio { get; set; }
+    public double HomePpEfficiency { get; set; }
+    public double AwayPpEfficiency { get; set; }
+    public double HomeRecentPpEfficiency { get; set; }
+    public double AwayRecentPpEfficiency { get; set; }
+    public double HomePkEfficiency { get; set; }
+    public double AwayPkEfficiency { get; set; }
+    public double HomeRecentPkEfficiency { get; set; }
+    public double AwayRecentPkEfficiency { get; set; }
+    public double HomeGoalsPerGamePeriod1 { get; set; }
+    public double AwayGoalsPerGamePeriod1 { get; set; }
+    public double HomeGoalsPerGamePeriod2 { get; set; }
+    public double AwayGoalsPerGamePeriod2 { get; set; }
+    public double HomeGoalsPerGamePeriod3 { get; set; }
+    public double AwayGoalsPerGamePeriod3 { get; set; }
+    public double HomeRecentGoalsPerGamePeriod1 { get; set; }
+    public double AwayRecentGoalsPerGamePeriod1 { get; set; }
+    public double HomeRecentGoalsPerGamePeriod2 { get; set; }
+    public double AwayRecentGoalsPerGamePeriod2 { get; set; }
+    public double HomeRecentGoalsPerGamePeriod3 { get; set; }
+    public double AwayRecentGoalsPerGamePeriod3 { get; set; }
+    public double HomeOffensiveZoneFaceoffWinPct { get; set; }
+    public double AwayOffensiveZoneFaceoffWinPct { get; set; }
+    public double HomeRecentOffensiveZoneFaceoffWinPct { get; set; }
+    public double AwayRecentOffensiveZoneFaceoffWinPct { get; set; }
+    public double HomePenaltyDifferentialAvg { get; set; }
+    public double AwayPenaltyDifferentialAvg { get; set; }
+    public double HomeRecentPenaltyDifferentialAvg { get; set; }
+    public double AwayRecentPenaltyDifferentialAvg { get; set; }
 
     [ForeignKey(nameof(GameId))]
     public DbGameRaw? Game { get; set; } = new DbGameRaw();
@@ -203,6 +231,34 @@ public class DbGameCleaned
         AwayRegulationWinRatio = gameCleaned.AwayRegulationWinRatio;
         HomeRecentRegulationWinRatio = gameCleaned.HomeRecentRegulationWinRatio;
         AwayRecentRegulationWinRatio = gameCleaned.AwayRecentRegulationWinRatio;
+        HomePpEfficiency = gameCleaned.HomePpEfficiency;
+        AwayPpEfficiency = gameCleaned.AwayPpEfficiency;
+        HomeRecentPpEfficiency = gameCleaned.HomeRecentPpEfficiency;
+        AwayRecentPpEfficiency = gameCleaned.AwayRecentPpEfficiency;
+        HomePkEfficiency = gameCleaned.HomePkEfficiency;
+        AwayPkEfficiency = gameCleaned.AwayPkEfficiency;
+        HomeRecentPkEfficiency = gameCleaned.HomeRecentPkEfficiency;
+        AwayRecentPkEfficiency = gameCleaned.AwayRecentPkEfficiency;
+        HomeGoalsPerGamePeriod1 = gameCleaned.HomeGoalsPerGamePeriod1;
+        AwayGoalsPerGamePeriod1 = gameCleaned.AwayGoalsPerGamePeriod1;
+        HomeGoalsPerGamePeriod2 = gameCleaned.HomeGoalsPerGamePeriod2;
+        AwayGoalsPerGamePeriod2 = gameCleaned.AwayGoalsPerGamePeriod2;
+        HomeGoalsPerGamePeriod3 = gameCleaned.HomeGoalsPerGamePeriod3;
+        AwayGoalsPerGamePeriod3 = gameCleaned.AwayGoalsPerGamePeriod3;
+        HomeRecentGoalsPerGamePeriod1 = gameCleaned.HomeRecentGoalsPerGamePeriod1;
+        AwayRecentGoalsPerGamePeriod1 = gameCleaned.AwayRecentGoalsPerGamePeriod1;
+        HomeRecentGoalsPerGamePeriod2 = gameCleaned.HomeRecentGoalsPerGamePeriod2;
+        AwayRecentGoalsPerGamePeriod2 = gameCleaned.AwayRecentGoalsPerGamePeriod2;
+        HomeRecentGoalsPerGamePeriod3 = gameCleaned.HomeRecentGoalsPerGamePeriod3;
+        AwayRecentGoalsPerGamePeriod3 = gameCleaned.AwayRecentGoalsPerGamePeriod3;
+        HomeOffensiveZoneFaceoffWinPct = gameCleaned.HomeOffensiveZoneFaceoffWinPct;
+        AwayOffensiveZoneFaceoffWinPct = gameCleaned.AwayOffensiveZoneFaceoffWinPct;
+        HomeRecentOffensiveZoneFaceoffWinPct = gameCleaned.HomeRecentOffensiveZoneFaceoffWinPct;
+        AwayRecentOffensiveZoneFaceoffWinPct = gameCleaned.AwayRecentOffensiveZoneFaceoffWinPct;
+        HomePenaltyDifferentialAvg = gameCleaned.HomePenaltyDifferentialAvg;
+        AwayPenaltyDifferentialAvg = gameCleaned.AwayPenaltyDifferentialAvg;
+        HomeRecentPenaltyDifferentialAvg = gameCleaned.HomeRecentPenaltyDifferentialAvg;
+        AwayRecentPenaltyDifferentialAvg = gameCleaned.AwayRecentPenaltyDifferentialAvg;
         Game = gameCleaned.Game;
     }
 
@@ -301,6 +357,34 @@ public class DbGameCleaned
             && HomeRegulationWinRatio == other.HomeRegulationWinRatio
             && AwayRegulationWinRatio == other.AwayRegulationWinRatio
             && HomeRecentRegulationWinRatio == other.HomeRecentRegulationWinRatio
-            && AwayRecentRegulationWinRatio == other.AwayRecentRegulationWinRatio;
+            && AwayRecentRegulationWinRatio == other.AwayRecentRegulationWinRatio
+            && HomePpEfficiency == other.HomePpEfficiency
+            && AwayPpEfficiency == other.AwayPpEfficiency
+            && HomeRecentPpEfficiency == other.HomeRecentPpEfficiency
+            && AwayRecentPpEfficiency == other.AwayRecentPpEfficiency
+            && HomePkEfficiency == other.HomePkEfficiency
+            && AwayPkEfficiency == other.AwayPkEfficiency
+            && HomeRecentPkEfficiency == other.HomeRecentPkEfficiency
+            && AwayRecentPkEfficiency == other.AwayRecentPkEfficiency
+            && HomeGoalsPerGamePeriod1 == other.HomeGoalsPerGamePeriod1
+            && AwayGoalsPerGamePeriod1 == other.AwayGoalsPerGamePeriod1
+            && HomeGoalsPerGamePeriod2 == other.HomeGoalsPerGamePeriod2
+            && AwayGoalsPerGamePeriod2 == other.AwayGoalsPerGamePeriod2
+            && HomeGoalsPerGamePeriod3 == other.HomeGoalsPerGamePeriod3
+            && AwayGoalsPerGamePeriod3 == other.AwayGoalsPerGamePeriod3
+            && HomeRecentGoalsPerGamePeriod1 == other.HomeRecentGoalsPerGamePeriod1
+            && AwayRecentGoalsPerGamePeriod1 == other.AwayRecentGoalsPerGamePeriod1
+            && HomeRecentGoalsPerGamePeriod2 == other.HomeRecentGoalsPerGamePeriod2
+            && AwayRecentGoalsPerGamePeriod2 == other.AwayRecentGoalsPerGamePeriod2
+            && HomeRecentGoalsPerGamePeriod3 == other.HomeRecentGoalsPerGamePeriod3
+            && AwayRecentGoalsPerGamePeriod3 == other.AwayRecentGoalsPerGamePeriod3
+            && HomeOffensiveZoneFaceoffWinPct == other.HomeOffensiveZoneFaceoffWinPct
+            && AwayOffensiveZoneFaceoffWinPct == other.AwayOffensiveZoneFaceoffWinPct
+            && HomeRecentOffensiveZoneFaceoffWinPct == other.HomeRecentOffensiveZoneFaceoffWinPct
+            && AwayRecentOffensiveZoneFaceoffWinPct == other.AwayRecentOffensiveZoneFaceoffWinPct
+            && HomePenaltyDifferentialAvg == other.HomePenaltyDifferentialAvg
+            && AwayPenaltyDifferentialAvg == other.AwayPenaltyDifferentialAvg
+            && HomeRecentPenaltyDifferentialAvg == other.HomeRecentPenaltyDifferentialAvg
+            && AwayRecentPenaltyDifferentialAvg == other.AwayRecentPenaltyDifferentialAvg;
     }
 }

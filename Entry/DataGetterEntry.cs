@@ -3,6 +3,7 @@ using DatabaseAccess;
 using DatabaseAccess.BroadcasterRepository;
 using DatabaseAccess.CleanedGameRepository;
 using DatabaseAccess.ErrorRepository;
+using DatabaseAccess.GameEventSeasonRepository;
 using DatabaseAccess.GameSeasonRepository;
 using DatabaseAccess.PlayerStatsSeasonRepository;
 using DatabaseAccess.GameEventRepository;
@@ -75,7 +76,8 @@ public class DataGetterEntry
         var playerStatsRepo = new PlayerStatsSeasonRepository(cleanerDbContext);
         var cleanerErrorDbContext = new NhlDbContext(modeSettings.ConnectionString);
         var cleanerErrorRepo = new ErrorRepository(cleanerErrorDbContext);
-        var gameCleaner = new GameCleaner(gameSeasonRepo, cleanedGameRepo, playerStatsRepo, cleanerErrorRepo, _loggerFactory);
+        var gameEventSeasonRepo = new GameEventSeasonRepository(cleanerDbContext);
+        var gameCleaner = new GameCleaner(gameSeasonRepo, cleanedGameRepo, playerStatsRepo, gameEventSeasonRepo, cleanerErrorRepo, _loggerFactory);
 
         _logger.LogTrace("Starting Data Cleaner");
         await gameCleaner.CleanGamesInSeasons(yearRange);

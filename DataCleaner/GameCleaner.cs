@@ -3,6 +3,7 @@ using DatabaseAccess.GameSeasonRepository;
 using DatabaseAccess.CleanedGameRepository;
 using DatabaseAccess.ErrorRepository;
 using DatabaseAccess.PlayerStatsSeasonRepository;
+using DatabaseAccess.GameEventSeasonRepository;
 using Entities.DbModels;
 using DataCleaner.Mappers;
 using Entities.Models;
@@ -15,15 +16,18 @@ public class GameCleaner
     private readonly IGameSeasonRepository _gameRepo;
     private readonly ICleanedGameRepository _cleanedGameRepo;
     private readonly IPlayerStatsSeasonRepository _playerStatsRepo;
+    private readonly IGameEventSeasonRepository _gameEventSeasonRepo;
     private readonly IErrorRepository _errorRepo;
     private readonly ILogger<GameCleaner> _logger;
 
     public GameCleaner(IGameSeasonRepository gameRepository, ICleanedGameRepository cleanedGameRepository,
-        IPlayerStatsSeasonRepository playerStatsRepository, IErrorRepository errorRepository, ILoggerFactory loggerFactory)
+        IPlayerStatsSeasonRepository playerStatsRepository, IGameEventSeasonRepository gameEventSeasonRepository,
+        IErrorRepository errorRepository, ILoggerFactory loggerFactory)
     {
         _gameRepo = gameRepository;
         _cleanedGameRepo = cleanedGameRepository;
         _playerStatsRepo = playerStatsRepository;
+        _gameEventSeasonRepo = gameEventSeasonRepository;
         _errorRepo = errorRepository;
         _logger = loggerFactory.CreateLogger<GameCleaner>();
     }
@@ -63,12 +67,28 @@ public class GameCleaner
                 currentGoalieStats.Concat(lastGoalieStats),
                 allGamesForScorer);
 
+            // Load event data for current + previous season to build event aggregator
+            var currentPenalties = await _gameEventSeasonRepo.GetSeasonPenalties(seasonStartYear);
+            var lastPenalties = await _gameEventSeasonRepo.GetSeasonPenalties(seasonStartYear - 1);
+            var currentGoals = await _gameEventSeasonRepo.GetSeasonGoals(seasonStartYear);
+            var lastGoals = await _gameEventSeasonRepo.GetSeasonGoals(seasonStartYear - 1);
+            var currentFaceoffs = await _gameEventSeasonRepo.GetSeasonFaceoffs(seasonStartYear);
+            var lastFaceoffs = await _gameEventSeasonRepo.GetSeasonFaceoffs(seasonStartYear - 1);
+
+            var eventAggregator = new EventAggregator(
+                currentPenalties.Concat(lastPenalties),
+                currentGoals.Concat(lastGoals),
+                currentFaceoffs.Concat(lastFaceoffs),
+                seasonGames.Concat(lastSeasonGames));
+
             var cleanedGames = new List<DbGameCleaned>();
             foreach (var game in gamesToClean)
             {
                 try
                 {
-                    cleanedGames.Add(MapGameToDbGameCleaned.Map(game, gameMap, rosterScorer));
+                    var cleanedGame = MapGameToDbGameCleaned.Map(game, gameMap, rosterScorer);
+                    MapEventToDbGameCleaned.Apply(cleanedGame, eventAggregator, game);
+                    cleanedGames.Add(cleanedGame);
                 }
                 catch (Exception ex)
                 {
