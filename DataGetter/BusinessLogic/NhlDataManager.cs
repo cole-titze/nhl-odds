@@ -75,7 +75,7 @@ public class NhlDataManager
         var seasonGameCount = await _gameManager.GetSeasonGameCount(seasonStartYear, mode);
         await SaveSeasonSchedule(seasonStartYear, seasonGameCount);
 
-        const int maxConsecutiveSkips = 5;
+        const int maxConsecutiveSkips = 20;
         int consecutiveSkips = 0;
 
         // game ids start at 1
@@ -93,18 +93,32 @@ public class NhlDataManager
                 }
 
                 var game = await _gameManager.GetGame(gameId, mode);
-                if (game == null || !game.HasBeenPlayed)
+                if (game == null)
                 {
-                    _logger.LogInformation("Game {GameId} is not ready to save. Skipping.", gameId);
+                    _logger.LogInformation("Game {GameId} is not available. Skipping.", gameId);
+                    consecutiveSkips++;
+                    if (consecutiveSkips >= maxConsecutiveSkips)
+                    {
+                        _logger.LogInformation("Reached {Count} consecutive unavailable games after game {GameId}. Stopping season {Season} early.", maxConsecutiveSkips, gameId, seasonStartYear);
+                        break;
+                    }
+                    continue;
+                }
+
+                if (!game.HasBeenPlayed)
+                {
                     consecutiveSkips++;
                     if (consecutiveSkips >= maxConsecutiveSkips)
                     {
                         _logger.LogInformation("Reached {Count} consecutive unplayed games after game {GameId}. Stopping season {Season} early.", maxConsecutiveSkips, gameId, seasonStartYear);
                         break;
                     }
-                    continue;
                 }
-                consecutiveSkips = 0;
+                else
+                {
+                    consecutiveSkips = 0;
+                }
+
                 var players = await _playerManager.GetPlayers(game, mode);
 
                 await SavePlayers(players);
@@ -188,17 +202,22 @@ public class NhlDataManager
         _logger.LogInformation("Saving Game: " + game.Id);
         await _gameRepo.AddUpdateGame(game);
 
-        // Updates tv broadcasters for the games
-        await _broadcasterRepo.AddUpdateTvBroadcasters(game);
-        await _broadcasterRepo.AddUpdateGameTvBroadcasters(game);
+        // Broadcasters and game events only exist for played games
+        if (game.HasBeenPlayed)
+        {
+            await _broadcasterRepo.AddUpdateTvBroadcasters(game);
+            await _broadcasterRepo.AddUpdateGameTvBroadcasters(game);
+            await _gameEventRepo.AddUpdateGameEvents(game);
+        }
 
-        // Update game events and save to the db
-        await _gameEventRepo.AddUpdateGameEvents(game);
         await _playerRepo.AddUpdateGameRosterStats(game);
 
-        // Add Coaches and Officials
-        await _gameRepo.AddUpdateGameCoaches(game);
-        await _gameRepo.AddUpdateGameOfficials(game);
+        // Coaches and officials are only available for played games
+        if (game.HasBeenPlayed)
+        {
+            await _gameRepo.AddUpdateGameCoaches(game);
+            await _gameRepo.AddUpdateGameOfficials(game);
+        }
 
         // Save all data to the database
         await _gameRepo.Commit();

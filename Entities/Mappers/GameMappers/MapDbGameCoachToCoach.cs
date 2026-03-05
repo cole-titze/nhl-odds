@@ -9,7 +9,7 @@ public static class MapDbGameCoachToCoach
     {
         if (dbGameCoach == null)
         {
-            throw new ArgumentNullException(nameof(dbGameCoach), "DbGameCoach cannot be null.");
+            return new Coach();
         }
 
         return new Coach()

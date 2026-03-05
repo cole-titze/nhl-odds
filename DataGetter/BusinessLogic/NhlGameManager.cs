@@ -93,11 +93,6 @@ public class NhlGameManager
             return null;
         }
 
-        if (!game.HasBeenPlayed)
-        {
-            return game;
-        }
-
         await BuildGameRosterStats(game);
 
         return game;

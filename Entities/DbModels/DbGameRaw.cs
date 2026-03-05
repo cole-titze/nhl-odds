@@ -32,16 +32,16 @@ public class DbGameRaw
     public int HomeGiveaways { get; set; }
     public int AwayGiveaways { get; set; }
     public bool HasBeenPlayed { get; set; }
-    public string GameSummary { get; set; } = string.Empty;
-    public string EventSummary { get; set; } = string.Empty;
-    public string PlayByPlaySummary { get; set; } = string.Empty;
-    public string FaceoffSummary { get; set; } = string.Empty;
-    public string FaceoffComparisonSummary { get; set; } = string.Empty;
-    public string RosterSummary { get; set; } = string.Empty;
-    public string ShotSummary { get; set; } = string.Empty;
-    public string ShiftChartSummary { get; set; } = string.Empty;
-    public string ToiAwaySummary { get; set; } = string.Empty;
-    public string ToiHomeSummary { get; set; } = string.Empty;
+    public string? GameSummary { get; set; }
+    public string? EventSummary { get; set; }
+    public string? PlayByPlaySummary { get; set; }
+    public string? FaceoffSummary { get; set; }
+    public string? FaceoffComparisonSummary { get; set; }
+    public string? RosterSummary { get; set; }
+    public string? ShotSummary { get; set; }
+    public string? ShiftChartSummary { get; set; }
+    public string? ToiAwaySummary { get; set; }
+    public string? ToiHomeSummary { get; set; }
     public int ThreeMinuteRecapVideoId { get; set; }
     public int CondensedGameVideoId { get; set; }
     public string VenueName { get; set; } = string.Empty;

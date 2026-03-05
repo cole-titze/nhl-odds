@@ -7,11 +7,6 @@ public static class MapGameToDbGame
 {
     public static DbGameRaw Map(Game game)
     {
-        if (game.ExtendedInfo == null)
-        {
-            throw new ArgumentNullException(nameof(game.ExtendedInfo), "Game extended info cannot be null");
-        }
-
         return new DbGameRaw()
         {
             Id = game.Id,
@@ -40,20 +35,20 @@ public static class MapGameToDbGame
             HomeGiveaways = game.HomeGiveaways,
             AwayGiveaways = game.AwayGiveaways,
             HasBeenPlayed = game.HasBeenPlayed,
-            GameSummary = game.ExtendedInfo.GameSummary,
-            EventSummary = game.ExtendedInfo.EventSummary,
-            PlayByPlaySummary = game.ExtendedInfo.PlayByPlaySummary,
-            FaceoffSummary = game.ExtendedInfo.FaceoffSummary,
-            FaceoffComparisonSummary = game.ExtendedInfo.FaceoffComparisonSummary,
-            RosterSummary = game.ExtendedInfo.RosterSummary,
-            ShotSummary = game.ExtendedInfo.ShotSummary,
-            ShiftChartSummary = game.ExtendedInfo.ShiftChartSummary,
-            ToiAwaySummary = game.ExtendedInfo.ToiAwaySummary,
-            ToiHomeSummary = game.ExtendedInfo.ToiHomeSummary,
-            ThreeMinuteRecapVideoId = game.ExtendedInfo.ThreeMinuteRecapVideoId,
-            CondensedGameVideoId = game.ExtendedInfo.CondensedGameVideoId,
-            VenueName = game.ExtendedInfo.VenueName,
-            VenueLocation = game.ExtendedInfo.VenueLocation,
+            GameSummary = game.ExtendedInfo?.GameSummary,
+            EventSummary = game.ExtendedInfo?.EventSummary,
+            PlayByPlaySummary = game.ExtendedInfo?.PlayByPlaySummary,
+            FaceoffSummary = game.ExtendedInfo?.FaceoffSummary,
+            FaceoffComparisonSummary = game.ExtendedInfo?.FaceoffComparisonSummary,
+            RosterSummary = game.ExtendedInfo?.RosterSummary,
+            ShotSummary = game.ExtendedInfo?.ShotSummary,
+            ShiftChartSummary = game.ExtendedInfo?.ShiftChartSummary,
+            ToiAwaySummary = game.ExtendedInfo?.ToiAwaySummary,
+            ToiHomeSummary = game.ExtendedInfo?.ToiHomeSummary,
+            ThreeMinuteRecapVideoId = game.ExtendedInfo?.ThreeMinuteRecapVideoId ?? 0,
+            CondensedGameVideoId = game.ExtendedInfo?.CondensedGameVideoId ?? 0,
+            VenueName = game.ExtendedInfo?.VenueName ?? string.Empty,
+            VenueLocation = game.ExtendedInfo?.VenueLocation ?? string.Empty,
         };
     }
     public static IEnumerable<DbGameRaw> MapList(IEnumerable<Game> games)
