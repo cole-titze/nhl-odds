@@ -1,13 +1,12 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
-COPY nhl-odds.sln ./
 COPY Entry/Entry.csproj Entry/
 COPY DataGetter/DataGetter.csproj DataGetter/
 COPY DataCleaner/DataCleaner.csproj DataCleaner/
 COPY DatabaseAccess/DatabaseAccess.csproj DatabaseAccess/
 COPY Entities/Entities.csproj Entities/
 COPY Services/Services.csproj Services/
-RUN dotnet restore
+RUN dotnet restore Entry/Entry.csproj
 
 COPY Entry/ Entry/
 COPY DataGetter/ DataGetter/
