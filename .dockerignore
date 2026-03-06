@@ -2,4 +2,8 @@
 **/obj/
 .git/
 .github/
+.venv/
+.vs/
 Entry/appsettings.Local.json
+game_predictor/settings.local.json
+DataCleaner.Tests/
