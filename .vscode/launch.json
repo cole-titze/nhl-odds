@@ -24,6 +24,14 @@
                 "moduleLoad": false,
                 "stepFiltering": false
             }
+        },
+        {
+            "name": "Python: Game Predictor",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "game_predictor",
+            "cwd": "${workspaceFolder}",
+            "justMyCode": true
         }
     ]
 }

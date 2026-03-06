@@ -1320,3 +1320,6 @@ appsettings.Local.json
 
 # SQL
 *.bak
+
+# Python game_predictor
+.venv/
