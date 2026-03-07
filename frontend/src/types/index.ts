@@ -1,7 +1,9 @@
-export enum Winner {
-  HOME = 0,
-  AWAY = 1,
-}
+export const Winner = {
+  HOME: 0,
+  AWAY: 1,
+} as const;
+
+export type Winner = (typeof Winner)[keyof typeof Winner];
 
 export interface MatchupTeamVM {
   id: number;
