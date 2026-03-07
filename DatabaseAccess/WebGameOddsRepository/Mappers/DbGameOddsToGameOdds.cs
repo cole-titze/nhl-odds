@@ -19,6 +19,12 @@ public static class DbGameOddsToGameOddsMapper
             seasonTeams.TryGetValue(game.HomeTeamId, out var homeSeasonTeam);
             seasonTeams.TryGetValue(game.AwayTeamId, out var awaySeasonTeam);
 
+            var logLoss = dbOdds.LogLoss != 0
+                ? dbOdds.LogLoss
+                : game.HasBeenPlayed
+                    ? GameOdds.CalculateLogLoss(dbOdds.HomeOdds, dbOdds.AwayOdds, game.Winner)
+                    : 0;
+
             gameOddsList.Add(new GameOdds
             {
                 game = new Game
@@ -36,6 +42,7 @@ public static class DbGameOddsToGameOddsMapper
                 modelHomeOdds = dbOdds.HomeOdds,
                 modelAwayOdds = dbOdds.AwayOdds,
                 modelName = dbOdds.ModelName,
+                logLoss = logLoss,
             });
         }
 

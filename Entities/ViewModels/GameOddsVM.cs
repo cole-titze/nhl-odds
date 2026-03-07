@@ -10,4 +10,5 @@ public class GameOddsVM
     public MatchupTeamVM? awayTeam { get; set; }
     public Winner winner { get; set; }
     public bool hasBeenPlayed { get; set; }
+    public double logLoss { get; set; }
 }

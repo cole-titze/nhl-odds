@@ -5,7 +5,7 @@ namespace Entities.DbModels;
 public class DbGameOdds
 {
     public int GameId { get; set; }
-    public string ModelName { get; set; } = string.Empty;
+    public int ModelName { get; set; }
     public DateTime RunDateUTC { get; set; }
     public double HomeOdds { get; set; }
     public double AwayOdds { get; set; }

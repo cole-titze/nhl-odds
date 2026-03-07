@@ -14,7 +14,7 @@ public static class TeamToTeamVmMapper
             locationName = teamStats.team.locationName,
             teamName = teamStats.team.teamName,
             logoUri = teamStats.team.logoUri,
-            modelLogLoss = teamStats.modelLogLoss,
+            modelLogLoss = GetAverageLogLoss(teamStats.gameOdds),
             totalGameCount = teamStats.gameOdds.Count(x => x.game.hasBeenPlayed),
             seasonWins = GetWins(teamStats.team.id, teamStats.gameOdds),
             seasonLosses = GetLosses(teamStats.team.id, teamStats.gameOdds),
@@ -31,6 +31,14 @@ public static class TeamToTeamVmMapper
     private static int GetLosses(int teamId, IEnumerable<GameOdds> gameOdds)
     {
         return gameOdds.Sum(g => g.game.IsLoss(teamId));
+    }
+
+    private static double GetAverageLogLoss(IEnumerable<GameOdds> gameOdds)
+    {
+        var playedWithLogLoss = gameOdds.Where(g => g.game.hasBeenPlayed && g.logLoss > 0).ToList();
+        if (playedWithLogLoss.Count == 0)
+            return 0;
+        return playedWithLogLoss.Average(g => g.logLoss);
     }
 
     private static int GetCorrectModelPredictionCount(IEnumerable<GameOdds> gameOdds)
