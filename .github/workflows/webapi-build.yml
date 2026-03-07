@@ -1,4 +1,4 @@
-name: Pipeline Container
+name: Web API Container
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/pipeline
+  IMAGE_NAME: ${{ github.repository }}/webapi
 
 jobs:
   build:
@@ -43,7 +43,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: Entry/Dockerfile
+          file: WebApi/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

@@ -25,7 +25,7 @@ COPY game_predictor/ /app/game_predictor/
 COPY game_predictor/requirements.txt /app/game_predictor/requirements.txt
 RUN python3 -m venv /app/.venv && /app/.venv/bin/pip install --no-cache-dir -r /app/game_predictor/requirements.txt
 
-COPY entrypoint.sh /app/entrypoint.sh
+COPY Entry/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 ENTRYPOINT ["/app/entrypoint.sh"]

@@ -1,7 +1,7 @@
 services:
   database:
     build:
-      context: ./database
+      context: .
       dockerfile: Dockerfile
     environment:
       - MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in your environment}
