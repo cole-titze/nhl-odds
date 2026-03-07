@@ -48,14 +48,22 @@ public class NhlTeamManager
     /// <returns>The filled teams</returns>
     private IEnumerable<Team> BuildTeams(IEnumerable<Team> teams, IEnumerable<SeasonTeam> seasonTeams)
     {
-        foreach (var team in teams)
+        // When multiple teams share an abbreviation (e.g. team relocations like
+        // Arizona -> Utah), the NHL API creates a new team ID. Deduplicate by
+        // keeping only the highest ID per abbreviation so we don't create
+        // duplicate SeasonTeam entries.
+        var deduplicated = teams
+            .GroupBy(t => t.Abbreviation)
+            .Select(g => g.OrderByDescending(t => t.Id).First());
+
+        foreach (var team in deduplicated)
         {
             team.SeasonInformation = seasonTeams
                 .Where(x => x.Abbreviation == team.Abbreviation)
                 .ToDictionary(x => x.SeasonStartYear, x => x);
         }
 
-        return teams;
+        return deduplicated;
     }
 
     /// <summary>
