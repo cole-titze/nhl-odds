@@ -1,7 +1,7 @@
 import pandas as pd
 import pytds
 
-from .queries import TEAM_NAMES_QUERY, TRAINING_DATA_QUERY, UNPLAYED_GAMES_QUERY
+from .queries import CURRENT_SEASON_GAMES_QUERY, TEAM_NAMES_QUERY, TRAINING_DATA_QUERY, UNPLAYED_GAMES_QUERY
 
 
 def _query_to_dataframe(conn: pytds.Connection, query: str) -> pd.DataFrame:
@@ -18,6 +18,10 @@ def load_training_data(conn: pytds.Connection) -> pd.DataFrame:
 
 def load_unplayed_games(conn: pytds.Connection) -> pd.DataFrame:
     return _query_to_dataframe(conn, UNPLAYED_GAMES_QUERY)
+
+
+def load_current_season_games(conn: pytds.Connection) -> pd.DataFrame:
+    return _query_to_dataframe(conn, CURRENT_SEASON_GAMES_QUERY)
 
 
 def load_team_names(conn: pytds.Connection) -> dict[int, str]:

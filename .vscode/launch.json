@@ -23,6 +23,7 @@
             "type": "debugpy",
             "request": "launch",
             "module": "game_predictor",
+            "args": ["--mode", "backfill"],
             "cwd": "${workspaceFolder}",
             "justMyCode": true
         },

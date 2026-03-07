@@ -145,6 +145,15 @@ JOIN GameRaw gr ON gc.GameId = gr.Id
 WHERE gr.HasBeenPlayed = 0
 """
 
+CURRENT_SEASON_GAMES_QUERY = f"""
+SELECT {_feature_cols_sql},
+       gr.Id AS GameId, gr.HomeTeamId, gr.AwayTeamId, gr.GameDateUTC,
+       gr.Winner, gr.HasBeenPlayed
+FROM GameCleaned gc
+JOIN GameRaw gr ON gc.GameId = gr.Id
+WHERE gr.SeasonStartYear = (SELECT MAX(SeasonStartYear) FROM GameRaw)
+"""
+
 TEAM_NAMES_QUERY = """
 SELECT st.TeamId, st.Name
 FROM SeasonTeam st
