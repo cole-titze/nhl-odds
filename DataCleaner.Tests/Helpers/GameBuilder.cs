@@ -31,7 +31,7 @@ public class GameBuilder
     private int _awayTakeaways = 4;
     private int _homeGiveaways = 7;
     private int _awayGiveaways = 6;
-    private bool _hasBeenPlayed = true;
+    private readonly bool _hasBeenPlayed = true;
 
     public GameBuilder WithId(int id) { _id = id; return this; }
     public GameBuilder WithTeams(int home, int away) { _homeTeamId = home; _awayTeamId = away; return this; }

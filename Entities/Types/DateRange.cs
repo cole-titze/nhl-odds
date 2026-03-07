@@ -1,9 +1,7 @@
-﻿namespace Entities.Types
-{
-    public class DateRange
-	{
-		public DateTime startDate { get; set; }
-		public DateTime endDate { get; set; }
-	}
-}
+namespace Entities.Types;
 
+public class DateRange
+{
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+}

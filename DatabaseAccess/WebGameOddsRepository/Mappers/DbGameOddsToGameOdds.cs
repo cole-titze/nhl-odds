@@ -27,22 +27,22 @@ public static class DbGameOddsToGameOddsMapper
 
             gameOddsList.Add(new GameOdds
             {
-                game = new Game
+                Game = new Game
                 {
-                    id = game.Id,
-                    gameDate = game.GameDateUTC,
-                    homeGoals = game.HomeGoals,
-                    awayGoals = game.AwayGoals,
-                    seasonStartYear = game.SeasonStartYear,
-                    winner = game.Winner,
-                    hasBeenPlayed = game.HasBeenPlayed,
-                    homeTeam = homeSeasonTeam != null ? DbSeasonTeamToTeamMapper.Map(homeSeasonTeam) : new Team(),
-                    awayTeam = awaySeasonTeam != null ? DbSeasonTeamToTeamMapper.Map(awaySeasonTeam) : new Team(),
+                    Id = game.Id,
+                    GameDate = game.GameDateUTC,
+                    HomeGoals = game.HomeGoals,
+                    AwayGoals = game.AwayGoals,
+                    SeasonStartYear = game.SeasonStartYear,
+                    Winner = game.Winner,
+                    HasBeenPlayed = game.HasBeenPlayed,
+                    HomeTeam = homeSeasonTeam != null ? DbSeasonTeamToTeamMapper.Map(homeSeasonTeam) : new Team(),
+                    AwayTeam = awaySeasonTeam != null ? DbSeasonTeamToTeamMapper.Map(awaySeasonTeam) : new Team(),
                 },
-                modelHomeOdds = dbOdds.HomeOdds,
-                modelAwayOdds = dbOdds.AwayOdds,
-                modelName = dbOdds.ModelName,
-                logLoss = logLoss,
+                ModelHomeOdds = dbOdds.HomeOdds,
+                ModelAwayOdds = dbOdds.AwayOdds,
+                ModelName = dbOdds.ModelName,
+                LogLoss = logLoss,
             });
         }
 

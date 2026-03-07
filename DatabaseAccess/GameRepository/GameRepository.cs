@@ -1,9 +1,9 @@
+using DatabaseAccess.GameEventRepository;
 using Entities.DbModels;
 using Entities.Mappers.GameEventMappers;
 using Entities.Mappers.GameMappers;
 using Entities.Models;
 using Entities.Types;
-using DatabaseAccess.GameEventRepository;
 using Microsoft.EntityFrameworkCore;
 
 namespace DatabaseAccess.GameRepository;

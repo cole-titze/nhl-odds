@@ -9,7 +9,7 @@ public static class DbSeasonTeamToTeamStatsMapper
     {
         return new TeamStats
         {
-            team = DbSeasonTeamToTeamMapper.Map(dbTeam)
+            Team = DbSeasonTeamToTeamMapper.Map(dbTeam)
         };
     }
 

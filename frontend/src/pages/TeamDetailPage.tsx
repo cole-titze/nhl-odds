@@ -15,10 +15,11 @@ export function TeamDetailPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const season = Number(searchParams.get('season')) || getCurrentSeason();
 
-  const { data: team, loading, error } = useFetch(
-    () => getTeam(Number(teamId), season),
-    [teamId, season]
-  );
+  const {
+    data: team,
+    loading,
+    error,
+  } = useFetch(() => getTeam(Number(teamId), season), [teamId, season]);
 
   const chartData = useMemo(() => {
     if (!team) return [];
@@ -48,9 +49,10 @@ export function TeamDetailPage() {
   if (error) return <div className="text-center text-red-500 py-8">{error}</div>;
   if (!team) return <div className="text-center text-gray-500 py-12">Team not found.</div>;
 
-  const accuracy = team.totalGameCount > 0
-    ? ((team.totalModelAccurateGameCount / team.totalGameCount) * 100).toFixed(1)
-    : '0.0';
+  const accuracy =
+    team.totalGameCount > 0
+      ? ((team.totalModelAccurateGameCount / team.totalGameCount) * 100).toFixed(1)
+      : '0.0';
 
   return (
     <div>
@@ -60,30 +62,40 @@ export function TeamDetailPage() {
             src={team.logoUri}
             alt={team.teamName}
             className="h-16 w-16 object-contain"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
           />
           <div>
-            <h1 className="text-2xl font-bold">{team.locationName} {team.teamName}</h1>
+            <h1 className="text-2xl font-bold">
+              {team.locationName} {team.teamName}
+            </h1>
             <p className="text-gray-500 dark:text-gray-400">
-              {team.seasonWins}-{team.seasonLosses} | Accuracy: {accuracy}% | Log Loss: {team.modelLogLoss.toFixed(4)}
+              {team.seasonWins}-{team.seasonLosses} | Accuracy: {accuracy}% | Log Loss:{' '}
+              {team.modelLogLoss.toFixed(4)}
             </p>
           </div>
         </div>
-        <SeasonSelector
-          value={season}
-          onChange={(s) => setSearchParams({ season: String(s) })}
-        />
+        <SeasonSelector value={season} onChange={(s) => setSearchParams({ season: String(s) })} />
       </div>
 
       {chartData.length > 1 && (
         <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-6">
-          <h2 className="text-sm font-semibold mb-3 text-gray-600 dark:text-gray-300">Cumulative Avg Log Loss</h2>
+          <h2 className="text-sm font-semibold mb-3 text-gray-600 dark:text-gray-300">
+            Cumulative Avg Log Loss
+          </h2>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={chartData}>
               <XAxis dataKey="date" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
               <YAxis tick={{ fontSize: 11 }} domain={['auto', 'auto']} />
               <Tooltip />
-              <Line type="monotone" dataKey="logLoss" stroke="#3b82f6" strokeWidth={2} dot={false} />
+              <Line
+                type="monotone"
+                dataKey="logLoss"
+                stroke="#3b82f6"
+                strokeWidth={2}
+                dot={false}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -110,16 +122,20 @@ export function TeamDetailPage() {
                 const teamSide = isHome ? game.homeTeam : game.awayTeam;
                 const correct = game.hasBeenPlayed && wasCorrectlyPredicted(game);
                 const incorrect = game.hasBeenPlayed && !wasCorrectlyPredicted(game);
-                const won = game.hasBeenPlayed && (
-                  (isHome && game.winner === Winner.HOME) ||
-                  (!isHome && game.winner === Winner.AWAY)
-                );
+                const won =
+                  game.hasBeenPlayed &&
+                  ((isHome && game.winner === Winner.HOME) ||
+                    (!isHome && game.winner === Winner.AWAY));
 
                 return (
                   <tr
                     key={game.id}
                     className={`border-b border-gray-200 dark:border-gray-700 ${
-                      correct ? 'bg-green-50 dark:bg-green-950' : incorrect ? 'bg-red-50 dark:bg-red-950' : ''
+                      correct
+                        ? 'bg-green-50 dark:bg-green-950'
+                        : incorrect
+                          ? 'bg-red-50 dark:bg-red-950'
+                          : ''
                     }`}
                   >
                     <td className="py-2 px-3">{formatShortDate(game.gameDate)}</td>
@@ -130,7 +146,9 @@ export function TeamDetailPage() {
                             src={opponent.logoUri}
                             alt=""
                             className="h-5 w-5 object-contain"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
                           />
                         )}
                         {opponent ? `${opponent.locationName} ${opponent.teamName}` : 'TBD'}

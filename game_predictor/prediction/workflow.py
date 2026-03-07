@@ -1,8 +1,6 @@
 import warnings
 from datetime import datetime, timezone
 
-warnings.filterwarnings("ignore", message="X does not have valid feature names")
-
 from ..config import get_db_config
 from ..db.connection import get_connection
 from ..db.queries import FEATURE_COLUMNS
@@ -10,6 +8,8 @@ from ..db.reader import load_team_names, load_training_data, load_unplayed_games
 from ..db.writer import save_predictions
 from ..models.trainer import build_models, train_and_evaluate
 from .predictor import EXPERIMENTS, SAVE_EXPERIMENT
+
+warnings.filterwarnings("ignore", message="X does not have valid feature names")
 
 
 def _final_result(results: dict) -> tuple[str, dict]:
@@ -59,9 +59,7 @@ def run():
         X_test_t = pipeline.transform(X_test_raw)
 
         models = build_models(exp["models"])
-        results = train_and_evaluate(
-            models, X_train_t, X_test_t, y_train, y_test, exp["ensemble"]
-        )
+        results = train_and_evaluate(models, X_train_t, X_test_t, y_train, y_test, exp["ensemble"])
 
         print("\n  Model Evaluation:")
         for name, metrics in results.items():
@@ -74,7 +72,7 @@ def run():
 
     # Summary comparison
     print(f"\n{'=' * 60}")
-    print(f"  Summary")
+    print("  Summary")
     print(f"{'=' * 60}")
     print(f"  {'Experiment':<20} {'Model':>10}  {'Accuracy':>8}  {'LogLoss':>8}")
     print(f"  {'-' * 55}")
@@ -106,21 +104,27 @@ def run():
     for i, row in unplayed_df.iterrows():
         home_name = team_names.get(row["HomeTeamId"], f"Team {row['HomeTeamId']}")
         away_name = team_names.get(row["AwayTeamId"], f"Team {row['AwayTeamId']}")
-        game_date = row["GameDateUTC"].strftime("%Y-%m-%d") if hasattr(row["GameDateUTC"], "strftime") else str(row["GameDateUTC"])[:10]
+        game_date = (
+            row["GameDateUTC"].strftime("%Y-%m-%d")
+            if hasattr(row["GameDateUTC"], "strftime")
+            else str(row["GameDateUTC"])[:10]
+        )
         idx = unplayed_df.index.get_loc(i)
         home_pct = proba[idx][0] * 100
         away_pct = proba[idx][1] * 100
         print(f"{game_date:<12} {home_name:>25} {away_name:>25}   {home_pct:5.1f}% {away_pct:5.1f}%")
 
-        all_predictions.append({
-            "GameId": int(row["GameId"]),
-            "ModelName": 1,
-            "RunDateUTC": run_date,
-            "HomeOdds": float(proba[idx][0]),
-            "AwayOdds": float(proba[idx][1]),
-            "LogLoss": float(save_metrics["log_loss"]),
-            "Notes": f"{SAVE_EXPERIMENT}/{save_name}",
-        })
+        all_predictions.append(
+            {
+                "GameId": int(row["GameId"]),
+                "ModelName": 1,
+                "RunDateUTC": run_date,
+                "HomeOdds": float(proba[idx][0]),
+                "AwayOdds": float(proba[idx][1]),
+                "LogLoss": float(save_metrics["log_loss"]),
+                "Notes": f"{SAVE_EXPERIMENT}/{save_name}",
+            }
+        )
 
     print(f"\nSaving {len(all_predictions)} predictions to GameOdds...")
     save_predictions(conn, all_predictions)

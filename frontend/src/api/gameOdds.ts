@@ -4,7 +4,7 @@ import type { GameOddsVM } from '../types';
 export function getGameOddsInDateRange(
   startDate: string,
   endDate: string,
-  seasonStartYear: number
+  seasonStartYear: number,
 ): Promise<GameOddsVM[]> {
   const params = new URLSearchParams({
     startDate,

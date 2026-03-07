@@ -19,8 +19,7 @@ def get_db_config() -> dict:
             return _parse_connection_string(conn_str)
 
     raise RuntimeError(
-        "No database config found. Set NHL_DATABASE env var or add a connection "
-        "string to Entry/appsettings.Local.json."
+        "No database config found. Set NHL_DATABASE env var or add a connection string to Entry/appsettings.Local.json."
     )
 
 

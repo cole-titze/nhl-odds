@@ -4,11 +4,11 @@ namespace Entities.ViewModels;
 
 public class MatchupTeamVM
 {
-    public int id { get; set; }
-    public string locationName { get; set; } = string.Empty;
-    public string teamName { get; set; } = string.Empty;
-    public string logoUri { get; set; } = string.Empty;
-    public double modelOdds { get; set; }
-    public int goals { get; set; }
-    public Winner team { get; set; }
+    public int Id { get; set; }
+    public string LocationName { get; set; } = string.Empty;
+    public string TeamName { get; set; } = string.Empty;
+    public string LogoUri { get; set; } = string.Empty;
+    public double ModelOdds { get; set; }
+    public int Goals { get; set; }
+    public Winner Team { get; set; }
 }

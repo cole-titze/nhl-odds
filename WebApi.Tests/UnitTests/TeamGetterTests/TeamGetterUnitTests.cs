@@ -1,8 +1,9 @@
-namespace WebApi.Tests.BusinessLogic.UnitTests.TeamGetterTests;
+using Entities.Models.Web;
 using FluentAssertions;
 using WebApi.BusinessLogic.TeamGetter;
-using Entities.Models.Web;
 using WebApi.Tests.BusinessLogic.Fakes;
+
+namespace WebApi.Tests.BusinessLogic.UnitTests.TeamGetterTests;
 
 [TestClass]
 public class TeamGetterUnitTests
@@ -15,9 +16,9 @@ public class TeamGetterUnitTests
         {
             var team = new TeamStats()
             {
-                team = new Team()
+                Team = new Team()
                 {
-                    id = i,
+                    Id = i,
                 }
             };
             teamList.Add(team);

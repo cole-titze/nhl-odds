@@ -1,21 +1,22 @@
-using Entities.Types;
-namespace WebApi.Tests.BusinessLogic.UnitTests.TeamGetterTests;
-using FluentAssertions;
 using Entities.Models.Web;
+using Entities.Types;
+using FluentAssertions;
 using WebApi.BusinessLogic.GameOddsGetter;
 using WebApi.Tests.BusinessLogic.Fakes;
+
+namespace WebApi.Tests.BusinessLogic.UnitTests.TeamGetterTests;
 
 [TestClass]
 public class GameOddsGetterUnitTests
 {
     private const int SEASON = 2021;
-    private DateRange dateRange = new DateRange()
+    private readonly DateRange dateRange = new DateRange()
     {
-        startDate = DateTime.Parse("1/1/2000"),
-        endDate = DateTime.Parse("1/1/2010")
+        StartDate = DateTime.Parse("1/1/2000"),
+        EndDate = DateTime.Parse("1/1/2010")
     };
-    private DateTime dateInRange = DateTime.Parse("1/1/2005");
-    private DateTime dateOutOfRange = DateTime.Parse("1/1/2020");
+    private readonly DateTime dateInRange = DateTime.Parse("1/1/2005");
+    private readonly DateTime dateOutOfRange = DateTime.Parse("1/1/2020");
     public List<GameOdds> GamesFactory(int numberOfGamesInDateRange, int numberOfGamesOutOfDateRange)
     {
         var gameList = new List<GameOdds>();
@@ -23,9 +24,9 @@ public class GameOddsGetterUnitTests
         {
             var game = new GameOdds()
             {
-                game = new Game()
+                Game = new Game()
                 {
-                    gameDate = dateInRange
+                    GameDate = dateInRange
                 }
             };
             gameList.Add(game);
@@ -34,9 +35,9 @@ public class GameOddsGetterUnitTests
         {
             var game = new GameOdds()
             {
-                game = new Game()
+                Game = new Game()
                 {
-                    gameDate = dateOutOfRange
+                    GameDate = dateOutOfRange
                 }
             };
             gameList.Add(game);

@@ -15,7 +15,7 @@ public static class TeamsToTeamsVmMapper
             var teamVm = TeamToTeamVmMapper.Map(teamStats);
             teams.Add(teamVm);
         }
-        teamsVm.teams = teams;
+        teamsVm.Teams = teams;
         teamsVm = BuildSeasonTotals(teamsVm);
 
         return teamsVm;
@@ -23,20 +23,20 @@ public static class TeamsToTeamsVmMapper
 
     private static TeamsVM BuildSeasonTotals(TeamsVM teamsVm)
     {
-        foreach (var team in teamsVm.teams)
+        foreach (var team in teamsVm.Teams)
         {
-            teamsVm.seasonTotals.totalGameCount += team.totalGameCount;
-            teamsVm.seasonTotals.totalModelAccurateGameCount += team.totalModelAccurateGameCount;
-            teamsVm.seasonTotals.modelLogLoss += (team.modelLogLoss * team.totalGameCount);
+            teamsVm.SeasonTotals.TotalGameCount += team.TotalGameCount;
+            teamsVm.SeasonTotals.TotalModelAccurateGameCount += team.TotalModelAccurateGameCount;
+            teamsVm.SeasonTotals.ModelLogLoss += (team.ModelLogLoss * team.TotalGameCount);
         }
-        if (teamsVm.seasonTotals.totalGameCount == 0)
+        if (teamsVm.SeasonTotals.TotalGameCount == 0)
             return teamsVm;
 
-        teamsVm.seasonTotals.modelLogLoss /= teamsVm.seasonTotals.totalGameCount;
+        teamsVm.SeasonTotals.ModelLogLoss /= teamsVm.SeasonTotals.TotalGameCount;
 
         // Cut in half since we were counting games twice (home and away)
-        teamsVm.seasonTotals.totalGameCount /= 2;
-        teamsVm.seasonTotals.totalModelAccurateGameCount /= 2;
+        teamsVm.SeasonTotals.TotalGameCount /= 2;
+        teamsVm.SeasonTotals.TotalModelAccurateGameCount /= 2;
 
         return teamsVm;
     }

@@ -23,10 +23,18 @@ export function TeamsPage() {
     teams.sort((a, b) => {
       let cmp = 0;
       switch (sortKey) {
-        case 'name': cmp = `${a.locationName} ${a.teamName}`.localeCompare(`${b.locationName} ${b.teamName}`); break;
-        case 'record': cmp = (a.seasonWins - a.seasonLosses) - (b.seasonWins - b.seasonLosses); break;
-        case 'accuracy': cmp = accuracy(a) - accuracy(b); break;
-        case 'logLoss': cmp = a.modelLogLoss - b.modelLogLoss; break;
+        case 'name':
+          cmp = `${a.locationName} ${a.teamName}`.localeCompare(`${b.locationName} ${b.teamName}`);
+          break;
+        case 'record':
+          cmp = a.seasonWins - a.seasonLosses - (b.seasonWins - b.seasonLosses);
+          break;
+        case 'accuracy':
+          cmp = accuracy(a) - accuracy(b);
+          break;
+        case 'logLoss':
+          cmp = a.modelLogLoss - b.modelLogLoss;
+          break;
       }
       return sortDir === 'asc' ? cmp : -cmp;
     });
@@ -61,8 +69,13 @@ export function TeamsPage() {
           <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-center">
             <div className="text-2xl font-bold">
               {data.seasonTotals.totalGameCount > 0
-                ? ((data.seasonTotals.totalModelAccurateGameCount / data.seasonTotals.totalGameCount) * 100).toFixed(1)
-                : '0.0'}%
+                ? (
+                    (data.seasonTotals.totalModelAccurateGameCount /
+                      data.seasonTotals.totalGameCount) *
+                    100
+                  ).toFixed(1)
+                : '0.0'}
+              %
             </div>
             <div className="text-sm text-gray-500 dark:text-gray-400">Model Accuracy</div>
           </div>
@@ -77,7 +90,9 @@ export function TeamsPage() {
 
       {loading && (
         <div className="space-y-3">
-          {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
         </div>
       )}
 
@@ -86,16 +101,28 @@ export function TeamsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b-2 border-gray-200 dark:border-gray-700 text-left">
-                <th className="py-2 px-4 cursor-pointer select-none" onClick={() => handleSort('name')}>
+                <th
+                  className="py-2 px-4 cursor-pointer select-none"
+                  onClick={() => handleSort('name')}
+                >
                   Team{arrow('name')}
                 </th>
-                <th className="py-2 px-4 text-center cursor-pointer select-none" onClick={() => handleSort('record')}>
+                <th
+                  className="py-2 px-4 text-center cursor-pointer select-none"
+                  onClick={() => handleSort('record')}
+                >
                   Record{arrow('record')}
                 </th>
-                <th className="py-2 px-4 text-center cursor-pointer select-none" onClick={() => handleSort('accuracy')}>
+                <th
+                  className="py-2 px-4 text-center cursor-pointer select-none"
+                  onClick={() => handleSort('accuracy')}
+                >
                   Accuracy{arrow('accuracy')}
                 </th>
-                <th className="py-2 px-4 text-center cursor-pointer select-none" onClick={() => handleSort('logLoss')}>
+                <th
+                  className="py-2 px-4 text-center cursor-pointer select-none"
+                  onClick={() => handleSort('logLoss')}
+                >
                   Log Loss{arrow('logLoss')}
                 </th>
               </tr>

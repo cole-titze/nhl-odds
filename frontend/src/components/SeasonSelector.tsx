@@ -15,7 +15,9 @@ export function SeasonSelector({ value, onChange }: SeasonSelectorProps) {
       className="px-3 py-1.5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm"
     >
       {options.map((y) => (
-        <option key={y} value={y}>{formatSeasonLabel(y)}</option>
+        <option key={y} value={y}>
+          {formatSeasonLabel(y)}
+        </option>
       ))}
     </select>
   );

@@ -23,8 +23,8 @@ public class GameOddsRepository : IGameOddsRepository
         var dbGameOdds = await _dbContext.GameOdds
             .Include(x => x.Game)
             .Where(x => x.Game != null
-                && x.Game.GameDateUTC.AddHours(-6).Date >= dateRange.startDate.Date
-                && x.Game.GameDateUTC.AddHours(-6).Date <= dateRange.endDate.Date)
+                && x.Game.GameDateUTC.AddHours(-6).Date >= dateRange.StartDate.Date
+                && x.Game.GameDateUTC.AddHours(-6).Date <= dateRange.EndDate.Date)
             .OrderBy(x => x.Game!.GameDateUTC)
             .ToListAsync();
 

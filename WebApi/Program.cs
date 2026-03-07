@@ -1,9 +1,9 @@
-using DatabaseAccess.WebGameOddsRepository;
 using DatabaseAccess;
+using DatabaseAccess.WebGameOddsRepository;
+using DatabaseAccess.WebTeamRepository;
 using Microsoft.EntityFrameworkCore;
 using WebApi.BusinessLogic.GameOddsGetter;
 using WebApi.BusinessLogic.TeamGetter;
-using DatabaseAccess.WebTeamRepository;
 
 var builder = WebApplication.CreateBuilder(args);
 

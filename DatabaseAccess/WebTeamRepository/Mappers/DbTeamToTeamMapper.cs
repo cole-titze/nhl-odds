@@ -9,10 +9,10 @@ public static class DbSeasonTeamToTeamMapper
     {
         return new Team
         {
-            id = dbTeam.TeamId,
-            teamName = dbTeam.CommonName,
-            locationName = dbTeam.PlaceName,
-            logoUri = dbTeam.LogoUri,
+            Id = dbTeam.TeamId,
+            TeamName = dbTeam.CommonName,
+            LocationName = dbTeam.PlaceName,
+            LogoUri = dbTeam.LogoUri,
         };
     }
 }

@@ -4,11 +4,11 @@ namespace Entities.ViewModels;
 
 public class GameOddsVM
 {
-    public int id { get; set; }
-    public DateTime gameDate { get; set; }
-    public MatchupTeamVM? homeTeam { get; set; }
-    public MatchupTeamVM? awayTeam { get; set; }
-    public Winner winner { get; set; }
-    public bool hasBeenPlayed { get; set; }
-    public double logLoss { get; set; }
+    public int Id { get; set; }
+    public DateTime GameDate { get; set; }
+    public MatchupTeamVM? HomeTeam { get; set; }
+    public MatchupTeamVM? AwayTeam { get; set; }
+    public Winner Winner { get; set; }
+    public bool HasBeenPlayed { get; set; }
+    public double LogLoss { get; set; }
 }

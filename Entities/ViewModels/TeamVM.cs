@@ -2,14 +2,14 @@ namespace Entities.ViewModels;
 
 public class TeamVM
 {
-    public int id { get; set; }
-    public string locationName { get; set; } = string.Empty;
-    public string teamName { get; set; } = string.Empty;
-    public string logoUri { get; set; } = string.Empty;
-    public double modelLogLoss { get; set; }
-    public int totalGameCount { get; set; }
-    public int seasonWins { get; set; }
-    public int seasonLosses { get; set; }
-    public int totalModelAccurateGameCount { get; set; }
-    public IEnumerable<GameOddsVM> gameOddsVM { get; set; } = new List<GameOddsVM>();
+    public int Id { get; set; }
+    public string LocationName { get; set; } = string.Empty;
+    public string TeamName { get; set; } = string.Empty;
+    public string LogoUri { get; set; } = string.Empty;
+    public double ModelLogLoss { get; set; }
+    public int TotalGameCount { get; set; }
+    public int SeasonWins { get; set; }
+    public int SeasonLosses { get; set; }
+    public int TotalModelAccurateGameCount { get; set; }
+    public IEnumerable<GameOddsVM> GameOddsVM { get; set; } = new List<GameOddsVM>();
 }

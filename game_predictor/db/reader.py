@@ -1,7 +1,7 @@
 import pandas as pd
 import pytds
 
-from .queries import TRAINING_DATA_QUERY, UNPLAYED_GAMES_QUERY, TEAM_NAMES_QUERY
+from .queries import TEAM_NAMES_QUERY, TRAINING_DATA_QUERY, UNPLAYED_GAMES_QUERY
 
 
 def _query_to_dataframe(conn: pytds.Connection, query: str) -> pd.DataFrame:

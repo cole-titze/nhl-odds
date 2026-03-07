@@ -48,15 +48,16 @@ EXPERIMENTS = {
                 },
             },
         },
-        "pipeline": Pipeline([
-            ("scaler", StandardScaler()),
-            ("minmax", MinMaxScaler()),
-            ("select", SelectKBest(f_classif, k=50)),
-            ("pca", PCA(n_components=15)),
-        ]),
+        "pipeline": Pipeline(
+            [
+                ("scaler", StandardScaler()),
+                ("minmax", MinMaxScaler()),
+                ("select", SelectKBest(f_classif, k=50)),
+                ("pca", PCA(n_components=15)),
+            ]
+        ),
         "ensemble": ["MLP", "LightGBM"],
     },
-
     "LightGBM Deep": {
         "models": {
             "LightGBM": {
@@ -70,15 +71,16 @@ EXPERIMENTS = {
                 },
             },
         },
-        "pipeline": Pipeline([
-            ("scaler", StandardScaler()),
-            ("minmax", MinMaxScaler()),
-            ("select", SelectKBest(f_classif, k=80)),
-            ("pca", PCA(n_components=25)),
-        ]),
+        "pipeline": Pipeline(
+            [
+                ("scaler", StandardScaler()),
+                ("minmax", MinMaxScaler()),
+                ("select", SelectKBest(f_classif, k=80)),
+                ("pca", PCA(n_components=25)),
+            ]
+        ),
         "ensemble": None,
     },
-
     "Wide MLP": {
         "models": {
             "MLP": {
@@ -91,12 +93,14 @@ EXPERIMENTS = {
                 },
             },
         },
-        "pipeline": Pipeline([
-            ("scaler", StandardScaler()),
-            ("minmax", MinMaxScaler()),
-            ("select", SelectKBest(f_classif, k=50)),
-            ("pca", PCA(n_components=15)),
-        ]),
+        "pipeline": Pipeline(
+            [
+                ("scaler", StandardScaler()),
+                ("minmax", MinMaxScaler()),
+                ("select", SelectKBest(f_classif, k=50)),
+                ("pca", PCA(n_components=15)),
+            ]
+        ),
         "ensemble": None,
     },
 }

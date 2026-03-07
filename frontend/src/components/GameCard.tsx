@@ -6,7 +6,11 @@ interface GameCardProps {
   game: GameOddsVM;
 }
 
-function TeamSide({ team, isWinner, played }: {
+function TeamSide({
+  team,
+  isWinner,
+  played,
+}: {
   team: GameOddsVM['homeTeam'];
   isWinner: boolean;
   played: boolean;
@@ -14,14 +18,20 @@ function TeamSide({ team, isWinner, played }: {
   if (!team) return <div className="flex-1 text-center text-gray-400">TBD</div>;
 
   return (
-    <div className={`flex-1 flex flex-col items-center gap-1 ${isWinner && played ? 'font-bold' : ''}`}>
+    <div
+      className={`flex-1 flex flex-col items-center gap-1 ${isWinner && played ? 'font-bold' : ''}`}
+    >
       <img
         src={team.logoUri}
         alt={team.teamName}
         className="h-16 w-16 object-contain"
-        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+        onError={(e) => {
+          (e.target as HTMLImageElement).style.display = 'none';
+        }}
       />
-      <div className="text-sm leading-tight">{team.locationName} {team.teamName}</div>
+      <div className="text-sm leading-tight">
+        {team.locationName} {team.teamName}
+      </div>
       <div className="flex items-baseline gap-2">
         <span className="text-base font-semibold text-blue-600 dark:text-blue-400">
           {(team.modelOdds * 100).toFixed(1)}%

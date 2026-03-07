@@ -5,7 +5,7 @@ namespace WebApi.Tests.BusinessLogic.Fakes;
 
 public class FakeTeamRepository : ITeamRepository
 {
-    private IEnumerable<TeamStats> _teams { get; set; } = new List<TeamStats>();
+    private readonly IEnumerable<TeamStats> _teams;
     public FakeTeamRepository(List<TeamStats> teams)
     {
         _teams = teams;
@@ -17,6 +17,6 @@ public class FakeTeamRepository : ITeamRepository
 
     public Task<TeamStats> GetTeam(int teamId, int seasonStartYear)
     {
-        return Task.FromResult(_teams.First(t => t.team.id == teamId));
+        return Task.FromResult(_teams.First(t => t.Team.Id == teamId));
     }
 }

@@ -1,6 +1,6 @@
+using DatabaseAccess.WebTeamRepository.Mappers;
 using Entities.Models.Web;
 using Microsoft.EntityFrameworkCore;
-using DatabaseAccess.WebTeamRepository.Mappers;
 
 namespace DatabaseAccess.WebTeamRepository;
 

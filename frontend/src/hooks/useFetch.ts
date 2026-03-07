@@ -21,7 +21,9 @@ export function useFetch<T>(fetcher: () => Promise<T>, deps: unknown[]): FetchSt
         if (!cancelled) setState({ data: null, loading: false, error: err.message });
       });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 

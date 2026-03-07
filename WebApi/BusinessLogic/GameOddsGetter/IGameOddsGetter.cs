@@ -1,5 +1,5 @@
-using Entities.Types;
 using Entities.Models.Web;
+using Entities.Types;
 
 namespace WebApi.BusinessLogic.GameOddsGetter;
 

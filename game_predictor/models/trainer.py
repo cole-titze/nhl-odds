@@ -10,9 +10,7 @@ def build_models(model_configs: dict) -> dict:
     return models
 
 
-def train_and_evaluate(
-    models: dict, X_train, X_test, y_train, y_test, ensemble_names: list | None
-) -> dict:
+def train_and_evaluate(models: dict, X_train, X_test, y_train, y_test, ensemble_names: list | None) -> dict:
     results = {}
 
     for name, model in models.items():

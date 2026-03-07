@@ -1,6 +1,6 @@
 using Entities.Types;
-using WebApi.BusinessLogic.GameOddsGetter;
 using Microsoft.AspNetCore.Mvc;
+using WebApi.BusinessLogic.GameOddsGetter;
 using WebApi.Mappers;
 
 namespace WebApi.Controllers;
@@ -23,8 +23,8 @@ public class GameOddsController
     {
         var dateRange = new DateRange
         {
-            startDate = startDate.Date,
-            endDate = endDate.Date
+            StartDate = startDate.Date,
+            EndDate = endDate.Date
         };
         var predictedGames = await _gameOddsGetter.GetGameOddsInDateRange(dateRange, seasonStartYear);
         var predictedGamesVM = GameOddsToViewModelsMapper.Map(predictedGames);

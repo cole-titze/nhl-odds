@@ -8,9 +8,10 @@ interface TeamRowProps {
 
 export function TeamRow({ team, season }: TeamRowProps) {
   const navigate = useNavigate();
-  const accuracy = team.totalGameCount > 0
-    ? ((team.totalModelAccurateGameCount / team.totalGameCount) * 100).toFixed(1)
-    : '0.0';
+  const accuracy =
+    team.totalGameCount > 0
+      ? ((team.totalModelAccurateGameCount / team.totalGameCount) * 100).toFixed(1)
+      : '0.0';
 
   return (
     <tr
@@ -23,12 +24,18 @@ export function TeamRow({ team, season }: TeamRowProps) {
             src={team.logoUri}
             alt={team.teamName}
             className="h-8 w-8 object-contain"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
           />
-          <span>{team.locationName} {team.teamName}</span>
+          <span>
+            {team.locationName} {team.teamName}
+          </span>
         </div>
       </td>
-      <td className="py-3 px-4 text-center">{team.seasonWins}-{team.seasonLosses}</td>
+      <td className="py-3 px-4 text-center">
+        {team.seasonWins}-{team.seasonLosses}
+      </td>
       <td className="py-3 px-4 text-center">{accuracy}%</td>
       <td className="py-3 px-4 text-center">{team.modelLogLoss.toFixed(4)}</td>
     </tr>

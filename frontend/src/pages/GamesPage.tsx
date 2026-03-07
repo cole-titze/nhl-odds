@@ -12,22 +12,23 @@ export function GamesPage() {
   const dateStr = formatDate(date);
   const season = getCurrentSeason(date);
 
-  const { data: games, loading, error } = useFetch(
-    () => getGameOddsInDateRange(dateStr, dateStr, season),
-    [dateStr, season]
-  );
+  const {
+    data: games,
+    loading,
+    error,
+  } = useFetch(() => getGameOddsInDateRange(dateStr, dateStr, season), [dateStr, season]);
 
   return (
     <div>
       <DateNav date={date} onChange={setDate} />
 
-      {error && (
-        <div className="text-center text-red-500 py-8">{error}</div>
-      )}
+      {error && <div className="text-center text-red-500 py-8">{error}</div>}
 
       {loading && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}
+          {Array.from({ length: 4 }).map((_, i) => (
+            <CardSkeleton key={i} />
+          ))}
         </div>
       )}
 

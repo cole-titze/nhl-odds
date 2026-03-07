@@ -4,11 +4,11 @@ namespace Entities.Models.Web;
 
 public class GameOdds
 {
-    public double modelHomeOdds { get; set; }
-    public double modelAwayOdds { get; set; }
-    public double logLoss { get; set; }
-    public int modelName { get; set; }
-    public Game game { get; set; } = new Game();
+    public double ModelHomeOdds { get; set; }
+    public double ModelAwayOdds { get; set; }
+    public double LogLoss { get; set; }
+    public int ModelName { get; set; }
+    public Game Game { get; set; } = new Game();
 
     public static double CalculateLogLoss(double homeOdds, double awayOdds, Winner winner)
     {

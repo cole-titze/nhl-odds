@@ -1,6 +1,6 @@
+using Microsoft.AspNetCore.Mvc;
 using WebApi.BusinessLogic.GameOddsGetter;
 using WebApi.BusinessLogic.TeamGetter;
-using Microsoft.AspNetCore.Mvc;
 using WebApi.Mappers;
 
 namespace WebApi.Controllers;

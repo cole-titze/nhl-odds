@@ -1,6 +1,6 @@
-using Entities.Types;
 using DatabaseAccess.WebGameOddsRepository;
 using Entities.Models.Web;
+using Entities.Types;
 
 namespace WebApi.BusinessLogic.GameOddsGetter;
 
@@ -30,7 +30,7 @@ public class GameOddsGetter : IGameOddsGetter
 
     public async Task<TeamStats> BuildTeamGameOdds(TeamStats team, int seasonStartYear)
     {
-        team.gameOdds = await GetTeamGameOdds(team.team.id, seasonStartYear);
+        team.GameOdds = await GetTeamGameOdds(team.Team.Id, seasonStartYear);
         return team;
     }
 
