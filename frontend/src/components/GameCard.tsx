@@ -53,8 +53,13 @@ export function GameCard({ game }: GameCardProps) {
           isWinner={game.hasBeenPlayed && game.winner === Winner.AWAY}
           played={game.hasBeenPlayed}
         />
-        <div className="text-gray-400 text-xs font-medium">
+        <div className="text-gray-400 text-xs font-medium text-center">
           {game.hasBeenPlayed ? 'FINAL' : 'VS'}
+          {!game.hasBeenPlayed && game.gameDate && (
+            <div className="mt-0.5">
+              {new Date(game.gameDate).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+            </div>
+          )}
         </div>
         <TeamSide
           team={game.homeTeam}

@@ -30,7 +30,7 @@ public static class DbGameOddsToGameOddsMapper
                 Game = new Game
                 {
                     Id = game.Id,
-                    GameDate = game.GameDateUTC,
+                    GameDate = DateTime.SpecifyKind(game.GameDateUTC, DateTimeKind.Utc),
                     HomeGoals = game.HomeGoals,
                     AwayGoals = game.AwayGoals,
                     SeasonStartYear = game.SeasonStartYear,
