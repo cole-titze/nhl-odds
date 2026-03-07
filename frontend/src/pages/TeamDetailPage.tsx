@@ -46,55 +46,86 @@ export function TeamDetailPage() {
     );
   }
 
-  if (error) return <div className="text-center text-red-500 py-8">{error}</div>;
-  if (!team) return <div className="text-center text-gray-500 py-12">Team not found.</div>;
+  if (error) return <div className="glass rounded-xl text-center text-red-500 py-8">{error}</div>;
+  if (!team) return <div className="text-center text-surface-400 py-12">Team not found.</div>;
 
-  const accuracy =
+  const accuracyPct =
     team.totalGameCount > 0
       ? ((team.totalModelAccurateGameCount / team.totalGameCount) * 100).toFixed(1)
       : '0.0';
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+        <div className="flex items-center gap-5">
           <img
             src={team.logoUri}
             alt={team.teamName}
-            className="h-16 w-16 object-contain"
+            className="h-20 w-20 object-contain drop-shadow-lg"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none';
             }}
           />
           <div>
-            <h1 className="text-2xl font-bold">
+            <h1 className="font-display text-3xl font-bold tracking-tight">
               {team.locationName} {team.teamName}
             </h1>
-            <p className="text-gray-500 dark:text-gray-400">
-              {team.seasonWins}-{team.seasonLosses} | Accuracy: {accuracy}% | Log Loss:{' '}
-              {team.modelLogLoss.toFixed(4)}
-            </p>
+            <div className="flex items-center gap-4 mt-1.5">
+              <span className="stat-number text-sm text-surface-500 dark:text-surface-400">
+                {team.seasonWins}-{team.seasonLosses}
+              </span>
+              <span className="w-1 h-1 rounded-full bg-surface-300 dark:bg-surface-600" />
+              <span className="stat-number text-sm text-accent-500">{accuracyPct}% accuracy</span>
+              <span className="w-1 h-1 rounded-full bg-surface-300 dark:bg-surface-600" />
+              <span className="stat-number text-sm text-surface-500 dark:text-surface-400">
+                {team.modelLogLoss.toFixed(4)} log loss
+              </span>
+            </div>
           </div>
         </div>
         <SeasonSelector value={season} onChange={(s) => setSearchParams({ season: String(s) })} />
       </div>
 
       {chartData.length > 1 && (
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-6">
-          <h2 className="text-sm font-semibold mb-3 text-gray-600 dark:text-gray-300">
+        <div className="glass rounded-xl p-5 mb-8">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500 mb-4">
             Cumulative Avg Log Loss
           </h2>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={chartData}>
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-              <YAxis tick={{ fontSize: 11 }} domain={['auto', 'auto']} />
-              <Tooltip />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 11, fontFamily: 'JetBrains Mono' }}
+                interval="preserveStartEnd"
+                stroke="#525252"
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fontFamily: 'JetBrains Mono' }}
+                domain={['auto', 'auto']}
+                stroke="#525252"
+                tickLine={false}
+                axisLine={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(10, 10, 10, 0.9)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: '8px',
+                  fontFamily: 'JetBrains Mono',
+                  fontSize: '12px',
+                  color: '#fff',
+                  backdropFilter: 'blur(12px)',
+                }}
+              />
               <Line
                 type="monotone"
                 dataKey="logLoss"
-                stroke="#3b82f6"
-                strokeWidth={2}
+                stroke="#10b981"
+                strokeWidth={2.5}
                 dot={false}
+                activeDot={{ r: 4, fill: '#10b981', stroke: '#0a0a0a', strokeWidth: 2 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -102,83 +133,111 @@ export function TeamDetailPage() {
       )}
 
       {team.gameOddsVM.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b-2 border-gray-200 dark:border-gray-700 text-left">
-                <th className="py-2 px-3">Date</th>
-                <th className="py-2 px-3">Opponent</th>
-                <th className="py-2 px-3 text-center">H/A</th>
-                <th className="py-2 px-3 text-center">Odds</th>
-                <th className="py-2 px-3 text-center">Score</th>
-                <th className="py-2 px-3 text-center">Result</th>
-                <th className="py-2 px-3 text-center">Log Loss</th>
-              </tr>
-            </thead>
-            <tbody>
-              {team.gameOddsVM.map((game) => {
-                const isHome = game.homeTeam?.id === team.id;
-                const opponent = isHome ? game.awayTeam : game.homeTeam;
-                const teamSide = isHome ? game.homeTeam : game.awayTeam;
-                const correct = game.hasBeenPlayed && wasCorrectlyPredicted(game);
-                const incorrect = game.hasBeenPlayed && !wasCorrectlyPredicted(game);
-                const won =
-                  game.hasBeenPlayed &&
-                  ((isHome && game.winner === Winner.HOME) ||
-                    (!isHome && game.winner === Winner.AWAY));
+        <div className="glass rounded-xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-surface-200 dark:border-white/[0.06] text-left text-xs uppercase tracking-wider text-surface-400 dark:text-surface-500">
+                  <th className="py-3 px-4 font-semibold">Date</th>
+                  <th className="py-3 px-4 font-semibold">Opponent</th>
+                  <th className="py-3 px-4 text-center font-semibold">H/A</th>
+                  <th className="py-3 px-4 text-center font-semibold">Odds</th>
+                  <th className="py-3 px-4 text-center font-semibold">Score</th>
+                  <th className="py-3 px-4 text-center font-semibold">Result</th>
+                  <th className="py-3 px-4 text-center font-semibold">Log Loss</th>
+                </tr>
+              </thead>
+              <tbody>
+                {team.gameOddsVM.map((game) => {
+                  const isHome = game.homeTeam?.id === team.id;
+                  const opponent = isHome ? game.awayTeam : game.homeTeam;
+                  const teamSide = isHome ? game.homeTeam : game.awayTeam;
+                  const correct = game.hasBeenPlayed && wasCorrectlyPredicted(game);
+                  const incorrect = game.hasBeenPlayed && !wasCorrectlyPredicted(game);
+                  const won =
+                    game.hasBeenPlayed &&
+                    ((isHome && game.winner === Winner.HOME) ||
+                      (!isHome && game.winner === Winner.AWAY));
 
-                return (
-                  <tr
-                    key={game.id}
-                    className={`border-b border-gray-200 dark:border-gray-700 ${
-                      correct
-                        ? 'bg-green-50 dark:bg-green-950'
-                        : incorrect
-                          ? 'bg-red-50 dark:bg-red-950'
-                          : ''
-                    }`}
-                  >
-                    <td className="py-2 px-3">{formatShortDate(game.gameDate)}</td>
-                    <td className="py-2 px-3">
-                      <div className="flex items-center gap-2">
-                        {opponent && (
-                          <img
-                            src={opponent.logoUri}
-                            alt=""
-                            className="h-5 w-5 object-contain"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
-                          />
+                  return (
+                    <tr
+                      key={game.id}
+                      className={`border-b border-surface-100 dark:border-white/[0.03] transition-colors ${
+                        correct
+                          ? 'bg-emerald-50/50 dark:bg-emerald-500/[0.04]'
+                          : incorrect
+                            ? 'bg-red-50/50 dark:bg-red-500/[0.04]'
+                            : 'hover:bg-surface-50 dark:hover:bg-white/[0.02]'
+                      }`}
+                    >
+                      <td className="py-3 px-4 font-mono text-xs">
+                        {formatShortDate(game.gameDate)}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2.5">
+                          {opponent && (
+                            <img
+                              src={opponent.logoUri}
+                              alt=""
+                              className="h-5 w-5 object-contain"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          )}
+                          <span className="font-medium">
+                            {opponent ? `${opponent.locationName} ${opponent.teamName}` : 'TBD'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded text-xs font-mono font-semibold ${
+                            isHome
+                              ? 'bg-accent-500/10 text-accent-500'
+                              : 'bg-surface-200/50 dark:bg-white/[0.05] text-surface-500 dark:text-surface-400'
+                          }`}
+                        >
+                          {isHome ? 'H' : 'A'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-center stat-number text-accent-500">
+                        {teamSide ? `${(teamSide.modelOdds * 100).toFixed(1)}%` : '-'}
+                      </td>
+                      <td className="py-3 px-4 text-center stat-number">
+                        {game.hasBeenPlayed
+                          ? `${game.awayTeam?.goals ?? 0}-${game.homeTeam?.goals ?? 0}`
+                          : '-'}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        {game.hasBeenPlayed ? (
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded text-xs font-bold ${
+                              won
+                                ? 'bg-emerald-500/10 text-emerald-500'
+                                : 'bg-red-500/10 text-red-500'
+                            }`}
+                          >
+                            {won ? 'W' : 'L'}
+                          </span>
+                        ) : (
+                          <span className="text-surface-400">-</span>
                         )}
-                        {opponent ? `${opponent.locationName} ${opponent.teamName}` : 'TBD'}
-                      </div>
-                    </td>
-                    <td className="py-2 px-3 text-center">{isHome ? 'H' : 'A'}</td>
-                    <td className="py-2 px-3 text-center">
-                      {teamSide ? `${(teamSide.modelOdds * 100).toFixed(1)}%` : '-'}
-                    </td>
-                    <td className="py-2 px-3 text-center">
-                      {game.hasBeenPlayed
-                        ? `${game.awayTeam?.goals ?? 0}-${game.homeTeam?.goals ?? 0}`
-                        : '-'}
-                    </td>
-                    <td className="py-2 px-3 text-center font-medium">
-                      {game.hasBeenPlayed ? (won ? 'W' : 'L') : '-'}
-                    </td>
-                    <td className="py-2 px-3 text-center">
-                      {game.hasBeenPlayed ? game.logLoss.toFixed(4) : '-'}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      </td>
+                      <td className="py-3 px-4 text-center stat-number text-xs">
+                        {game.hasBeenPlayed ? game.logLoss.toFixed(4) : '-'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {team.gameOddsVM.length === 0 && (
-        <div className="text-center text-gray-500 dark:text-gray-400 py-12">
+        <div className="text-center text-surface-400 dark:text-surface-500 py-12">
           No games found for this team and season.
         </div>
       )}

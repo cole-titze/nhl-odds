@@ -11,9 +11,9 @@ export function wasCorrectlyPredicted(game: GameOddsVM): boolean {
 
 export function predictionBorderClass(game: GameOddsVM): string {
   if (!game.hasBeenPlayed) {
-    return 'border-blue-400 dark:border-blue-600';
+    return 'border-surface-200 dark:border-white/[0.06]';
   }
   return wasCorrectlyPredicted(game)
-    ? 'border-green-500 bg-green-50 dark:bg-green-950'
-    : 'border-red-500 bg-red-50 dark:bg-red-950';
+    ? 'border-emerald-500/40 dark:border-emerald-500/20 !bg-emerald-50/30 dark:!bg-emerald-500/[0.03]'
+    : 'border-red-500/40 dark:border-red-500/20 !bg-red-50/30 dark:!bg-red-500/[0.03]';
 }

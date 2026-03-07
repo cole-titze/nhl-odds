@@ -55,19 +55,23 @@ export function TeamsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Teams</h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="font-display text-3xl font-bold tracking-tight">Teams</h1>
         <SeasonSelector value={season} onChange={setSeason} />
       </div>
 
       {data && (
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold">{data.seasonTotals.totalGameCount}</div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Total Games</div>
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="glass rounded-xl p-5 text-center">
+            <div className="stat-number text-3xl text-surface-900 dark:text-white">
+              {data.seasonTotals.totalGameCount}
+            </div>
+            <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+              Total Games
+            </div>
           </div>
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold">
+          <div className="glass rounded-xl p-5 text-center">
+            <div className="stat-number text-3xl text-accent-500">
               {data.seasonTotals.totalGameCount > 0
                 ? (
                     (data.seasonTotals.totalModelAccurateGameCount /
@@ -77,67 +81,75 @@ export function TeamsPage() {
                 : '0.0'}
               %
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Model Accuracy</div>
+            <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+              Model Accuracy
+            </div>
           </div>
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold">{data.seasonTotals.modelLogLoss.toFixed(4)}</div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Avg Log Loss</div>
+          <div className="glass rounded-xl p-5 text-center">
+            <div className="stat-number text-3xl text-surface-900 dark:text-white">
+              {data.seasonTotals.modelLogLoss.toFixed(4)}
+            </div>
+            <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+              Avg Log Loss
+            </div>
           </div>
         </div>
       )}
 
-      {error && <div className="text-center text-red-500 py-8">{error}</div>}
+      {error && <div className="glass rounded-xl text-center text-red-500 py-8">{error}</div>}
 
       {loading && (
         <div className="space-y-3">
           {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full" />
+            <Skeleton key={i} className="h-14 w-full" />
           ))}
         </div>
       )}
 
       {!loading && sorted.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b-2 border-gray-200 dark:border-gray-700 text-left">
-                <th
-                  className="py-2 px-4 cursor-pointer select-none"
-                  onClick={() => handleSort('name')}
-                >
-                  Team{arrow('name')}
-                </th>
-                <th
-                  className="py-2 px-4 text-center cursor-pointer select-none"
-                  onClick={() => handleSort('record')}
-                >
-                  Record{arrow('record')}
-                </th>
-                <th
-                  className="py-2 px-4 text-center cursor-pointer select-none"
-                  onClick={() => handleSort('accuracy')}
-                >
-                  Accuracy{arrow('accuracy')}
-                </th>
-                <th
-                  className="py-2 px-4 text-center cursor-pointer select-none"
-                  onClick={() => handleSort('logLoss')}
-                >
-                  Log Loss{arrow('logLoss')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map((team) => (
-                <TeamRow key={team.id} team={team} season={season} />
-              ))}
-            </tbody>
-          </table>
+        <div className="glass rounded-xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-surface-200 dark:border-white/[0.06] text-left text-xs uppercase tracking-wider text-surface-400 dark:text-surface-500">
+                  <th
+                    className="py-3 px-4 cursor-pointer select-none hover:text-surface-900 dark:hover:text-white transition-colors font-semibold"
+                    onClick={() => handleSort('name')}
+                  >
+                    Team{arrow('name')}
+                  </th>
+                  <th
+                    className="py-3 px-4 text-center cursor-pointer select-none hover:text-surface-900 dark:hover:text-white transition-colors font-semibold"
+                    onClick={() => handleSort('record')}
+                  >
+                    Record{arrow('record')}
+                  </th>
+                  <th
+                    className="py-3 px-4 text-center cursor-pointer select-none hover:text-surface-900 dark:hover:text-white transition-colors font-semibold"
+                    onClick={() => handleSort('accuracy')}
+                  >
+                    Accuracy{arrow('accuracy')}
+                  </th>
+                  <th
+                    className="py-3 px-4 text-center cursor-pointer select-none hover:text-surface-900 dark:hover:text-white transition-colors font-semibold"
+                    onClick={() => handleSort('logLoss')}
+                  >
+                    Log Loss{arrow('logLoss')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map((team) => (
+                  <TeamRow key={team.id} team={team} season={season} />
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {!loading && !error && sorted.length === 0 && (
-        <div className="text-center text-gray-500 dark:text-gray-400 py-12">
+        <div className="text-center text-surface-400 dark:text-surface-500 py-12">
           No team data available for this season.
         </div>
       )}

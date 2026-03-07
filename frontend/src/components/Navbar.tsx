@@ -11,31 +11,44 @@ export function Navbar() {
   const { theme, toggle } = useTheme();
 
   return (
-    <nav className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-      <div className="mx-auto max-w-5xl flex items-center justify-between px-4 h-14">
-        <div className="flex items-center gap-6">
-          <span className="font-bold text-lg">NHL Odds</span>
-          {links.map((l) => (
-            <NavLink
-              key={l.to}
-              to={l.to}
-              className={({ isActive }) =>
-                `text-sm font-medium ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'}`
-              }
-            >
-              {l.label}
-            </NavLink>
-          ))}
+    <nav className="sticky top-0 z-50 border-b border-surface-200/80 dark:border-white/[0.06] bg-white/70 dark:bg-surface-950/80 backdrop-blur-xl">
+      <div className="mx-auto max-w-6xl flex items-center justify-between px-5 h-16">
+        <div className="flex items-center gap-8">
+          <NavLink to="/" className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 rounded-lg bg-accent-500 flex items-center justify-center text-white font-bold text-sm tracking-tight shadow-lg shadow-accent-500/25">
+              N
+            </div>
+            <span className="font-display font-bold text-lg tracking-tight">
+              NHL <span className="text-accent-500">Odds</span>
+            </span>
+          </NavLink>
+          <div className="flex items-center gap-1">
+            {links.map((l) => (
+              <NavLink
+                key={l.to}
+                to={l.to}
+                className={({ isActive }) =>
+                  `px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 ${
+                    isActive
+                      ? 'bg-surface-100 dark:bg-white/[0.08] text-surface-900 dark:text-white'
+                      : 'text-surface-500 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white hover:bg-surface-100/50 dark:hover:bg-white/[0.04]'
+                  }`
+                }
+              >
+                {l.label}
+              </NavLink>
+            ))}
+          </div>
         </div>
         <button
           onClick={toggle}
-          className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
+          className="p-2.5 rounded-lg hover:bg-surface-100 dark:hover:bg-white/[0.06] text-surface-500 dark:text-surface-400 transition-colors"
           aria-label="Toggle dark mode"
         >
           {theme === 'dark' ? (
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
+              className="h-4.5 w-4.5"
               viewBox="0 0 20 20"
               fill="currentColor"
             >
@@ -48,7 +61,7 @@ export function Navbar() {
           ) : (
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
+              className="h-4.5 w-4.5"
               viewBox="0 0 20 20"
               fill="currentColor"
             >
