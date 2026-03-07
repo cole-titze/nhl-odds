@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
+import { useOddsFormatContext } from '../contexts/OddsFormatContext';
 
 const links = [
   { to: '/', label: 'Games' },
@@ -9,9 +10,10 @@ const links = [
 
 export function Navbar() {
   const { theme, toggle } = useTheme();
+  const { format, toggle: toggleOdds } = useOddsFormatContext();
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-surface-200/80 dark:border-white/[0.06] bg-white/70 dark:bg-surface-950/80 backdrop-blur-xl">
+    <nav className="sticky top-0 z-50 border-b border-surface-200/80 dark:border-white/[0.08] bg-white/80 dark:bg-surface-900/70 backdrop-blur-xl shadow-sm dark:shadow-black/20">
       <div className="mx-auto max-w-6xl flex items-center justify-between px-5 h-16">
         <div className="flex items-center gap-8">
           <NavLink to="/" className="flex items-center gap-2.5 group">
@@ -40,6 +42,14 @@ export function Navbar() {
             ))}
           </div>
         </div>
+        <div className="flex items-center gap-1">
+        <button
+          onClick={toggleOdds}
+          className="px-2.5 py-1.5 rounded-lg hover:bg-surface-100 dark:hover:bg-white/[0.06] text-surface-500 dark:text-surface-400 transition-colors text-xs font-mono font-semibold"
+          aria-label="Toggle odds format"
+        >
+          {format === 'pct' ? '%' : '+-'}
+        </button>
         <button
           onClick={toggle}
           className="p-2.5 rounded-lg hover:bg-surface-100 dark:hover:bg-white/[0.06] text-surface-500 dark:text-surface-400 transition-colors"
@@ -69,6 +79,7 @@ export function Navbar() {
             </svg>
           )}
         </button>
+        </div>
       </div>
     </nav>
   );

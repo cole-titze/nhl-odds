@@ -1,6 +1,8 @@
 import type { GameOddsVM } from '../types';
 import { Winner } from '../types';
-import { predictionBorderClass } from '../utils/predictions';
+import { predictionBorderClass, wasCorrectlyPredicted } from '../utils/predictions';
+import { useOddsFormatContext } from '../contexts/OddsFormatContext';
+import { formatOdds } from '../utils/oddsFormat';
 
 interface GameCardProps {
   game: GameOddsVM;
@@ -49,28 +51,24 @@ function TeamSide({
         <br />
         <span className="text-surface-900 dark:text-white text-sm">{team.teamName}</span>
       </div>
-      <div className="flex items-baseline gap-2">
-        <span className="stat-number text-sm text-accent-500">
-          {(team.modelOdds * 100).toFixed(1)}%
-        </span>
-        {played && (
-          <span className="stat-number text-2xl text-surface-900 dark:text-white">
-            {team.goals}
-          </span>
-        )}
-      </div>
     </div>
   );
 }
 
 export function GameCard({ game }: GameCardProps) {
+  const { format } = useOddsFormatContext();
   const borderClass = predictionBorderClass(game);
+  const oddsColor = !game.hasBeenPlayed
+    ? 'text-accent-500'
+    : wasCorrectlyPredicted(game)
+      ? 'text-emerald-500'
+      : 'text-red-500';
 
   return (
     <div
-      className={`glass rounded-xl px-5 py-4 ${borderClass} transition-transform duration-200 hover:scale-[1.01]`}
+      className={`glass rounded-xl px-5 py-4 ${borderClass}`}
     >
-      <div className="flex items-center justify-center gap-3">
+      <div className="grid grid-cols-3 items-center">
         <TeamSide
           team={game.awayTeam}
           isWinner={game.hasBeenPlayed && game.winner === Winner.AWAY}
@@ -84,30 +82,40 @@ export function GameCard({ game }: GameCardProps) {
           >
             {game.hasBeenPlayed ? 'Final' : 'VS'}
           </div>
-          {!game.hasBeenPlayed && game.gameDate && (
-            <div className="text-[11px] font-mono text-surface-400 dark:text-surface-500">
-              {new Date(game.gameDate).toLocaleTimeString([], {
-                hour: 'numeric',
-                minute: '2-digit',
-              })}
+          {game.hasBeenPlayed ? (
+            <div className="stat-number text-lg text-surface-900 dark:text-white">
+              {game.awayTeam?.goals ?? 0}
+              <span className="text-surface-400 dark:text-surface-500 mx-1">-</span>
+              {game.homeTeam?.goals ?? 0}
             </div>
+          ) : (
+            game.gameDate && (
+              <div className="text-[11px] font-mono text-surface-400 dark:text-surface-500">
+                {new Date(game.gameDate).toLocaleTimeString([], {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                })}
+              </div>
+            )
           )}
-          <div className="w-px h-6 bg-surface-200 dark:bg-white/[0.06]" />
         </div>
         <TeamSide
           team={game.homeTeam}
           isWinner={game.hasBeenPlayed && game.winner === Winner.HOME}
           played={game.hasBeenPlayed}
         />
-      </div>
-      {game.hasBeenPlayed && (
-        <div className="text-center text-[11px] font-mono text-surface-400 dark:text-surface-500 mt-2 pt-2 border-t border-surface-200/50 dark:border-white/[0.04]">
-          Log Loss{' '}
-          <span className="stat-number text-surface-600 dark:text-surface-300">
-            {game.logLoss.toFixed(4)}
-          </span>
+        <div className="col-span-3 mt-2 pt-2 border-t border-surface-200/50 dark:border-white/[0.04]">
+          <div className="grid grid-cols-3 items-center text-[11px] font-mono">
+            <span className={`text-center stat-number ${oddsColor}`}>
+              {game.awayTeam ? formatOdds(game.awayTeam.modelOdds, format) : '-'}
+            </span>
+            <span className="text-center text-surface-400 dark:text-surface-500">Model {game.modelName}</span>
+            <span className={`text-center stat-number ${oddsColor}`}>
+              {game.homeTeam ? formatOdds(game.homeTeam.modelOdds, format) : '-'}
+            </span>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

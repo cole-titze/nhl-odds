@@ -17,10 +17,10 @@
   --color-surface-800: #262626;
   --color-surface-850: #1a1a1a;
   --color-surface-900: #131313;
-  --color-surface-950: #0a0a0a;
-  --color-accent-400: #34d399;
-  --color-accent-500: #10b981;
-  --color-accent-600: #059669;
+  --color-surface-950: #141418;
+  --color-accent-400: #60a5fa;
+  --color-accent-500: #3b82f6;
+  --color-accent-600: #2563eb;
 }
 
 :root {

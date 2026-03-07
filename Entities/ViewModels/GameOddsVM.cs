@@ -11,4 +11,5 @@ public class GameOddsVM
     public Winner Winner { get; set; }
     public bool HasBeenPlayed { get; set; }
     public double LogLoss { get; set; }
+    public int ModelName { get; set; }
 }

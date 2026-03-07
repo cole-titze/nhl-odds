@@ -23,6 +23,7 @@ export interface GameOddsVM {
   winner: Winner;
   hasBeenPlayed: boolean;
   logLoss: number;
+  modelName: number;
 }
 
 export interface SeasonTotalsVM {

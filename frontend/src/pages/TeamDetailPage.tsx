@@ -9,8 +9,11 @@ import { wasCorrectlyPredicted } from '../utils/predictions';
 import { Skeleton } from '../components/Skeleton';
 import { SeasonSelector } from '../components/SeasonSelector';
 import { Winner } from '../types';
+import { useOddsFormatContext } from '../contexts/OddsFormatContext';
+import { formatOdds } from '../utils/oddsFormat';
 
 export function TeamDetailPage() {
+  const { format } = useOddsFormatContext();
   const { teamId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const season = Number(searchParams.get('season')) || getCurrentSeason();
@@ -122,10 +125,10 @@ export function TeamDetailPage() {
               <Line
                 type="monotone"
                 dataKey="logLoss"
-                stroke="#10b981"
+                stroke="#3b82f6"
                 strokeWidth={2.5}
                 dot={false}
-                activeDot={{ r: 4, fill: '#10b981', stroke: '#0a0a0a', strokeWidth: 2 }}
+                activeDot={{ r: 4, fill: '#3b82f6', stroke: '#141418', strokeWidth: 2 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -164,7 +167,7 @@ export function TeamDetailPage() {
                       key={game.id}
                       className={`border-b border-surface-100 dark:border-white/[0.03] transition-colors ${
                         correct
-                          ? 'bg-emerald-50/50 dark:bg-emerald-500/[0.04]'
+                          ? 'bg-blue-50/50 dark:bg-blue-500/[0.04]'
                           : incorrect
                             ? 'bg-red-50/50 dark:bg-red-500/[0.04]'
                             : 'hover:bg-surface-50 dark:hover:bg-white/[0.02]'
@@ -202,7 +205,7 @@ export function TeamDetailPage() {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-center stat-number text-accent-500">
-                        {teamSide ? `${(teamSide.modelOdds * 100).toFixed(1)}%` : '-'}
+                        {teamSide ? formatOdds(teamSide.modelOdds, format) : '-'}
                       </td>
                       <td className="py-3 px-4 text-center stat-number">
                         {game.hasBeenPlayed
@@ -214,7 +217,7 @@ export function TeamDetailPage() {
                           <span
                             className={`inline-block px-2 py-0.5 rounded text-xs font-bold ${
                               won
-                                ? 'bg-emerald-500/10 text-emerald-500'
+                                ? 'bg-blue-500/10 text-blue-500'
                                 : 'bg-red-500/10 text-red-500'
                             }`}
                           >

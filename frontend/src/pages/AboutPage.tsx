@@ -40,7 +40,7 @@ export function AboutPage() {
           <h2 className="font-display text-lg font-bold tracking-tight">Color coding</h2>
           <ul className="text-surface-600 dark:text-surface-400 space-y-3">
             <li className="flex items-center gap-3">
-              <span className="w-3 h-3 rounded-sm bg-emerald-500 shadow-lg shadow-emerald-500/30" />
+              <span className="w-3 h-3 rounded-sm bg-blue-500 shadow-lg shadow-blue-500/30" />
               <span>Model correctly predicted the winner</span>
             </li>
             <li className="flex items-center gap-3">

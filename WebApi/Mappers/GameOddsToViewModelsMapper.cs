@@ -39,7 +39,8 @@ public static class GameOddsToViewModelsMapper
                 HomeTeam = homeTeam,
                 Winner = gameOdds.Game.Winner,
                 HasBeenPlayed = gameOdds.Game.HasBeenPlayed,
-                LogLoss = gameOdds.LogLoss
+                LogLoss = gameOdds.LogLoss,
+                ModelName = gameOdds.ModelName
             };
             viewModelGames.Add(viewModelGame);
         }
