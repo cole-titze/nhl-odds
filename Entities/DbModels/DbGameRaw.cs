@@ -79,8 +79,6 @@ public class DbGameRaw
         HomeGiveaways = game.HomeGiveaways;
         AwayGiveaways = game.AwayGiveaways;
         HasBeenPlayed = game.HasBeenPlayed;
-        HomeTeam = game.HomeTeam;
-        AwayTeam = game.AwayTeam;
         GameSummary = game.GameSummary;
         EventSummary = game.EventSummary;
         PlayByPlaySummary = game.PlayByPlaySummary;

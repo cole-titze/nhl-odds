@@ -59,7 +59,6 @@ public class GameRepository : IGameRepository
         else if (!dbGame.IsEquivalentTo(dbGameToStore))
         {
             dbGame.Clone(dbGameToStore);
-            _dbContext.GameRaw.Update(dbGameToStore);
         }
     }
 
@@ -378,7 +377,6 @@ public class GameRepository : IGameRepository
         else if (dbGameCount.GameCount != seasonGameCount)
         {
             dbGameCount.Clone(dbNewSeasonGameCount);
-            _dbContext.SeasonGameCount.Update(dbNewSeasonGameCount);
         }
 
     }

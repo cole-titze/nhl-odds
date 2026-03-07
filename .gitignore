@@ -1317,6 +1317,7 @@ FodyWeavers.xsd
 .DS_Store
 
 appsettings.Local.json
+appsettings.Development.json
 
 # SQL
 *.bak

@@ -1,0 +1,15 @@
+namespace Entities.ViewModels;
+
+public class TeamVM
+{
+    public int id { get; set; }
+    public string locationName { get; set; } = string.Empty;
+    public string teamName { get; set; } = string.Empty;
+    public string logoUri { get; set; } = string.Empty;
+    public double modelLogLoss { get; set; }
+    public int totalGameCount { get; set; }
+    public int seasonWins { get; set; }
+    public int seasonLosses { get; set; }
+    public int totalModelAccurateGameCount { get; set; }
+    public IEnumerable<GameOddsVM> gameOddsVM { get; set; } = new List<GameOddsVM>();
+}
