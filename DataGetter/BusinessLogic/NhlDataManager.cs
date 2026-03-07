@@ -75,8 +75,8 @@ public class NhlDataManager
         var seasonGameCount = await _gameManager.GetSeasonGameCount(seasonStartYear, mode);
         await SaveSeasonSchedule(seasonStartYear, seasonGameCount);
 
-        const int maxConsecutiveSkips = 20;
-        int consecutiveSkips = 0;
+        const int maxConsecutiveUnavailable = 20;
+        int consecutiveUnavailable = 0;
 
         // game ids start at 1
         for (int count = 1; count <= seasonGameCount; count++)
@@ -87,37 +87,30 @@ public class NhlDataManager
                 // Skip games that already exist and have been played in Add mode
                 if (mode != ModeType.Update && await _gameRepo.IsGamePlayed(gameId))
                 {
-                    _logger.LogInformation("Game {GameId} already exists and has been played. Skipping.", gameId);
-                    consecutiveSkips = 0;
+                    consecutiveUnavailable = 0;
+                    continue;
+                }
+
+                // Skip unplayed games whose date hasn't arrived yet — no need to re-fetch
+                if (mode != ModeType.Update && await _gameRepo.IsUnplayedFutureGame(gameId))
+                {
+                    _logger.LogInformation("Game {GameId} is a future game already saved. Skipping.", gameId);
                     continue;
                 }
 
                 var game = await _gameManager.GetGame(gameId, mode);
                 if (game == null)
                 {
-                    _logger.LogInformation("Game {GameId} is not available. Skipping.", gameId);
-                    consecutiveSkips++;
-                    if (consecutiveSkips >= maxConsecutiveSkips)
+                    consecutiveUnavailable++;
+                    if (consecutiveUnavailable >= maxConsecutiveUnavailable)
                     {
-                        _logger.LogInformation("Reached {Count} consecutive unavailable games after game {GameId}. Stopping season {Season} early.", maxConsecutiveSkips, gameId, seasonStartYear);
+                        _logger.LogInformation("Reached {Count} consecutive unavailable games after game {GameId}. Stopping season {Season} early.", maxConsecutiveUnavailable, gameId, seasonStartYear);
                         break;
                     }
                     continue;
                 }
 
-                if (!game.HasBeenPlayed)
-                {
-                    consecutiveSkips++;
-                    if (consecutiveSkips >= maxConsecutiveSkips)
-                    {
-                        _logger.LogInformation("Reached {Count} consecutive unplayed games after game {GameId}. Stopping season {Season} early.", maxConsecutiveSkips, gameId, seasonStartYear);
-                        break;
-                    }
-                }
-                else
-                {
-                    consecutiveSkips = 0;
-                }
+                consecutiveUnavailable = 0;
 
                 var players = await _playerManager.GetPlayers(game, mode);
 

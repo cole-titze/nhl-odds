@@ -186,6 +186,12 @@ public class GameRepository : IGameRepository
         return game != null && game.HasBeenPlayed;
     }
 
+    public async Task<bool> IsUnplayedFutureGame(int gameId)
+    {
+        var game = await GetGameSummary(gameId);
+        return game != null && !game.HasBeenPlayed && game.GameDateUTC > DateTime.UtcNow;
+    }
+
     public async Task<Game?> GetGameSummary(int gameId)
     {
         var dbGame = await GetDbGame(gameId);

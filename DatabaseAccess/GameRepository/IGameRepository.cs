@@ -12,6 +12,7 @@ public interface IGameRepository
     Task<Game?> GetGame(int gameId);
     Task<Game?> GetGameSummary(int gameId);
     Task<bool> IsGamePlayed(int gameId);
+    Task<bool> IsUnplayedFutureGame(int gameId);
     Task<int> GetSavedGameCountForSeason(int seasonStartYear);
     Task<int?> GetGameCountForSeason(int seasonStartYear);
 }
