@@ -3,8 +3,22 @@ name: Format Check
 on:
   push:
     branches: [main]
+    paths:
+      - '**/*.cs'
+      - '**/*.csproj'
+      - '.editorconfig'
+      - 'frontend/**'
+      - 'game_predictor/**'
+      - '.github/workflows/format-check.yml'
   pull_request:
     branches: [main]
+    paths:
+      - '**/*.cs'
+      - '**/*.csproj'
+      - '.editorconfig'
+      - 'frontend/**'
+      - 'game_predictor/**'
+      - '.github/workflows/format-check.yml'
   workflow_dispatch:
 
 jobs:

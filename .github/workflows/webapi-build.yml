@@ -3,8 +3,22 @@ name: Web API Container
 on:
   push:
     branches: [main]
+    paths:
+      - 'WebApi/**'
+      - 'DatabaseAccess/**'
+      - 'Entities/**'
+      - 'WebBusinessLogic/**'
+      - 'nhl-odds.sln'
+      - '.github/workflows/webapi-build.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'WebApi/**'
+      - 'DatabaseAccess/**'
+      - 'Entities/**'
+      - 'WebBusinessLogic/**'
+      - 'nhl-odds.sln'
+      - '.github/workflows/webapi-build.yml'
   workflow_dispatch:
 
 env:

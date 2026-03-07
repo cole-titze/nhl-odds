@@ -3,8 +3,28 @@ name: Pipeline Container
 on:
   push:
     branches: [main]
+    paths:
+      - 'Entry/**'
+      - 'DataGetter/**'
+      - 'DataCleaner/**'
+      - 'DatabaseAccess/**'
+      - 'Entities/**'
+      - 'Services/**'
+      - 'game_predictor/**'
+      - 'nhl-odds.sln'
+      - '.github/workflows/pipeline-build.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'Entry/**'
+      - 'DataGetter/**'
+      - 'DataCleaner/**'
+      - 'DatabaseAccess/**'
+      - 'Entities/**'
+      - 'Services/**'
+      - 'game_predictor/**'
+      - 'nhl-odds.sln'
+      - '.github/workflows/pipeline-build.yml'
   workflow_dispatch:
 
 env:

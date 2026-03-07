@@ -3,8 +3,14 @@ name: Database Container
 on:
   push:
     branches: [main]
+    paths:
+      - 'database/**'
+      - '.github/workflows/docker-build.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'database/**'
+      - '.github/workflows/docker-build.yml'
   workflow_dispatch:
 
 env:
