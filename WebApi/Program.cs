@@ -37,6 +37,7 @@ builder.Services.AddCors(options =>
                           builder.WithOrigins("http://10.0.0.19:8081");
                           builder.WithOrigins("http://192.168.1.19:8081");
                           builder.WithOrigins("http://localhost:8081");
+                          builder.WithOrigins("http://localhost:5173");
                       });
 });
 

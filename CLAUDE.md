@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-A .NET 9 C# solution that collects NHL game data from the NHL public API, stores it in an Azure SQL Edge database, and is intended to feed data-cleaning and machine learning pipelines for game outcome prediction. Also includes an ASP.NET Core Web API that serves game odds, team stats, and log loss data to a frontend.
+A .NET 9 C# solution that collects NHL game data from the NHL public API, stores it in an Azure SQL Edge database, and is intended to feed data-cleaning and machine learning pipelines for game outcome prediction. Also includes an ASP.NET Core Web API that serves game odds, team stats, and log loss data to a React frontend.
 
 ## Commands
 
@@ -23,6 +23,11 @@ dotnet test
 
 # Build a specific project
 dotnet build DataGetter/DataGetter.csproj
+
+# Frontend (from frontend/ directory)
+cd frontend && npm install    # install dependencies
+cd frontend && npm run dev    # Vite dev server on http://localhost:5173
+cd frontend && npm run build  # production build to frontend/dist/
 ```
 
 ## Configuration
@@ -69,6 +74,7 @@ Then connect and run the scripts in order:
 | `database` | SQL scripts for schema (not a C# project) |
 | `WebApi` | ASP.NET Core Web API — controllers, view model mappers, Swagger |
 | `WebBusinessLogic` | Web API business logic — team stats, game odds, log loss orchestration |
+| `frontend` | React 19 + TypeScript + Vite + Tailwind CSS v4 frontend — game odds, team stats, team detail pages |
 
 ### Data Flow
 

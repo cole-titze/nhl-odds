@@ -1324,3 +1324,7 @@ appsettings.Development.json
 
 # Python game_predictor
 .venv/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/

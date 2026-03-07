@@ -46,6 +46,22 @@
                 "moduleLoad": false,
                 "stepFiltering": false
             }
+        },
+        {
+            "name": "Frontend",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/frontend",
+            "runtimeExecutable": "bash",
+            "runtimeArgs": ["-c", "source $NVM_DIR/nvm.sh && npm run dev"],
+            "env": {
+                "NVM_DIR": "${env:HOME}/.nvm"
+            },
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "Local:\\s+(https?://\\S+)",
+                "uriFormat": "%s"
+            }
         }
     ]
 }
