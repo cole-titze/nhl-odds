@@ -1,10 +1,15 @@
 import numpy as np
-from lightgbm import LGBMClassifier
-from sklearn.decomposition import PCA
-from sklearn.feature_selection import SelectKBest, f_classif
-from sklearn.neural_network import MLPClassifier
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
+
+from ..models.experiment import (
+    Experiment,
+    knn,
+    lgbm,
+    logistic_regression,
+    mlp,
+    random_forest,
+    standard_pipeline,
+    xgboost,
+)
 
 
 class Ensemble:
@@ -19,90 +24,73 @@ class Ensemble:
         return np.argmax(self.predict_proba(X), axis=1)
 
 
-# --- Define experiments here ---
-# Each experiment has:
-#   "models"   - dict of model name -> {cls, params}
-#   "pipeline" - a sklearn Pipeline for preprocessing
-#   "ensemble" - list of model names to combine (or None to skip)
+# ---------------------------------------------------------------------------
+# Define experiments here.
+# Each Experiment has typed fields with intellisense:
+#   models   - dict of name -> ModelConfig  (use mlp() / lgbm() helpers)
+#   pipeline - sklearn Pipeline              (use standard_pipeline() helper)
+#   ensemble - list of model names to average, or None for single model
+# ---------------------------------------------------------------------------
 
-EXPERIMENTS = {
-    "Default": {
-        "models": {
-            "MLP": {
-                "cls": MLPClassifier,
-                "params": {
-                    "hidden_layer_sizes": (64, 32),
-                    "max_iter": 500,
-                    "early_stopping": True,
-                    "random_state": 42,
-                },
-            },
-            "LightGBM": {
-                "cls": LGBMClassifier,
-                "params": {
-                    "n_estimators": 200,
-                    "learning_rate": 0.05,
-                    "max_depth": 6,
-                    "random_state": 42,
-                    "verbosity": -1,
-                },
-            },
+EXPERIMENTS: dict[str, Experiment] = {
+    "Default": Experiment(
+        models={
+            "MLP": mlp(hidden_layer_sizes=(64, 32), max_iter=500),
+            "LightGBM": lgbm(n_estimators=200, learning_rate=0.05, max_depth=6),
+            "RF": random_forest(n_estimators=200, max_depth=10),
+            "KNN": knn(n_neighbors=15, weights="distance"),
         },
-        "pipeline": Pipeline(
-            [
-                ("scaler", StandardScaler()),
-                ("minmax", MinMaxScaler()),
-                ("select", SelectKBest(f_classif, k=50)),
-                ("pca", PCA(n_components=15)),
-            ]
-        ),
-        "ensemble": ["MLP", "LightGBM"],
-    },
-    "LightGBM Deep": {
-        "models": {
-            "LightGBM": {
-                "cls": LGBMClassifier,
-                "params": {
-                    "n_estimators": 500,
-                    "learning_rate": 0.03,
-                    "max_depth": 8,
-                    "random_state": 42,
-                    "verbosity": -1,
-                },
-            },
+        pipeline=standard_pipeline(k_best=50, pca_components=15),
+        ensemble=["MLP", "LightGBM", "RF", "KNN"],
+    ),
+    "LightGBM Deep": Experiment(
+        models={
+            "LightGBM": lgbm(n_estimators=500, learning_rate=0.03, max_depth=8),
         },
-        "pipeline": Pipeline(
-            [
-                ("scaler", StandardScaler()),
-                ("minmax", MinMaxScaler()),
-                ("select", SelectKBest(f_classif, k=80)),
-                ("pca", PCA(n_components=25)),
-            ]
-        ),
-        "ensemble": None,
-    },
-    "Wide MLP": {
-        "models": {
-            "MLP": {
-                "cls": MLPClassifier,
-                "params": {
-                    "hidden_layer_sizes": (128, 64, 32),
-                    "max_iter": 800,
-                    "early_stopping": True,
-                    "random_state": 42,
-                },
-            },
+        pipeline=standard_pipeline(k_best=80, pca_components=25),
+    ),
+    "Wide MLP": Experiment(
+        models={
+            "MLP": mlp(hidden_layer_sizes=(128, 64, 32), max_iter=800),
         },
-        "pipeline": Pipeline(
-            [
-                ("scaler", StandardScaler()),
-                ("minmax", MinMaxScaler()),
-                ("select", SelectKBest(f_classif, k=50)),
-                ("pca", PCA(n_components=15)),
-            ]
-        ),
-        "ensemble": None,
-    },
+        pipeline=standard_pipeline(k_best=50, pca_components=15),
+    ),
+    "Deep MLP": Experiment(
+        models={
+            "MLP": mlp(hidden_layer_sizes=(128, 64, 32), max_iter=800),
+        },
+        pipeline=standard_pipeline(k_best=126, pca_components=126),
+    ),
+    "RF": Experiment(
+        models={
+            "RF": random_forest(n_estimators=250, max_depth=10),
+        },
+        pipeline=standard_pipeline(k_best=126, pca_components=126),
+    ),
+    "Shallow KNN": Experiment(
+        models={
+            "KNN": knn(n_neighbors=15, weights="distance"),
+        },
+        pipeline=standard_pipeline(k_best=100, pca_components=32),
+    ),
+    "Deep KNN": Experiment(
+        models={
+            "KNN": knn(n_neighbors=250, weights="distance"),
+        },
+        pipeline=standard_pipeline(k_best=126, pca_components=80),
+    ),
+    "XGBoost": Experiment(
+        models={
+            "XGB": xgboost(n_estimators=200, learning_rate=0.05, max_depth=6),
+        },
+        pipeline=standard_pipeline(),
+    ),
+    "Logistic": Experiment(
+        models={
+            "LR": logistic_regression(C=1.0),
+        },
+        pipeline=standard_pipeline(),
+    ),
 }
 
 SAVE_EXPERIMENT = "Default"

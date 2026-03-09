@@ -1,13 +1,11 @@
 from sklearn.metrics import accuracy_score, log_loss
 
 from ..prediction.predictor import Ensemble
+from .experiment import ModelConfig
 
 
-def build_models(model_configs: dict) -> dict:
-    models = {}
-    for name, cfg in model_configs.items():
-        models[name] = cfg["cls"](**cfg["params"])
-    return models
+def build_models(model_configs: dict[str, ModelConfig]) -> dict:
+    return {name: cfg.build() for name, cfg in model_configs.items()}
 
 
 def train_and_evaluate(models: dict, X_train, X_test, y_train, y_test, ensemble_names: list | None) -> dict:
