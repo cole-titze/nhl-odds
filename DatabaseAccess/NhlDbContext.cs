@@ -59,7 +59,7 @@ public partial class NhlDbContext : DbContext
         modelBuilder.Entity<DbGameGoalieStats>()
             .HasKey(c => new { c.GameId, c.PlayerId });
         modelBuilder.Entity<DbGameOdds>()
-            .HasKey(c => new { c.GameId, c.ModelName, c.RunDateUTC });
+            .HasKey(c => new { c.GameId, c.ModelId, c.RunDateUTC });
         modelBuilder.Entity<DbGameOfficial>()
             .HasKey(c => new { c.GameId, c.Name });
         modelBuilder.Entity<DbGameCoach>()

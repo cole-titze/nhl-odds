@@ -2,6 +2,7 @@ import type { GameOddsVM } from '../types';
 import { Winner } from '../types';
 import { predictionBorderClass, wasCorrectlyPredicted } from '../utils/predictions';
 import { useOddsFormatContext } from '../contexts/OddsFormatContext';
+import { getModelName } from '../utils/modelNames';
 import { formatOdds } from '../utils/oddsFormat';
 
 interface GameCardProps {
@@ -108,7 +109,7 @@ export function GameCard({ game }: GameCardProps) {
               {game.awayTeam ? formatOdds(game.awayTeam.modelOdds, format) : '-'}
             </span>
             <span className="text-center text-surface-400 dark:text-surface-500">
-              Model {game.modelName}
+              {getModelName(game.modelId)}
             </span>
             <span className={`text-center stat-number ${oddsColor}`}>
               {game.homeTeam ? formatOdds(game.homeTeam.modelOdds, format) : '-'}

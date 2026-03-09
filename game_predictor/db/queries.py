@@ -167,9 +167,9 @@ INNER JOIN (
 UPSERT_GAME_ODDS = """
 MERGE GameOdds AS target
 USING (VALUES (%s, %s, %s, %s, %s, %s, %s))
-    AS source (GameId, ModelName, RunDateUTC, HomeOdds, AwayOdds, LogLoss, Notes)
+    AS source (GameId, ModelId, RunDateUTC, HomeOdds, AwayOdds, LogLoss, Notes)
 ON target.GameId = source.GameId
-   AND target.ModelName = source.ModelName
+   AND target.ModelId = source.ModelId
    AND target.RunDateUTC = source.RunDateUTC
 WHEN MATCHED THEN
     UPDATE SET HomeOdds = source.HomeOdds,
@@ -177,7 +177,7 @@ WHEN MATCHED THEN
                LogLoss = source.LogLoss,
                Notes = source.Notes
 WHEN NOT MATCHED THEN
-    INSERT (GameId, ModelName, RunDateUTC, HomeOdds, AwayOdds, LogLoss, Notes)
-    VALUES (source.GameId, source.ModelName, source.RunDateUTC,
+    INSERT (GameId, ModelId, RunDateUTC, HomeOdds, AwayOdds, LogLoss, Notes)
+    VALUES (source.GameId, source.ModelId, source.RunDateUTC,
             source.HomeOdds, source.AwayOdds, source.LogLoss, source.Notes);
 """

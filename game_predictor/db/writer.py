@@ -10,7 +10,7 @@ def save_predictions(conn: pytds.Connection, predictions: list[dict]):
                 UPSERT_GAME_ODDS,
                 (
                     pred["GameId"],
-                    pred["ModelName"],
+                    pred["ModelId"],
                     pred["RunDateUTC"],
                     pred["HomeOdds"],
                     pred["AwayOdds"],

@@ -5,7 +5,7 @@ namespace Entities.DbModels;
 public class DbGameOdds
 {
     public int GameId { get; set; }
-    public int ModelName { get; set; }
+    public int ModelId { get; set; }
     public DateTime RunDateUTC { get; set; }
     public double HomeOdds { get; set; }
     public double AwayOdds { get; set; }
@@ -16,7 +16,7 @@ public class DbGameOdds
     public void Clone(DbGameOdds gameOdds)
     {
         GameId = gameOdds.GameId;
-        ModelName = gameOdds.ModelName;
+        ModelId = gameOdds.ModelId;
         RunDateUTC = gameOdds.RunDateUTC;
         HomeOdds = gameOdds.HomeOdds;
         AwayOdds = gameOdds.AwayOdds;

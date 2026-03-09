@@ -4,6 +4,14 @@ from pathlib import Path
 
 _REPO_ROOT = Path(__file__).parent.parent
 
+# Model name IDs used in the GameOdds table.
+# Keep in sync with frontend/src/utils/modelNames.ts
+MODEL_IDS = {
+    1: "Homegrown",
+}
+
+HOMEGROWN_MODEL_ID = 1
+
 
 def get_db_config() -> dict:
     conn_str = os.environ.get("NHL_DATABASE")

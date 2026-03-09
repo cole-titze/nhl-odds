@@ -15,7 +15,7 @@ public partial class GameDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<DbGameOdds>()
-            .HasKey(c => new { c.GameId, c.ModelName, c.RunDateUTC });
+            .HasKey(c => new { c.GameId, c.ModelId, c.RunDateUTC });
         modelBuilder.Entity<DbSeasonTeam>()
             .HasKey(c => new { c.TeamId, c.SeasonStartYear });
     }

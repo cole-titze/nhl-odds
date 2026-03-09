@@ -1,7 +1,7 @@
 import warnings
 from datetime import datetime, timezone
 
-from ..config import get_db_config
+from ..config import HOMEGROWN_MODEL_ID, get_db_config
 from ..db.connection import get_connection
 from ..db.queries import FEATURE_COLUMNS
 from ..db.reader import load_current_season_games, load_team_names, load_training_data, load_unplayed_games
@@ -144,7 +144,7 @@ def run(mode: str = "predict"):
         all_predictions.append(
             {
                 "GameId": int(row["GameId"]),
-                "ModelName": 1,
+                "ModelId": HOMEGROWN_MODEL_ID,
                 "RunDateUTC": run_date,
                 "HomeOdds": home_odds,
                 "AwayOdds": away_odds,

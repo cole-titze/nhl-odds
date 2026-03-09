@@ -41,7 +41,7 @@ public static class DbGameOddsToGameOddsMapper
                 },
                 ModelHomeOdds = dbOdds.HomeOdds,
                 ModelAwayOdds = dbOdds.AwayOdds,
-                ModelName = dbOdds.ModelName,
+                ModelId = dbOdds.ModelId,
                 LogLoss = logLoss,
             });
         }

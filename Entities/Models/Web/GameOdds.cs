@@ -7,7 +7,7 @@ public class GameOdds
     public double ModelHomeOdds { get; set; }
     public double ModelAwayOdds { get; set; }
     public double LogLoss { get; set; }
-    public int ModelName { get; set; }
+    public int ModelId { get; set; }
     public Game Game { get; set; } = new Game();
 
     public static double CalculateLogLoss(double homeOdds, double awayOdds, Winner winner)
