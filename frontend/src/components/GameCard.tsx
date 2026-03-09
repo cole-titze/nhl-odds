@@ -65,9 +65,7 @@ export function GameCard({ game }: GameCardProps) {
       : 'text-red-500';
 
   return (
-    <div
-      className={`glass rounded-xl px-5 py-4 ${borderClass}`}
-    >
+    <div className={`glass rounded-xl px-5 py-4 ${borderClass}`}>
       <div className="grid grid-cols-3 items-center">
         <TeamSide
           team={game.awayTeam}
@@ -109,7 +107,9 @@ export function GameCard({ game }: GameCardProps) {
             <span className={`text-center stat-number ${oddsColor}`}>
               {game.awayTeam ? formatOdds(game.awayTeam.modelOdds, format) : '-'}
             </span>
-            <span className="text-center text-surface-400 dark:text-surface-500">Model {game.modelName}</span>
+            <span className="text-center text-surface-400 dark:text-surface-500">
+              Model {game.modelName}
+            </span>
             <span className={`text-center stat-number ${oddsColor}`}>
               {game.homeTeam ? formatOdds(game.homeTeam.modelOdds, format) : '-'}
             </span>

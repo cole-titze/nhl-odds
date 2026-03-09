@@ -25,7 +25,8 @@
             "module": "game_predictor",
             "args": ["--mode", "backfill"],
             "cwd": "${workspaceFolder}",
-            "justMyCode": true
+            "justMyCode": true,
+            "console": "internalConsole"
         },
         {
             "name": "Web API",

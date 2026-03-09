@@ -216,9 +216,7 @@ export function TeamDetailPage() {
                         {game.hasBeenPlayed ? (
                           <span
                             className={`inline-block px-2 py-0.5 rounded text-xs font-bold ${
-                              won
-                                ? 'bg-blue-500/10 text-blue-500'
-                                : 'bg-red-500/10 text-red-500'
+                              won ? 'bg-blue-500/10 text-blue-500' : 'bg-red-500/10 text-red-500'
                             }`}
                           >
                             {won ? 'W' : 'L'}
