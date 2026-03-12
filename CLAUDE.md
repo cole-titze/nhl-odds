@@ -28,6 +28,12 @@ dotnet build DataGetter/DataGetter.csproj
 cd frontend && npm install    # install dependencies
 cd frontend && npm run dev    # Vite dev server on http://localhost:5173
 cd frontend && npm run build  # production build to frontend/dist/
+
+# Python game predictor (from repo root)
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r game_predictor/requirements.txt
+python -m game_predictor
 ```
 
 ## Configuration

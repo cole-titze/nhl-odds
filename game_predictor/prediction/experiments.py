@@ -24,49 +24,51 @@ from ..models.experiment import (
 )
 
 EXPERIMENTS: dict[str, Experiment] = {
+    # "Default": Experiment(
+    #     models={
+    #         "MLP": mlp(hidden_layer_sizes=(64, 32), max_iter=500),
+    #         "LightGBM": lgbm(n_estimators=200, learning_rate=0.05, max_depth=6),
+    #         "RF": random_forest(n_estimators=200, max_depth=10),
+    #         "KNN": knn(n_neighbors=250, weights="distance"),
+    #     },
+    #     pipeline=standard_pipeline(k_best=100, pca_components=52),
+    #     ensemble=["MLP", "LightGBM", "RF", "KNN"],
+    #     calibration="isotonic",
+    #     tune=True
+    # ),
     "Default": Experiment(
-        models={
-            "MLP": mlp(hidden_layer_sizes=(64, 32), max_iter=500),
-            "LightGBM": lgbm(n_estimators=200, learning_rate=0.05, max_depth=6),
-            "RF": random_forest(n_estimators=200, max_depth=10),
-            "KNN": knn(n_neighbors=250, weights="distance"),
-        },
-        pipeline=standard_pipeline(k_best=100, pca_components=52),
-        ensemble=["MLP", "LightGBM", "RF", "KNN"],
-        calibration="isotonic",
-        tune=True
-    ),
-    "LightGBM Deep": Experiment(
         models={
             "LightGBM": lgbm(),
         },
-        pipeline=standard_pipeline(k_best=80, pca_components=25),
+        pipeline=standard_pipeline(),
         calibration="sigmoid",
-        tune=True
+        tune=True,
     ),
     "Deep MLP": Experiment(
         models={
             "MLP": mlp(),
         },
-        pipeline=standard_pipeline(k_best=126, pca_components=126),
+        pipeline=standard_pipeline(),
         calibration="none",
-        tune=True
+        tune=True,
+        tune_trials=250,
     ),
     "RF": Experiment(
         models={
             "RF": random_forest(),
         },
-        pipeline=standard_pipeline(k_best=126, pca_components=126),
+        pipeline=standard_pipeline(),
         calibration="none",
-        tune=True
+        tune=True,
+        tune_trials=150,
     ),
     "Deep KNN": Experiment(
         models={
             "KNN": knn(),
         },
-        pipeline=standard_pipeline(k_best=126, pca_components=80),
+        pipeline=standard_pipeline(),
         calibration="none",
-        tune=True
+        tune=True,
     ),
     "XGBoost": Experiment(
         models={
@@ -74,15 +76,15 @@ EXPERIMENTS: dict[str, Experiment] = {
         },
         pipeline=standard_pipeline(),
         calibration="none",
-        tune=True
+        tune=True,
     ),
     "Logistic": Experiment(
         models={
-            "LR": logistic_regression(C=1.0),
+            "LR": logistic_regression(),
         },
         pipeline=standard_pipeline(),
         calibration="none",
-        tune=False
+        tune=True,
     ),
 }
 

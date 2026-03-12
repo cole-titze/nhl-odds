@@ -18,3 +18,40 @@ def mlp(
             "random_state": random_state,
         },
     )
+
+
+def tune_mlp(X_train, X_test, y_train, y_test, n_trials, progress_callback):
+    import optuna
+    from sklearn.metrics import log_loss
+
+    def objective(trial):
+        n_layers = trial.suggest_int("n_layers", 1, 3)
+        layers = tuple(trial.suggest_int(f"layer_{i}", 16, 256) for i in range(n_layers))
+        params = {
+            "hidden_layer_sizes": layers,
+            "max_iter": trial.suggest_int("max_iter", 200, 1000),
+            "learning_rate_init": trial.suggest_float("learning_rate_init", 1e-4, 1e-1, log=True),
+            "alpha": trial.suggest_float("alpha", 1e-6, 1e-1, log=True),
+            "activation": trial.suggest_categorical("activation", ["relu", "tanh"]),
+            "early_stopping": True,
+            "random_state": 42,
+        }
+        model = MLPClassifier(**params)
+        model.fit(X_train, y_train)
+        return log_loss(y_test, model.predict_proba(X_test))
+
+    study = optuna.create_study(direction="minimize", study_name="mlp-tuning")
+    # n_jobs=1: MLPClassifier already uses all cores internally
+    study.optimize(objective, n_trials=n_trials, n_jobs=1, callbacks=[progress_callback])
+    return study
+
+
+def mlp_params_from_study(study) -> dict:
+    """Convert Optuna study best_params to MLPClassifier constructor params."""
+    params = study.best_params.copy()
+    n_layers = params.pop("n_layers")
+    layers = tuple(params.pop(f"layer_{i}") for i in range(n_layers))
+    params["hidden_layer_sizes"] = layers
+    params["early_stopping"] = True
+    params["random_state"] = 42
+    return params

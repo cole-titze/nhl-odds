@@ -21,27 +21,81 @@ def _run_tuning(exp_name, exp, X_train_t, X_test_t, y_train, y_test) -> dict:
 
     Returns a dict of model_name -> tuned sklearn model instance.
     """
-    from .tuner import print_best_params, tune_lgbm, tune_xgboost
+    from .tuner import PARAM_CONVERTERS, TUNERS, print_best_params, progress_callback
 
     tuned_models = {}
     for model_name, model_cfg in exp.models.items():
         cls_name = model_cfg.cls.__name__
-        study = None
-        if cls_name == "LGBMClassifier":
-            print(f"\n  Tuning {exp_name}/{model_name} (LightGBM, {exp.tune_trials} trials)...")
-            study = tune_lgbm(X_train_t, X_test_t, y_train, y_test, exp.tune_trials)
-            print_best_params(study, "lgbm")
-        elif cls_name == "XGBClassifier":
-            print(f"\n  Tuning {exp_name}/{model_name} (XGBoost, {exp.tune_trials} trials)...")
-            study = tune_xgboost(X_train_t, X_test_t, y_train, y_test, exp.tune_trials)
-            print_best_params(study, "xgboost")
+        tune_fn = TUNERS.get(cls_name)
+        if tune_fn is None:
+            continue
 
-        if study is not None:
-            # Build a model with the tuned params merged over defaults
+        print(f"    Tuning {model_name} ({exp.tune_trials} trials)...")
+        study = tune_fn(X_train_t, X_test_t, y_train, y_test, exp.tune_trials, progress_callback(exp.tune_trials))
+        print_best_params(study, model_name)
+
+        converter = PARAM_CONVERTERS.get(cls_name)
+        if converter:
+            tuned_params = converter(study)
+        else:
             tuned_params = {**model_cfg.params, **study.best_params}
-            tuned_models[model_name] = model_cfg.cls(**tuned_params)
+        tuned_models[model_name] = model_cfg.cls(**tuned_params)
 
     return tuned_models
+
+
+def _run_experiment(exp_name, exp, X_train_raw, X_cal_raw, X_test_raw, y_train, y_cal, y_test):
+    """Run a single experiment: pipeline tuning, model tuning, training, calibration."""
+    from .experiment.pipeline import standard_pipeline, tune_pipeline
+    from .tuner import print_best_params, progress_callback
+
+    pipeline = exp.pipeline
+
+    # Tune pipeline params using the first model as evaluator
+    if exp.tune:
+        first_cfg = next(iter(exp.models.values()))
+        print(f"    Tuning pipeline ({exp.tune_trials} trials)...")
+        pipe_study = tune_pipeline(
+            X_train_raw,
+            X_cal_raw,
+            y_train,
+            y_cal,
+            first_cfg.cls,
+            first_cfg.params,
+            exp.tune_trials,
+            progress_callback(exp.tune_trials),
+        )
+        print_best_params(pipe_study, "pipeline")
+        pipeline = standard_pipeline(**pipe_study.best_params)
+
+    X_train_t = pipeline.fit_transform(X_train_raw, y_train)
+    X_cal_t = pipeline.transform(X_cal_raw)
+    X_test_t = pipeline.transform(X_test_raw)
+
+    if exp.tune:
+        tuned_models = _run_tuning(exp_name, exp, X_train_t, X_cal_t, y_train, y_cal)
+    else:
+        tuned_models = {}
+
+    models = build_models(exp.models)
+    models.update(tuned_models)
+    results = train_and_evaluate(models, X_train_t, X_test_t, y_train, y_test, exp.ensemble)
+
+    name, metrics = _final_result(results)
+
+    if exp.calibration:
+        calibrated_model = calibrate_model(metrics["model"], X_cal_t, y_cal, X_test_t, y_test, method=exp.calibration)
+
+        cal_proba = calibrated_model.predict_proba(X_test_t)
+        cal_pred = np.argmax(cal_proba, axis=1)
+
+        results[f"{name} (calibrated)"] = {
+            "model": calibrated_model,
+            "accuracy": float(np.mean(cal_pred == y_test)),
+            "log_loss": sklearn_log_loss(y_test, cal_proba),
+        }
+
+    return exp_name, results, pipeline
 
 
 def train_default(train_df):
@@ -63,7 +117,10 @@ def train_default(train_df):
     X_cal_raw = train_df.loc[cal_mask, FEATURE_COLUMNS].values
     y_cal = train_df.loc[cal_mask, "Winner"].values
 
-    print(f"Training '{SAVE_EXPERIMENT}' on {len(X_train_raw)} games, calibrating on {len(X_cal_raw)} games (season {current_season})")
+    print(
+        f"Training '{SAVE_EXPERIMENT}' on {len(X_train_raw)} games,"
+        f" calibrating on {len(X_cal_raw)} games (season {current_season})"
+    )
 
     exp = EXPERIMENTS[SAVE_EXPERIMENT]
     pipeline = exp.pipeline
@@ -84,18 +141,15 @@ def train_default(train_df):
         save_model = built[save_name]
 
     if exp.calibration:
-        print(f"  Calibrating {save_name} ({exp.calibration})...")
         save_model = calibrate_model(save_model, X_cal_t, y_cal, X_cal_t, y_cal, method=exp.calibration)
 
     return pipeline, save_model, save_name
 
 
 def train_all(train_df, shap: bool = False):
-    """Train all experiments with train/calibration/test split.
+    """Train all experiments in parallel with train/calibration/test split.
 
     Used by backfill mode (IDE experimenting).
-    Runs tuning for experiments with tune=True.
-    Runs SHAP analysis if shap=True.
     Returns (pipeline, model, model_name, test_df) or None.
     """
     if train_df.empty:
@@ -122,7 +176,6 @@ def train_all(train_df, shap: bool = False):
     print(f"Calibrating on season {cal_season} ({len(X_cal_raw)} games)")
     print(f"Testing on seasons {test_start_season}-{current_season} ({len(X_test_raw)} games)")
 
-    # SHAP analysis (uses raw features, no PCA, so it's interpretable)
     if shap:
         from .analysis import run_shap_analysis
 
@@ -131,49 +184,30 @@ def train_all(train_df, shap: bool = False):
     all_experiment_results = {}
 
     for exp_name, exp in EXPERIMENTS.items():
-        pipeline = exp.pipeline
-        X_train_t = pipeline.fit_transform(X_train_raw, y_train)
-        X_cal_t = pipeline.transform(X_cal_raw)
-        X_test_t = pipeline.transform(X_test_raw)
-
-        # Tuning — find best params and use them for training
-        if exp.tune:
-            tuned_models = _run_tuning(exp_name, exp, X_train_t, X_test_t, y_train, y_test)
-        else:
-            tuned_models = {}
-
-        # Build models, replacing with tuned versions where available
-        models = build_models(exp.models)
-        models.update(tuned_models)
-        results = train_and_evaluate(models, X_train_t, X_test_t, y_train, y_test, exp.ensemble)
-
-        name, metrics = _final_result(results)
-
-        if exp.calibration:
-            print(f"\n  Calibrating {exp_name}/{name} ({exp.calibration})...")
-            calibrated_model = calibrate_model(metrics["model"], X_cal_t, y_cal, X_test_t, y_test, method=exp.calibration)
-
-            cal_proba = calibrated_model.predict_proba(X_test_t)
-            cal_pred = np.argmax(cal_proba, axis=1)
-
-            results[f"{name} (calibrated)"] = {
-                "model": calibrated_model,
-                "accuracy": float(np.mean(cal_pred == y_test)),
-                "log_loss": sklearn_log_loss(y_test, cal_proba),
-            }
-
+        print(f"\n  {exp_name}...")
+        exp_name, results, pipeline = _run_experiment(
+            exp_name,
+            exp,
+            X_train_raw,
+            X_cal_raw,
+            X_test_raw,
+            y_train,
+            y_cal,
+            y_test,
+        )
         all_experiment_results[exp_name] = {
             "results": results,
             "pipeline": pipeline,
         }
 
-    # Summary
+    # Summary (in experiment definition order)
     print(f"\n{'=' * 70}")
     print("  Summary")
     print(f"{'=' * 70}")
     print(f"  {'Experiment':<20} {'Model':>22}  {'Accuracy':>8}  {'LogLoss':>8}")
     print(f"  {'-' * 65}")
-    for exp_name, exp_data in all_experiment_results.items():
+    for exp_name in EXPERIMENTS:
+        exp_data = all_experiment_results[exp_name]
         for model_name, metrics in exp_data["results"].items():
             print(f"  {exp_name:<20} {model_name:>22}  {metrics['accuracy']:>8.4f}  {metrics['log_loss']:>8.4f}")
 

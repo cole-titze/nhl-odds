@@ -1,4 +1,5 @@
 import math
+import time
 import warnings
 from datetime import datetime, timezone
 
@@ -7,8 +8,8 @@ from .db.connection import get_connection
 from .db.queries import FEATURE_COLUMNS
 from .db.reader import load_training_data, load_unplayed_games
 from .db.writer import save_predictions
-from .prediction.experiments import SAVE_EXPERIMENT
 from .models.training import train_all, train_default
+from .prediction.experiments import SAVE_EXPERIMENT
 
 warnings.filterwarnings("ignore", message="X does not have valid feature names")
 
@@ -79,6 +80,7 @@ def _save_unplayed_predictions(conn, save_pipeline, save_model, save_name, run_d
 
 
 def run(mode: str = "predict", shap: bool = False):
+    start = time.time()
     config = get_db_config()
     conn = get_connection(config)
 
@@ -106,5 +108,7 @@ def run(mode: str = "predict", shap: bool = False):
 
     _save_unplayed_predictions(conn, save_pipeline, save_model, save_name, run_date)
 
-    print("Done.")
+    elapsed = time.time() - start
+    minutes, seconds = divmod(int(elapsed), 60)
+    print(f"Done in {minutes}m {seconds}s.")
     conn.close()

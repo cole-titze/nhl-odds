@@ -52,6 +52,13 @@ dotnet run
 
 ### Run Data Models
 
+```
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r game_predictor/requirements.txt
+python -m game_predictor
+```
+
 ### Backup Database
 
 ```

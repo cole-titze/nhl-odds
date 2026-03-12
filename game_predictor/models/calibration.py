@@ -23,11 +23,4 @@ def calibrate_model(model, X_cal, y_cal, X_test, y_test, method: str = "sigmoid"
     cal_proba = calibrated.predict_proba(X_test)
     cal_ll = log_loss(y_test, cal_proba)
 
-    improved = cal_ll < uncal_ll
-    diff = abs(cal_ll - uncal_ll)
-
-    print(f"    Uncalibrated log loss: {uncal_ll:.4f}")
-    print(f"    Calibrated log loss:   {cal_ll:.4f} ({diff:.4f} {'better' if improved else 'worse'}) [{method}]")
-    print(f"    Using {'calibrated' if improved else 'uncalibrated'}")
-
-    return calibrated if improved else model
+    return calibrated if cal_ll < uncal_ll else model
