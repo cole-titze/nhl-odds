@@ -19,8 +19,20 @@ class ModelConfig:
 
 @dataclass
 class Experiment:
-    """A complete experiment: preprocessing pipeline, models, and optional ensemble."""
+    """A complete experiment: preprocessing pipeline, models, and optional ensemble.
+
+    calibration controls post-training probability calibration:
+      "none"     — no calibration
+      "sigmoid"  — Platt scaling (2 params, robust with small data)
+      "isotonic" — non-parametric (needs more data, can overfit)
+
+    tune controls whether Optuna hyperparameter tuning runs for this experiment
+    during backfill. tune_trials sets how many Optuna trials to run.
+    """
 
     models: dict[str, ModelConfig]
     pipeline: Pipeline
     ensemble: list[str] | None = None
+    calibration: str = "sigmoid"
+    tune: bool = False
+    tune_trials: int = 100

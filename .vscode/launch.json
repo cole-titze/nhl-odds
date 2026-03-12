@@ -29,6 +29,16 @@
             "console": "internalConsole"
         },
         {
+            "name": "Python: SHAP Analysis",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "game_predictor",
+            "args": ["--mode", "backfill", "--shap"],
+            "cwd": "${workspaceFolder}",
+            "justMyCode": true,
+            "console": "internalConsole"
+        },
+        {
             "name": "Web API",
             "type": "coreclr",
             "request": "launch",

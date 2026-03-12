@@ -131,7 +131,8 @@ _feature_cols_sql = ", ".join(f"gc.{col}" for col in FEATURE_COLUMNS)
 
 TRAINING_DATA_QUERY = f"""
 SELECT {_feature_cols_sql},
-       gr.Winner, gr.SeasonStartYear
+       gr.Winner, gr.SeasonStartYear,
+       gr.Id AS GameId, gr.HomeTeamId, gr.AwayTeamId
 FROM GameCleaned gc
 JOIN GameRaw gr ON gc.GameId = gr.Id
 WHERE gr.HasBeenPlayed = 1

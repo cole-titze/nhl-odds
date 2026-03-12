@@ -1,6 +1,6 @@
 from sklearn.metrics import accuracy_score, log_loss
 
-from ..prediction.predictor import Ensemble
+from .ensemble import Ensemble
 from .experiment import ModelConfig
 
 
@@ -25,7 +25,8 @@ def train_and_evaluate(models: dict, X_train, X_test, y_train, y_test, ensemble_
 
     if ensemble_names and len(ensemble_names) > 1:
         ensemble_models = [results[n]["model"] for n in ensemble_names]
-        ensemble = Ensemble(ensemble_models)
+        ensemble = Ensemble(models=ensemble_models)
+        ensemble.fit(X_train, y_train)  # sets classes_
         y_proba = ensemble.predict_proba(X_test)
         y_pred = ensemble.predict(X_test)
 
