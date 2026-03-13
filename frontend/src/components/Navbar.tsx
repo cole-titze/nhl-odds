@@ -6,6 +6,7 @@ const links = [
   { to: '/', label: 'Games' },
   { to: '/teams', label: 'Teams' },
   { to: '/about', label: 'About' },
+  { to: '/admin', label: 'Admin' },
 ];
 
 export function Navbar() {

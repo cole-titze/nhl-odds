@@ -3,6 +3,7 @@ using DatabaseAccess.WebGameOddsRepository;
 using DatabaseAccess.WebTeamRepository;
 using Microsoft.EntityFrameworkCore;
 using WebApi.BusinessLogic.GameOddsGetter;
+using WebApi.BusinessLogic.JobService;
 using WebApi.BusinessLogic.TeamGetter;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,8 @@ if (_connectionString == null)
     throw new Exception("Connection String Null");
 
 // Add services to the container
+builder.Services.AddSingleton<IJobService, JobService>();
+builder.Services.AddHostedService<DailyDataCollectionService>();
 builder.Services.AddScoped<ITeamGetter, TeamGetter>();
 builder.Services.AddScoped<IGameOddsGetter, GameOddsGetter>();
 builder.Services.AddScoped<ITeamRepository, TeamRepository>();
