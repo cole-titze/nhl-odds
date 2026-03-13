@@ -10,6 +10,7 @@ public class TeamVM
     public int TotalGameCount { get; set; }
     public int SeasonWins { get; set; }
     public int SeasonLosses { get; set; }
+    public int SeasonOvertimeLosses { get; set; }
     public int TotalModelAccurateGameCount { get; set; }
     public IEnumerable<GameOddsVM> GameOddsVM { get; set; } = new List<GameOddsVM>();
 }

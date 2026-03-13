@@ -36,6 +36,7 @@ export function TeamDetailPage() {
         return {
           date: formatShortDate(g.gameDate),
           logLoss: +(cumLogLoss / count).toFixed(4),
+          games: count,
         };
       });
   }, [team]);
@@ -75,7 +76,7 @@ export function TeamDetailPage() {
             </h1>
             <div className="flex items-center gap-4 mt-1.5">
               <span className="stat-number text-sm text-surface-500 dark:text-surface-400">
-                {team.seasonWins}-{team.seasonLosses}
+                {team.seasonWins}-{team.seasonLosses}-{team.seasonOvertimeLosses}
               </span>
               <span className="w-1 h-1 rounded-full bg-surface-300 dark:bg-surface-600" />
               <span className="stat-number text-sm text-accent-500">{accuracyPct}% accuracy</span>
@@ -112,14 +113,27 @@ export function TeamDetailPage() {
                 axisLine={false}
               />
               <Tooltip
-                contentStyle={{
-                  backgroundColor: 'rgba(10, 10, 10, 0.9)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: '8px',
-                  fontFamily: 'JetBrains Mono',
-                  fontSize: '12px',
-                  color: '#fff',
-                  backdropFilter: 'blur(12px)',
+                content={({ active, payload, label }) => {
+                  if (!active || !payload?.length) return null;
+                  const d = payload[0].payload;
+                  return (
+                    <div
+                      style={{
+                        backgroundColor: 'rgba(10, 10, 10, 0.9)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: '8px',
+                        fontFamily: 'JetBrains Mono',
+                        fontSize: '12px',
+                        color: '#fff',
+                        backdropFilter: 'blur(12px)',
+                        padding: '8px 12px',
+                      }}
+                    >
+                      <div>{label}</div>
+                      <div style={{ color: '#3b82f6' }}>logLoss: {d.logLoss}</div>
+                      <div>games: {d.games}</div>
+                    </div>
+                  );
                 }}
               />
               <Line

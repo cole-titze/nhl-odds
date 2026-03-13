@@ -17,7 +17,8 @@ public static class TeamToTeamVmMapper
             ModelLogLoss = GetAverageLogLoss(teamStats.GameOdds),
             TotalGameCount = teamStats.GameOdds.Count(x => x.Game.HasBeenPlayed),
             SeasonWins = GetWins(teamStats.Team.Id, teamStats.GameOdds),
-            SeasonLosses = GetLosses(teamStats.Team.Id, teamStats.GameOdds),
+            SeasonLosses = GetRegulationLosses(teamStats.Team.Id, teamStats.GameOdds),
+            SeasonOvertimeLosses = GetOvertimeLosses(teamStats.Team.Id, teamStats.GameOdds),
             TotalModelAccurateGameCount = GetCorrectModelPredictionCount(teamStats.GameOdds),
             GameOddsVM = GameOddsToViewModelsMapper.Map(teamStats.GameOdds),
         };
@@ -28,9 +29,14 @@ public static class TeamToTeamVmMapper
         return gameOdds.Sum(g => g.Game.IsWin(teamId));
     }
 
-    private static int GetLosses(int teamId, IEnumerable<GameOdds> gameOdds)
+    private static int GetRegulationLosses(int teamId, IEnumerable<GameOdds> gameOdds)
     {
-        return gameOdds.Sum(g => g.Game.IsLoss(teamId));
+        return gameOdds.Sum(g => g.Game.IsLoss(teamId) - g.Game.IsOvertimeLoss(teamId));
+    }
+
+    private static int GetOvertimeLosses(int teamId, IEnumerable<GameOdds> gameOdds)
+    {
+        return gameOdds.Sum(g => g.Game.IsOvertimeLoss(teamId));
     }
 
     private static double GetAverageLogLoss(IEnumerable<GameOdds> gameOdds)

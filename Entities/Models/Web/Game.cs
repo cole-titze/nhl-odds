@@ -1,4 +1,5 @@
 using Entities.Types;
+using Entities.Types.Enums;
 
 namespace Entities.Models.Web;
 
@@ -10,6 +11,7 @@ public class Game
     public int AwayGoals { get; set; }
     public int SeasonStartYear { get; set; }
     public Winner Winner { get; set; }
+    public PeriodType EndPeriod { get; set; }
     public bool HasBeenPlayed { get; set; }
     public Team HomeTeam { get; set; } = new Team();
     public Team AwayTeam { get; set; } = new Team();
@@ -34,5 +36,16 @@ public class Game
             return 1;
 
         return 0;
+    }
+
+    public int IsOvertimeLoss(int teamId)
+    {
+        if (!HasBeenPlayed)
+            return 0;
+
+        if (EndPeriod == PeriodType.Regulation)
+            return 0;
+
+        return IsLoss(teamId);
     }
 }

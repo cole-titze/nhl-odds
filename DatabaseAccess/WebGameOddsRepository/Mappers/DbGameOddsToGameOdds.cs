@@ -35,6 +35,7 @@ public static class DbGameOddsToGameOddsMapper
                     AwayGoals = game.AwayGoals,
                     SeasonStartYear = game.SeasonStartYear,
                     Winner = game.Winner,
+                    EndPeriod = game.EndPeriod,
                     HasBeenPlayed = game.HasBeenPlayed,
                     HomeTeam = homeSeasonTeam != null ? DbSeasonTeamToTeamMapper.Map(homeSeasonTeam) : new Team(),
                     AwayTeam = awaySeasonTeam != null ? DbSeasonTeamToTeamMapper.Map(awaySeasonTeam) : new Team(),

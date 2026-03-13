@@ -1,21 +1,45 @@
 import { useState, useMemo } from 'react';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { SeasonSelector } from '../components/SeasonSelector';
 import { TeamRow } from '../components/TeamRow';
-import { Skeleton } from '../components/Skeleton';
+import { Skeleton, StatCardSkeleton } from '../components/Skeleton';
 import { useFetch } from '../hooks/useFetch';
 import { getAllTeams } from '../api/teams';
 import { getCurrentSeason } from '../utils/season';
+import { formatShortDate } from '../utils/dates';
 import type { TeamVM } from '../types';
 
-type SortKey = 'name' | 'record' | 'accuracy' | 'logLoss';
+type SortKey = 'name' | 'points' | 'record' | 'accuracy' | 'logLoss';
 type SortDir = 'asc' | 'desc';
 
 export function TeamsPage() {
   const [season, setSeason] = useState(getCurrentSeason);
-  const [sortKey, setSortKey] = useState<SortKey>('accuracy');
+  const [sortKey, setSortKey] = useState<SortKey>('points');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
   const { data, loading, error } = useFetch(() => getAllTeams(season), [season]);
+
+  const chartData = useMemo(() => {
+    if (!data) return [];
+    const seen = new Set<number>();
+    const games: { date: string; logLoss: number; ts: number }[] = [];
+    for (const team of data.teams) {
+      for (const g of team.gameOddsVM) {
+        if (g.hasBeenPlayed && g.logLoss > 0 && !seen.has(g.id)) {
+          seen.add(g.id);
+          games.push({ date: g.gameDate, logLoss: g.logLoss, ts: new Date(g.gameDate).getTime() });
+        }
+      }
+    }
+    games.sort((a, b) => a.ts - b.ts);
+    let cumLogLoss = 0;
+    let count = 0;
+    return games.map((g) => {
+      cumLogLoss += g.logLoss;
+      count++;
+      return { date: formatShortDate(g.date), logLoss: +(cumLogLoss / count).toFixed(4), games: count };
+    });
+  }, [data]);
 
   const sorted = useMemo(() => {
     if (!data) return [];
@@ -26,8 +50,11 @@ export function TeamsPage() {
         case 'name':
           cmp = `${a.locationName} ${a.teamName}`.localeCompare(`${b.locationName} ${b.teamName}`);
           break;
+        case 'points':
+          cmp = points(a) - points(b);
+          break;
         case 'record':
-          cmp = a.seasonWins - a.seasonLosses - (b.seasonWins - b.seasonLosses);
+          cmp = points(a) - points(b);
           break;
         case 'accuracy':
           cmp = accuracy(a) - accuracy(b);
@@ -96,14 +123,81 @@ export function TeamsPage() {
         </div>
       )}
 
+      {chartData.length > 1 && (
+        <div className="glass rounded-xl p-5 mb-8">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500 mb-4">
+            Cumulative Avg Log Loss
+          </h2>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={chartData}>
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 11, fontFamily: 'JetBrains Mono' }}
+                interval="preserveStartEnd"
+                stroke="#525252"
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fontFamily: 'JetBrains Mono' }}
+                domain={['auto', 'auto']}
+                stroke="#525252"
+                tickLine={false}
+                axisLine={false}
+              />
+              <Tooltip
+                content={({ active, payload, label }) => {
+                  if (!active || !payload?.length) return null;
+                  const d = payload[0].payload;
+                  return (
+                    <div
+                      style={{
+                        backgroundColor: 'rgba(10, 10, 10, 0.9)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: '8px',
+                        fontFamily: 'JetBrains Mono',
+                        fontSize: '12px',
+                        color: '#fff',
+                        backdropFilter: 'blur(12px)',
+                        padding: '8px 12px',
+                      }}
+                    >
+                      <div>{label}</div>
+                      <div style={{ color: '#3b82f6' }}>logLoss: {d.logLoss}</div>
+                      <div>games: {d.games}</div>
+                    </div>
+                  );
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="logLoss"
+                stroke="#3b82f6"
+                strokeWidth={2.5}
+                dot={false}
+                activeDot={{ r: 4, fill: '#3b82f6', stroke: '#141418', strokeWidth: 2 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
       {error && <div className="glass rounded-xl text-center text-red-500 py-8">{error}</div>}
 
       {loading && (
-        <div className="space-y-3">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-14 w-full" />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-3 gap-4 mb-8">
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </div>
+          <Skeleton className="h-[310px] w-full mb-8" />
+          <div className="space-y-3">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="h-14 w-full" />
+            ))}
+          </div>
+        </>
       )}
 
       {!loading && sorted.length > 0 && (
@@ -117,6 +211,12 @@ export function TeamsPage() {
                     onClick={() => handleSort('name')}
                   >
                     Team{arrow('name')}
+                  </th>
+                  <th
+                    className="py-3 px-4 text-center cursor-pointer select-none hover:text-surface-900 dark:hover:text-white transition-colors font-semibold"
+                    onClick={() => handleSort('points')}
+                  >
+                    Pts{arrow('points')}
                   </th>
                   <th
                     className="py-3 px-4 text-center cursor-pointer select-none hover:text-surface-900 dark:hover:text-white transition-colors font-semibold"
@@ -159,4 +259,8 @@ export function TeamsPage() {
 
 function accuracy(t: TeamVM): number {
   return t.totalGameCount > 0 ? t.totalModelAccurateGameCount / t.totalGameCount : 0;
+}
+
+function points(t: TeamVM): number {
+  return t.seasonWins * 2 + t.seasonOvertimeLosses;
 }

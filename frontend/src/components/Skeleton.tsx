@@ -1,8 +1,10 @@
 export function Skeleton({ className = '' }: { className?: string }) {
   return (
     <div
-      className={`animate-pulse rounded-lg bg-surface-200/60 dark:bg-white/[0.04] ${className}`}
-    />
+      className={`rounded-lg bg-surface-200/60 dark:bg-white/[0.06] overflow-hidden relative ${className}`}
+    >
+      <div className="absolute inset-0 skeleton-shimmer" />
+    </div>
   );
 }
 
@@ -22,6 +24,15 @@ export function CardSkeleton() {
           <Skeleton className="h-4 w-12" />
         </div>
       </div>
+    </div>
+  );
+}
+
+export function StatCardSkeleton() {
+  return (
+    <div className="glass rounded-xl p-5 text-center">
+      <Skeleton className="h-9 w-20 mx-auto" />
+      <Skeleton className="h-3 w-24 mx-auto mt-2" />
     </div>
   );
 }

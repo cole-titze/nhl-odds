@@ -34,7 +34,10 @@ export function TeamRow({ team, season }: TeamRowProps) {
         </div>
       </td>
       <td className="py-3.5 px-4 text-center stat-number text-sm">
-        {team.seasonWins}-{team.seasonLosses}
+        {team.seasonWins * 2 + team.seasonOvertimeLosses}
+      </td>
+      <td className="py-3.5 px-4 text-center stat-number text-sm">
+        {team.seasonWins}-{team.seasonLosses}-{team.seasonOvertimeLosses}
       </td>
       <td className="py-3.5 px-4 text-center stat-number text-sm text-accent-500">{accuracy}%</td>
       <td className="py-3.5 px-4 text-center stat-number text-sm">

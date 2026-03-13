@@ -41,6 +41,7 @@ export interface TeamVM {
   totalGameCount: number;
   seasonWins: number;
   seasonLosses: number;
+  seasonOvertimeLosses: number;
   totalModelAccurateGameCount: number;
   gameOddsVM: GameOddsVM[];
 }
