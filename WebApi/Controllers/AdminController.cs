@@ -1,4 +1,7 @@
+using DatabaseAccess;
+using Entities.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using WebApi.BusinessLogic.JobService;
 
 namespace WebApi.Controllers;
@@ -9,14 +12,16 @@ public class AdminController
 {
     private readonly IJobService _jobService;
     private readonly IConfiguration _configuration;
+    private readonly GameDbContext _db;
 
     private const string DataCollectionJob = "data-collection";
     private const string PredictionJob = "prediction";
 
-    public AdminController(IJobService jobService, IConfiguration configuration)
+    public AdminController(IJobService jobService, IConfiguration configuration, GameDbContext db)
     {
         _jobService = jobService;
         _configuration = configuration;
+        _db = db;
     }
 
     private string GetRepoRoot()
@@ -70,6 +75,28 @@ public class AdminController
             return Results.Conflict(new { message = "Prediction is already running." });
 
         return Results.Ok(new { message = "Prediction started." });
+    }
+
+    [HttpGet]
+    public async Task<IResult> GetErrorLogs()
+    {
+        var errors = await _db.ErrorLog
+            .OrderByDescending(e => e.TimestampUTC)
+            .Take(50)
+            .Select(e => new ErrorLogVM
+            {
+                Id = e.Id,
+                TimestampUTC = e.TimestampUTC,
+                GameId = e.GameId,
+                SeasonStartYear = e.SeasonStartYear,
+                ExceptionType = e.ExceptionType,
+                Message = e.Message,
+                StackTrace = e.StackTrace,
+                Source = e.Source,
+            })
+            .ToListAsync();
+
+        return Results.Ok(errors);
     }
 
     [HttpGet]

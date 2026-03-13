@@ -10,7 +10,7 @@ def random_forest(
     max_depth: int | None = None,
     min_samples_split: int = 2,
     min_samples_leaf: int = 1,
-    random_state: int = 42,
+    max_features: str | None = "sqrt",
 ) -> ModelConfig:
     """Create a Random Forest model config."""
     return ModelConfig(
@@ -20,12 +20,13 @@ def random_forest(
             "max_depth": max_depth,
             "min_samples_split": min_samples_split,
             "min_samples_leaf": min_samples_leaf,
-            "random_state": random_state,
+            "max_features": max_features,
+            "random_state": 42,
         },
     )
 
 
-def tune_random_forest(X_train, X_test, y_train, y_test, n_trials, progress_callback):
+def tune_random_forest(X_train, X_test, y_train, y_test, n_trials, progress_callback, sample_weight=None):
     import optuna
     from sklearn.metrics import log_loss
 
@@ -39,7 +40,7 @@ def tune_random_forest(X_train, X_test, y_train, y_test, n_trials, progress_call
             "random_state": 42,
         }
         model = RandomForestClassifier(**params)
-        model.fit(X_train, y_train)
+        model.fit(X_train, y_train, sample_weight=sample_weight)
         return log_loss(y_test, model.predict_proba(X_test))
 
     study = optuna.create_study(direction="minimize", study_name="rf-tuning")

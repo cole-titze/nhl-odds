@@ -1,3 +1,5 @@
+import inspect
+
 from sklearn.metrics import accuracy_score, log_loss
 
 from .ensemble import Ensemble
@@ -8,11 +10,20 @@ def build_models(model_configs: dict[str, ModelConfig]) -> dict:
     return {name: cfg.build() for name, cfg in model_configs.items()}
 
 
-def train_and_evaluate(models: dict, X_train, X_test, y_train, y_test, ensemble_names: list | None) -> dict:
+def _fit(model, X, y, sample_weight=None):
+    if sample_weight is not None and "sample_weight" in inspect.signature(model.fit).parameters:
+        model.fit(X, y, sample_weight=sample_weight)
+    else:
+        model.fit(X, y)
+
+
+def train_and_evaluate(
+    models: dict, X_train, X_test, y_train, y_test, ensemble_names: list | None, sample_weight=None
+) -> dict:
     results = {}
 
     for name, model in models.items():
-        model.fit(X_train, y_train)
+        _fit(model, X_train, y_train, sample_weight)
 
         y_proba = model.predict_proba(X_test)
         y_pred = model.predict(X_test)

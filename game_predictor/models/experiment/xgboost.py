@@ -7,7 +7,12 @@ def xgboost(
     n_estimators: int = 200,
     learning_rate: float = 0.05,
     max_depth: int = 6,
-    random_state: int = 42,
+    min_child_weight: int = 1,
+    subsample: float = 1.0,
+    colsample_bytree: float = 1.0,
+    reg_alpha: float = 0.0,
+    reg_lambda: float = 1.0,
+    gamma: float = 0.0,
 ) -> ModelConfig:
     """Create an XGBoost model config."""
     return ModelConfig(
@@ -16,14 +21,20 @@ def xgboost(
             "n_estimators": n_estimators,
             "learning_rate": learning_rate,
             "max_depth": max_depth,
-            "random_state": random_state,
+            "min_child_weight": min_child_weight,
+            "subsample": subsample,
+            "colsample_bytree": colsample_bytree,
+            "reg_alpha": reg_alpha,
+            "reg_lambda": reg_lambda,
+            "gamma": gamma,
+            "random_state": 42,
             "verbosity": 0,
             "use_label_encoder": False,
         },
     )
 
 
-def tune_xgboost(X_train, X_test, y_train, y_test, n_trials, progress_callback):
+def tune_xgboost(X_train, X_test, y_train, y_test, n_trials, progress_callback, sample_weight=None):
     import optuna
     from sklearn.metrics import log_loss
 
@@ -43,7 +54,7 @@ def tune_xgboost(X_train, X_test, y_train, y_test, n_trials, progress_callback):
             "random_state": 42,
         }
         model = XGBClassifier(**params)
-        model.fit(X_train, y_train)
+        model.fit(X_train, y_train, sample_weight=sample_weight)
         return log_loss(y_test, model.predict_proba(X_test))
 
     study = optuna.create_study(direction="minimize", study_name="xgboost-tuning")

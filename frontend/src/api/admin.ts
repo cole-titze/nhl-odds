@@ -1,5 +1,16 @@
 const BASE_URL = import.meta.env.VITE_API_URL || '';
 
+export interface ErrorLog {
+  id: number;
+  timestampUTC: string;
+  gameId: number | null;
+  seasonStartYear: number | null;
+  exceptionType: string;
+  message: string;
+  stackTrace: string;
+  source: string;
+}
+
 export interface JobInfo {
   id: string;
   name: string;
@@ -36,5 +47,11 @@ export async function startPrediction(): Promise<{ message: string }> {
     const body = await res.json().catch(() => null);
     throw new Error(body?.message || `API error: ${res.status}`);
   }
+  return res.json();
+}
+
+export async function getErrorLogs(): Promise<ErrorLog[]> {
+  const res = await fetch(`${BASE_URL}/api/Admin/GetErrorLogs`);
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }

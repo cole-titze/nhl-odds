@@ -27,14 +27,16 @@ EXPERIMENTS: dict[str, Experiment] = {
     # "Default": Experiment(
     #     models={
     #         "MLP": mlp(hidden_layer_sizes=(64, 32), max_iter=500),
-    #         "LightGBM": lgbm(n_estimators=200, learning_rate=0.05, max_depth=6),
+    #         "LightGBM": lgbm(
+    #             n_estimators=640, learning_rate=0.011922, max_depth=4, num_leaves=211, min_child_samples=28
+    #         ),
     #         "RF": random_forest(n_estimators=200, max_depth=10),
     #         "KNN": knn(n_neighbors=250, weights="distance"),
     #     },
     #     pipeline=standard_pipeline(k_best=100, pca_components=52),
     #     ensemble=["MLP", "LightGBM", "RF", "KNN"],
-    #     calibration="isotonic",
-    #     tune=True
+    #     calibration="none",
+    #     tune=False
     # ),
     "Default": Experiment(
         models={
@@ -42,6 +44,7 @@ EXPERIMENTS: dict[str, Experiment] = {
         },
         pipeline=standard_pipeline(),
         calibration="sigmoid",
+        decay=0,
         tune=True,
     ),
     "Deep MLP": Experiment(
@@ -51,6 +54,7 @@ EXPERIMENTS: dict[str, Experiment] = {
         pipeline=standard_pipeline(),
         calibration="none",
         tune=True,
+        decay=0,
         tune_trials=250,
     ),
     "RF": Experiment(
@@ -60,6 +64,7 @@ EXPERIMENTS: dict[str, Experiment] = {
         pipeline=standard_pipeline(),
         calibration="none",
         tune=True,
+        decay=0,
         tune_trials=150,
     ),
     "Deep KNN": Experiment(
@@ -68,6 +73,7 @@ EXPERIMENTS: dict[str, Experiment] = {
         },
         pipeline=standard_pipeline(),
         calibration="none",
+        decay=0,
         tune=True,
     ),
     "XGBoost": Experiment(
@@ -76,6 +82,7 @@ EXPERIMENTS: dict[str, Experiment] = {
         },
         pipeline=standard_pipeline(),
         calibration="none",
+        decay=0,
         tune=True,
     ),
     "Logistic": Experiment(
@@ -84,6 +91,7 @@ EXPERIMENTS: dict[str, Experiment] = {
         },
         pipeline=standard_pipeline(),
         calibration="none",
+        decay=0,
         tune=True,
     ),
 }

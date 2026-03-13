@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
+  getErrorLogs,
   getJobStatuses,
   startDataCollection,
   startPrediction,
+  type ErrorLog,
   type JobInfo,
   type JobStatuses,
 } from '../api/admin';
@@ -44,15 +46,7 @@ function ElapsedTime({ startedAt }: { startedAt: string | null }) {
   return <span className="stat-number text-xs">{elapsed}</span>;
 }
 
-function JobCard({
-  job,
-  label,
-  onStart,
-}: {
-  job: JobInfo;
-  label: string;
-  onStart: () => void;
-}) {
+function JobCard({ job, label, onStart }: { job: JobInfo; label: string; onStart: () => void }) {
   const isRunning = job.status === 'running';
   const detailsRef = useRef<HTMLDetailsElement>(null);
 
@@ -128,12 +122,14 @@ function JobCard({
 
 export function AdminPage() {
   const [statuses, setStatuses] = useState<JobStatuses | null>(null);
+  const [errorLogs, setErrorLogs] = useState<ErrorLog[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
-      const data = await getJobStatuses();
-      setStatuses(data);
+      const [statusData, logsData] = await Promise.all([getJobStatuses(), getErrorLogs()]);
+      setStatuses(statusData);
+      setErrorLogs(logsData);
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to fetch statuses');
@@ -182,6 +178,56 @@ export function AdminPage() {
           />
         </div>
       )}
+
+      <div className="mt-10">
+        <h2 className="font-display text-xl font-semibold mb-4">Error Log</h2>
+        {errorLogs.length === 0 ? (
+          <div className="glass rounded-xl p-6 text-sm text-surface-500 dark:text-surface-400 text-center">
+            No errors logged.
+          </div>
+        ) : (
+          <div className="glass rounded-xl overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-surface-200 dark:border-white/[0.06] text-left text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">
+                  <th className="px-4 py-3">Time</th>
+                  <th className="px-4 py-3">Source</th>
+                  <th className="px-4 py-3">Exception</th>
+                  <th className="px-4 py-3">Message</th>
+                </tr>
+              </thead>
+              <tbody>
+                {errorLogs.map((log) => (
+                  <tr
+                    key={log.id}
+                    className="border-b border-surface-200 dark:border-white/[0.04] last:border-0"
+                  >
+                    <td className="px-4 py-3 stat-number text-xs whitespace-nowrap text-surface-500 dark:text-surface-400">
+                      {formatTime(log.timestampUTC)}
+                    </td>
+                    <td className="px-4 py-3 text-xs font-mono text-surface-600 dark:text-surface-300 whitespace-nowrap">
+                      {log.source}
+                    </td>
+                    <td className="px-4 py-3 text-xs font-mono text-red-600 dark:text-red-400 whitespace-nowrap">
+                      {log.exceptionType}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-surface-700 dark:text-surface-300">
+                      <details>
+                        <summary className="cursor-pointer truncate max-w-md select-none">
+                          {log.message}
+                        </summary>
+                        <pre className="mt-2 p-2 rounded bg-surface-900 dark:bg-black/40 text-surface-300 dark:text-surface-400 whitespace-pre-wrap break-all text-xs font-mono">
+                          {log.stackTrace}
+                        </pre>
+                      </details>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -7,7 +7,12 @@ def lgbm(
     n_estimators: int = 200,
     learning_rate: float = 0.05,
     max_depth: int = 6,
-    random_state: int = 42,
+    num_leaves: int = 31,
+    min_child_samples: int = 20,
+    subsample: float = 1.0,
+    colsample_bytree: float = 1.0,
+    reg_alpha: float = 0.0,
+    reg_lambda: float = 0.0,
 ) -> ModelConfig:
     """Create a LightGBM model config."""
     return ModelConfig(
@@ -16,13 +21,19 @@ def lgbm(
             "n_estimators": n_estimators,
             "learning_rate": learning_rate,
             "max_depth": max_depth,
-            "random_state": random_state,
+            "num_leaves": num_leaves,
+            "min_child_samples": min_child_samples,
+            "subsample": subsample,
+            "colsample_bytree": colsample_bytree,
+            "reg_alpha": reg_alpha,
+            "reg_lambda": reg_lambda,
+            "random_state": 42,
             "verbosity": -1,
         },
     )
 
 
-def tune_lgbm(X_train, X_test, y_train, y_test, n_trials, progress_callback):
+def tune_lgbm(X_train, X_test, y_train, y_test, n_trials, progress_callback, sample_weight=None):
     import optuna
     from sklearn.metrics import log_loss
 
@@ -41,7 +52,7 @@ def tune_lgbm(X_train, X_test, y_train, y_test, n_trials, progress_callback):
             "random_state": 42,
         }
         model = LGBMClassifier(**params)
-        model.fit(X_train, y_train)
+        model.fit(X_train, y_train, sample_weight=sample_weight)
         return log_loss(y_test, model.predict_proba(X_test))
 
     study = optuna.create_study(direction="minimize", study_name="lgbm-tuning")

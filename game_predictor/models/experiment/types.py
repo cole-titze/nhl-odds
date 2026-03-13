@@ -28,6 +28,9 @@ class Experiment:
 
     tune controls whether Optuna hyperparameter tuning runs for this experiment
     during backfill. tune_trials sets how many Optuna trials to run.
+
+    decay controls exponential recency weighting: weight = exp(-decay * seasons_ago),
+    normalized to mean=1. decay=0.0 disables weighting. Try 0.2-0.5 to start.
     """
 
     models: dict[str, ModelConfig]
@@ -36,3 +39,4 @@ class Experiment:
     calibration: str = "sigmoid"
     tune: bool = False
     tune_trials: int = 100
+    decay: float = 0.0

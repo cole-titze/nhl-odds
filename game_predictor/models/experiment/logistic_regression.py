@@ -4,23 +4,18 @@ from .types import ModelConfig
 
 
 def logistic_regression(
-    max_iter: int = 1000,
     C: float = 1.0,
-    random_state: int = 42,
+    penalty: str = "l2",
+    l1_ratio: float | None = None,
 ) -> ModelConfig:
     """Create a Logistic Regression model config."""
-    return ModelConfig(
-        cls=LR,
-        params={
-            "max_iter": max_iter,
-            "C": C,
-            "solver": "saga",
-            "random_state": random_state,
-        },
-    )
+    params: dict = {"C": C, "penalty": penalty, "solver": "saga", "max_iter": 2000, "random_state": 42}
+    if l1_ratio is not None:
+        params["l1_ratio"] = l1_ratio
+    return ModelConfig(cls=LR, params=params)
 
 
-def tune_logistic_regression(X_train, X_test, y_train, y_test, n_trials, progress_callback):
+def tune_logistic_regression(X_train, X_test, y_train, y_test, n_trials, progress_callback, sample_weight=None):
     import optuna
     from sklearn.metrics import log_loss
 
@@ -35,7 +30,7 @@ def tune_logistic_regression(X_train, X_test, y_train, y_test, n_trials, progres
         if params["penalty"] == "elasticnet":
             params["l1_ratio"] = trial.suggest_float("l1_ratio", 0.0, 1.0)
         model = LR(**params)
-        model.fit(X_train, y_train)
+        model.fit(X_train, y_train, sample_weight=sample_weight)
         return log_loss(y_test, model.predict_proba(X_test))
 
     study = optuna.create_study(direction="minimize", study_name="lr-tuning")

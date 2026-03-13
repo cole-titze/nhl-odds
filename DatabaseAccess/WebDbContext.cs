@@ -11,6 +11,7 @@ public partial class GameDbContext : DbContext
     public virtual DbSet<DbGameRaw> GameRaw { get; set; } = null!;
     public virtual DbSet<DbSeasonTeam> SeasonTeam { get; set; } = null!;
     public virtual DbSet<DbGameOdds> GameOdds { get; set; } = null!;
+    public virtual DbSet<DbErrorLog> ErrorLog { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -6,7 +6,9 @@ from .types import ModelConfig
 def mlp(
     hidden_layer_sizes: tuple[int, ...] = (64, 32),
     max_iter: int = 500,
-    random_state: int = 42,
+    learning_rate_init: float = 1e-3,
+    alpha: float = 1e-4,
+    activation: str = "relu",
 ) -> ModelConfig:
     """Create an MLP model config."""
     return ModelConfig(
@@ -14,13 +16,16 @@ def mlp(
         params={
             "hidden_layer_sizes": hidden_layer_sizes,
             "max_iter": max_iter,
+            "learning_rate_init": learning_rate_init,
+            "alpha": alpha,
+            "activation": activation,
             "early_stopping": True,
-            "random_state": random_state,
+            "random_state": 42,
         },
     )
 
 
-def tune_mlp(X_train, X_test, y_train, y_test, n_trials, progress_callback):
+def tune_mlp(X_train, X_test, y_train, y_test, n_trials, progress_callback, sample_weight=None):
     import optuna
     from sklearn.metrics import log_loss
 

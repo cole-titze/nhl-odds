@@ -7,6 +7,7 @@ def knn(
     n_neighbors: int = 5,
     weights: str = "uniform",
     metric: str = "minkowski",
+    p: int = 2,
 ) -> ModelConfig:
     """Create a K-Nearest Neighbors model config."""
     return ModelConfig(
@@ -15,11 +16,12 @@ def knn(
             "n_neighbors": n_neighbors,
             "weights": weights,
             "metric": metric,
+            "p": p,
         },
     )
 
 
-def tune_knn(X_train, X_test, y_train, y_test, n_trials, progress_callback):
+def tune_knn(X_train, X_test, y_train, y_test, n_trials, progress_callback, sample_weight=None):
     import optuna
     from sklearn.metrics import log_loss
 

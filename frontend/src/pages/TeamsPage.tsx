@@ -37,7 +37,11 @@ export function TeamsPage() {
     return games.map((g) => {
       cumLogLoss += g.logLoss;
       count++;
-      return { date: formatShortDate(g.date), logLoss: +(cumLogLoss / count).toFixed(4), games: count };
+      return {
+        date: formatShortDate(g.date),
+        logLoss: +(cumLogLoss / count).toFixed(4),
+        games: count,
+      };
     });
   }, [data]);
 
