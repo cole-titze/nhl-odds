@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using Entities.ViewModels;
+using Microsoft.Extensions.Hosting;
 
 namespace WebApi.BusinessLogic.JobService;
 
@@ -10,10 +11,12 @@ public class JobService : IJobService
     private readonly ConcurrentDictionary<string, object> _locks = new();
     private readonly ConcurrentDictionary<string, TaskCompletionSource> _completionSources = new();
     private readonly ILogger<JobService> _logger;
+    private readonly CancellationToken _appStopping;
 
-    public JobService(ILogger<JobService> logger)
+    public JobService(ILogger<JobService> logger, IHostApplicationLifetime lifetime)
     {
         _logger = logger;
+        _appStopping = lifetime.ApplicationStopping;
     }
 
     public JobInfoVM GetStatus(string jobName)
@@ -101,7 +104,18 @@ public class JobService : IJobService
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
 
-            await process.WaitForExitAsync();
+            try
+            {
+                await process.WaitForExitAsync(_appStopping);
+            }
+            catch (OperationCanceledException)
+            {
+                process.Kill(entireProcessTree: true);
+                job.Status = "cancelled";
+                job.Error = "Application shutting down";
+                job.FinishedAt = DateTime.UtcNow;
+                return;
+            }
 
             if (process.ExitCode == 0)
             {
