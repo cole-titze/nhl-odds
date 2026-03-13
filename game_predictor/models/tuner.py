@@ -47,7 +47,9 @@ def print_best_params(study: optuna.Study, model_name: str):
     """Print the best parameters from an Optuna study."""
     print(f"    Best log loss: {study.best_value:.4f} (trial #{study.best_trial.number})")
     print("    Best parameters:")
-    for key, value in study.best_params.items():
+    converter = PARAM_CONVERTERS.get(model_name)
+    params = converter(study) if converter else study.best_params
+    for key, value in params.items():
         if isinstance(value, float):
             print(f"      {key}: {value:.6f}")
         else:

@@ -26,7 +26,7 @@ from ..models.experiment import (
 EXPERIMENTS: dict[str, Experiment] = {
     "Default": Experiment(
         models={
-            "MLP": mlp(n_layers=1, layer_0=212, learning_rate_init=0.00112711, alpha=0.0367419, activation="relu"),
+            "MLP": mlp(hidden_layer_sizes=(212,), learning_rate_init=0.00112711, alpha=0.0367419, activation="relu"),
             "LightGBM": lgbm(n_estimators=260, learning_rate=0.0133063, max_depth=7, num_leaves=240, min_child_samples=5, subsample=0.788132, colsample_bytree=0.644878, reg_alpha=8.03915e-06, reg_lambda=0.0487625),
             "RF": random_forest(n_estimators=184, max_depth=26, min_samples_split=11, min_samples_leaf=3, max_features="sqrt"),
             "KNN": knn(n_neighbors=152, weights="distance", metric="minkowski", p=2),
@@ -34,7 +34,7 @@ EXPERIMENTS: dict[str, Experiment] = {
             "LR": logistic_regression(C=0.0768651, penalty="l1"),
         },
         pipeline=standard_pipeline(k_best=99, pca_components=90),
-        ensemble=["MLP", "LightGBM", "RF", "KNN, XGB"],
+        ensemble=["MLP", "LightGBM", "RF", "KNN", "XGB","LR"],
         calibration="none",
         decay=0.8,
         tune=False
@@ -51,7 +51,7 @@ EXPERIMENTS: dict[str, Experiment] = {
     ),
     "Deep MLP": Experiment(
         models={
-            "MLP": mlp(n_layers=1, layer_0=212, learning_rate_init=0.00112711, alpha=0.0367419, activation="relu"),
+            "MLP": mlp(hidden_layer_sizes=(212,), learning_rate_init=0.00112711, alpha=0.0367419, activation="relu"),
         },
         pipeline=standard_pipeline(k_best=20, pca_components=6),
         calibration="none",
