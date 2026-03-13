@@ -21,10 +21,14 @@ public class DailyDataCollectionService : BackgroundService
             var delay = GetDelayUntilNextRun();
             _logger.LogInformation("Next scheduled pipeline in {Hours:F1} hours", delay.TotalHours);
 
-            await Task.Delay(delay, stoppingToken);
-
-            if (stoppingToken.IsCancellationRequested)
+            try
+            {
+                await Task.Delay(delay, stoppingToken);
+            }
+            catch (OperationCanceledException)
+            {
                 break;
+            }
 
             await RunPipeline(stoppingToken);
         }

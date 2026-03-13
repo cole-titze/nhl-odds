@@ -24,75 +24,75 @@ from ..models.experiment import (
 )
 
 EXPERIMENTS: dict[str, Experiment] = {
-    # "Default": Experiment(
-    #     models={
-    #         "MLP": mlp(hidden_layer_sizes=(64, 32), max_iter=500),
-    #         "LightGBM": lgbm(
-    #             n_estimators=640, learning_rate=0.011922, max_depth=4, num_leaves=211, min_child_samples=28
-    #         ),
-    #         "RF": random_forest(n_estimators=200, max_depth=10),
-    #         "KNN": knn(n_neighbors=250, weights="distance"),
-    #     },
-    #     pipeline=standard_pipeline(k_best=100, pca_components=52),
-    #     ensemble=["MLP", "LightGBM", "RF", "KNN"],
-    #     calibration="none",
-    #     tune=False
-    # ),
     "Default": Experiment(
         models={
-            "LightGBM": lgbm(),
+            "MLP": mlp(n_layers=1, layer_0=212, learning_rate_init=0.00112711, alpha=0.0367419, activation="relu"),
+            "LightGBM": lgbm(n_estimators=260, learning_rate=0.0133063, max_depth=7, num_leaves=240, min_child_samples=5, subsample=0.788132, colsample_bytree=0.644878, reg_alpha=8.03915e-06, reg_lambda=0.0487625),
+            "RF": random_forest(n_estimators=184, max_depth=26, min_samples_split=11, min_samples_leaf=3, max_features="sqrt"),
+            "KNN": knn(n_neighbors=152, weights="distance", metric="minkowski", p=2),
+            "XGB": xgboost(n_estimators=830, learning_rate=0.0147956, max_depth=4, min_child_weight=1, subsample=0.901271, colsample_bytree=0.799057, reg_alpha=3.51218e-06, reg_lambda=0.0333008, gamma=2.56812e-07),
+            "LR": logistic_regression(C=0.0768651, penalty="l1"),
         },
-        pipeline=standard_pipeline(),
-        calibration="sigmoid",
-        decay=0,
-        tune=True,
+        pipeline=standard_pipeline(k_best=99, pca_components=90),
+        ensemble=["MLP", "LightGBM", "RF", "KNN, XGB"],
+        calibration="none",
+        decay=0.8,
+        tune=False
+    ),
+
+    "LightGBM": Experiment(
+        models={
+            "LightGBM": lgbm(n_estimators=260, learning_rate=0.0133063, max_depth=7, num_leaves=240, min_child_samples=5, subsample=0.788132, colsample_bytree=0.644878, reg_alpha=8.03915e-06, reg_lambda=0.0487625),
+        },
+        pipeline=standard_pipeline(k_best=99, pca_components=90),
+        calibration="none",
+        decay=0.1055,
+        tune=False,
     ),
     "Deep MLP": Experiment(
         models={
-            "MLP": mlp(),
+            "MLP": mlp(n_layers=1, layer_0=212, learning_rate_init=0.00112711, alpha=0.0367419, activation="relu"),
         },
-        pipeline=standard_pipeline(),
+        pipeline=standard_pipeline(k_best=20, pca_components=6),
         calibration="none",
-        tune=True,
-        decay=0,
-        tune_trials=250,
+        decay=0.07648,
+        tune=False,
     ),
     "RF": Experiment(
         models={
-            "RF": random_forest(),
+            "RF": random_forest(n_estimators=184, max_depth=26, min_samples_split=11, min_samples_leaf=3, max_features="sqrt"),
         },
-        pipeline=standard_pipeline(),
+        pipeline=standard_pipeline(k_best=31, pca_components=21),
         calibration="none",
-        tune=True,
-        decay=0,
-        tune_trials=150,
+        decay=0.1507,
+        tune=False,
     ),
     "Deep KNN": Experiment(
         models={
-            "KNN": knn(),
+            "KNN": knn(n_neighbors=152, weights="distance", metric="minkowski", p=2),
         },
-        pipeline=standard_pipeline(),
+        pipeline=standard_pipeline(k_best=62, pca_components=20),
         calibration="none",
-        decay=0,
-        tune=True,
+        decay=0.4337,
+        tune=False,
     ),
     "XGBoost": Experiment(
         models={
-            "XGB": xgboost(),
+            "XGB": xgboost(n_estimators=830, learning_rate=0.0147956, max_depth=4, min_child_weight=1, subsample=0.901271, colsample_bytree=0.799057, reg_alpha=3.51218e-06, reg_lambda=0.0333008, gamma=2.56812e-07),
         },
-        pipeline=standard_pipeline(),
-        calibration="none",
-        decay=0,
-        tune=True,
+        pipeline=standard_pipeline(k_best=88, pca_components=71),
+        calibration="sigmoid",
+        decay=0.02728,
+        tune=False,
     ),
     "Logistic": Experiment(
         models={
-            "LR": logistic_regression(),
+            "LR": logistic_regression(C=0.0768651, penalty="l1"),
         },
-        pipeline=standard_pipeline(),
+        pipeline=standard_pipeline(k_best=124, pca_components=98),
         calibration="none",
-        decay=0,
-        tune=True,
+        decay=0.0008893,
+        tune=False,
     ),
 }
 
