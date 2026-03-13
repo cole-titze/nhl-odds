@@ -1,4 +1,6 @@
 import numpy as np
+from sklearn.ensemble import StackingClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss as sklearn_log_loss
 from sklearn.pipeline import Pipeline
 
@@ -59,6 +61,8 @@ def _print_tuned_config(exp_name, exp, pipeline_params, tuned_decay, tuned_model
 
     if exp.ensemble:
         lines.append(f"{indent}ensemble={exp.ensemble!r},")
+    if exp.stack:
+        lines.append(f"{indent}stack=True,")
 
     lines.append(f'{indent}calibration="{used_cal}",')
     lines.append(f"{indent}decay={tuned_decay:.4g},")
@@ -160,7 +164,7 @@ def _run_experiment(exp_name, exp, X_train_raw, X_cal_raw, X_test_raw, y_train, 
     models = build_models(exp.models)
     models.update(tuned_models)
     results = train_and_evaluate(
-        models, X_train_t, X_test_t, y_train, y_test, exp.ensemble, sample_weight=sample_weight
+        models, X_train_t, X_test_t, y_train, y_test, exp.ensemble, stack=exp.stack, sample_weight=sample_weight
     )
 
     name, metrics = _final_result(results)
@@ -223,9 +227,22 @@ def train_default(train_df):
         _fit(model, X_train_t, y_train, w_train)
 
     if exp.ensemble and len(exp.ensemble) > 1:
-        ensemble_models = [built[n] for n in exp.ensemble]
-        save_model = Ensemble(models=ensemble_models)
-        save_model.fit(X_train_t, y_train)
+        if exp.stack:
+            from sklearn.base import clone
+
+            estimators = [(n, clone(built[n])) for n in exp.ensemble]
+            save_model = StackingClassifier(
+                estimators=estimators,
+                final_estimator=LogisticRegression(),
+                cv=5,
+                stack_method="predict_proba",
+                n_jobs=-1,
+            )
+            save_model.fit(X_train_t, y_train)
+        else:
+            ensemble_models = [built[n] for n in exp.ensemble]
+            save_model = Ensemble(models=ensemble_models)
+            save_model.fit(X_train_t, y_train)
         save_name = "Ensemble"
     else:
         save_name = next(iter(built))

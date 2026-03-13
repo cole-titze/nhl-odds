@@ -36,6 +36,7 @@ class Experiment:
     models: dict[str, ModelConfig]
     pipeline: Pipeline
     ensemble: list[str] | None = None
+    stack: bool = False
     calibration: str = "sigmoid"
     tune: bool = False
     tune_trials: int = 100

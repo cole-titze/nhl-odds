@@ -27,22 +27,54 @@ EXPERIMENTS: dict[str, Experiment] = {
     "Default": Experiment(
         models={
             "MLP": mlp(hidden_layer_sizes=(212,), learning_rate_init=0.00112711, alpha=0.0367419, activation="relu"),
-            "LightGBM": lgbm(n_estimators=260, learning_rate=0.0133063, max_depth=7, num_leaves=240, min_child_samples=5, subsample=0.788132, colsample_bytree=0.644878, reg_alpha=8.03915e-06, reg_lambda=0.0487625),
-            "RF": random_forest(n_estimators=184, max_depth=26, min_samples_split=11, min_samples_leaf=3, max_features="sqrt"),
+            "LightGBM": lgbm(
+                n_estimators=260,
+                learning_rate=0.0133063,
+                max_depth=7,
+                num_leaves=240,
+                min_child_samples=5,
+                subsample=0.788132,
+                colsample_bytree=0.644878,
+                reg_alpha=8.03915e-06,
+                reg_lambda=0.0487625,
+            ),
+            "RF": random_forest(
+                n_estimators=184, max_depth=26, min_samples_split=11, min_samples_leaf=3, max_features="sqrt"
+            ),
             "KNN": knn(n_neighbors=152, weights="distance", metric="minkowski", p=2),
-            "XGB": xgboost(n_estimators=830, learning_rate=0.0147956, max_depth=4, min_child_weight=1, subsample=0.901271, colsample_bytree=0.799057, reg_alpha=3.51218e-06, reg_lambda=0.0333008, gamma=2.56812e-07),
+            "XGB": xgboost(
+                n_estimators=830,
+                learning_rate=0.0147956,
+                max_depth=4,
+                min_child_weight=1,
+                subsample=0.901271,
+                colsample_bytree=0.799057,
+                reg_alpha=3.51218e-06,
+                reg_lambda=0.0333008,
+                gamma=2.56812e-07,
+            ),
             "LR": logistic_regression(C=0.0768651, penalty="l1"),
         },
         pipeline=standard_pipeline(k_best=99, pca_components=90),
-        ensemble=["MLP", "LightGBM", "RF", "KNN", "XGB","LR"],
+        ensemble=["MLP", "LightGBM", "RF", "KNN", "XGB", "LR"],
         calibration="none",
-        decay=0.8,
-        tune=False
+        decay=0.08,
+        stack=True,
+        tune=False,
     ),
-
     "LightGBM": Experiment(
         models={
-            "LightGBM": lgbm(n_estimators=260, learning_rate=0.0133063, max_depth=7, num_leaves=240, min_child_samples=5, subsample=0.788132, colsample_bytree=0.644878, reg_alpha=8.03915e-06, reg_lambda=0.0487625),
+            "LightGBM": lgbm(
+                n_estimators=260,
+                learning_rate=0.0133063,
+                max_depth=7,
+                num_leaves=240,
+                min_child_samples=5,
+                subsample=0.788132,
+                colsample_bytree=0.644878,
+                reg_alpha=8.03915e-06,
+                reg_lambda=0.0487625,
+            ),
         },
         pipeline=standard_pipeline(k_best=99, pca_components=90),
         calibration="none",
@@ -60,7 +92,9 @@ EXPERIMENTS: dict[str, Experiment] = {
     ),
     "RF": Experiment(
         models={
-            "RF": random_forest(n_estimators=184, max_depth=26, min_samples_split=11, min_samples_leaf=3, max_features="sqrt"),
+            "RF": random_forest(
+                n_estimators=184, max_depth=26, min_samples_split=11, min_samples_leaf=3, max_features="sqrt"
+            ),
         },
         pipeline=standard_pipeline(k_best=31, pca_components=21),
         calibration="none",
@@ -78,7 +112,17 @@ EXPERIMENTS: dict[str, Experiment] = {
     ),
     "XGBoost": Experiment(
         models={
-            "XGB": xgboost(n_estimators=830, learning_rate=0.0147956, max_depth=4, min_child_weight=1, subsample=0.901271, colsample_bytree=0.799057, reg_alpha=3.51218e-06, reg_lambda=0.0333008, gamma=2.56812e-07),
+            "XGB": xgboost(
+                n_estimators=830,
+                learning_rate=0.0147956,
+                max_depth=4,
+                min_child_weight=1,
+                subsample=0.901271,
+                colsample_bytree=0.799057,
+                reg_alpha=3.51218e-06,
+                reg_lambda=0.0333008,
+                gamma=2.56812e-07,
+            ),
         },
         pipeline=standard_pipeline(k_best=88, pca_components=71),
         calibration="sigmoid",
