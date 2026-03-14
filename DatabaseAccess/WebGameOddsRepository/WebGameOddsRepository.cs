@@ -1,3 +1,4 @@
+using DatabaseAccess.WebBookmakerOddsRepository;
 using DatabaseAccess.WebGameOddsRepository.Mappers;
 using DatabaseAccess.WebTeamRepository.Mappers;
 using Entities.DbModels;
@@ -10,10 +11,12 @@ namespace DatabaseAccess.WebGameOddsRepository;
 public class GameOddsRepository : IGameOddsRepository
 {
     private readonly GameDbContext _dbContext;
+    private readonly IWebBookmakerOddsRepository _bookmakerOddsRepo;
     private const int MAX_GAMES = 16;
-    public GameOddsRepository(GameDbContext dbContext)
+    public GameOddsRepository(GameDbContext dbContext, IWebBookmakerOddsRepository bookmakerOddsRepo)
     {
         _dbContext = dbContext;
+        _bookmakerOddsRepo = bookmakerOddsRepo;
     }
 
     public async Task<IEnumerable<GameOdds>> GetGameOddsInDateRange(DateRange dateRange, int seasonStartYear)
@@ -29,8 +32,10 @@ public class GameOddsRepository : IGameOddsRepository
             .ToListAsync();
 
         var latestPerGame = GetLatestOddsPerGame(dbGameOdds);
+        var gameOdds = DbGameOddsToGameOddsMapper.Map(latestPerGame, seasonTeams);
 
-        return DbGameOddsToGameOddsMapper.Map(latestPerGame, seasonTeams);
+        await AttachBookmakerOdds(gameOdds);
+        return gameOdds;
     }
 
     public async Task<IEnumerable<GameOdds>> GetTeamGameOdds(int teamId, int seasonStartYear)
@@ -46,8 +51,22 @@ public class GameOddsRepository : IGameOddsRepository
             .ToListAsync();
 
         var latestPerGame = GetLatestOddsPerGame(dbGameOdds);
+        var gameOdds = DbGameOddsToGameOddsMapper.Map(latestPerGame, seasonTeams);
 
-        return DbGameOddsToGameOddsMapper.Map(latestPerGame, seasonTeams);
+        await AttachBookmakerOdds(gameOdds);
+        return gameOdds;
+    }
+
+    private async Task AttachBookmakerOdds(List<GameOdds> gameOddsList)
+    {
+        var gameIds = gameOddsList.Select(g => g.Game.Id);
+        var bookmakerOddsMap = await _bookmakerOddsRepo.GetBookmakerOddsByGameIds(gameIds);
+
+        foreach (var gameOdds in gameOddsList)
+        {
+            if (bookmakerOddsMap.TryGetValue(gameOdds.Game.Id, out var bookmakerOdds))
+                gameOdds.BookmakerOdds = bookmakerOdds;
+        }
     }
 
     private async Task<Dictionary<int, DbSeasonTeam>> GetSeasonTeams(int seasonStartYear)

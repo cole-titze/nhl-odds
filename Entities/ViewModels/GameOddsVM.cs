@@ -12,4 +12,5 @@ public class GameOddsVM
     public bool HasBeenPlayed { get; set; }
     public double LogLoss { get; set; }
     public int ModelId { get; set; }
+    public List<BookmakerOddsVM> BookmakerOdds { get; set; } = new();
 }

@@ -15,6 +15,12 @@ export interface MatchupTeamVM {
   team: Winner;
 }
 
+export interface BookmakerOddsVM {
+  bookmakerName: string;
+  homeOdds: number;
+  awayOdds: number;
+}
+
 export interface GameOddsVM {
   id: number;
   gameDate: string;
@@ -24,6 +30,7 @@ export interface GameOddsVM {
   hasBeenPlayed: boolean;
   logLoss: number;
   modelId: number;
+  bookmakerOdds: BookmakerOddsVM[];
 }
 
 export interface SeasonTotalsVM {

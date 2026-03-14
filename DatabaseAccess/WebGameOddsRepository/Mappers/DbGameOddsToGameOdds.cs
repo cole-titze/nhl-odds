@@ -7,7 +7,7 @@ namespace DatabaseAccess.WebGameOddsRepository.Mappers;
 
 public static class DbGameOddsToGameOddsMapper
 {
-    public static IEnumerable<GameOdds> Map(IEnumerable<DbGameOdds> dbGameOdds, Dictionary<int, DbSeasonTeam> seasonTeams)
+    public static List<GameOdds> Map(IEnumerable<DbGameOdds> dbGameOdds, Dictionary<int, DbSeasonTeam> seasonTeams)
     {
         var gameOddsList = new List<GameOdds>();
         foreach (var dbOdds in dbGameOdds)

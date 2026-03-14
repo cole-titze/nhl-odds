@@ -26,6 +26,8 @@ public partial class NhlDbContext : DbContext
     public virtual DbSet<DbGameOdds> GameOdds { get; set; } = null!;
     public virtual DbSet<DbTvBroadcaster> TvBroadcaster { get; set; } = null!;
     public virtual DbSet<DbGameTvBroadcaster> GameTvBroadcaster { get; set; } = null!;
+    public virtual DbSet<DbBookmakerOdds> BookmakerOdds { get; set; } = null!;
+    public virtual DbSet<DbBookmakerOddsResponse> BookmakerOddsResponse { get; set; } = null!;
     public virtual DbSet<DbErrorLog> ErrorLog { get; set; } = null!;
 
     // Game Event Tables
@@ -58,6 +60,8 @@ public partial class NhlDbContext : DbContext
             .HasKey(c => new { c.GameId, c.PlayerId });
         modelBuilder.Entity<DbGameGoalieStats>()
             .HasKey(c => new { c.GameId, c.PlayerId });
+        modelBuilder.Entity<DbBookmakerOdds>()
+            .HasKey(c => new { c.GameId, c.BookmakerName });
         modelBuilder.Entity<DbGameOdds>()
             .HasKey(c => new { c.GameId, c.ModelId, c.RunDateUTC });
         modelBuilder.Entity<DbGameOfficial>()

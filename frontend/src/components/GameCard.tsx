@@ -115,6 +115,23 @@ export function GameCard({ game }: GameCardProps) {
               {game.homeTeam ? formatOdds(game.homeTeam.modelOdds, format) : '-'}
             </span>
           </div>
+          {game.bookmakerOdds?.length > 0 &&
+            game.bookmakerOdds.map((bm) => (
+              <div
+                key={bm.bookmakerName}
+                className="grid grid-cols-3 items-center text-[11px] font-mono mt-1"
+              >
+                <span className="text-center stat-number text-surface-500 dark:text-surface-400">
+                  {formatOdds(bm.awayOdds, format)}
+                </span>
+                <span className="text-center text-surface-400 dark:text-surface-500 truncate px-1">
+                  {bm.bookmakerName}
+                </span>
+                <span className="text-center stat-number text-surface-500 dark:text-surface-400">
+                  {formatOdds(bm.homeOdds, format)}
+                </span>
+              </div>
+            ))}
         </div>
       </div>
     </div>

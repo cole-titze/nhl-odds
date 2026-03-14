@@ -10,11 +10,14 @@ using DatabaseAccess.GameSeasonRepository;
 using DatabaseAccess.PlayerRepository;
 using DatabaseAccess.PlayerStatsSeasonRepository;
 using DatabaseAccess.TeamRepository;
+using BookmakerOddsGetter;
+using DatabaseAccess.BookmakerOddsRepository;
 using DataCleaner;
 using DataGetter.BusinessLogic;
 using Entities.Types;
 using Microsoft.Extensions.Logging;
 using Services.NhlData;
+using Services.OddsApi;
 using Services.RequestMaker;
 
 namespace Entry;
@@ -82,6 +85,23 @@ public class DataGetterEntry
         _logger.LogTrace("Starting Data Cleaner");
         await gameCleaner.CleanGamesInSeasons(yearRange);
         _logger.LogTrace("Completed Data Cleaner");
+
+        // Fetch bookmaker odds if API key is configured
+        if (!string.IsNullOrEmpty(modeSettings.OddsApiKey))
+        {
+            var oddsDbContext = new NhlDbContext(modeSettings.ConnectionString);
+            var bookmakerOddsRepo = new BookmakerOddsRepository(oddsDbContext);
+            var oddsApiGetter = new OddsApiGetter(modeSettings.OddsApiKey, _loggerFactory);
+            var bookmakerFetcher = new BookmakerOddsFetcher(oddsDbContext, bookmakerOddsRepo, oddsApiGetter, _loggerFactory);
+
+            _logger.LogTrace("Starting Bookmaker Odds Getter");
+            await bookmakerFetcher.FetchAndSaveBookmakerOdds();
+            _logger.LogTrace("Completed Bookmaker Odds Getter");
+        }
+        else
+        {
+            _logger.LogTrace("Skipping Bookmaker Odds — ODDS_API_KEY not set");
+        }
 
         watch.Stop();
         var elapsedTime = watch.Elapsed;

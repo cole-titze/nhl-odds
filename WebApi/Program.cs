@@ -1,4 +1,5 @@
 using DatabaseAccess;
+using DatabaseAccess.WebBookmakerOddsRepository;
 using DatabaseAccess.WebGameOddsRepository;
 using DatabaseAccess.WebTeamRepository;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +24,7 @@ builder.Services.AddHostedService<DailyDataCollectionService>();
 builder.Services.AddScoped<ITeamGetter, TeamGetter>();
 builder.Services.AddScoped<IGameOddsGetter, GameOddsGetter>();
 builder.Services.AddScoped<ITeamRepository, TeamRepository>();
+builder.Services.AddScoped<IWebBookmakerOddsRepository, WebBookmakerOddsRepository>();
 builder.Services.AddScoped<IGameOddsRepository, GameOddsRepository>();
 builder.Services.AddDbContext<GameDbContext>(x => x.UseSqlServer(_connectionString));
 builder.Services.AddLogging();

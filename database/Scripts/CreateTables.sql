@@ -732,6 +732,25 @@ CREATE TABLE [dbo].[GameShootoutCompleteEvent]
     FOREIGN KEY (GameId) REFERENCES GameRaw(Id)
 );
 
+CREATE TABLE [dbo].[BookmakerOddsResponse]
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    FetchedDateUTC DATETIME2 NOT NULL,
+    RawJson VARCHAR(MAX) NOT NULL,
+    CONSTRAINT PK_BookmakerOddsResponse PRIMARY KEY(Id),
+);
+
+CREATE TABLE [dbo].[BookmakerOdds]
+(
+    GameId INT NOT NULL,
+    BookmakerName VARCHAR(100) NOT NULL,
+    HomeOdds FLOAT NOT NULL,
+    AwayOdds FLOAT NOT NULL,
+    FetchedDateUTC DATETIME2 NOT NULL,
+    CONSTRAINT PK_BookmakerOdds PRIMARY KEY(GameId, BookmakerName),
+    FOREIGN KEY (GameId) REFERENCES GameRaw(Id),
+);
+
 CREATE TABLE [dbo].[ErrorLog]
 (
     Id INT IDENTITY(1,1) NOT NULL,

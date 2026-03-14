@@ -19,6 +19,7 @@ var settings = new ModeSettings()
 {
     ConnectionString = Environment.GetEnvironmentVariable("NHL_DATABASE") ?? string.Empty,
     Mode = ModeTypeParser.ParseFromString(Environment.GetEnvironmentVariable("RUN_MODE")),
+    OddsApiKey = Environment.GetEnvironmentVariable("ODDS_API_KEY") ?? string.Empty,
 };
 
 if (settings.ConnectionString.IsNullOrEmpty())
@@ -27,6 +28,8 @@ if (settings.ConnectionString.IsNullOrEmpty())
     settings.Mode = ModeTypeParser.ParseFromString(config["ModeSettings:RUN_MODE"]);
     settings.ThrottleTimeMs = int.Parse(config["ModeSettings:THROTTLE_TIME_MS"] ?? "0");
     settings.ConnectionString = config.GetConnectionString("NHL_DATABASE") ?? string.Empty;
+    if (string.IsNullOrEmpty(settings.OddsApiKey))
+        settings.OddsApiKey = config["OddsApi:API_KEY"] ?? string.Empty;
 }
 
 if (settings.ConnectionString.IsNullOrEmpty())

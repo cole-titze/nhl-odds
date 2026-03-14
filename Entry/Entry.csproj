@@ -20,6 +20,7 @@
     <ProjectReference Include="..\DatabaseAccess\DatabaseAccess.csproj" />
     <ProjectReference Include="..\DataGetter\DataGetter.csproj" />
     <ProjectReference Include="..\DataCleaner\DataCleaner.csproj" />
+    <ProjectReference Include="..\BookmakerOddsGetter\BookmakerOddsGetter.csproj" />
   </ItemGroup>
 
     <ItemGroup>

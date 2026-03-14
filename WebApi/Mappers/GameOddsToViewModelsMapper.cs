@@ -40,7 +40,13 @@ public static class GameOddsToViewModelsMapper
                 Winner = gameOdds.Game.Winner,
                 HasBeenPlayed = gameOdds.Game.HasBeenPlayed,
                 LogLoss = gameOdds.LogLoss,
-                ModelId = gameOdds.ModelId
+                ModelId = gameOdds.ModelId,
+                BookmakerOdds = gameOdds.BookmakerOdds.Select(b => new BookmakerOddsVM
+                {
+                    BookmakerName = b.BookmakerName,
+                    HomeOdds = b.HomeOdds,
+                    AwayOdds = b.AwayOdds,
+                }).ToList()
             };
             viewModelGames.Add(viewModelGame);
         }
