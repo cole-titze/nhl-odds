@@ -19,6 +19,13 @@ export interface BookmakerOddsVM {
   bookmakerName: string;
   homeOdds: number;
   awayOdds: number;
+  homePoint: number;
+  homePrice: number;
+  awayPoint: number;
+  awayPrice: number;
+  overUnderPoint: number;
+  overPrice: number;
+  underPrice: number;
 }
 
 export interface GameOddsVM {

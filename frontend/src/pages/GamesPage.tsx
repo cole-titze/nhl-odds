@@ -7,8 +7,11 @@ import { getGameOddsInDateRange } from '../api/gameOdds';
 import { formatDate } from '../utils/dates';
 import { getCurrentSeason } from '../utils/season';
 
+export type OddsType = 'moneyline' | 'spread' | 'overUnder';
+
 export function GamesPage() {
   const [date, setDate] = useState(new Date());
+  const [oddsType, setOddsType] = useState<OddsType>('moneyline');
   const dateStr = formatDate(date);
   const season = getCurrentSeason(date);
 
@@ -20,7 +23,24 @@ export function GamesPage() {
 
   return (
     <div>
-      <DateNav date={date} onChange={setDate} />
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-8">
+        <DateNav date={date} onChange={setDate} />
+        <div className="flex gap-1">
+          {(['moneyline', 'spread', 'overUnder'] as const).map((type) => (
+            <button
+              key={type}
+              onClick={() => setOddsType(type)}
+              className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                oddsType === type
+                  ? 'bg-accent-500 text-white'
+                  : 'glass text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200'
+              }`}
+            >
+              {type === 'moneyline' ? 'Moneyline' : type === 'spread' ? 'Spread' : 'Over/Under'}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {error && <div className="glass rounded-xl text-center text-red-500 py-8 px-4">{error}</div>}
 
@@ -58,7 +78,7 @@ export function GamesPage() {
       {!loading && games && games.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {games.map((game) => (
-            <GameCard key={game.id} game={game} />
+            <GameCard key={game.id} game={game} oddsType={oddsType} />
           ))}
         </div>
       )}

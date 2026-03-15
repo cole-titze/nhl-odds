@@ -46,6 +46,13 @@ public static class GameOddsToViewModelsMapper
                     BookmakerName = b.BookmakerName,
                     HomeOdds = b.HomeOdds,
                     AwayOdds = b.AwayOdds,
+                    HomePoint = b.HomePoint,
+                    HomePrice = b.HomePrice,
+                    AwayPoint = b.AwayPoint,
+                    AwayPrice = b.AwayPrice,
+                    OverUnderPoint = b.OverUnderPoint,
+                    OverPrice = b.OverPrice,
+                    UnderPrice = b.UnderPrice,
                 }).ToList()
             };
             viewModelGames.Add(viewModelGame);

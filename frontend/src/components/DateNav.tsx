@@ -8,7 +8,7 @@ interface DateNavProps {
 
 export function DateNav({ date, onChange }: DateNavProps) {
   return (
-    <div className="flex flex-col sm:flex-row items-center gap-3 mb-8">
+    <div className="flex flex-col sm:flex-row items-center gap-3">
       <button
         onClick={() => onChange(subDays(date, 1))}
         className="group flex items-center gap-1.5 px-4 py-2 rounded-lg glass text-sm font-medium text-surface-600 dark:text-surface-300 hover:text-surface-900 dark:hover:text-white transition-colors"

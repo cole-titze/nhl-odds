@@ -1,12 +1,14 @@
-import type { GameOddsVM } from '../types';
+import type { GameOddsVM, BookmakerOddsVM } from '../types';
 import { Winner } from '../types';
 import { predictionBorderClass, wasCorrectlyPredicted } from '../utils/predictions';
 import { useOddsFormatContext } from '../contexts/OddsFormatContext';
 import { getModelName } from '../utils/modelNames';
 import { formatOdds } from '../utils/oddsFormat';
+import type { OddsType } from '../pages/GamesPage';
 
 interface GameCardProps {
   game: GameOddsVM;
+  oddsType?: OddsType;
 }
 
 function TeamSide({
@@ -56,7 +58,65 @@ function TeamSide({
   );
 }
 
-export function GameCard({ game }: GameCardProps) {
+function formatPrice(price: number): string {
+  return price > 0 ? `+${price}` : `${price}`;
+}
+
+function formatPoint(point: number): string {
+  return point > 0 ? `+${point}` : `${point}`;
+}
+
+function BookmakerOddsRow({
+  bm,
+  oddsType,
+  format,
+}: {
+  bm: BookmakerOddsVM;
+  oddsType: OddsType;
+  format: Parameters<typeof formatOdds>[1];
+}) {
+  const cellClass = 'text-center stat-number text-surface-500 dark:text-surface-400';
+
+  if (oddsType === 'spread') {
+    return (
+      <div className="grid grid-cols-3 items-center text-[11px] font-mono mt-1">
+        <span className={cellClass}>
+          {formatPoint(bm.awayPoint)} ({formatPrice(bm.awayPrice)})
+        </span>
+        <span className="text-center text-surface-400 dark:text-surface-500 truncate px-1">
+          {bm.bookmakerName}
+        </span>
+        <span className={cellClass}>
+          {formatPoint(bm.homePoint)} ({formatPrice(bm.homePrice)})
+        </span>
+      </div>
+    );
+  }
+
+  if (oddsType === 'overUnder') {
+    return (
+      <div className="grid grid-cols-3 items-center text-[11px] font-mono mt-1">
+        <span className={cellClass}>O {formatPrice(bm.overPrice)}</span>
+        <span className="text-center text-surface-400 dark:text-surface-500 truncate px-1">
+          {bm.bookmakerName} ({bm.overUnderPoint})
+        </span>
+        <span className={cellClass}>U {formatPrice(bm.underPrice)}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-3 items-center text-[11px] font-mono mt-1">
+      <span className={cellClass}>{formatOdds(bm.awayOdds, format)}</span>
+      <span className="text-center text-surface-400 dark:text-surface-500 truncate px-1">
+        {bm.bookmakerName}
+      </span>
+      <span className={cellClass}>{formatOdds(bm.homeOdds, format)}</span>
+    </div>
+  );
+}
+
+export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
   const { format } = useOddsFormatContext();
   const borderClass = predictionBorderClass(game);
   const oddsColor = !game.hasBeenPlayed
@@ -122,17 +182,7 @@ export function GameCard({ game }: GameCardProps) {
               return (
                 <>
                   {dk && (
-                    <div className="grid grid-cols-3 items-center text-[11px] font-mono mt-1">
-                      <span className="text-center stat-number text-surface-500 dark:text-surface-400">
-                        {formatOdds(dk.awayOdds, format)}
-                      </span>
-                      <span className="text-center text-surface-400 dark:text-surface-500 truncate px-1">
-                        {dk.bookmakerName}
-                      </span>
-                      <span className="text-center stat-number text-surface-500 dark:text-surface-400">
-                        {formatOdds(dk.homeOdds, format)}
-                      </span>
-                    </div>
+                    <BookmakerOddsRow bm={dk} oddsType={oddsType} format={format} />
                   )}
                   {rest.length > 0 && (
                     <details className="mt-1">
@@ -140,20 +190,12 @@ export function GameCard({ game }: GameCardProps) {
                         {rest.length} more bookmaker{rest.length > 1 ? 's' : ''}
                       </summary>
                       {rest.map((bm) => (
-                        <div
+                        <BookmakerOddsRow
                           key={bm.bookmakerName}
-                          className="grid grid-cols-3 items-center text-[11px] font-mono mt-1"
-                        >
-                          <span className="text-center stat-number text-surface-500 dark:text-surface-400">
-                            {formatOdds(bm.awayOdds, format)}
-                          </span>
-                          <span className="text-center text-surface-400 dark:text-surface-500 truncate px-1">
-                            {bm.bookmakerName}
-                          </span>
-                          <span className="text-center stat-number text-surface-500 dark:text-surface-400">
-                            {formatOdds(bm.homeOdds, format)}
-                          </span>
-                        </div>
+                          bm={bm}
+                          oddsType={oddsType}
+                          format={format}
+                        />
                       ))}
                     </details>
                   )}
