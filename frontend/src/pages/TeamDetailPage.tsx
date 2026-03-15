@@ -1,4 +1,4 @@
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useFetch } from '../hooks/useFetch';
 import { getTeam } from '../api/teams';
 import { getCurrentSeason } from '../utils/season';
@@ -14,6 +14,7 @@ import { formatOdds } from '../utils/oddsFormat';
 export function TeamDetailPage() {
   const { format } = useOddsFormatContext();
   const { teamId } = useParams();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const season = Number(searchParams.get('season')) || getCurrentSeason();
 
@@ -124,11 +125,12 @@ export function TeamDetailPage() {
                   return (
                     <tr
                       key={game.id}
-                      className={`border-b border-surface-100 dark:border-white/[0.03] transition-colors ${
+                      onClick={() => navigate(`/game/${game.id}`, { state: { game } })}
+                      className={`border-b border-surface-100 dark:border-white/[0.03] transition-colors cursor-pointer ${
                         correct
-                          ? 'bg-blue-50/50 dark:bg-blue-500/[0.04]'
+                          ? 'bg-blue-50/50 dark:bg-blue-500/[0.04] hover:bg-blue-50 dark:hover:bg-blue-500/[0.07]'
                           : incorrect
-                            ? 'bg-red-50/50 dark:bg-red-500/[0.04]'
+                            ? 'bg-red-50/50 dark:bg-red-500/[0.04] hover:bg-red-50 dark:hover:bg-red-500/[0.07]'
                             : 'hover:bg-surface-50 dark:hover:bg-white/[0.02]'
                       }`}
                     >

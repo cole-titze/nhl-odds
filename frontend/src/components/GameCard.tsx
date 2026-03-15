@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import type { GameOddsVM, BookmakerOddsVM } from '../types';
 import { Winner } from '../types';
 import { predictionBorderClass, wasCorrectlyPredicted } from '../utils/predictions';
@@ -126,7 +127,7 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
       : 'text-red-500';
 
   return (
-    <div className={`glass rounded-xl px-5 py-4 ${borderClass}`}>
+    <Link to={`/game/${game.id}`} state={{ game }} className={`glass rounded-xl px-5 py-4 block hover:ring-1 hover:ring-accent-500/30 transition-all ${borderClass}`}>
       <div className="grid grid-cols-3 items-center">
         <TeamSide
           team={game.awayTeam}
@@ -204,6 +205,6 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
             })()}
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
