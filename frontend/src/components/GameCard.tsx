@@ -115,50 +115,51 @@ export function GameCard({ game }: GameCardProps) {
               {game.homeTeam ? formatOdds(game.homeTeam.modelOdds, format) : '-'}
             </span>
           </div>
-          {game.bookmakerOdds?.length > 0 && (() => {
-            const dk = game.bookmakerOdds.find((bm) => bm.bookmakerName === 'DraftKings');
-            const rest = game.bookmakerOdds.filter((bm) => bm.bookmakerName !== 'DraftKings');
-            return (
-              <>
-                {dk && (
-                  <div className="grid grid-cols-3 items-center text-[11px] font-mono mt-1">
-                    <span className="text-center stat-number text-surface-500 dark:text-surface-400">
-                      {formatOdds(dk.awayOdds, format)}
-                    </span>
-                    <span className="text-center text-surface-400 dark:text-surface-500 truncate px-1">
-                      {dk.bookmakerName}
-                    </span>
-                    <span className="text-center stat-number text-surface-500 dark:text-surface-400">
-                      {formatOdds(dk.homeOdds, format)}
-                    </span>
-                  </div>
-                )}
-                {rest.length > 0 && (
-                  <details className="mt-1">
-                    <summary className="text-[10px] text-center text-surface-400 dark:text-surface-500 cursor-pointer hover:text-surface-600 dark:hover:text-surface-300 select-none">
-                      {rest.length} more bookmaker{rest.length > 1 ? 's' : ''}
-                    </summary>
-                    {rest.map((bm) => (
-                      <div
-                        key={bm.bookmakerName}
-                        className="grid grid-cols-3 items-center text-[11px] font-mono mt-1"
-                      >
-                        <span className="text-center stat-number text-surface-500 dark:text-surface-400">
-                          {formatOdds(bm.awayOdds, format)}
-                        </span>
-                        <span className="text-center text-surface-400 dark:text-surface-500 truncate px-1">
-                          {bm.bookmakerName}
-                        </span>
-                        <span className="text-center stat-number text-surface-500 dark:text-surface-400">
-                          {formatOdds(bm.homeOdds, format)}
-                        </span>
-                      </div>
-                    ))}
-                  </details>
-                )}
-              </>
-            );
-          })()}
+          {game.bookmakerOdds?.length > 0 &&
+            (() => {
+              const dk = game.bookmakerOdds.find((bm) => bm.bookmakerName === 'DraftKings');
+              const rest = game.bookmakerOdds.filter((bm) => bm.bookmakerName !== 'DraftKings');
+              return (
+                <>
+                  {dk && (
+                    <div className="grid grid-cols-3 items-center text-[11px] font-mono mt-1">
+                      <span className="text-center stat-number text-surface-500 dark:text-surface-400">
+                        {formatOdds(dk.awayOdds, format)}
+                      </span>
+                      <span className="text-center text-surface-400 dark:text-surface-500 truncate px-1">
+                        {dk.bookmakerName}
+                      </span>
+                      <span className="text-center stat-number text-surface-500 dark:text-surface-400">
+                        {formatOdds(dk.homeOdds, format)}
+                      </span>
+                    </div>
+                  )}
+                  {rest.length > 0 && (
+                    <details className="mt-1">
+                      <summary className="text-[10px] text-center text-surface-400 dark:text-surface-500 cursor-pointer hover:text-surface-600 dark:hover:text-surface-300 select-none">
+                        {rest.length} more bookmaker{rest.length > 1 ? 's' : ''}
+                      </summary>
+                      {rest.map((bm) => (
+                        <div
+                          key={bm.bookmakerName}
+                          className="grid grid-cols-3 items-center text-[11px] font-mono mt-1"
+                        >
+                          <span className="text-center stat-number text-surface-500 dark:text-surface-400">
+                            {formatOdds(bm.awayOdds, format)}
+                          </span>
+                          <span className="text-center text-surface-400 dark:text-surface-500 truncate px-1">
+                            {bm.bookmakerName}
+                          </span>
+                          <span className="text-center stat-number text-surface-500 dark:text-surface-400">
+                            {formatOdds(bm.homeOdds, format)}
+                          </span>
+                        </div>
+                      ))}
+                    </details>
+                  )}
+                </>
+              );
+            })()}
         </div>
       </div>
     </div>

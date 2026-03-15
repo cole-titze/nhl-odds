@@ -1,12 +1,11 @@
 import { useState, useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { SeasonSelector } from '../components/SeasonSelector';
 import { TeamRow } from '../components/TeamRow';
+import { LogLossChart } from '../components/LogLossChart';
 import { Skeleton, StatCardSkeleton } from '../components/Skeleton';
 import { useFetch } from '../hooks/useFetch';
 import { getAllTeams } from '../api/teams';
 import { getCurrentSeason } from '../utils/season';
-import { formatShortDate } from '../utils/dates';
 import type { TeamVM } from '../types';
 
 type SortKey = 'name' | 'points' | 'record' | 'accuracy' | 'logLoss' | 'dkAccuracy' | 'dkLogLoss';
@@ -19,30 +18,9 @@ export function TeamsPage() {
 
   const { data, loading, error } = useFetch(() => getAllTeams(season), [season]);
 
-  const chartData = useMemo(() => {
+  const allGames = useMemo(() => {
     if (!data) return [];
-    const seen = new Set<number>();
-    const games: { date: string; logLoss: number; ts: number }[] = [];
-    for (const team of data.teams) {
-      for (const g of team.gameOddsVM) {
-        if (g.hasBeenPlayed && g.logLoss > 0 && !seen.has(g.id)) {
-          seen.add(g.id);
-          games.push({ date: g.gameDate, logLoss: g.logLoss, ts: new Date(g.gameDate).getTime() });
-        }
-      }
-    }
-    games.sort((a, b) => a.ts - b.ts);
-    let cumLogLoss = 0;
-    let count = 0;
-    return games.map((g) => {
-      cumLogLoss += g.logLoss;
-      count++;
-      return {
-        date: formatShortDate(g.date),
-        logLoss: +(cumLogLoss / count).toFixed(4),
-        games: count,
-      };
-    });
+    return data.teams.flatMap((t) => t.gameOddsVM);
   }, [data]);
 
   const sorted = useMemo(() => {
@@ -101,133 +79,76 @@ export function TeamsPage() {
 
       {data && (
         <>
-        <div className="grid grid-cols-3 gap-4 mb-4">
-          <div className="glass rounded-xl p-5 text-center">
-            <div className="stat-number text-3xl text-surface-900 dark:text-white">
-              {data.seasonTotals.totalGameCount}
-            </div>
-            <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
-              Total Games
-            </div>
-          </div>
-          <div className="glass rounded-xl p-5 text-center">
-            <div className="stat-number text-3xl text-accent-500">
-              {data.seasonTotals.totalGameCount > 0
-                ? (
-                    (data.seasonTotals.totalModelAccurateGameCount /
-                      data.seasonTotals.totalGameCount) *
-                    100
-                  ).toFixed(1)
-                : '0.0'}
-              %
-            </div>
-            <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
-              Home Accuracy
-            </div>
-          </div>
-          <div className="glass rounded-xl p-5 text-center">
-            <div className="stat-number text-3xl text-surface-900 dark:text-white">
-              {data.seasonTotals.modelLogLoss.toFixed(4)}
-            </div>
-            <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
-              Home Log Loss
-            </div>
-          </div>
-        </div>
-        {data.seasonTotals.draftKingsGameCount > 0 && (
-          <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-3 gap-4 mb-4">
             <div className="glass rounded-xl p-5 text-center">
               <div className="stat-number text-3xl text-surface-900 dark:text-white">
-                {data.seasonTotals.draftKingsGameCount}
+                {data.seasonTotals.totalGameCount}
               </div>
               <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
-                DK Games
+                Total Games
               </div>
             </div>
             <div className="glass rounded-xl p-5 text-center">
               <div className="stat-number text-3xl text-accent-500">
-                {(
-                  (data.seasonTotals.draftKingsAccurateGameCount /
-                    data.seasonTotals.draftKingsGameCount) *
-                  100
-                ).toFixed(1)}
+                {data.seasonTotals.totalGameCount > 0
+                  ? (
+                      (data.seasonTotals.totalModelAccurateGameCount /
+                        data.seasonTotals.totalGameCount) *
+                      100
+                    ).toFixed(1)
+                  : '0.0'}
                 %
               </div>
               <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
-                DK Accuracy
+                Home Accuracy
               </div>
             </div>
             <div className="glass rounded-xl p-5 text-center">
               <div className="stat-number text-3xl text-surface-900 dark:text-white">
-                {data.seasonTotals.draftKingsLogLoss.toFixed(4)}
+                {data.seasonTotals.modelLogLoss.toFixed(4)}
               </div>
               <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
-                DK Log Loss
+                Home Log Loss
               </div>
             </div>
           </div>
-        )}
+          {data.seasonTotals.draftKingsGameCount > 0 && (
+            <div className="grid grid-cols-3 gap-4 mb-8">
+              <div className="glass rounded-xl p-5 text-center">
+                <div className="stat-number text-3xl text-surface-900 dark:text-white">
+                  {data.seasonTotals.draftKingsGameCount}
+                </div>
+                <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                  DK Games
+                </div>
+              </div>
+              <div className="glass rounded-xl p-5 text-center">
+                <div className="stat-number text-3xl text-accent-500">
+                  {(
+                    (data.seasonTotals.draftKingsAccurateGameCount /
+                      data.seasonTotals.draftKingsGameCount) *
+                    100
+                  ).toFixed(1)}
+                  %
+                </div>
+                <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                  DK Accuracy
+                </div>
+              </div>
+              <div className="glass rounded-xl p-5 text-center">
+                <div className="stat-number text-3xl text-surface-900 dark:text-white">
+                  {data.seasonTotals.draftKingsLogLoss.toFixed(4)}
+                </div>
+                <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                  DK Log Loss
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
 
-      {chartData.length > 1 && (
-        <div className="glass rounded-xl p-5 mb-8">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500 mb-4">
-            Cumulative Avg Log Loss
-          </h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={chartData}>
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 11, fontFamily: 'JetBrains Mono' }}
-                interval="preserveStartEnd"
-                stroke="#525252"
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 11, fontFamily: 'JetBrains Mono' }}
-                domain={['auto', 'auto']}
-                stroke="#525252"
-                tickLine={false}
-                axisLine={false}
-              />
-              <Tooltip
-                content={({ active, payload, label }) => {
-                  if (!active || !payload?.length) return null;
-                  const d = payload[0].payload;
-                  return (
-                    <div
-                      style={{
-                        backgroundColor: 'rgba(10, 10, 10, 0.9)',
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        borderRadius: '8px',
-                        fontFamily: 'JetBrains Mono',
-                        fontSize: '12px',
-                        color: '#fff',
-                        backdropFilter: 'blur(12px)',
-                        padding: '8px 12px',
-                      }}
-                    >
-                      <div>{label}</div>
-                      <div style={{ color: '#3b82f6' }}>logLoss: {d.logLoss}</div>
-                      <div>games: {d.games}</div>
-                    </div>
-                  );
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="logLoss"
-                stroke="#3b82f6"
-                strokeWidth={2.5}
-                dot={false}
-                activeDot={{ r: 4, fill: '#3b82f6', stroke: '#141418', strokeWidth: 2 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      )}
+      <LogLossChart games={allGames} deduplicateById />
 
       {error && <div className="glass rounded-xl text-center text-red-500 py-8">{error}</div>}
 

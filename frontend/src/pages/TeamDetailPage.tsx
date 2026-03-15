@@ -1,6 +1,4 @@
 import { useParams, useSearchParams } from 'react-router-dom';
-import { useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useFetch } from '../hooks/useFetch';
 import { getTeam } from '../api/teams';
 import { getCurrentSeason } from '../utils/season';
@@ -8,6 +6,7 @@ import { formatShortDate } from '../utils/dates';
 import { wasCorrectlyPredicted, calculateLogLoss } from '../utils/predictions';
 import { Skeleton } from '../components/Skeleton';
 import { SeasonSelector } from '../components/SeasonSelector';
+import { LogLossChart } from '../components/LogLossChart';
 import { Winner } from '../types';
 import { useOddsFormatContext } from '../contexts/OddsFormatContext';
 import { formatOdds } from '../utils/oddsFormat';
@@ -23,23 +22,6 @@ export function TeamDetailPage() {
     loading,
     error,
   } = useFetch(() => getTeam(Number(teamId), season), [teamId, season]);
-
-  const chartData = useMemo(() => {
-    if (!team) return [];
-    let cumLogLoss = 0;
-    let count = 0;
-    return team.gameOddsVM
-      .filter((g) => g.hasBeenPlayed)
-      .map((g) => {
-        cumLogLoss += g.logLoss;
-        count++;
-        return {
-          date: formatShortDate(g.gameDate),
-          logLoss: +(cumLogLoss / count).toFixed(4),
-          games: count,
-        };
-      });
-  }, [team]);
 
   if (loading) {
     return (
@@ -88,7 +70,11 @@ export function TeamDetailPage() {
                 <>
                   <span className="w-1 h-1 rounded-full bg-surface-300 dark:bg-surface-600" />
                   <span className="stat-number text-sm text-surface-500 dark:text-surface-400">
-                    DK {((team.draftKingsAccurateGameCount / team.draftKingsGameCount) * 100).toFixed(1)}%
+                    DK{' '}
+                    {((team.draftKingsAccurateGameCount / team.draftKingsGameCount) * 100).toFixed(
+                      1,
+                    )}
+                    %
                   </span>
                   <span className="w-1 h-1 rounded-full bg-surface-300 dark:bg-surface-600" />
                   <span className="stat-number text-sm text-surface-500 dark:text-surface-400">
@@ -102,64 +88,7 @@ export function TeamDetailPage() {
         <SeasonSelector value={season} onChange={(s) => setSearchParams({ season: String(s) })} />
       </div>
 
-      {chartData.length > 1 && (
-        <div className="glass rounded-xl p-5 mb-8">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500 mb-4">
-            Cumulative Avg Log Loss
-          </h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={chartData}>
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 11, fontFamily: 'JetBrains Mono' }}
-                interval="preserveStartEnd"
-                stroke="#525252"
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 11, fontFamily: 'JetBrains Mono' }}
-                domain={['auto', 'auto']}
-                stroke="#525252"
-                tickLine={false}
-                axisLine={false}
-              />
-              <Tooltip
-                content={({ active, payload, label }) => {
-                  if (!active || !payload?.length) return null;
-                  const d = payload[0].payload;
-                  return (
-                    <div
-                      style={{
-                        backgroundColor: 'rgba(10, 10, 10, 0.9)',
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        borderRadius: '8px',
-                        fontFamily: 'JetBrains Mono',
-                        fontSize: '12px',
-                        color: '#fff',
-                        backdropFilter: 'blur(12px)',
-                        padding: '8px 12px',
-                      }}
-                    >
-                      <div>{label}</div>
-                      <div style={{ color: '#3b82f6' }}>logLoss: {d.logLoss}</div>
-                      <div>games: {d.games}</div>
-                    </div>
-                  );
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="logLoss"
-                stroke="#3b82f6"
-                strokeWidth={2.5}
-                dot={false}
-                activeDot={{ r: 4, fill: '#3b82f6', stroke: '#141418', strokeWidth: 2 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      )}
+      <LogLossChart games={team.gameOddsVM} />
 
       {team.gameOddsVM.length > 0 && (
         <div className="glass rounded-xl overflow-hidden">
