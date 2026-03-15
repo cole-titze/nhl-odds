@@ -3,7 +3,6 @@
 ![Unit Tests](https://github.com/cole-titze/nhl-odds/actions/workflows/unit-tests.yml/badge.svg)
 ![Format Check](https://github.com/cole-titze/nhl-odds/actions/workflows/format-check.yml/badge.svg)
 ![Database Container](https://github.com/cole-titze/nhl-odds/actions/workflows/docker-build.yml/badge.svg)
-![Data Processing Container](https://github.com/cole-titze/nhl-odds/actions/workflows/pipeline-build.yml/badge.svg)
 ![Web API Container](https://github.com/cole-titze/nhl-odds/actions/workflows/webapi-build.yml/badge.svg)
 ![Frontend Container](https://github.com/cole-titze/nhl-odds/actions/workflows/frontend-build.yml/badge.svg)
 
@@ -33,21 +32,6 @@ sudo docker run --restart=always --cap-add SYS_PTRACE -e 'ACCEPT_EULA=1' -e 'MSS
 ```
 docker cp ./nhl.bak azuresqledge:/var/opt/mssql/backup/nhl.bak
 docker exec azuresqledge /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P '<YOUR PASSWORD>' -Q "RESTORE DATABASE [nhl] FROM DISK = N'/var/opt/mssql/backup/nhl.bak' WITH REPLACE"
-```
-
-### Run Data Collection
-
-- Build
-
-```
-dotnet build
-```
-
-- Run
-
-```
-cd ../Entry
-dotnet run
 ```
 
 ### Run Data Models
