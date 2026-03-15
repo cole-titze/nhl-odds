@@ -12,11 +12,17 @@ public partial class GameDbContext : DbContext
     public virtual DbSet<DbSeasonTeam> SeasonTeam { get; set; } = null!;
     public virtual DbSet<DbGameOdds> GameOdds { get; set; } = null!;
     public virtual DbSet<DbBookmakerOdds> BookmakerOdds { get; set; } = null!;
+    public virtual DbSet<DbBookmakerSpreads> BookmakerSpreads { get; set; } = null!;
+    public virtual DbSet<DbBookmakerTotals> BookmakerTotals { get; set; } = null!;
     public virtual DbSet<DbErrorLog> ErrorLog { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<DbBookmakerOdds>()
+            .HasKey(c => new { c.GameId, c.BookmakerName });
+        modelBuilder.Entity<DbBookmakerSpreads>()
+            .HasKey(c => new { c.GameId, c.BookmakerName });
+        modelBuilder.Entity<DbBookmakerTotals>()
             .HasKey(c => new { c.GameId, c.BookmakerName });
         modelBuilder.Entity<DbGameOdds>()
             .HasKey(c => new { c.GameId, c.ModelId, c.RunDateUTC });

@@ -37,6 +37,9 @@ export interface SeasonTotalsVM {
   modelLogLoss: number;
   totalGameCount: number;
   totalModelAccurateGameCount: number;
+  draftKingsLogLoss: number;
+  draftKingsAccurateGameCount: number;
+  draftKingsGameCount: number;
 }
 
 export interface TeamVM {
@@ -50,6 +53,9 @@ export interface TeamVM {
   seasonLosses: number;
   seasonOvertimeLosses: number;
   totalModelAccurateGameCount: number;
+  draftKingsLogLoss: number;
+  draftKingsAccurateGameCount: number;
+  draftKingsGameCount: number;
   gameOddsVM: GameOddsVM[];
 }
 

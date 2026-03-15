@@ -5,6 +5,7 @@ namespace Services.OddsApi;
 public interface IOddsApiGetter
 {
     Task<OddsApiResult> GetUpcomingOdds();
+    Task<OddsApiResult> GetHistoricalOdds(DateTime date);
     int? GetRemainingRequests();
 }
 

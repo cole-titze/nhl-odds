@@ -12,5 +12,8 @@ public class TeamVM
     public int SeasonLosses { get; set; }
     public int SeasonOvertimeLosses { get; set; }
     public int TotalModelAccurateGameCount { get; set; }
+    public double DraftKingsLogLoss { get; set; }
+    public int DraftKingsAccurateGameCount { get; set; }
+    public int DraftKingsGameCount { get; set; }
     public IEnumerable<GameOddsVM> GameOddsVM { get; set; } = new List<GameOddsVM>();
 }

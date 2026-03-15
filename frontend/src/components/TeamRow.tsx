@@ -4,14 +4,19 @@ import type { TeamVM } from '../types';
 interface TeamRowProps {
   team: TeamVM;
   season: number;
+  showDk?: boolean;
 }
 
-export function TeamRow({ team, season }: TeamRowProps) {
+export function TeamRow({ team, season, showDk }: TeamRowProps) {
   const navigate = useNavigate();
   const accuracy =
     team.totalGameCount > 0
       ? ((team.totalModelAccurateGameCount / team.totalGameCount) * 100).toFixed(1)
       : '0.0';
+  const dkAccuracy =
+    team.draftKingsGameCount > 0
+      ? ((team.draftKingsAccurateGameCount / team.draftKingsGameCount) * 100).toFixed(1)
+      : '-';
 
   return (
     <tr
@@ -43,6 +48,16 @@ export function TeamRow({ team, season }: TeamRowProps) {
       <td className="py-3.5 px-4 text-center stat-number text-sm">
         {team.modelLogLoss.toFixed(4)}
       </td>
+      {showDk && (
+        <td className="py-3.5 px-4 text-center stat-number text-sm">
+          {dkAccuracy !== '-' ? `${dkAccuracy}%` : '-'}
+        </td>
+      )}
+      {showDk && (
+        <td className="py-3.5 px-4 text-center stat-number text-sm">
+          {team.draftKingsGameCount > 0 ? team.draftKingsLogLoss.toFixed(4) : '-'}
+        </td>
+      )}
     </tr>
   );
 }

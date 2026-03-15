@@ -29,7 +29,7 @@ public class JobService : IJobService
         return _jobs.Values;
     }
 
-    public bool TryStart(string jobName, string command, string args, string workingDirectory)
+    public bool TryStart(string jobName, string command, string args, string workingDirectory, Dictionary<string, string>? environmentVariables = null)
     {
         var lockObj = _locks.GetOrAdd(jobName, _ => new object());
 
@@ -51,7 +51,7 @@ public class JobService : IJobService
 
             _ = Task.Run(async () =>
             {
-                await RunProcess(job, command, args, workingDirectory);
+                await RunProcess(job, command, args, workingDirectory, environmentVariables);
                 tcs.TrySetResult();
             });
             return true;
@@ -64,7 +64,7 @@ public class JobService : IJobService
             await tcs.Task.WaitAsync(cancellationToken);
     }
 
-    private async Task RunProcess(JobInfoVM job, string command, string args, string workingDirectory)
+    private async Task RunProcess(JobInfoVM job, string command, string args, string workingDirectory, Dictionary<string, string>? environmentVariables = null)
     {
         try
         {
@@ -81,6 +81,11 @@ public class JobService : IJobService
                 CreateNoWindow = true,
             };
             psi.Environment["PYTHONUNBUFFERED"] = "1";
+            if (environmentVariables != null)
+            {
+                foreach (var (key, value) in environmentVariables)
+                    psi.Environment[key] = value;
+            }
 
             using var process = Process.Start(psi);
             if (process == null)

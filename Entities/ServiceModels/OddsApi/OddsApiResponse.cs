@@ -48,4 +48,6 @@ public class OddsApiOutcome
     public string Name { get; set; } = string.Empty;
     [JsonProperty("price")]
     public int Price { get; set; }
+    [JsonProperty("point")]
+    public double? Point { get; set; }
 }

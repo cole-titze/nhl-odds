@@ -85,14 +85,14 @@ public class NhlDataManager
             try
             {
                 // Skip games that already exist and have been played in Add mode
-                if (mode != ModeType.Update && await _gameRepo.IsGamePlayed(gameId))
+                if (mode != ModeType.NhlUpdate && await _gameRepo.IsGamePlayed(gameId))
                 {
                     consecutiveUnavailable = 0;
                     continue;
                 }
 
                 // Skip unplayed games whose date hasn't arrived yet — no need to re-fetch
-                if (mode != ModeType.Update && await _gameRepo.IsUnplayedFutureGame(gameId))
+                if (mode != ModeType.NhlUpdate && await _gameRepo.IsUnplayedFutureGame(gameId))
                 {
                     _logger.LogInformation("Game {GameId} is a future game already saved. Skipping.", gameId);
                     continue;
@@ -170,7 +170,7 @@ public class NhlDataManager
     /// <returns>True if the season can be skipped. Otherwise false</returns>
     private static bool CanSkipSeason(ModeType mode, bool isCurrentYear, bool hasAllSeasonGames)
     {
-        return hasAllSeasonGames && !isCurrentYear && mode != ModeType.Update;
+        return hasAllSeasonGames && !isCurrentYear && mode != ModeType.NhlUpdate;
     }
 
     /// <summary>

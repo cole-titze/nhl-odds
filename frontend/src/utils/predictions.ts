@@ -9,6 +9,12 @@ export function wasCorrectlyPredicted(game: GameOddsVM): boolean {
   return predictedHome === actualHome;
 }
 
+export function calculateLogLoss(homeOdds: number, awayOdds: number, winner: Winner): number {
+  if (homeOdds <= 0 || awayOdds <= 0) return -1;
+  const w = winner as number;
+  return -(w * Math.log(awayOdds) + (1 - w) * Math.log(homeOdds));
+}
+
 export function predictionBorderClass(game: GameOddsVM): string {
   if (!game.hasBeenPlayed) {
     return 'border-surface-200 dark:border-white/[0.06]';

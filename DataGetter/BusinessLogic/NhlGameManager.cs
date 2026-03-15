@@ -30,7 +30,7 @@ public class NhlGameManager
     /// <returns>True if the game can be skipped, otherwise false</returns>
     private static bool CanSkipGame(Game? existingGame, ModeType mode)
     {
-        return existingGame != null && existingGame.HasBeenPlayed && mode != ModeType.Update;
+        return existingGame != null && existingGame.HasBeenPlayed && mode != ModeType.NhlUpdate;
     }
 
     /// Gets a seasons worth of player stats per game. Only returns games that have not already been found.
@@ -60,7 +60,7 @@ public class NhlGameManager
     public async Task<int> GetSeasonGameCount(int seasonStartYear, ModeType mode)
     {
         var existingGameCount = await _gameRepo.GetGameCountForSeason(seasonStartYear);
-        if (existingGameCount != null && mode != ModeType.Update)
+        if (existingGameCount != null && mode != ModeType.NhlUpdate)
             return (int)existingGameCount;
 
         var gameCount = await _nhlDataGetter.ScheduleDataGetter.GetGameCountInSeason(seasonStartYear);

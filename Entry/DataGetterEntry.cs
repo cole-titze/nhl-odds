@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics;
+using BookmakerOddsGetter;
 using DatabaseAccess;
+using DatabaseAccess.BookmakerOddsRepository;
 using DatabaseAccess.BroadcasterRepository;
 using DatabaseAccess.CleanedGameRepository;
 using DatabaseAccess.ErrorRepository;
@@ -10,11 +12,10 @@ using DatabaseAccess.GameSeasonRepository;
 using DatabaseAccess.PlayerRepository;
 using DatabaseAccess.PlayerStatsSeasonRepository;
 using DatabaseAccess.TeamRepository;
-using BookmakerOddsGetter;
-using DatabaseAccess.BookmakerOddsRepository;
 using DataCleaner;
 using DataGetter.BusinessLogic;
 using Entities.Types;
+using Entities.Types.Enums;
 using Microsoft.Extensions.Logging;
 using Services.NhlData;
 using Services.OddsApi;
@@ -68,39 +69,54 @@ public class DataGetterEntry
 
         var dataManager = new NhlDataManager(gameRepo, playerRepo, teamRepo, errorRepo, broadcasterRepo, gameEventRepo, gameGetter, playerGetter, teamGetter, _loggerFactory);
 
-        _logger.LogTrace("Starting Data Getter");
-        await dataManager.GetNhlData(yearRange, modeSettings.Mode);
-        _logger.LogTrace("Completed Data Getter");
-
-        // Run data cleaner with a separate DbContext to avoid EF tracking conflicts
-        var cleanerDbContext = new NhlDbContext(modeSettings.ConnectionString);
-        var gameSeasonRepo = new GameSeasonRepository(cleanerDbContext);
-        var cleanedGameRepo = new CleanedGameRepository(cleanerDbContext);
-        var playerStatsRepo = new PlayerStatsSeasonRepository(cleanerDbContext);
-        var cleanerErrorDbContext = new NhlDbContext(modeSettings.ConnectionString);
-        var cleanerErrorRepo = new ErrorRepository(cleanerErrorDbContext);
-        var gameEventSeasonRepo = new GameEventSeasonRepository(cleanerDbContext);
-        var gameCleaner = new GameCleaner(gameSeasonRepo, cleanedGameRepo, playerStatsRepo, gameEventSeasonRepo, cleanerErrorRepo, _loggerFactory);
-
-        _logger.LogTrace("Starting Data Cleaner");
-        await gameCleaner.CleanGamesInSeasons(yearRange);
-        _logger.LogTrace("Completed Data Cleaner");
-
-        // Fetch bookmaker odds if API key is configured
-        if (!string.IsNullOrEmpty(modeSettings.OddsApiKey))
+        if (modeSettings.Mode == ModeType.NextDayOdds || modeSettings.Mode == ModeType.BackfillOdds)
         {
+            var isBackfill = modeSettings.Mode == ModeType.BackfillOdds;
+            var apiKey = isBackfill ? modeSettings.OddsApiBackfillKey : modeSettings.OddsApiKey;
+
+            if (string.IsNullOrEmpty(apiKey))
+                throw new Exception(isBackfill
+                    ? "API_BACKFILL_KEY must be set for BackfillOdds mode"
+                    : "ODDS_API_KEY must be set for NextDayOdds mode");
+
             var oddsDbContext = new NhlDbContext(modeSettings.ConnectionString);
             var bookmakerOddsRepo = new BookmakerOddsRepository(oddsDbContext);
-            var oddsApiGetter = new OddsApiGetter(modeSettings.OddsApiKey, _loggerFactory);
-            var bookmakerFetcher = new BookmakerOddsFetcher(oddsDbContext, bookmakerOddsRepo, oddsApiGetter, _loggerFactory);
+            var oddsApiGetter = new OddsApiGetter(apiKey, _loggerFactory);
 
-            _logger.LogTrace("Starting Bookmaker Odds Getter");
-            await bookmakerFetcher.FetchAndSaveBookmakerOdds();
-            _logger.LogTrace("Completed Bookmaker Odds Getter");
+            if (isBackfill)
+            {
+                var backfiller = new BookmakerOddsBackfiller(oddsDbContext, bookmakerOddsRepo, oddsApiGetter, _loggerFactory);
+                _logger.LogTrace("Starting Bookmaker Odds Backfill");
+                await backfiller.BackfillBookmakerOdds();
+                _logger.LogTrace("Completed Bookmaker Odds Backfill");
+            }
+            else
+            {
+                var bookmakerFetcher = new BookmakerOddsFetcher(oddsDbContext, bookmakerOddsRepo, oddsApiGetter, _loggerFactory);
+                _logger.LogTrace("Starting Bookmaker Odds Getter");
+                await bookmakerFetcher.FetchAndSaveBookmakerOdds();
+                _logger.LogTrace("Completed Bookmaker Odds Getter");
+            }
         }
         else
         {
-            _logger.LogTrace("Skipping Bookmaker Odds — ODDS_API_KEY not set");
+            _logger.LogTrace("Starting Data Getter");
+            await dataManager.GetNhlData(yearRange, modeSettings.Mode);
+            _logger.LogTrace("Completed Data Getter");
+
+            // Run data cleaner with a separate DbContext to avoid EF tracking conflicts
+            var cleanerDbContext = new NhlDbContext(modeSettings.ConnectionString);
+            var gameSeasonRepo = new GameSeasonRepository(cleanerDbContext);
+            var cleanedGameRepo = new CleanedGameRepository(cleanerDbContext);
+            var playerStatsRepo = new PlayerStatsSeasonRepository(cleanerDbContext);
+            var cleanerErrorDbContext = new NhlDbContext(modeSettings.ConnectionString);
+            var cleanerErrorRepo = new ErrorRepository(cleanerErrorDbContext);
+            var gameEventSeasonRepo = new GameEventSeasonRepository(cleanerDbContext);
+            var gameCleaner = new GameCleaner(gameSeasonRepo, cleanedGameRepo, playerStatsRepo, gameEventSeasonRepo, cleanerErrorRepo, _loggerFactory);
+
+            _logger.LogTrace("Starting Data Cleaner");
+            await gameCleaner.CleanGamesInSeasons(yearRange);
+            _logger.LogTrace("Completed Data Cleaner");
         }
 
         watch.Stop();

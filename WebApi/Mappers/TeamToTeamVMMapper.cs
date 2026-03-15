@@ -6,8 +6,11 @@ namespace WebApi.Mappers;
 
 public static class TeamToTeamVmMapper
 {
+    private const string DraftKingsName = "DraftKings";
+
     public static TeamVM Map(TeamStats teamStats)
     {
+        var dkStats = GetDraftKingsStats(teamStats.GameOdds);
         return new TeamVM
         {
             Id = teamStats.Team.Id,
@@ -20,6 +23,9 @@ public static class TeamToTeamVmMapper
             SeasonLosses = GetRegulationLosses(teamStats.Team.Id, teamStats.GameOdds),
             SeasonOvertimeLosses = GetOvertimeLosses(teamStats.Team.Id, teamStats.GameOdds),
             TotalModelAccurateGameCount = GetCorrectModelPredictionCount(teamStats.GameOdds),
+            DraftKingsLogLoss = dkStats.LogLoss,
+            DraftKingsAccurateGameCount = dkStats.AccurateCount,
+            DraftKingsGameCount = dkStats.GameCount,
             GameOddsVM = GameOddsToViewModelsMapper.Map(teamStats.GameOdds),
         };
     }
@@ -68,5 +74,33 @@ public static class TeamToTeamVmMapper
             return 1;
 
         return 0;
+    }
+
+    private static (double LogLoss, int AccurateCount, int GameCount) GetDraftKingsStats(IEnumerable<GameOdds> gameOdds)
+    {
+        double totalLogLoss = 0;
+        int accurateCount = 0;
+        int gameCount = 0;
+
+        foreach (var g in gameOdds)
+        {
+            if (!g.Game.HasBeenPlayed)
+                continue;
+
+            var dk = g.BookmakerOdds.FirstOrDefault(b => b.BookmakerName == DraftKingsName);
+            if (dk == null)
+                continue;
+
+            var logLoss = GameOdds.CalculateLogLoss(dk.HomeOdds, dk.AwayOdds, g.Game.Winner);
+            if (logLoss < 0)
+                continue;
+
+            totalLogLoss += logLoss;
+            accurateCount += IsCorrectlyPredicted(g.Game, dk.HomeOdds, dk.AwayOdds);
+            gameCount++;
+        }
+
+        var avgLogLoss = gameCount > 0 ? totalLogLoss / gameCount : 0;
+        return (avgLogLoss, accurateCount, gameCount);
     }
 }

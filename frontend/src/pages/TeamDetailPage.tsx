@@ -5,7 +5,7 @@ import { useFetch } from '../hooks/useFetch';
 import { getTeam } from '../api/teams';
 import { getCurrentSeason } from '../utils/season';
 import { formatShortDate } from '../utils/dates';
-import { wasCorrectlyPredicted } from '../utils/predictions';
+import { wasCorrectlyPredicted, calculateLogLoss } from '../utils/predictions';
 import { Skeleton } from '../components/Skeleton';
 import { SeasonSelector } from '../components/SeasonSelector';
 import { Winner } from '../types';
@@ -79,11 +79,23 @@ export function TeamDetailPage() {
                 {team.seasonWins}-{team.seasonLosses}-{team.seasonOvertimeLosses}
               </span>
               <span className="w-1 h-1 rounded-full bg-surface-300 dark:bg-surface-600" />
-              <span className="stat-number text-sm text-accent-500">{accuracyPct}% accuracy</span>
+              <span className="stat-number text-sm text-accent-500">{accuracyPct}% home acc</span>
               <span className="w-1 h-1 rounded-full bg-surface-300 dark:bg-surface-600" />
               <span className="stat-number text-sm text-surface-500 dark:text-surface-400">
-                {team.modelLogLoss.toFixed(4)} log loss
+                {team.modelLogLoss.toFixed(4)} home loss
               </span>
+              {team.draftKingsGameCount > 0 && (
+                <>
+                  <span className="w-1 h-1 rounded-full bg-surface-300 dark:bg-surface-600" />
+                  <span className="stat-number text-sm text-surface-500 dark:text-surface-400">
+                    DK {((team.draftKingsAccurateGameCount / team.draftKingsGameCount) * 100).toFixed(1)}%
+                  </span>
+                  <span className="w-1 h-1 rounded-full bg-surface-300 dark:bg-surface-600" />
+                  <span className="stat-number text-sm text-surface-500 dark:text-surface-400">
+                    DK {team.draftKingsLogLoss.toFixed(4)} log loss
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -158,10 +170,12 @@ export function TeamDetailPage() {
                   <th className="py-3 px-4 font-semibold">Date</th>
                   <th className="py-3 px-4 font-semibold">Opponent</th>
                   <th className="py-3 px-4 text-center font-semibold">H/A</th>
-                  <th className="py-3 px-4 text-center font-semibold">Odds</th>
+                  <th className="py-3 px-4 text-center font-semibold">Home Odds</th>
+                  <th className="py-3 px-4 text-center font-semibold">DK Odds</th>
                   <th className="py-3 px-4 text-center font-semibold">Score</th>
                   <th className="py-3 px-4 text-center font-semibold">Result</th>
-                  <th className="py-3 px-4 text-center font-semibold">Log Loss</th>
+                  <th className="py-3 px-4 text-center font-semibold">Home Loss</th>
+                  <th className="py-3 px-4 text-center font-semibold">DK Loss</th>
                 </tr>
               </thead>
               <tbody>
@@ -169,6 +183,8 @@ export function TeamDetailPage() {
                   const isHome = game.homeTeam?.id === team.id;
                   const opponent = isHome ? game.awayTeam : game.homeTeam;
                   const teamSide = isHome ? game.homeTeam : game.awayTeam;
+                  const dk = game.bookmakerOdds?.find((b) => b.bookmakerName === 'DraftKings');
+                  const dkTeamOdds = dk ? (isHome ? dk.homeOdds : dk.awayOdds) : null;
                   const correct = game.hasBeenPlayed && wasCorrectlyPredicted(game);
                   const incorrect = game.hasBeenPlayed && !wasCorrectlyPredicted(game);
                   const won =
@@ -222,6 +238,9 @@ export function TeamDetailPage() {
                         {teamSide ? formatOdds(teamSide.modelOdds, format) : '-'}
                       </td>
                       <td className="py-3 px-4 text-center stat-number">
+                        {dkTeamOdds != null ? formatOdds(dkTeamOdds, format) : '-'}
+                      </td>
+                      <td className="py-3 px-4 text-center stat-number">
                         {game.hasBeenPlayed
                           ? `${game.awayTeam?.goals ?? 0}-${game.homeTeam?.goals ?? 0}`
                           : '-'}
@@ -241,6 +260,11 @@ export function TeamDetailPage() {
                       </td>
                       <td className="py-3 px-4 text-center stat-number text-xs">
                         {game.hasBeenPlayed ? game.logLoss.toFixed(4) : '-'}
+                      </td>
+                      <td className="py-3 px-4 text-center stat-number text-xs">
+                        {game.hasBeenPlayed && dk
+                          ? calculateLogLoss(dk.homeOdds, dk.awayOdds, game.winner).toFixed(4)
+                          : '-'}
                       </td>
                     </tr>
                   );

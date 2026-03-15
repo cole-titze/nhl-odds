@@ -9,7 +9,7 @@ import { getCurrentSeason } from '../utils/season';
 import { formatShortDate } from '../utils/dates';
 import type { TeamVM } from '../types';
 
-type SortKey = 'name' | 'points' | 'record' | 'accuracy' | 'logLoss';
+type SortKey = 'name' | 'points' | 'record' | 'accuracy' | 'logLoss' | 'dkAccuracy' | 'dkLogLoss';
 type SortDir = 'asc' | 'desc';
 
 export function TeamsPage() {
@@ -66,18 +66,26 @@ export function TeamsPage() {
         case 'logLoss':
           cmp = a.modelLogLoss - b.modelLogLoss;
           break;
+        case 'dkAccuracy':
+          cmp = dkAccuracy(a) - dkAccuracy(b);
+          break;
+        case 'dkLogLoss':
+          cmp = a.draftKingsLogLoss - b.draftKingsLogLoss;
+          break;
       }
       return sortDir === 'asc' ? cmp : -cmp;
     });
     return teams;
   }, [data, sortKey, sortDir]);
 
+  const hasDk = data ? data.seasonTotals.draftKingsGameCount > 0 : false;
+
   function handleSort(key: SortKey) {
     if (sortKey === key) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortKey(key);
-      setSortDir(key === 'logLoss' ? 'asc' : 'desc');
+      setSortDir(key === 'logLoss' || key === 'dkLogLoss' ? 'asc' : 'desc');
     }
   }
 
@@ -92,7 +100,8 @@ export function TeamsPage() {
       </div>
 
       {data && (
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        <>
+        <div className="grid grid-cols-3 gap-4 mb-4">
           <div className="glass rounded-xl p-5 text-center">
             <div className="stat-number text-3xl text-surface-900 dark:text-white">
               {data.seasonTotals.totalGameCount}
@@ -113,7 +122,7 @@ export function TeamsPage() {
               %
             </div>
             <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
-              Model Accuracy
+              Home Accuracy
             </div>
           </div>
           <div className="glass rounded-xl p-5 text-center">
@@ -121,10 +130,44 @@ export function TeamsPage() {
               {data.seasonTotals.modelLogLoss.toFixed(4)}
             </div>
             <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
-              Avg Log Loss
+              Home Log Loss
             </div>
           </div>
         </div>
+        {data.seasonTotals.draftKingsGameCount > 0 && (
+          <div className="grid grid-cols-3 gap-4 mb-8">
+            <div className="glass rounded-xl p-5 text-center">
+              <div className="stat-number text-3xl text-surface-900 dark:text-white">
+                {data.seasonTotals.draftKingsGameCount}
+              </div>
+              <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                DK Games
+              </div>
+            </div>
+            <div className="glass rounded-xl p-5 text-center">
+              <div className="stat-number text-3xl text-accent-500">
+                {(
+                  (data.seasonTotals.draftKingsAccurateGameCount /
+                    data.seasonTotals.draftKingsGameCount) *
+                  100
+                ).toFixed(1)}
+                %
+              </div>
+              <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                DK Accuracy
+              </div>
+            </div>
+            <div className="glass rounded-xl p-5 text-center">
+              <div className="stat-number text-3xl text-surface-900 dark:text-white">
+                {data.seasonTotals.draftKingsLogLoss.toFixed(4)}
+              </div>
+              <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                DK Log Loss
+              </div>
+            </div>
+          </div>
+        )}
+        </>
       )}
 
       {chartData.length > 1 && (
@@ -232,19 +275,35 @@ export function TeamsPage() {
                     className="py-3 px-4 text-center cursor-pointer select-none hover:text-surface-900 dark:hover:text-white transition-colors font-semibold"
                     onClick={() => handleSort('accuracy')}
                   >
-                    Accuracy{arrow('accuracy')}
+                    Home Acc{arrow('accuracy')}
                   </th>
                   <th
                     className="py-3 px-4 text-center cursor-pointer select-none hover:text-surface-900 dark:hover:text-white transition-colors font-semibold"
                     onClick={() => handleSort('logLoss')}
                   >
-                    Log Loss{arrow('logLoss')}
+                    Home Loss{arrow('logLoss')}
                   </th>
+                  {hasDk && (
+                    <th
+                      className="py-3 px-4 text-center cursor-pointer select-none hover:text-surface-900 dark:hover:text-white transition-colors font-semibold"
+                      onClick={() => handleSort('dkAccuracy')}
+                    >
+                      DK Acc{arrow('dkAccuracy')}
+                    </th>
+                  )}
+                  {hasDk && (
+                    <th
+                      className="py-3 px-4 text-center cursor-pointer select-none hover:text-surface-900 dark:hover:text-white transition-colors font-semibold"
+                      onClick={() => handleSort('dkLogLoss')}
+                    >
+                      DK Loss{arrow('dkLogLoss')}
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody>
                 {sorted.map((team) => (
-                  <TeamRow key={team.id} team={team} season={season} />
+                  <TeamRow key={team.id} team={team} season={season} showDk={hasDk} />
                 ))}
               </tbody>
             </table>
@@ -263,6 +322,10 @@ export function TeamsPage() {
 
 function accuracy(t: TeamVM): number {
   return t.totalGameCount > 0 ? t.totalModelAccurateGameCount / t.totalGameCount : 0;
+}
+
+function dkAccuracy(t: TeamVM): number {
+  return t.draftKingsGameCount > 0 ? t.draftKingsAccurateGameCount / t.draftKingsGameCount : 0;
 }
 
 function points(t: TeamVM): number {

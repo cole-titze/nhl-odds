@@ -71,7 +71,7 @@ public class NhlPlayerManager
     /// <returns>True if the player can be skipped, otherwise false</returns>
     private static bool CanSkipPlayer(ModeType mode, bool hasPlayer)
     {
-        return mode != ModeType.Update && hasPlayer;
+        return mode != ModeType.NhlUpdate && hasPlayer;
     }
 
     /// <summary>

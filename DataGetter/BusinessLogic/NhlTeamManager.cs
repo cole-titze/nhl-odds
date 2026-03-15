@@ -27,7 +27,7 @@ public class NhlTeamManager
     {
         var hasAllSeasonTeams = await _teamRepo.HasSeasonTeams(seasonStartYear);
         var teams = await _teamRepo.GetSeasonTeams(seasonStartYear);
-        if (hasAllSeasonTeams && mode != ModeType.Update)
+        if (hasAllSeasonTeams && mode != ModeType.NhlUpdate)
         {
             _logger.LogInformation("All team data for season " + seasonStartYear.ToString() + " already exists. Skipping...");
             return teams;

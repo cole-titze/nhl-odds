@@ -29,7 +29,9 @@ if (settings.ConnectionString.IsNullOrEmpty())
     settings.ThrottleTimeMs = int.Parse(config["ModeSettings:THROTTLE_TIME_MS"] ?? "0");
     settings.ConnectionString = config.GetConnectionString("NHL_DATABASE") ?? string.Empty;
     if (string.IsNullOrEmpty(settings.OddsApiKey))
-        settings.OddsApiKey = config["OddsApi:API_KEY"] ?? string.Empty;
+        settings.OddsApiKey = config["OddsApi:API_FUTURE_KEY"] ?? string.Empty;
+    if (string.IsNullOrEmpty(settings.OddsApiBackfillKey))
+        settings.OddsApiBackfillKey = config["OddsApi:API_BACKFILL_KEY"] ?? string.Empty;
 }
 
 if (settings.ConnectionString.IsNullOrEmpty())

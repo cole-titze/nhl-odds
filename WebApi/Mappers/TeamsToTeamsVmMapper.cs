@@ -28,6 +28,9 @@ public static class TeamsToTeamsVmMapper
             teamsVm.SeasonTotals.TotalGameCount += team.TotalGameCount;
             teamsVm.SeasonTotals.TotalModelAccurateGameCount += team.TotalModelAccurateGameCount;
             teamsVm.SeasonTotals.ModelLogLoss += (team.ModelLogLoss * team.TotalGameCount);
+            teamsVm.SeasonTotals.DraftKingsGameCount += team.DraftKingsGameCount;
+            teamsVm.SeasonTotals.DraftKingsAccurateGameCount += team.DraftKingsAccurateGameCount;
+            teamsVm.SeasonTotals.DraftKingsLogLoss += (team.DraftKingsLogLoss * team.DraftKingsGameCount);
         }
         if (teamsVm.SeasonTotals.TotalGameCount == 0)
             return teamsVm;
@@ -37,6 +40,11 @@ public static class TeamsToTeamsVmMapper
         // Cut in half since we were counting games twice (home and away)
         teamsVm.SeasonTotals.TotalGameCount /= 2;
         teamsVm.SeasonTotals.TotalModelAccurateGameCount /= 2;
+
+        if (teamsVm.SeasonTotals.DraftKingsGameCount > 0)
+            teamsVm.SeasonTotals.DraftKingsLogLoss /= teamsVm.SeasonTotals.DraftKingsGameCount;
+        teamsVm.SeasonTotals.DraftKingsGameCount /= 2;
+        teamsVm.SeasonTotals.DraftKingsAccurateGameCount /= 2;
 
         return teamsVm;
     }
