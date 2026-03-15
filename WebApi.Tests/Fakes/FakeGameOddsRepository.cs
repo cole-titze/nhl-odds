@@ -22,4 +22,9 @@ public class FakeGameOddsRepository : IGameOddsRepository
     {
         throw new NotImplementedException();
     }
+
+    public Task<List<GameOdds>> GetAllGameOddsForSeason(int seasonStartYear)
+    {
+        return Task.FromResult(_predictedGames.ToList());
+    }
 }

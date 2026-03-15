@@ -19,6 +19,7 @@ if (_connectionString == null)
     throw new Exception("Connection String Null");
 
 // Add services to the container
+builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<IJobService, JobService>();
 builder.Services.AddHostedService<DailyDataCollectionService>();
 builder.Services.AddHostedService<DailyOddsFetchService>();

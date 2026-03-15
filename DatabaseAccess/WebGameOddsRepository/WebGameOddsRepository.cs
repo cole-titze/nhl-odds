@@ -77,6 +77,23 @@ public class GameOddsRepository : IGameOddsRepository
         return teams.ToDictionary(t => t.TeamId);
     }
 
+    public async Task<List<GameOdds>> GetAllGameOddsForSeason(int seasonStartYear)
+    {
+        var seasonTeams = await GetSeasonTeams(seasonStartYear);
+
+        var dbGameOdds = await _dbContext.GameOdds
+            .Include(x => x.Game)
+            .Where(x => x.Game != null
+                && x.Game.SeasonStartYear == seasonStartYear)
+            .ToListAsync();
+
+        var latestPerGame = GetLatestOddsPerGame(dbGameOdds);
+        var gameOdds = DbGameOddsToGameOddsMapper.Map(latestPerGame, seasonTeams);
+
+        await AttachBookmakerOdds(gameOdds);
+        return gameOdds;
+    }
+
     private static List<DbGameOdds> GetLatestOddsPerGame(List<DbGameOdds> dbGameOdds)
     {
         return dbGameOdds

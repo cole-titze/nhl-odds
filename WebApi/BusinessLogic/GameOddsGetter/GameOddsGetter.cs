@@ -18,11 +18,16 @@ public class GameOddsGetter : IGameOddsGetter
         return await _gameOddsRepository.GetGameOddsInDateRange(dateRange, seasonStartYear);
     }
 
-    public async Task<IEnumerable<TeamStats>> BuildTeamsGameOdds(IEnumerable<TeamStats> teams, int seasonStartYear)
+    public async Task<IEnumerable<TeamStats>> BuildAllTeamsGameOdds(IEnumerable<TeamStats> teams, int seasonStartYear)
     {
+        var allGameOdds = await _gameOddsRepository.GetAllGameOddsForSeason(seasonStartYear);
+
         foreach (var team in teams)
         {
-            await BuildTeamGameOdds(team, seasonStartYear);
+            var teamId = team.Team.Id;
+            team.GameOdds = allGameOdds
+                .Where(g => g.Game.HomeTeam.Id == teamId || g.Game.AwayTeam.Id == teamId)
+                .ToList();
         }
 
         return teams;
