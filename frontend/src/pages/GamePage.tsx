@@ -74,7 +74,11 @@ export function GamePage() {
       {/* Matchup Header */}
       <div className={`glass rounded-xl px-6 py-6 ${borderClass}`}>
         <div className="grid grid-cols-3 items-center">
-          <TeamHeader team={game.awayTeam} isWinner={game.hasBeenPlayed && game.winner === Winner.AWAY} played={game.hasBeenPlayed} />
+          <TeamHeader
+            team={game.awayTeam}
+            isWinner={game.hasBeenPlayed && game.winner === Winner.AWAY}
+            played={game.hasBeenPlayed}
+          />
           <div className="flex flex-col items-center gap-1">
             <div
               className={`text-xs font-mono font-bold tracking-widest uppercase ${
@@ -110,7 +114,11 @@ export function GamePage() {
               </div>
             )}
           </div>
-          <TeamHeader team={game.homeTeam} isWinner={game.hasBeenPlayed && game.winner === Winner.HOME} played={game.hasBeenPlayed} />
+          <TeamHeader
+            team={game.homeTeam}
+            isWinner={game.hasBeenPlayed && game.winner === Winner.HOME}
+            played={game.hasBeenPlayed}
+          />
         </div>
       </div>
 
@@ -134,9 +142,7 @@ export function GamePage() {
           <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-surface-200/50 dark:border-white/[0.04]">
             <span
               className={`inline-block px-2.5 py-0.5 rounded text-xs font-bold ${
-                correct
-                  ? 'bg-emerald-500/10 text-emerald-500'
-                  : 'bg-red-500/10 text-red-500'
+                correct ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'
               }`}
             >
               {correct ? 'Correct' : 'Incorrect'}
@@ -161,9 +167,15 @@ export function GamePage() {
               <thead>
                 <tr className="border-b border-surface-200 dark:border-white/[0.06] text-left text-xs uppercase tracking-wider text-surface-400 dark:text-surface-500">
                   <th className="py-3 px-4 font-semibold">Bookmaker</th>
-                  <th className="py-3 px-4 text-center font-semibold" colSpan={2}>Moneyline</th>
-                  <th className="py-3 px-4 text-center font-semibold" colSpan={2}>Spread</th>
-                  <th className="py-3 px-4 text-center font-semibold" colSpan={2}>Over/Under</th>
+                  <th className="py-3 px-4 text-center font-semibold" colSpan={2}>
+                    Moneyline
+                  </th>
+                  <th className="py-3 px-4 text-center font-semibold" colSpan={2}>
+                    Spread
+                  </th>
+                  <th className="py-3 px-4 text-center font-semibold" colSpan={2}>
+                    Over/Under
+                  </th>
                   {game.hasBeenPlayed && (
                     <th className="py-3 px-4 text-center font-semibold">Log Loss</th>
                   )}
@@ -181,12 +193,7 @@ export function GamePage() {
               </thead>
               <tbody>
                 {game.bookmakerOdds.map((bm) => (
-                  <BookmakerRow
-                    key={bm.bookmakerName}
-                    bm={bm}
-                    game={game}
-                    format={format}
-                  />
+                  <BookmakerRow key={bm.bookmakerName} bm={bm} game={game} format={format} />
                 ))}
               </tbody>
             </table>
@@ -209,9 +216,7 @@ function TeamHeader({
   if (!team) return <div className="flex-1 text-center text-surface-400">TBD</div>;
 
   return (
-    <div
-      className={`flex flex-col items-center gap-2 ${isWinner && played ? 'font-bold' : ''}`}
-    >
+    <div className={`flex flex-col items-center gap-2 ${isWinner && played ? 'font-bold' : ''}`}>
       <div className="relative">
         <img
           src={team.logoUri}
@@ -239,12 +244,8 @@ function TeamHeader({
         to={`/team/${team.id}`}
         className="text-center leading-tight hover:text-accent-500 transition-colors"
       >
-        <div className="text-xs text-surface-600 dark:text-surface-400">
-          {team.locationName}
-        </div>
-        <div className="text-surface-900 dark:text-white text-sm font-medium">
-          {team.teamName}
-        </div>
+        <div className="text-xs text-surface-600 dark:text-surface-400">{team.locationName}</div>
+        <div className="text-surface-900 dark:text-white text-sm font-medium">{team.teamName}</div>
       </Link>
     </div>
   );
@@ -259,7 +260,8 @@ function BookmakerRow({
   game: GameOddsVM;
   format: Parameters<typeof formatOdds>[1];
 }) {
-  const cellClass = 'py-3 px-2 text-center stat-number text-surface-600 dark:text-surface-400 font-mono text-xs';
+  const cellClass =
+    'py-3 px-2 text-center stat-number text-surface-600 dark:text-surface-400 font-mono text-xs';
   const bmLogLoss = game.hasBeenPlayed
     ? calculateLogLoss(bm.homeOdds, bm.awayOdds, game.winner)
     : null;

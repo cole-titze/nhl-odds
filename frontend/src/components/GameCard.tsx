@@ -127,7 +127,11 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
       : 'text-red-500';
 
   return (
-    <Link to={`/game/${game.id}`} state={{ game }} className={`glass rounded-xl px-5 py-4 block hover:ring-1 hover:ring-accent-500/30 transition-all ${borderClass}`}>
+    <Link
+      to={`/game/${game.id}`}
+      state={{ game }}
+      className={`glass rounded-xl px-5 py-4 block hover:ring-1 hover:ring-accent-500/30 transition-all ${borderClass}`}
+    >
       <div className="grid grid-cols-3 items-center">
         <TeamSide
           team={game.awayTeam}
@@ -182,9 +186,7 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
               const rest = game.bookmakerOdds.filter((bm) => bm.bookmakerName !== 'DraftKings');
               return (
                 <>
-                  {dk && (
-                    <BookmakerOddsRow bm={dk} oddsType={oddsType} format={format} />
-                  )}
+                  {dk && <BookmakerOddsRow bm={dk} oddsType={oddsType} format={format} />}
                   {rest.length > 0 && (
                     <details className="mt-1">
                       <summary className="text-[10px] text-center text-surface-400 dark:text-surface-500 cursor-pointer hover:text-surface-600 dark:hover:text-surface-300 select-none">

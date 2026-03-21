@@ -75,5 +75,12 @@
                 "uriFormat": "%s"
             }
         }
+    ],
+    "compounds": [
+        {
+            "name": "Web API + Frontend",
+            "configurations": ["Web API", "Frontend"],
+            "stopAll": true
+        }
     ]
 }

@@ -4,7 +4,7 @@ import { formatShortDate } from '../utils/dates';
 import { calculateLogLoss } from '../utils/predictions';
 import type { GameOddsVM } from '../types';
 
-const HOMEGROWN = 'Homegrown';
+const HOMEGROWN = 'In-House Model';
 
 const LINE_COLORS: Record<string, string> = {
   [HOMEGROWN]: '#3b82f6',

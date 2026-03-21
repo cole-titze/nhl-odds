@@ -5,6 +5,7 @@ import { useOddsFormatContext } from '../contexts/OddsFormatContext';
 const links = [
   { to: '/', label: 'Games' },
   { to: '/teams', label: 'Teams' },
+  { to: '/strategies', label: 'Strategies' },
   { to: '/about', label: 'About' },
   { to: '/admin', label: 'Admin' },
 ];
