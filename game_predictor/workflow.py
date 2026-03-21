@@ -22,33 +22,6 @@ def _calculate_log_loss(winner: int, home_odds: float, away_odds: float) -> floa
     return -(winner * math.log(away_odds) + (1 - winner) * math.log(home_odds))
 
 
-def _save_test_predictions(conn, save_pipeline, save_model, save_name, test_df, run_date):
-    X_test_save = save_pipeline.transform(test_df[FEATURE_COLUMNS].values)
-    test_proba = save_model.predict_proba(X_test_save)
-
-    test_predictions = []
-    for i, row in test_df.iterrows():
-        idx = test_df.index.get_loc(i)
-        home_odds = float(test_proba[idx][0])
-        away_odds = float(test_proba[idx][1])
-        game_log_loss = _calculate_log_loss(int(row["Winner"]), home_odds, away_odds)
-
-        test_predictions.append(
-            {
-                "GameId": int(row["GameId"]),
-                "ModelId": HOMEGROWN_MODEL_ID,
-                "RunDateUTC": run_date,
-                "HomeOdds": home_odds,
-                "AwayOdds": away_odds,
-                "LogLoss": game_log_loss,
-                "Notes": f"{SAVE_EXPERIMENT}/{save_name}",
-            }
-        )
-
-    print(f"\nSaving {len(test_predictions)} test set predictions (last 2 seasons) to GameOdds...")
-    save_predictions(conn, test_predictions)
-
-
 def _save_unplayed_predictions(conn, save_pipeline, save_model, save_name, run_date):
     unplayed_df = load_unplayed_games(conn)
 
@@ -163,16 +136,7 @@ def run(mode: str = "predict"):
     if mode == "backfill":
         _run_backfill(conn, train_df)
     elif mode == "test":
-        result = train_all(train_df)
-        if result is None:
-            conn.close()
-            return
-
-        save_pipeline, save_model, save_name, test_df = result
-        run_date = datetime.now(timezone.utc)
-
-        _save_test_predictions(conn, save_pipeline, save_model, save_name, test_df, run_date)
-        _save_unplayed_predictions(conn, save_pipeline, save_model, save_name, run_date)
+        train_all(train_df)
     else:
         result = train_default(train_df)
         if result is None:
