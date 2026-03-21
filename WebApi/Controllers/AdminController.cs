@@ -78,9 +78,14 @@ public class AdminController
     }
 
     [HttpGet]
-    public async Task<IResult> GetErrorLogs()
+    public async Task<IResult> GetErrorLogs(int? seasonStartYear)
     {
-        var errors = await _db.ErrorLog
+        var query = _db.ErrorLog.AsQueryable();
+
+        if (seasonStartYear.HasValue)
+            query = query.Where(e => e.SeasonStartYear == seasonStartYear.Value);
+
+        var errors = await query
             .OrderByDescending(e => e.TimestampUTC)
             .Take(50)
             .Select(e => new ErrorLogVM
@@ -97,6 +102,64 @@ public class AdminController
             .ToListAsync();
 
         return Results.Ok(errors);
+    }
+
+    [HttpGet]
+    public async Task<IResult> GetHealthChecks()
+    {
+        // Pull lightweight data into memory for cross-table checks
+        var games = await _db.GameRaw
+            .Select(g => new { g.Id, g.SeasonStartYear, g.HasBeenPlayed, g.GameDateUTC })
+            .ToListAsync();
+
+        var gameOddsGameIds = new HashSet<int>(
+            await _db.GameOdds.Select(go => go.GameId).Distinct().ToListAsync());
+        var bookmakerGameIds = new HashSet<int>(
+            await _db.BookmakerOdds.Select(bo => bo.GameId).Distinct().ToListAsync());
+        var cleanedGameIds = new HashSet<int>(
+            await _db.GameCleaned.Select(gc => gc.GameId).Distinct().ToListAsync());
+
+        // QueryDateUTC in UTC maps to the game date
+        // (old: 10pm Central night before, new: 6am Central game day — both .Date = game date)
+        var oddsFetchDateRaws = await _db.BookmakerOddsResponse
+            .Where(r => r.QueryDateUTC != null)
+            .Select(r => r.QueryDateUTC!.Value)
+            .ToListAsync();
+        var oddsFetchDateSet = new HashSet<DateTime>(oddsFetchDateRaws.Select(d => d.Date));
+
+        var errorCounts = await _db.ErrorLog
+            .GroupBy(e => e.SeasonStartYear)
+            .Select(g => new { SeasonStartYear = g.Key, Count = g.Count() })
+            .ToListAsync();
+        var errorCountDict = errorCounts
+            .Where(e => e.SeasonStartYear.HasValue)
+            .ToDictionary(e => e.SeasonStartYear!.Value, e => e.Count);
+
+        var checks = games
+            .GroupBy(g => g.SeasonStartYear)
+            .Select(g =>
+            {
+                var today = DateTime.UtcNow.Date;
+                var allGames = g.ToList();
+                var playedBeforeToday = allGames.Where(x => x.HasBeenPlayed && x.GameDateUTC.Date < today).ToList();
+                var playedThroughToday = allGames.Where(x => x.HasBeenPlayed && x.GameDateUTC.Date <= today).ToList();
+                var gameDates = playedBeforeToday.Select(x => x.GameDateUTC.Date).Distinct().ToList();
+                return new SeasonHealthCheckVM
+                {
+                    SeasonStartYear = g.Key,
+                    TotalGames = allGames.Count,
+                    PlayedGames = playedThroughToday.Count,
+                    MissingPredictions = allGames.Count(x => !gameOddsGameIds.Contains(x.Id)),
+                    MissingBookmakerOdds = playedThroughToday.Count(x => !bookmakerGameIds.Contains(x.Id)),
+                    MissingGameCleaned = allGames.Count(x => !cleanedGameIds.Contains(x.Id)),
+                    MissingOddsFetchDays = gameDates.Count(d => !oddsFetchDateSet.Contains(d)),
+                    ErrorCount = errorCountDict.GetValueOrDefault(g.Key, 0),
+                };
+            })
+            .OrderByDescending(c => c.SeasonStartYear)
+            .ToList();
+
+        return Results.Ok(checks);
     }
 
     [HttpGet]

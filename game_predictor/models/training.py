@@ -256,10 +256,44 @@ def train_default(train_df):
     return pipeline, save_model, save_name
 
 
-def train_all(train_df, shap: bool = False):
-    """Train all experiments in parallel with train/calibration/test split.
+def train_for_day(train_df):
+    """Train the save experiment on provided data without splitting.
 
-    Used by backfill mode (IDE experimenting).
+    Used by walk-forward backfill. No calibration or stacking for speed.
+    Returns (pipeline, model, model_name) or None.
+    """
+    if train_df.empty or len(train_df) < 50:
+        return None
+
+    exp = EXPERIMENTS[SAVE_EXPERIMENT]
+
+    X_raw = train_df[FEATURE_COLUMNS].values
+    y = train_df["Winner"].values
+    w = _compute_weights(train_df["SeasonStartYear"].values, exp.decay)
+
+    pipeline = exp.pipeline
+    X_t = pipeline.fit_transform(X_raw, y)
+
+    built = build_models(exp.models)
+    for model in built.values():
+        _fit(model, X_t, y, w)
+
+    if exp.ensemble and len(exp.ensemble) > 1:
+        ensemble_models = [built[n] for n in exp.ensemble]
+        save_model = Ensemble(models=ensemble_models)
+        save_model.fit(X_t, y)
+        save_name = "Ensemble"
+    else:
+        save_name = next(iter(built))
+        save_model = built[save_name]
+
+    return pipeline, save_model, save_name
+
+
+def train_all(train_df):
+    """Train all experiments with train/calibration/test split.
+
+    Used by test mode (IDE experimenting).
     Returns (pipeline, model, model_name, test_df) or None.
     """
     if train_df.empty:
@@ -287,11 +321,6 @@ def train_all(train_df, shap: bool = False):
     print(f"Testing on seasons {test_start_season}-{current_season} ({len(X_test_raw)} games)")
 
     train_seasons = train_df.loc[train_mask, "SeasonStartYear"].values
-
-    if shap:
-        from .analysis import run_shap_analysis
-
-        run_shap_analysis(X_train_raw, X_test_raw, y_train, y_test, FEATURE_COLUMNS)
 
     all_experiment_results = {}
 

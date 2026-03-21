@@ -141,17 +141,25 @@ public static class OddsApiResponseMapper
     private static int? MatchGameId(OddsApiResponse response, List<GameInfo> games)
     {
         // Compare dates in UTC to avoid timezone issues
-        // Also check previous day — evening NA games have next-day UTC dates
+        // Check previous and next day — game dates can be off by a day due to timezones
         var apiDateUtc = response.CommenceTime.ToUniversalTime().Date;
         var prevDate = apiDateUtc.AddDays(-1);
+        var nextDate = apiDateUtc.AddDays(1);
 
         var bestMatch = games
-            .Where(g => g.GameDateUTC.Date == apiDateUtc || g.GameDateUTC.Date == prevDate)
+            .Where(g => g.GameDateUTC.Date == apiDateUtc || g.GameDateUTC.Date == prevDate || g.GameDateUTC.Date == nextDate)
             .Select(g =>
             {
-                var homeScore = Fuzz.TokenSortRatio(g.HomeTeamName.ToLower(), response.HomeTeam.ToLower());
-                var awayScore = Fuzz.TokenSortRatio(g.AwayTeamName.ToLower(), response.AwayTeam.ToLower());
-                return new { Game = g, Score = Math.Max(homeScore, awayScore) };
+                var homeHome = Fuzz.TokenSortRatio(g.HomeTeamName.ToLower(), response.HomeTeam.ToLower());
+                var awayAway = Fuzz.TokenSortRatio(g.AwayTeamName.ToLower(), response.AwayTeam.ToLower());
+                var normalScore = Math.Min(homeHome, awayAway);
+
+                // Also check swapped home/away — API and DB can disagree
+                var homeCross = Fuzz.TokenSortRatio(g.HomeTeamName.ToLower(), response.AwayTeam.ToLower());
+                var awayCross = Fuzz.TokenSortRatio(g.AwayTeamName.ToLower(), response.HomeTeam.ToLower());
+                var crossScore = Math.Min(homeCross, awayCross);
+
+                return new { Game = g, Score = Math.Max(normalScore, crossScore) };
             })
             .OrderByDescending(x => x.Score)
             .FirstOrDefault();

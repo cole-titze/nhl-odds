@@ -3,12 +3,14 @@ import time
 import warnings
 from datetime import datetime, timezone
 
+import pandas as pd
+
 from .config import HOMEGROWN_MODEL_ID, get_db_config
 from .db.connection import get_connection
 from .db.queries import FEATURE_COLUMNS
 from .db.reader import load_training_data, load_unplayed_games
 from .db.writer import save_predictions
-from .models.training import train_all, train_default
+from .models.training import train_all, train_default, train_for_day
 from .prediction.experiments import SAVE_EXPERIMENT
 
 warnings.filterwarnings("ignore", message="X does not have valid feature names")
@@ -79,7 +81,78 @@ def _save_unplayed_predictions(conn, save_pipeline, save_model, save_name, run_d
     save_predictions(conn, unplayed_predictions)
 
 
-def run(mode: str = "predict", shap: bool = False):
+def _run_backfill(conn, train_df):
+    """Walk-forward backfill: for each game day, train on all prior games and predict that day."""
+    train_df = train_df.sort_values("GameDateUTC").reset_index(drop=True)
+    train_df["GameDate"] = pd.to_datetime(train_df["GameDateUTC"]).dt.date
+
+    game_days = sorted(train_df["GameDate"].unique())
+    run_date = datetime.now(timezone.utc)
+    all_predictions = []
+    total_correct = 0
+    total_log_loss = 0.0
+
+    print(f"Walk-forward backfill: {len(game_days)} game days, {len(train_df)} total games\n")
+
+    for day_idx, day in enumerate(game_days):
+        day_mask = train_df["GameDate"] == day
+        before_mask = train_df["GameDate"] < day
+
+        day_games = train_df.loc[day_mask]
+        prior_games = train_df.loc[before_mask]
+
+        result = train_for_day(prior_games)
+        if result is None:
+            continue
+
+        pipeline, model, name = result
+
+        X_day = pipeline.transform(day_games[FEATURE_COLUMNS].values)
+        proba = model.predict_proba(X_day)
+
+        for i, (_, row) in enumerate(day_games.iterrows()):
+            home_odds = float(proba[i][0])
+            away_odds = float(proba[i][1])
+            winner = int(row["Winner"])
+            game_log_loss = _calculate_log_loss(winner, home_odds, away_odds)
+
+            predicted_winner = 0 if home_odds >= 0.5 else 1
+            if predicted_winner == winner:
+                total_correct += 1
+            total_log_loss += game_log_loss
+
+            all_predictions.append(
+                {
+                    "GameId": int(row["GameId"]),
+                    "ModelId": HOMEGROWN_MODEL_ID,
+                    "RunDateUTC": run_date,
+                    "HomeOdds": home_odds,
+                    "AwayOdds": away_odds,
+                    "LogLoss": game_log_loss,
+                    "Notes": f"{SAVE_EXPERIMENT}/{name}",
+                }
+            )
+
+        if (day_idx + 1) % 50 == 0 or day_idx == len(game_days) - 1:
+            n = len(all_predictions)
+            avg_ll = total_log_loss / n if n > 0 else 0
+            acc = total_correct / n if n > 0 else 0
+            print(
+                f"  Day {day_idx + 1}/{len(game_days)} ({day}): {n} games, log loss: {avg_ll:.4f}, accuracy: {acc:.4f}"
+            )
+
+    if all_predictions:
+        n = len(all_predictions)
+        avg_ll = total_log_loss / n
+        acc = total_correct / n
+        print(f"\nBackfill complete: {n} games predicted")
+        print(f"  Accuracy: {acc:.4f}")
+        print(f"  Log Loss: {avg_ll:.4f}")
+        print(f"\nSaving {n} predictions to GameOdds...")
+        save_predictions(conn, all_predictions)
+
+
+def run(mode: str = "predict"):
     start = time.time()
     config = get_db_config()
     conn = get_connection(config)
@@ -88,7 +161,9 @@ def run(mode: str = "predict", shap: bool = False):
     train_df = load_training_data(conn)
 
     if mode == "backfill":
-        result = train_all(train_df, shap=shap)
+        _run_backfill(conn, train_df)
+    elif mode == "test":
+        result = train_all(train_df)
         if result is None:
             conn.close()
             return
@@ -97,6 +172,7 @@ def run(mode: str = "predict", shap: bool = False):
         run_date = datetime.now(timezone.utc)
 
         _save_test_predictions(conn, save_pipeline, save_model, save_name, test_df, run_date)
+        _save_unplayed_predictions(conn, save_pipeline, save_model, save_name, run_date)
     else:
         result = train_default(train_df)
         if result is None:
@@ -106,7 +182,7 @@ def run(mode: str = "predict", shap: bool = False):
         save_pipeline, save_model, save_name = result
         run_date = datetime.now(timezone.utc)
 
-    _save_unplayed_predictions(conn, save_pipeline, save_model, save_name, run_date)
+        _save_unplayed_predictions(conn, save_pipeline, save_model, save_name, run_date)
 
     elapsed = time.time() - start
     minutes, seconds = divmod(int(elapsed), 60)

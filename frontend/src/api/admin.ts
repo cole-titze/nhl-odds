@@ -50,8 +50,26 @@ export async function startPrediction(): Promise<{ message: string }> {
   return res.json();
 }
 
-export async function getErrorLogs(): Promise<ErrorLog[]> {
-  const res = await fetch(`${BASE_URL}/api/Admin/GetErrorLogs`);
+export interface SeasonHealthCheck {
+  seasonStartYear: number;
+  totalGames: number;
+  playedGames: number;
+  missingPredictions: number;
+  missingBookmakerOdds: number;
+  missingGameCleaned: number;
+  missingOddsFetchDays: number;
+  errorCount: number;
+}
+
+export async function getErrorLogs(seasonStartYear?: number): Promise<ErrorLog[]> {
+  const params = seasonStartYear != null ? `?seasonStartYear=${seasonStartYear}` : '';
+  const res = await fetch(`${BASE_URL}/api/Admin/GetErrorLogs${params}`);
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
+
+export async function getHealthChecks(): Promise<SeasonHealthCheck[]> {
+  const res = await fetch(`${BASE_URL}/api/Admin/GetHealthChecks`);
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }

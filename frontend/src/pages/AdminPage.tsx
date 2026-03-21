@@ -1,13 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   getErrorLogs,
+  getHealthChecks,
   getJobStatuses,
   startDataCollection,
   startPrediction,
   type ErrorLog,
   type JobInfo,
   type JobStatuses,
+  type SeasonHealthCheck,
 } from '../api/admin';
+import { formatSeasonLabel } from '../utils/season';
 
 const STATUS_STYLES: Record<string, string> = {
   idle: 'bg-surface-200 dark:bg-white/[0.06] text-surface-500 dark:text-surface-400',
@@ -120,16 +123,156 @@ function JobCard({ job, label, onStart }: { job: JobInfo; label: string; onStart
   );
 }
 
+function countClass(count: number) {
+  if (count === 0) return 'text-emerald-500';
+  return 'text-red-500 dark:text-red-400';
+}
+
+function HealthCheckRow({ check }: { check: SeasonHealthCheck }) {
+  const [expanded, setExpanded] = useState(false);
+  const [errors, setErrors] = useState<ErrorLog[]>([]);
+  const [loadingErrors, setLoadingErrors] = useState(false);
+
+  async function handleToggle() {
+    const next = !expanded;
+    setExpanded(next);
+    if (next && errors.length === 0) {
+      setLoadingErrors(true);
+      try {
+        const data = await getErrorLogs(check.seasonStartYear);
+        setErrors(data);
+      } catch {
+        /* ignore */
+      } finally {
+        setLoadingErrors(false);
+      }
+    }
+  }
+
+  const hasIssues =
+    check.missingPredictions > 0 ||
+    check.missingBookmakerOdds > 0 ||
+    check.missingGameCleaned > 0 ||
+    check.missingOddsFetchDays > 0 ||
+    check.errorCount > 0;
+
+  return (
+    <>
+      <tr
+        onClick={handleToggle}
+        className={`border-b border-surface-200 dark:border-white/[0.04] last:border-0 cursor-pointer transition-colors hover:bg-surface-100/50 dark:hover:bg-white/[0.03] ${expanded ? 'bg-surface-100/30 dark:bg-white/[0.02]' : ''}`}
+      >
+        <td className="px-4 py-3 text-sm font-mono font-medium">
+          <span className="mr-1.5 text-surface-400 dark:text-surface-500 text-xs">
+            {expanded ? '\u25BC' : '\u25B6'}
+          </span>
+          {formatSeasonLabel(check.seasonStartYear)}
+        </td>
+        <td className="px-4 py-3 stat-number text-sm text-center">{check.totalGames}</td>
+        <td className="px-4 py-3 stat-number text-sm text-center">{check.playedGames}</td>
+        <td
+          className={`px-4 py-3 stat-number text-sm text-center ${countClass(check.missingPredictions)}`}
+        >
+          {check.missingPredictions}
+        </td>
+        <td
+          className={`px-4 py-3 stat-number text-sm text-center ${countClass(check.missingBookmakerOdds)}`}
+        >
+          {check.missingBookmakerOdds}
+        </td>
+        <td
+          className={`px-4 py-3 stat-number text-sm text-center ${countClass(check.missingGameCleaned)}`}
+        >
+          {check.missingGameCleaned}
+        </td>
+        <td
+          className={`px-4 py-3 stat-number text-sm text-center ${countClass(check.missingOddsFetchDays)}`}
+        >
+          {check.missingOddsFetchDays}
+        </td>
+        <td className={`px-4 py-3 stat-number text-sm text-center ${countClass(check.errorCount)}`}>
+          {check.errorCount}
+        </td>
+        <td className="px-4 py-3 text-center">
+          {hasIssues ? (
+            <span className="inline-block w-2 h-2 rounded-full bg-amber-500" />
+          ) : (
+            <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
+          )}
+        </td>
+      </tr>
+      {expanded && (
+        <tr>
+          <td colSpan={9} className="p-0">
+            <div className="px-4 py-3 bg-surface-50/50 dark:bg-white/[0.01]">
+              {loadingErrors && (
+                <div className="text-xs text-surface-400 dark:text-surface-500 py-2">
+                  Loading errors...
+                </div>
+              )}
+              {!loadingErrors && errors.length === 0 && (
+                <div className="text-xs text-surface-400 dark:text-surface-500 py-2">
+                  No errors for this season.
+                </div>
+              )}
+              {!loadingErrors && errors.length > 0 && (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">
+                      <th className="px-3 py-2">Time</th>
+                      <th className="px-3 py-2">Source</th>
+                      <th className="px-3 py-2">Exception</th>
+                      <th className="px-3 py-2">Message</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {errors.map((log) => (
+                      <tr
+                        key={log.id}
+                        className="border-t border-surface-200/50 dark:border-white/[0.03]"
+                      >
+                        <td className="px-3 py-2 stat-number text-xs whitespace-nowrap text-surface-500 dark:text-surface-400">
+                          {formatTime(log.timestampUTC)}
+                        </td>
+                        <td className="px-3 py-2 text-xs font-mono text-surface-600 dark:text-surface-300 whitespace-nowrap">
+                          {log.source}
+                        </td>
+                        <td className="px-3 py-2 text-xs font-mono text-red-600 dark:text-red-400 whitespace-nowrap">
+                          {log.exceptionType}
+                        </td>
+                        <td className="px-3 py-2 text-xs text-surface-700 dark:text-surface-300">
+                          <details>
+                            <summary className="cursor-pointer truncate max-w-md select-none">
+                              {log.message}
+                            </summary>
+                            <pre className="mt-2 p-2 rounded bg-surface-900 dark:bg-black/40 text-surface-300 dark:text-surface-400 whitespace-pre-wrap break-all text-xs font-mono">
+                              {log.stackTrace}
+                            </pre>
+                          </details>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
 export function AdminPage() {
   const [statuses, setStatuses] = useState<JobStatuses | null>(null);
-  const [errorLogs, setErrorLogs] = useState<ErrorLog[]>([]);
+  const [healthChecks, setHealthChecks] = useState<SeasonHealthCheck[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
-      const [statusData, logsData] = await Promise.all([getJobStatuses(), getErrorLogs()]);
+      const [statusData, checksData] = await Promise.all([getJobStatuses(), getHealthChecks()]);
       setStatuses(statusData);
-      setErrorLogs(logsData);
+      setHealthChecks(checksData);
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to fetch statuses');
@@ -181,48 +324,30 @@ export function AdminPage() {
       )}
 
       <div className="mt-10">
-        <h2 className="font-display text-xl font-semibold mb-4">Error Log</h2>
-        {errorLogs.length === 0 ? (
+        <h2 className="font-display text-xl font-semibold mb-4">Health Checks</h2>
+        {healthChecks.length === 0 ? (
           <div className="glass rounded-xl p-6 text-sm text-surface-500 dark:text-surface-400 text-center">
-            No errors logged.
+            No data available.
           </div>
         ) : (
           <div className="glass rounded-xl overflow-hidden">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-surface-200 dark:border-white/[0.06] text-left text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">
-                  <th className="px-4 py-3">Time</th>
-                  <th className="px-4 py-3">Source</th>
-                  <th className="px-4 py-3">Exception</th>
-                  <th className="px-4 py-3">Message</th>
+                  <th className="px-4 py-3">Season</th>
+                  <th className="px-4 py-3 text-center">Total</th>
+                  <th className="px-4 py-3 text-center">Played</th>
+                  <th className="px-4 py-3 text-center">No In-House Odds</th>
+                  <th className="px-4 py-3 text-center">No Bookmaker Odds</th>
+                  <th className="px-4 py-3 text-center">No Cleaned Data</th>
+                  <th className="px-4 py-3 text-center">No Odds Fetch</th>
+                  <th className="px-4 py-3 text-center">Errors</th>
+                  <th className="px-4 py-3 text-center w-10"></th>
                 </tr>
               </thead>
               <tbody>
-                {errorLogs.map((log) => (
-                  <tr
-                    key={log.id}
-                    className="border-b border-surface-200 dark:border-white/[0.04] last:border-0"
-                  >
-                    <td className="px-4 py-3 stat-number text-xs whitespace-nowrap text-surface-500 dark:text-surface-400">
-                      {formatTime(log.timestampUTC)}
-                    </td>
-                    <td className="px-4 py-3 text-xs font-mono text-surface-600 dark:text-surface-300 whitespace-nowrap">
-                      {log.source}
-                    </td>
-                    <td className="px-4 py-3 text-xs font-mono text-red-600 dark:text-red-400 whitespace-nowrap">
-                      {log.exceptionType}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-surface-700 dark:text-surface-300">
-                      <details>
-                        <summary className="cursor-pointer truncate max-w-md select-none">
-                          {log.message}
-                        </summary>
-                        <pre className="mt-2 p-2 rounded bg-surface-900 dark:bg-black/40 text-surface-300 dark:text-surface-400 whitespace-pre-wrap break-all text-xs font-mono">
-                          {log.stackTrace}
-                        </pre>
-                      </details>
-                    </td>
-                  </tr>
+                {healthChecks.map((check) => (
+                  <HealthCheckRow key={check.seasonStartYear} check={check} />
                 ))}
               </tbody>
             </table>

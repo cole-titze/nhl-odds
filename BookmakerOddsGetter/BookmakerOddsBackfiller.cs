@@ -46,18 +46,7 @@ public class BookmakerOddsBackfiller
 
         foreach (var season in seasons)
         {
-            var totalGames = await _bookmakerOddsRepo.GetGameCountForSeason(season);
-            var gamesWithOdds = await _bookmakerOddsRepo.GetGamesWithOddsCountForSeason(season);
-
-            if (totalGames > 0 && gamesWithOdds >= totalGames)
-            {
-                _logger.LogInformation("Season {Season}: all {Count} games have bookmaker odds, skipping.", season, totalGames);
-                continue;
-            }
-
-            _logger.LogInformation("Season {Season}: {With}/{Total} games have bookmaker odds, backfilling...",
-                season, gamesWithOdds, totalGames);
-
+            _logger.LogInformation("Season {Season}: backfilling odds...", season);
             await BackfillSeason(season, seasonTeamsByYear);
         }
 
@@ -66,14 +55,20 @@ public class BookmakerOddsBackfiller
 
     private async Task BackfillSeason(int seasonStartYear, Dictionary<int, Dictionary<int, string>> seasonTeamsByYear)
     {
-        var gameDates = await _dbContext.GameRaw
+        var centralZone = TimeZoneInfo.FindSystemTimeZoneById("America/Chicago");
+
+        // Get all games and group by Central time date (not UTC) so evening NA games
+        // land on the correct local date instead of the next UTC day
+        var allGames = await _dbContext.GameRaw
             .Where(g => g.SeasonStartYear == seasonStartYear)
-            .Select(g => g.GameDateUTC.Date)
-            .Distinct()
-            .OrderBy(d => d)
+            .Select(g => new { g.Id, g.HomeTeamId, g.AwayTeamId, g.GameDateUTC })
             .ToListAsync();
 
-        var existingGameIds = await _bookmakerOddsRepo.GetGameIdsWithBookmakerOdds();
+        var gameDates = allGames
+            .Select(g => TimeZoneInfo.ConvertTimeFromUtc(g.GameDateUTC, centralZone).Date)
+            .Distinct()
+            .OrderBy(d => d)
+            .ToList();
 
         if (!seasonTeamsByYear.TryGetValue(seasonStartYear, out var seasonTeams))
         {
@@ -83,21 +78,14 @@ public class BookmakerOddsBackfiller
 
         foreach (var gameDate in gameDates)
         {
-            // Include next day — evening NA games have next-day UTC dates
-            var nextDate = gameDate.AddDays(1);
-            var gamesOnDate = await _dbContext.GameRaw
-                .Where(g => (g.GameDateUTC.Date == gameDate || g.GameDateUTC.Date == nextDate)
-                    && g.SeasonStartYear == seasonStartYear)
-                .Select(g => new { g.Id, g.HomeTeamId, g.AwayTeamId, g.GameDateUTC })
-                .ToListAsync();
-
-            var gamesNeedingOdds = gamesOnDate.Where(g => !existingGameIds.Contains(g.Id)).ToList();
-            if (!gamesNeedingOdds.Any())
-                continue;
+            // Find games whose Central time date matches this game date
+            var gamesOnDate = allGames
+                .Where(g => TimeZoneInfo.ConvertTimeFromUtc(g.GameDateUTC, centralZone).Date == gameDate)
+                .ToList();
 
             var dateGameDates = gamesOnDate.ToDictionary(g => g.Id, g => g.GameDateUTC);
             var gameInfoList = BookmakerOddsHelper.BuildGameInfoList(
-                gamesNeedingOdds.Select(g => new GameRef(g.Id, g.HomeTeamId, g.AwayTeamId)),
+                gamesOnDate.Select(g => new GameRef(g.Id, g.HomeTeamId, g.AwayTeamId)),
                 seasonTeams, dateGameDates);
 
             if (!gameInfoList.Any())
@@ -106,10 +94,10 @@ public class BookmakerOddsBackfiller
                 continue;
             }
 
-            // Query at 10pm Central the night before (mimics daily job timing)
-            var centralZone = TimeZoneInfo.FindSystemTimeZoneById("America/Chicago");
-            var centralPriorNight = new DateTime(gameDate.Year, gameDate.Month, gameDate.Day, 22, 0, 0).AddDays(-1);
-            var queryDate = TimeZoneInfo.ConvertTimeToUtc(centralPriorNight, centralZone);
+            // Query at 6am Central on the game day — games are listed with pre-game odds
+            // but no NHL games have started yet (earliest starts ~noon ET / 11am CT)
+            var centralGameMorning = new DateTime(gameDate.Year, gameDate.Month, gameDate.Day, 6, 0, 0);
+            var queryDate = TimeZoneInfo.ConvertTimeToUtc(centralGameMorning, centralZone);
             var responses = await GetOrFetchResponses(queryDate, gameDate);
 
             if (responses == null)
@@ -119,15 +107,21 @@ public class BookmakerOddsBackfiller
                 gameDate.ToString("yyyy-MM-dd"), gameInfoList.Count, responses.Count);
 
             await BookmakerOddsHelper.MapAndSave(_logger, _bookmakerOddsRepo, responses, gameInfoList);
-
-            foreach (var g in gamesNeedingOdds)
-                existingGameIds.Add(g.Id);
         }
     }
 
     private async Task<List<OddsApiResponse>?> GetOrFetchResponses(DateTime queryDate, DateTime gameDate)
     {
         var cached = await _bookmakerOddsRepo.GetCachedResponse(queryDate);
+
+        // Also check old query time (10pm Central night before) for backwards compatibility
+        if (cached == null)
+        {
+            var centralZone = TimeZoneInfo.FindSystemTimeZoneById("America/Chicago");
+            var oldPriorNight = new DateTime(gameDate.Year, gameDate.Month, gameDate.Day, 22, 0, 0).AddDays(-1);
+            var oldQueryDate = TimeZoneInfo.ConvertTimeToUtc(oldPriorNight, centralZone);
+            cached = await _bookmakerOddsRepo.GetCachedResponse(oldQueryDate);
+        }
 
         if (cached != null)
         {

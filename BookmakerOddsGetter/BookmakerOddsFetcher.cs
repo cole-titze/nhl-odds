@@ -1,7 +1,5 @@
 using DatabaseAccess;
 using DatabaseAccess.BookmakerOddsRepository;
-using Entities.ServiceModels.Mappers;
-using Entities.ServiceModels.OddsApi;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Services.OddsApi;
@@ -40,29 +38,20 @@ public class BookmakerOddsFetcher
             return;
         }
 
-        var existingGameIds = await _bookmakerOddsRepo.GetGameIdsWithBookmakerOdds();
-        var gamesNeedingOdds = unplayedGames.Where(g => !existingGameIds.Contains(g.Id)).ToList();
-
-        if (!gamesNeedingOdds.Any())
-        {
-            _logger.LogInformation("All unplayed games already have bookmaker odds. Skipping API call.");
-            return;
-        }
-
-        var seasonStartYear = gamesNeedingOdds.First().SeasonStartYear;
+        var seasonStartYear = unplayedGames.First().SeasonStartYear;
         var seasonTeams = await _dbContext.SeasonTeam
             .Where(t => t.SeasonStartYear == seasonStartYear)
             .ToDictionaryAsync(t => t.TeamId, t => t.Name);
 
-        var gameIds = gamesNeedingOdds.Select(g => g.Id).ToHashSet();
+        var gameIds = unplayedGames.Select(g => g.Id).ToHashSet();
         var gameDates = await _dbContext.GameRaw
             .Where(g => gameIds.Contains(g.Id))
             .ToDictionaryAsync(g => g.Id, g => g.GameDateUTC);
 
         var gameInfoList = BookmakerOddsHelper.BuildGameInfoList(
-            gamesNeedingOdds.Select(g => new GameRef(g.Id, g.HomeTeamId, g.AwayTeamId)), seasonTeams, gameDates);
+            unplayedGames.Select(g => new GameRef(g.Id, g.HomeTeamId, g.AwayTeamId)), seasonTeams, gameDates);
 
-        _logger.LogInformation("Fetching bookmaker odds for {Count} games...", gamesNeedingOdds.Count);
+        _logger.LogInformation("Fetching bookmaker odds for {Count} games...", unplayedGames.Count);
         var apiResult = await _oddsApiGetter.GetUpcomingOdds();
 
         if (!apiResult.Responses.Any())

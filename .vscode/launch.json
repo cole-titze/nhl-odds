@@ -19,7 +19,7 @@
             }
         },
         {
-            "name": "Python: Game Predictor",
+            "name": "Python: Backfill",
             "type": "debugpy",
             "request": "launch",
             "module": "game_predictor",
@@ -29,11 +29,11 @@
             "console": "internalConsole"
         },
         {
-            "name": "Python: SHAP Analysis",
+            "name": "Python: Test Models",
             "type": "debugpy",
             "request": "launch",
             "module": "game_predictor",
-            "args": ["--mode", "backfill", "--shap"],
+            "args": ["--mode", "test"],
             "cwd": "${workspaceFolder}",
             "justMyCode": true,
             "console": "internalConsole"
@@ -47,16 +47,15 @@
             "args": [],
             "cwd": "${workspaceFolder}/WebApi",
             "stopAtEntry": false,
-            "serverReadyAction": {
-                "action": "openExternally",
-                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
-            },
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
             },
             "logging": {
                 "moduleLoad": false,
                 "stepFiltering": false
+            },
+            "presentation": {
+                "hidden": true
             }
         },
         {
@@ -73,12 +72,15 @@
                 "action": "openExternally",
                 "pattern": "Local:\\s+(https?://\\S+)",
                 "uriFormat": "%s"
+            },
+            "presentation": {
+                "hidden": true
             }
         }
     ],
     "compounds": [
         {
-            "name": "Web API + Frontend",
+            "name": "Web App",
             "configurations": ["Web API", "Frontend"],
             "stopAll": true
         }
