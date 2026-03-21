@@ -271,11 +271,20 @@ def train_for_day(train_df):
     y = train_df["Winner"].values
     w = _compute_weights(train_df["SeasonStartYear"].values, exp.decay)
 
-    pipeline = exp.pipeline
+    # Cap pipeline params to fit available data size
+    from .experiment.pipeline import standard_pipeline
+
+    n_samples, n_features = X_raw.shape
+    k_best = min(exp.pipeline.named_steps["select"].k, n_features)
+    pca_components = min(exp.pipeline.named_steps["pca"].n_components, k_best, n_samples)
+    pipeline = standard_pipeline(k_best=k_best, pca_components=pca_components)
     X_t = pipeline.fit_transform(X_raw, y)
 
     built = build_models(exp.models)
     for model in built.values():
+        # Cap KNN neighbors to training size
+        if hasattr(model, "n_neighbors") and model.n_neighbors > n_samples:
+            model.n_neighbors = max(1, n_samples - 1)
         _fit(model, X_t, y, w)
 
     if exp.ensemble and len(exp.ensemble) > 1:
