@@ -6,6 +6,7 @@ import { useFetch } from '../hooks/useFetch';
 import { getGameOddsInDateRange } from '../api/gameOdds';
 import { formatDate } from '../utils/dates';
 import { getCurrentSeason } from '../utils/season';
+import { StrategyPicker } from '../components/StrategyPicker';
 
 export type OddsType = 'moneyline' | 'spread' | 'overUnder';
 
@@ -23,7 +24,7 @@ export function GamesPage() {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-8">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
         <DateNav date={date} onChange={setDate} />
         <div className="flex gap-1">
           {(['moneyline', 'spread', 'overUnder'] as const).map((type) => (
@@ -40,6 +41,10 @@ export function GamesPage() {
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="flex justify-end mb-6">
+        <StrategyPicker />
       </div>
 
       {error && <div className="glass rounded-xl text-center text-red-500 py-8 px-4">{error}</div>}

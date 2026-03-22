@@ -11,6 +11,9 @@ import {
   calculateLogLoss,
   predictionBorderClass,
 } from '../utils/predictions';
+import { checkStrategy } from '../utils/bettingStrategies';
+import { useStrategy } from '../contexts/StrategyContext';
+import { StrategyPicker } from '../components/StrategyPicker';
 import { Skeleton } from '../components/Skeleton';
 
 function formatPrice(price: number): string {
@@ -25,6 +28,7 @@ export function GamePage() {
   const { gameId } = useParams();
   const location = useLocation();
   const { format } = useOddsFormatContext();
+  const { strategy } = useStrategy();
   const [game, setGame] = useState<GameOddsVM | null>(
     (location.state as { game?: GameOddsVM } | null)?.game ?? null,
   );
@@ -157,10 +161,11 @@ export function GamePage() {
       {/* Bookmaker Odds Table */}
       {game.bookmakerOdds?.length > 0 && (
         <div className="glass rounded-xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-surface-200/50 dark:border-white/[0.04]">
+          <div className="px-6 py-4 border-b border-surface-200/50 dark:border-white/[0.04] flex items-center justify-between">
             <h2 className="text-xs font-mono font-bold tracking-widest uppercase text-surface-400 dark:text-surface-500">
               Bookmaker Odds
             </h2>
+            <StrategyPicker />
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -193,7 +198,13 @@ export function GamePage() {
               </thead>
               <tbody>
                 {game.bookmakerOdds.map((bm) => (
-                  <BookmakerRow key={bm.bookmakerName} bm={bm} game={game} format={format} />
+                  <BookmakerRow
+                    key={bm.bookmakerName}
+                    bm={bm}
+                    game={game}
+                    format={format}
+                    strategy={strategy}
+                  />
                 ))}
               </tbody>
             </table>
@@ -255,22 +266,44 @@ function BookmakerRow({
   bm,
   game,
   format,
+  strategy,
 }: {
   bm: BookmakerOddsVM;
   game: GameOddsVM;
   format: Parameters<typeof formatOdds>[1];
+  strategy: import('../utils/bettingStrategies').StrategyConfig;
 }) {
   const cellClass =
     'py-3 px-2 text-center stat-number text-surface-600 dark:text-surface-400 font-mono text-xs';
   const bmLogLoss = game.hasBeenPlayed
     ? calculateLogLoss(bm.homeOdds, bm.awayOdds, game.winner)
     : null;
+  const valueBet = checkStrategy(game, bm, strategy);
 
   return (
     <tr className="border-b border-surface-100 dark:border-white/[0.03] hover:bg-surface-50 dark:hover:bg-white/[0.02] transition-colors">
-      <td className="py-3 px-4 font-medium text-xs">{bm.bookmakerName}</td>
-      <td className={cellClass}>{formatOdds(bm.awayOdds, format)}</td>
-      <td className={cellClass}>{formatOdds(bm.homeOdds, format)}</td>
+      <td className="py-3 px-4 font-medium text-xs">
+        <div className="flex items-center gap-2">
+          {bm.bookmakerName}
+          {valueBet && (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wide">
+              {valueBet.side === 'home' ? game.homeTeam?.teamName : game.awayTeam?.teamName}
+              {' +'}
+              {(valueBet.edge * 100).toFixed(0)}%
+            </span>
+          )}
+        </div>
+      </td>
+      <td
+        className={`${cellClass}${valueBet?.side === 'away' ? ' text-emerald-600 dark:text-emerald-400 font-bold' : ''}`}
+      >
+        {formatOdds(bm.awayOdds, format)}
+      </td>
+      <td
+        className={`${cellClass}${valueBet?.side === 'home' ? ' text-emerald-600 dark:text-emerald-400 font-bold' : ''}`}
+      >
+        {formatOdds(bm.homeOdds, format)}
+      </td>
       <td className={cellClass}>
         {bm.awayPoint ? `${formatPoint(bm.awayPoint)} (${formatPrice(bm.awayPrice)})` : '-'}
       </td>

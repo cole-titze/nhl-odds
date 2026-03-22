@@ -1,11 +1,27 @@
 import { Link } from 'react-router-dom';
 import type { GameOddsVM, BookmakerOddsVM } from '../types';
 import { Winner } from '../types';
-import { predictionBorderClass, wasCorrectlyPredicted } from '../utils/predictions';
+import { wasCorrectlyPredicted } from '../utils/predictions';
 import { useOddsFormatContext } from '../contexts/OddsFormatContext';
 import { getModelName } from '../utils/modelNames';
 import { formatOdds } from '../utils/oddsFormat';
 import type { OddsType } from '../pages/GamesPage';
+import { checkStrategy, type BetFlag, type StrategyConfig } from '../utils/bettingStrategies';
+import { useStrategy } from '../contexts/StrategyContext';
+
+function getBestBetFlag(
+  game: GameOddsVM,
+  strategy: StrategyConfig,
+): (BetFlag & { bookmaker: string }) | null {
+  let best: (BetFlag & { bookmaker: string }) | null = null;
+  for (const bm of game.bookmakerOdds ?? []) {
+    const flag = checkStrategy(game, bm, strategy);
+    if (flag && (!best || flag.edge > best.edge)) {
+      best = { ...flag, bookmaker: bm.bookmakerName };
+    }
+  }
+  return best;
+}
 
 interface GameCardProps {
   game: GameOddsVM;
@@ -117,9 +133,30 @@ function BookmakerOddsRow({
   );
 }
 
+function strategyBetWon(game: GameOddsVM, bet: BetFlag): boolean {
+  return game.winner === (bet.side === 'home' ? Winner.HOME : Winner.AWAY);
+}
+
 export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
   const { format } = useOddsFormatContext();
-  const borderClass = predictionBorderClass(game);
+  const { strategy } = useStrategy();
+  const valueBet = getBestBetFlag(game, strategy);
+
+  let cardClass: string;
+  if (valueBet) {
+    if (!game.hasBeenPlayed) {
+      cardClass =
+        'border-emerald-500/40 dark:border-emerald-500/20 !bg-emerald-50/30 dark:!bg-emerald-500/[0.03]';
+    } else if (strategyBetWon(game, valueBet)) {
+      cardClass =
+        'border-emerald-500/40 dark:border-emerald-500/20 !bg-emerald-50/30 dark:!bg-emerald-500/[0.03]';
+    } else {
+      cardClass = 'border-red-500/40 dark:border-red-500/20 !bg-red-50/30 dark:!bg-red-500/[0.03]';
+    }
+  } else {
+    cardClass = 'border-surface-200 dark:border-white/[0.06]';
+  }
+
   const oddsColor = !game.hasBeenPlayed
     ? 'text-accent-500'
     : wasCorrectlyPredicted(game)
@@ -130,8 +167,23 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
     <Link
       to={`/game/${game.id}`}
       state={{ game }}
-      className={`glass rounded-xl px-5 py-4 block hover:ring-1 hover:ring-accent-500/30 transition-all ${borderClass}`}
+      className={`glass rounded-xl px-5 py-4 block hover:ring-1 hover:ring-accent-500/30 transition-all ${cardClass}`}
     >
+      {valueBet && (
+        <div className="flex justify-center mb-3">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold uppercase tracking-wide">
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Bet {valueBet.side === 'home' ? game.homeTeam?.teamName : game.awayTeam?.teamName} +
+            {(valueBet.edge * 100).toFixed(0)}%
+          </span>
+        </div>
+      )}
       <div className="grid grid-cols-3 items-center">
         <TeamSide
           team={game.awayTeam}

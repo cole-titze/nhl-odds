@@ -78,17 +78,18 @@ def _run_backfill(conn, train_df):
         prior_games = train_df.loc[before_mask]
 
         result = train_for_day(prior_games)
-        if result is None:
-            continue
 
-        pipeline, model, name = result
-
-        X_day = pipeline.transform(day_games[FEATURE_COLUMNS].values)
-        proba = model.predict_proba(X_day)
+        if result is not None:
+            pipeline, model, name = result
+            X_day = pipeline.transform(day_games[FEATURE_COLUMNS].values)
+            proba = model.predict_proba(X_day)
+        else:
+            proba = None
+            name = "baseline"
 
         for i, (_, row) in enumerate(day_games.iterrows()):
-            home_odds = float(proba[i][0])
-            away_odds = float(proba[i][1])
+            home_odds = float(proba[i][0]) if proba is not None else 0.5
+            away_odds = float(proba[i][1]) if proba is not None else 0.5
             winner = int(row["Winner"])
             game_log_loss = _calculate_log_loss(winner, home_odds, away_odds)
 
