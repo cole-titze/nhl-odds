@@ -44,7 +44,7 @@ export function GamesPage() {
       </div>
 
       <div className="flex justify-end mb-6">
-        <StrategyPicker />
+        <StrategyPicker betType={oddsType} />
       </div>
 
       {error && <div className="glass rounded-xl text-center text-red-500 py-8 px-4">{error}</div>}

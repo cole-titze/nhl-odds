@@ -16,6 +16,10 @@ const STRATEGY_COLORS: Record<string, string> = {
   'Value Bets': '#22c55e',
   'In-House Underdog': '#f97316',
   Confidence: '#a855f7',
+  'Spread Bet': '#3b82f6',
+  'Spread Value': '#22c55e',
+  'O/U Bet': '#3b82f6',
+  'O/U Value': '#22c55e',
 };
 
 interface Props {

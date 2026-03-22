@@ -4,9 +4,14 @@ import { Winner } from '../types';
 import { wasCorrectlyPredicted } from '../utils/predictions';
 import { useOddsFormatContext } from '../contexts/OddsFormatContext';
 import { getModelName } from '../utils/modelNames';
-import { formatOdds } from '../utils/oddsFormat';
+import { formatOdds, formatAmericanOdds } from '../utils/oddsFormat';
 import type { OddsType } from '../pages/GamesPage';
-import { checkStrategy, type BetFlag, type StrategyConfig } from '../utils/bettingStrategies';
+import {
+  checkStrategy,
+  STRATEGY_OPTIONS,
+  type BetFlag,
+  type StrategyConfig,
+} from '../utils/bettingStrategies';
 import { useStrategy } from '../contexts/StrategyContext';
 
 function getBestBetFlag(
@@ -75,10 +80,6 @@ function TeamSide({
   );
 }
 
-function formatPrice(price: number): string {
-  return price > 0 ? `+${price}` : `${price}`;
-}
-
 function formatPoint(point: number): string {
   return point > 0 ? `+${point}` : `${point}`;
 }
@@ -98,13 +99,13 @@ function BookmakerOddsRow({
     return (
       <div className="grid grid-cols-3 items-center text-[11px] font-mono mt-1">
         <span className={cellClass}>
-          {formatPoint(bm.awayPoint)} ({formatPrice(bm.awayPrice)})
+          {formatPoint(bm.awayPoint)} ({formatAmericanOdds(bm.awayPrice, format)})
         </span>
         <span className="text-center text-surface-400 dark:text-surface-500 truncate px-1">
           {bm.bookmakerName}
         </span>
         <span className={cellClass}>
-          {formatPoint(bm.homePoint)} ({formatPrice(bm.homePrice)})
+          {formatPoint(bm.homePoint)} ({formatAmericanOdds(bm.homePrice, format)})
         </span>
       </div>
     );
@@ -113,11 +114,11 @@ function BookmakerOddsRow({
   if (oddsType === 'overUnder') {
     return (
       <div className="grid grid-cols-3 items-center text-[11px] font-mono mt-1">
-        <span className={cellClass}>O {formatPrice(bm.overPrice)}</span>
+        <span className={cellClass}>O {formatAmericanOdds(bm.overPrice, format)}</span>
         <span className="text-center text-surface-400 dark:text-surface-500 truncate px-1">
           {bm.bookmakerName} ({bm.overUnderPoint})
         </span>
-        <span className={cellClass}>U {formatPrice(bm.underPrice)}</span>
+        <span className={cellClass}>U {formatAmericanOdds(bm.underPrice, format)}</span>
       </div>
     );
   }
@@ -133,7 +134,24 @@ function BookmakerOddsRow({
   );
 }
 
-function strategyBetWon(game: GameOddsVM, bet: BetFlag): boolean {
+function strategyBetWon(game: GameOddsVM, bet: BetFlag, strategy: StrategyConfig): boolean {
+  const opt = STRATEGY_OPTIONS.find((o) => o.type === strategy.type);
+  if (!opt || !game.homeTeam || !game.awayTeam) return false;
+
+  if (opt.betType === 'spread') {
+    const bk = game.bookmakerOdds?.find((b) => b.homePoint);
+    if (!bk) return false;
+    const margin = game.homeTeam.goals - game.awayTeam.goals;
+    return bet.side === 'home' ? margin + bk.homePoint > 0 : margin + bk.awayPoint > 0;
+  }
+
+  if (opt.betType === 'overUnder') {
+    const bk = game.bookmakerOdds?.find((b) => b.overUnderPoint);
+    if (!bk) return false;
+    const total = game.homeTeam.goals + game.awayTeam.goals;
+    return bet.side === 'home' ? total > bk.overUnderPoint : total < bk.overUnderPoint;
+  }
+
   return game.winner === (bet.side === 'home' ? Winner.HOME : Winner.AWAY);
 }
 
@@ -147,7 +165,7 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
     if (!game.hasBeenPlayed) {
       cardClass =
         'border-emerald-500/40 dark:border-emerald-500/20 !bg-emerald-50/30 dark:!bg-emerald-500/[0.03]';
-    } else if (strategyBetWon(game, valueBet)) {
+    } else if (strategyBetWon(game, valueBet, strategy)) {
       cardClass =
         'border-emerald-500/40 dark:border-emerald-500/20 !bg-emerald-50/30 dark:!bg-emerald-500/[0.03]';
     } else {
@@ -179,8 +197,20 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
                 clipRule="evenodd"
               />
             </svg>
-            Bet {valueBet.side === 'home' ? game.homeTeam?.teamName : game.awayTeam?.teamName} +
-            {(valueBet.edge * 100).toFixed(0)}%
+            {(() => {
+              const opt = STRATEGY_OPTIONS.find((o) => o.type === strategy.type);
+              if (opt?.betType === 'overUnder') {
+                return `${valueBet.side === 'home' ? 'Over' : 'Under'} +${valueBet.edge.toFixed(1)}`;
+              }
+              if (opt?.betType === 'spread') {
+                const label =
+                  valueBet.side === 'home' ? game.homeTeam?.teamName : game.awayTeam?.teamName;
+                return `${label} +${valueBet.edge.toFixed(1)}`;
+              }
+              const label =
+                valueBet.side === 'home' ? game.homeTeam?.teamName : game.awayTeam?.teamName;
+              return `Bet ${label} +${(valueBet.edge * 100).toFixed(0)}%`;
+            })()}
           </span>
         </div>
       )}
@@ -237,30 +267,27 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
             ) : oddsType === 'spread' ? (
               <>
                 <span className={`text-center stat-number ${oddsColor}`}>
-                  {game.predictedSpread != null ? formatPoint(-game.predictedSpread) : '-'}
+                  {game.predictedSpread != null
+                    ? formatPoint(+game.predictedSpread.toFixed(2))
+                    : '-'}
                 </span>
                 <span className="text-center text-surface-400 dark:text-surface-500">
                   {getModelName(game.modelId)}
                 </span>
                 <span className={`text-center stat-number ${oddsColor}`}>
-                  {game.predictedSpread != null ? formatPoint(game.predictedSpread) : '-'}
+                  {game.predictedSpread != null
+                    ? formatPoint(+(-game.predictedSpread).toFixed(2))
+                    : '-'}
                 </span>
               </>
             ) : (
               <>
-                <span className={`text-center stat-number ${oddsColor}`}>
-                  {game.totalOverProb != null ? `${(game.totalOverProb * 100).toFixed(0)}%` : '-'}
-                </span>
+                <span className={`text-center stat-number ${oddsColor}`}>{'-'}</span>
                 <span className="text-center text-surface-400 dark:text-surface-500">
-                  {game.predictedTotal != null
-                    ? game.predictedTotal.toFixed(1)
-                    : getModelName(game.modelId)}
+                  {getModelName(game.modelId)}
+                  {game.predictedTotal != null ? ` (${game.predictedTotal.toFixed(1)})` : ''}
                 </span>
-                <span className={`text-center stat-number ${oddsColor}`}>
-                  {game.totalOverProb != null
-                    ? `${((1 - game.totalOverProb) * 100).toFixed(0)}%`
-                    : '-'}
-                </span>
+                <span className={`text-center stat-number ${oddsColor}`}>{'-'}</span>
               </>
             )}
           </div>

@@ -1,23 +1,42 @@
+import { useEffect } from 'react';
 import { useStrategy } from '../contexts/StrategyContext';
-import { STRATEGY_OPTIONS, type StrategyType } from '../utils/bettingStrategies';
+import {
+  STRATEGY_OPTIONS,
+  type BetTypeCategory,
+  type StrategyType,
+} from '../utils/bettingStrategies';
 
-export function StrategyPicker() {
+interface Props {
+  betType?: BetTypeCategory;
+}
+
+export function StrategyPicker({ betType = 'moneyline' }: Props) {
   const { strategy, setStrategy } = useStrategy();
-  const current = STRATEGY_OPTIONS.find((o) => o.type === strategy.type);
+  const filtered = STRATEGY_OPTIONS.filter((o) => o.betType === betType);
+  const current = filtered.find((o) => o.type === strategy.type);
+
+  // When betType changes, switch to the first strategy of that type
+  useEffect(() => {
+    if (!filtered.some((o) => o.type === strategy.type)) {
+      const first = filtered[0];
+      const threshold = first?.thresholds?.[Math.floor((first.thresholds.length - 1) / 2)] ?? 0;
+      setStrategy({ type: first.type, threshold });
+    }
+  }, [betType, filtered, strategy.type, setStrategy]);
 
   return (
     <div className="flex flex-wrap items-center gap-2">
       <select
-        value={strategy.type}
+        value={current ? strategy.type : filtered[0]?.type}
         onChange={(e) => {
           const type = e.target.value as StrategyType;
-          const opt = STRATEGY_OPTIONS.find((o) => o.type === type);
+          const opt = filtered.find((o) => o.type === type);
           const threshold = opt?.thresholds?.[Math.floor((opt.thresholds.length - 1) / 2)] ?? 0;
           setStrategy({ type, threshold });
         }}
         className="glass px-3 py-1.5 rounded-lg text-xs font-medium bg-transparent border-0 cursor-pointer text-surface-700 dark:text-surface-300"
       >
-        {STRATEGY_OPTIONS.map((opt) => (
+        {filtered.map((opt) => (
           <option key={opt.type} value={opt.type}>
             {opt.label}
           </option>
@@ -35,7 +54,7 @@ export function StrategyPicker() {
                   : 'glass text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200'
               }`}
             >
-              {`${(t * 100).toFixed(0)}%`}
+              {current.thresholdFormat === 'goals' ? t : `${(t * 100).toFixed(0)}%`}
             </button>
           ))}
         </div>

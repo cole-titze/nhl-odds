@@ -4,7 +4,7 @@ import type { GameOddsVM, BookmakerOddsVM } from '../types';
 import { Winner } from '../types';
 import { getGameOddsInDateRange } from '../api/gameOdds';
 import { useOddsFormatContext } from '../contexts/OddsFormatContext';
-import { formatOdds } from '../utils/oddsFormat';
+import { formatOdds, formatAmericanOdds } from '../utils/oddsFormat';
 import { getModelName } from '../utils/modelNames';
 import {
   wasCorrectlyPredicted,
@@ -15,10 +15,6 @@ import { checkStrategy } from '../utils/bettingStrategies';
 import { useStrategy } from '../contexts/StrategyContext';
 import { StrategyPicker } from '../components/StrategyPicker';
 import { Skeleton } from '../components/Skeleton';
-
-function formatPrice(price: number): string {
-  return price > 0 ? `+${price}` : `${price}`;
-}
 
 function formatPoint(point: number): string {
   return point > 0 ? `+${point}` : `${point}`;
@@ -172,7 +168,7 @@ export function GamePage() {
                 </div>
                 <div className="stat-number text-lg text-accent-500">
                   {game.predictedSpread > 0 ? '+' : ''}
-                  {game.predictedSpread.toFixed(1)}
+                  {game.predictedSpread.toFixed(2)}
                 </div>
                 {game.spreadCoverProb != null && (
                   <div className="text-xs text-surface-400 dark:text-surface-500 mt-1">
@@ -347,16 +343,24 @@ function BookmakerRow({
         {formatOdds(bm.homeOdds, format)}
       </td>
       <td className={cellClass}>
-        {bm.awayPoint ? `${formatPoint(bm.awayPoint)} (${formatPrice(bm.awayPrice)})` : '-'}
+        {bm.awayPoint
+          ? `${formatPoint(bm.awayPoint)} (${formatAmericanOdds(bm.awayPrice, format)})`
+          : '-'}
       </td>
       <td className={cellClass}>
-        {bm.homePoint ? `${formatPoint(bm.homePoint)} (${formatPrice(bm.homePrice)})` : '-'}
+        {bm.homePoint
+          ? `${formatPoint(bm.homePoint)} (${formatAmericanOdds(bm.homePrice, format)})`
+          : '-'}
       </td>
       <td className={cellClass}>
-        {bm.overPrice ? `O ${bm.overUnderPoint} (${formatPrice(bm.overPrice)})` : '-'}
+        {bm.overPrice
+          ? `O ${bm.overUnderPoint} (${formatAmericanOdds(bm.overPrice, format)})`
+          : '-'}
       </td>
       <td className={cellClass}>
-        {bm.underPrice ? `U ${bm.overUnderPoint} (${formatPrice(bm.underPrice)})` : '-'}
+        {bm.underPrice
+          ? `U ${bm.overUnderPoint} (${formatAmericanOdds(bm.underPrice, format)})`
+          : '-'}
       </td>
       {game.hasBeenPlayed && (
         <td className={cellClass}>

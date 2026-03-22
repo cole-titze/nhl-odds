@@ -13,3 +13,12 @@ export function formatOdds(probability: number, format: OddsFormat): string {
 
   return `+${Math.round(((1 - probability) / probability) * 100)}`;
 }
+
+export function formatAmericanOdds(price: number, format: OddsFormat): string {
+  if (format === 'vegas') {
+    return price > 0 ? `+${price}` : `${price}`;
+  }
+  // Convert American odds to implied probability
+  const prob = price < 0 ? Math.abs(price) / (Math.abs(price) + 100) : 100 / (price + 100);
+  return `${(prob * 100).toFixed(0)}%`;
+}
