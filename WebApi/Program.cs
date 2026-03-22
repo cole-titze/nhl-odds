@@ -57,7 +57,8 @@ if (app.Environment.IsDevelopment())
 }
 app.UseCors(MyAllowSpecificOrigins);
 
-if (!app.Environment.IsDevelopment())
+// HTTPS is handled by the reverse proxy (nginx/Cloudflare), not the API
+if (app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }

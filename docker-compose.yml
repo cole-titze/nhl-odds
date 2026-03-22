@@ -3,6 +3,7 @@ services:
     build:
       context: ./database
       dockerfile: Dockerfile
+    restart: always
     environment:
       - MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in your environment}
     ports:
@@ -20,10 +21,11 @@ services:
     build:
       context: .
       dockerfile: WebApi/Dockerfile
+    restart: always
     environment:
       - NHL_DATABASE=Server=database;Database=nhl;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
-    ports:
-      - "32616:8080"
+      - ODDS_API_KEY=${ODDS_API_KEY:-}
+      - API_BACKFILL_KEY=${API_BACKFILL_KEY:-}
     depends_on:
       database:
         condition: service_healthy
@@ -32,6 +34,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    restart: always
     ports:
       - "8081:80"
     depends_on:

@@ -4,5 +4,13 @@
 .github/
 .venv/
 .vs/
+.vscode/
+.claude/
 game_predictor/settings.local.json
 DataCleaner.Tests/
+WebApi.Tests/
+frontend/node_modules/
+frontend/dist/
+Entry/appsettings.Local.json
+WebApi/appsettings.Local.json
+WebApi/appsettings.Development.json
