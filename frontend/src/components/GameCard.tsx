@@ -222,15 +222,47 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
         />
         <div className="col-span-3 mt-2 pt-2 border-t border-surface-200/50 dark:border-white/[0.04]">
           <div className="grid grid-cols-3 items-center text-[11px] font-mono">
-            <span className={`text-center stat-number ${oddsColor}`}>
-              {game.awayTeam ? formatOdds(game.awayTeam.modelOdds, format) : '-'}
-            </span>
-            <span className="text-center text-surface-400 dark:text-surface-500">
-              {getModelName(game.modelId)}
-            </span>
-            <span className={`text-center stat-number ${oddsColor}`}>
-              {game.homeTeam ? formatOdds(game.homeTeam.modelOdds, format) : '-'}
-            </span>
+            {oddsType === 'moneyline' ? (
+              <>
+                <span className={`text-center stat-number ${oddsColor}`}>
+                  {game.awayTeam ? formatOdds(game.awayTeam.modelOdds, format) : '-'}
+                </span>
+                <span className="text-center text-surface-400 dark:text-surface-500">
+                  {getModelName(game.modelId)}
+                </span>
+                <span className={`text-center stat-number ${oddsColor}`}>
+                  {game.homeTeam ? formatOdds(game.homeTeam.modelOdds, format) : '-'}
+                </span>
+              </>
+            ) : oddsType === 'spread' ? (
+              <>
+                <span className={`text-center stat-number ${oddsColor}`}>
+                  {game.predictedSpread != null ? formatPoint(-game.predictedSpread) : '-'}
+                </span>
+                <span className="text-center text-surface-400 dark:text-surface-500">
+                  {getModelName(game.modelId)}
+                </span>
+                <span className={`text-center stat-number ${oddsColor}`}>
+                  {game.predictedSpread != null ? formatPoint(game.predictedSpread) : '-'}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className={`text-center stat-number ${oddsColor}`}>
+                  {game.totalOverProb != null ? `${(game.totalOverProb * 100).toFixed(0)}%` : '-'}
+                </span>
+                <span className="text-center text-surface-400 dark:text-surface-500">
+                  {game.predictedTotal != null
+                    ? game.predictedTotal.toFixed(1)
+                    : getModelName(game.modelId)}
+                </span>
+                <span className={`text-center stat-number ${oddsColor}`}>
+                  {game.totalOverProb != null
+                    ? `${((1 - game.totalOverProb) * 100).toFixed(0)}%`
+                    : '-'}
+                </span>
+              </>
+            )}
           </div>
           {game.bookmakerOdds?.length > 0 &&
             (() => {

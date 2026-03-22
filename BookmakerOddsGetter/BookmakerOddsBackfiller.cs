@@ -10,7 +10,7 @@ namespace BookmakerOddsGetter;
 
 public class BookmakerOddsBackfiller
 {
-    private const int BACKFILL_START_YEAR = 2024;
+    private const int BACKFILL_START_YEAR = 2009;
     private readonly NhlDbContext _dbContext;
     private readonly IBookmakerOddsRepository _bookmakerOddsRepo;
     private readonly IOddsApiGetter _oddsApiGetter;
@@ -44,13 +44,20 @@ public class BookmakerOddsBackfiller
             .GroupBy(t => t.SeasonStartYear)
             .ToDictionary(g => g.Key, g => g.ToDictionary(t => t.TeamId, t => t.Name));
 
-        foreach (var season in seasons)
+        try
         {
-            _logger.LogInformation("Season {Season}: backfilling odds...", season);
-            await BackfillSeason(season, seasonTeamsByYear);
-        }
+            foreach (var season in seasons)
+            {
+                _logger.LogInformation("Season {Season}: backfilling odds...", season);
+                await BackfillSeason(season, seasonTeamsByYear);
+            }
 
-        _logger.LogInformation("Backfill complete.");
+            _logger.LogInformation("Backfill complete.");
+        }
+        catch (OddsApiRateLimitException)
+        {
+            _logger.LogWarning("Rate limited by Odds API (429). Stopping backfill — progress has been saved.");
+        }
     }
 
     private async Task BackfillSeason(int seasonStartYear, Dictionary<int, Dictionary<int, string>> seasonTeamsByYear)
@@ -125,18 +132,22 @@ public class BookmakerOddsBackfiller
         _logger.LogInformation("Fetching historical odds for {Date}...", gameDate.ToString("yyyy-MM-dd"));
         var apiResult = await _oddsApiGetter.GetHistoricalOdds(queryDate);
 
+        var remaining = _oddsApiGetter.GetRemainingRequests();
+        if (remaining.HasValue)
+            _logger.LogInformation("Odds API requests remaining: {Remaining}", remaining.Value);
+
+        // Cache even empty responses so we don't re-fetch dates with no data
+        if (!string.IsNullOrEmpty(apiResult.RawJson))
+        {
+            await _bookmakerOddsRepo.SaveRawResponse(apiResult.RawJson, queryDate);
+            await _bookmakerOddsRepo.Commit();
+        }
+
         if (!apiResult.Responses.Any())
         {
             _logger.LogWarning("No historical odds returned for {Date}", gameDate.ToString("yyyy-MM-dd"));
             return null;
         }
-
-        await _bookmakerOddsRepo.SaveRawResponse(apiResult.RawJson, queryDate);
-        await _bookmakerOddsRepo.Commit();
-
-        var remaining = _oddsApiGetter.GetRemainingRequests();
-        if (remaining.HasValue)
-            _logger.LogInformation("Odds API requests remaining: {Remaining}", remaining.Value);
 
         return apiResult.Responses;
     }

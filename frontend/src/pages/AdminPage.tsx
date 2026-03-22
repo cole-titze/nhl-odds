@@ -125,8 +125,13 @@ function JobCard({ job, label, onStart }: { job: JobInfo; label: string; onStart
 }
 
 function countClass(count: number) {
+  if (count < 0) return 'text-surface-400 dark:text-surface-500';
   if (count === 0) return 'text-emerald-500';
   return 'text-red-500 dark:text-red-400';
+}
+
+function countDisplay(count: number) {
+  return count < 0 ? '-' : count;
 }
 
 function HealthCheckRow({ check }: { check: SeasonHealthCheck }) {
@@ -158,6 +163,8 @@ function HealthCheckRow({ check }: { check: SeasonHealthCheck }) {
     check.liveBookmakerOdds > 0 ||
     check.errorCount > 0;
 
+  const cd = countDisplay;
+
   return (
     <>
       <tr
@@ -180,7 +187,7 @@ function HealthCheckRow({ check }: { check: SeasonHealthCheck }) {
         <td
           className={`px-4 py-3 stat-number text-sm text-center ${countClass(check.missingBookmakerOdds)}`}
         >
-          {check.missingBookmakerOdds}
+          {cd(check.missingBookmakerOdds)}
         </td>
         <td
           className={`px-4 py-3 stat-number text-sm text-center ${countClass(check.missingGameCleaned)}`}

@@ -114,6 +114,10 @@ public class AdminController
 
         var gameOddsGameIds = new HashSet<int>(
             await _db.GameOdds.Select(go => go.GameId).Distinct().ToListAsync());
+        var spreadGameIds = new HashSet<int>(
+            await _db.GameSpreadTotalOdds.Where(st => st.ModelId == 2).Select(st => st.GameId).Distinct().ToListAsync());
+        var totalGameIds = new HashSet<int>(
+            await _db.GameSpreadTotalOdds.Where(st => st.ModelId == 3).Select(st => st.GameId).Distinct().ToListAsync());
         var liveBookmakerOddsGameIds = new HashSet<int>(
             await _db.BookmakerOdds
                 .Join(_db.GameRaw, bo => bo.GameId, g => g.Id, (bo, g) => new { bo.GameId, bo.MarketLastUpdate, g.GameDateUTC })
@@ -123,16 +127,21 @@ public class AdminController
                 .ToListAsync());
         var bookmakerGameIds = new HashSet<int>(
             await _db.BookmakerOdds.Select(bo => bo.GameId).Distinct().ToListAsync());
+        var spreadBookmakerGameIds = new HashSet<int>(
+            await _db.BookmakerSpreads.Select(bs => bs.GameId).Distinct().ToListAsync());
+        var totalBookmakerGameIds = new HashSet<int>(
+            await _db.BookmakerTotals.Select(bt => bt.GameId).Distinct().ToListAsync());
         var cleanedGameIds = new HashSet<int>(
             await _db.GameCleaned.Select(gc => gc.GameId).Distinct().ToListAsync());
 
-        // QueryDateUTC in UTC maps to the game date
-        // (old: 10pm Central night before, new: 6am Central game day — both .Date = game date)
+        // Convert fetch dates to Central time to match game dates
+        var centralZone = TimeZoneInfo.FindSystemTimeZoneById("America/Chicago");
         var oddsFetchDateRaws = await _db.BookmakerOddsResponse
             .Where(r => r.QueryDateUTC != null)
             .Select(r => r.QueryDateUTC!.Value)
             .ToListAsync();
-        var oddsFetchDateSet = new HashSet<DateTime>(oddsFetchDateRaws.Select(d => d.Date));
+        var oddsFetchDateSet = new HashSet<DateTime>(
+            oddsFetchDateRaws.Select(d => TimeZoneInfo.ConvertTimeFromUtc(d, centralZone).Date));
 
         var errorCounts = await _db.ErrorLog
             .GroupBy(e => e.SeasonStartYear)
@@ -150,14 +159,22 @@ public class AdminController
                 var allGames = g.ToList();
                 var playedBeforeToday = allGames.Where(x => x.HasBeenPlayed && x.GameDateUTC.Date < today).ToList();
                 var playedThroughToday = allGames.Where(x => x.HasBeenPlayed && x.GameDateUTC.Date <= today).ToList();
-                var gameDates = playedBeforeToday.Select(x => x.GameDateUTC.Date).Distinct().ToList();
+                // Use Central time dates to match the backfiller's fetch dates
+                var gameDates = playedBeforeToday
+                    .Select(x => TimeZoneInfo.ConvertTimeFromUtc(x.GameDateUTC, centralZone).Date)
+                    .Distinct().ToList();
                 return new SeasonHealthCheckVM
                 {
                     SeasonStartYear = g.Key,
                     TotalGames = allGames.Count,
                     PlayedGames = playedThroughToday.Count,
-                    MissingPredictions = allGames.Count(x => !gameOddsGameIds.Contains(x.Id)),
-                    MissingBookmakerOdds = playedThroughToday.Count(x => !bookmakerGameIds.Contains(x.Id)),
+                    MissingPredictions = allGames.Count(x => !gameOddsGameIds.Contains(x.Id))
+                        + allGames.Count(x => !spreadGameIds.Contains(x.Id))
+                        + allGames.Count(x => !totalGameIds.Contains(x.Id)),
+                    MissingBookmakerOdds = g.Key < 2020 ? -1
+                        : playedThroughToday.Count(x => !bookmakerGameIds.Contains(x.Id))
+                        + playedThroughToday.Count(x => !spreadBookmakerGameIds.Contains(x.Id))
+                        + playedThroughToday.Count(x => !totalBookmakerGameIds.Contains(x.Id)),
                     MissingGameCleaned = allGames.Count(x => !cleanedGameIds.Contains(x.Id)),
                     MissingOddsFetchDays = gameDates.Count(d => !oddsFetchDateSet.Contains(d)),
                     LiveBookmakerOdds = allGames.Count(x => liveBookmakerOddsGameIds.Contains(x.Id)),

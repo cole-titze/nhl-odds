@@ -1,3 +1,4 @@
+using System.Net;
 using Entities.ServiceModels.OddsApi;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -30,6 +31,9 @@ public class OddsApiGetter : IOddsApiGetter
             var response = await _httpClient.GetAsync(url);
             ReadRemainingRequests(response);
 
+            if (response.StatusCode == HttpStatusCode.TooManyRequests)
+                throw new OddsApiRateLimitException("Odds API rate limit reached (429)");
+
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError("Odds API request failed with status {StatusCode}", response.StatusCode);
@@ -61,6 +65,9 @@ public class OddsApiGetter : IOddsApiGetter
         {
             var response = await _httpClient.GetAsync(url);
             ReadRemainingRequests(response);
+
+            if (response.StatusCode == HttpStatusCode.TooManyRequests)
+                throw new OddsApiRateLimitException("Odds API rate limit reached (429)");
 
             if (!response.IsSuccessStatusCode)
             {

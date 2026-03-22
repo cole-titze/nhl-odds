@@ -14,3 +14,8 @@ public class OddsApiResult
     public List<OddsApiResponse> Responses { get; set; } = new();
     public string RawJson { get; set; } = string.Empty;
 }
+
+public class OddsApiRateLimitException : Exception
+{
+    public OddsApiRateLimitException(string message) : base(message) { }
+}

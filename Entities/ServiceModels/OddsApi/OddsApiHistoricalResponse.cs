@@ -5,7 +5,7 @@ namespace Entities.ServiceModels.OddsApi;
 public class OddsApiHistoricalResponse
 {
     [JsonProperty("timestamp")]
-    public DateTime Timestamp { get; set; }
+    public DateTime? Timestamp { get; set; }
     [JsonProperty("previous_timestamp")]
     public DateTime? PreviousTimestamp { get; set; }
     [JsonProperty("next_timestamp")]
