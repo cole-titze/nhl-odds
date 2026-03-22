@@ -52,23 +52,29 @@ docker cp azuresqledge:/var/opt/mssql/backup/nhl.bak ./nhl.bak
 
 # Docker Deployment
 
-Deploy the full stack (database, API, frontend) with Docker Compose. Designed to run on a Raspberry Pi or any ARM64/x86 host.
+Deploy the full stack (database, API, frontend) using pre-built images from GitHub Container Registry. No repo clone needed.
 
-## Quick Start
+## 1. Create a project directory
 
 ```bash
-# Copy env template and fill in your values
-cp .env.example .env
-
-# Start all services
-docker compose up -d
+mkdir ~/nhl-odds && cd ~/nhl-odds
 ```
 
-The site will be available at `http://<host-ip>:8081`.
+## 2. Download the production compose file
 
-## Environment Variables
+```bash
+curl -o docker-compose.yml https://raw.githubusercontent.com/cole-titze/nhl-odds/main/docker-compose.prod.yml
+```
 
-Set these in `.env`:
+## 3. Create a `.env` file
+
+```bash
+cat > .env <<'EOF'
+MSSQL_SA_PASSWORD=YourSecurePassword123!
+ODDS_API_KEY=your-odds-api-key
+API_BACKFILL_KEY=your-backfill-api-key
+EOF
+```
 
 | Variable | Required | Description |
 |---|---|---|
@@ -76,7 +82,21 @@ Set these in `.env`:
 | `ODDS_API_KEY` | No | The Odds API key for daily odds fetching |
 | `API_BACKFILL_KEY` | No | The Odds API key for historical odds backfill |
 
-## Services
+## 4. Log in to GitHub Container Registry
+
+```bash
+echo "YOUR_GITHUB_PAT" | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+```
+
+Needs a [GitHub Personal Access Token](https://github.com/settings/tokens) with `read:packages` scope.
+
+## 5. Start the services
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+The site will be available at `http://<host-ip>:8081`.
 
 | Service | Port | Description |
 |---|---|---|
@@ -84,26 +104,16 @@ Set these in `.env`:
 | `webapi` | 8080 (internal) | .NET API + Python predictor + scheduled jobs |
 | `frontend` | 8081 | Nginx serving React app, proxies `/api/` to webapi |
 
-## Restore a Database Backup
+## 6. Auto-update nightly
 
 ```bash
-# Copy backup into the running container
-docker cp nhl.bak nhl-odds-database-1:/var/opt/mssql/backup/nhl.bak
-
-# Restore (replace <PASSWORD> with your MSSQL_SA_PASSWORD)
-docker exec nhl-odds-database-1 /opt/mssql-tools/bin/sqlcmd \
-  -S localhost -U SA -P '<PASSWORD>' \
-  -Q "RESTORE DATABASE [nhl] FROM DISK = N'/var/opt/mssql/backup/nhl.bak' WITH REPLACE"
+crontab -e
 ```
 
-## Create a Database Backup
+Add this line (runs at 2:00 AM, before the 3 AM data collection):
 
-```bash
-docker exec nhl-odds-database-1 /opt/mssql-tools/bin/sqlcmd \
-  -S localhost -U SA -P '<PASSWORD>' \
-  -Q "BACKUP DATABASE [nhl] TO DISK = N'/var/opt/mssql/backup/nhl.bak' WITH FORMAT"
-
-docker cp nhl-odds-database-1:/var/opt/mssql/backup/nhl.bak ./nhl.bak
+```
+0 2 * * * cd ~/nhl-odds && docker compose pull -q && docker compose up -d --remove-orphans >> /var/log/nhl-odds-update.log 2>&1
 ```
 
 ## Scheduled Jobs
@@ -114,6 +124,32 @@ The API container runs two daily jobs automatically:
 - **6:00 AM** — Odds fetch + prediction (fetches bookmaker odds, then runs the ML predictor)
 
 Jobs can also be triggered manually from the Admin page.
+
+## Database Backup / Restore
+
+```bash
+# Backup
+docker exec nhl-odds-database-1 /opt/mssql-tools/bin/sqlcmd \
+  -S localhost -U SA -P '<PASSWORD>' \
+  -Q "BACKUP DATABASE [nhl] TO DISK = N'/var/opt/mssql/backup/nhl.bak' WITH FORMAT"
+docker cp nhl-odds-database-1:/var/opt/mssql/backup/nhl.bak ./nhl.bak
+
+# Restore
+docker cp nhl.bak nhl-odds-database-1:/var/opt/mssql/backup/nhl.bak
+docker exec nhl-odds-database-1 /opt/mssql-tools/bin/sqlcmd \
+  -S localhost -U SA -P '<PASSWORD>' \
+  -Q "RESTORE DATABASE [nhl] FROM DISK = N'/var/opt/mssql/backup/nhl.bak' WITH REPLACE"
+```
+
+## CI/CD
+
+Images are automatically built and pushed to GHCR on every push to `main`:
+
+| Image | Workflow | Triggers |
+|-------|----------|----------|
+| `ghcr.io/cole-titze/nhl-odds/webapi` | `webapi-build.yml` | WebApi, DatabaseAccess, Entities, WebBusinessLogic changes |
+| `ghcr.io/cole-titze/nhl-odds/frontend` | `frontend-build.yml` | frontend/ changes |
+| `ghcr.io/cole-titze/nhl-odds/database` | `docker-build.yml` | database/ changes |
 
 ## Cloudflare Tunnel
 
