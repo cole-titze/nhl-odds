@@ -1,6 +1,9 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using DatabaseAccess;
+using Entities.DbModels;
 using Entities.ViewModels;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 
 namespace WebApi.BusinessLogic.JobService;
@@ -11,16 +14,20 @@ public class JobService : IJobService
     private readonly ConcurrentDictionary<string, object> _locks = new();
     private readonly ConcurrentDictionary<string, TaskCompletionSource> _completionSources = new();
     private readonly ILogger<JobService> _logger;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly CancellationToken _appStopping;
+    private bool _loaded;
 
-    public JobService(ILogger<JobService> logger, IHostApplicationLifetime lifetime)
+    public JobService(ILogger<JobService> logger, IHostApplicationLifetime lifetime, IServiceScopeFactory scopeFactory)
     {
         _logger = logger;
+        _scopeFactory = scopeFactory;
         _appStopping = lifetime.ApplicationStopping;
     }
 
     public JobInfoVM GetStatus(string jobName)
     {
+        LoadFromDb();
         return _jobs.GetOrAdd(jobName, name => new JobInfoVM { Id = name, Name = name });
     }
 
@@ -143,6 +150,68 @@ public class JobService : IJobService
         finally
         {
             job.FinishedAt = DateTime.UtcNow;
+            SaveToDb(job);
+        }
+    }
+
+    private void LoadFromDb()
+    {
+        if (_loaded) return;
+        _loaded = true;
+
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<GameDbContext>();
+            var rows = db.JobStatus.AsNoTracking().ToList();
+
+            foreach (var row in rows)
+            {
+                var job = _jobs.GetOrAdd(row.JobName, name => new JobInfoVM { Id = name, Name = name });
+                job.Status = row.Status;
+                job.StartedAt = row.StartedAt;
+                job.FinishedAt = row.FinishedAt;
+                job.Error = row.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to load job statuses from database");
+        }
+    }
+
+    private void SaveToDb(JobInfoVM job)
+    {
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<GameDbContext>();
+            var existing = db.JobStatus.Find(job.Name);
+
+            if (existing != null)
+            {
+                existing.Status = job.Status;
+                existing.StartedAt = job.StartedAt;
+                existing.FinishedAt = job.FinishedAt;
+                existing.Error = job.Error;
+            }
+            else
+            {
+                db.JobStatus.Add(new DbJobStatus
+                {
+                    JobName = job.Name,
+                    Status = job.Status,
+                    StartedAt = job.StartedAt,
+                    FinishedAt = job.FinishedAt,
+                    Error = job.Error,
+                });
+            }
+
+            db.SaveChanges();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to save job status for {JobName}", job.Name);
         }
     }
 }

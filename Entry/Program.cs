@@ -15,17 +15,19 @@ ServiceProvider serviceProvider = new ServiceCollection()
 var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
 
 var dataGetter = new DataGetterEntry(loggerFactory);
+var runModeEnv = Environment.GetEnvironmentVariable("RUN_MODE");
 var settings = new ModeSettings()
 {
     ConnectionString = Environment.GetEnvironmentVariable("NHL_DATABASE") ?? string.Empty,
-    Mode = ModeTypeParser.ParseFromString(Environment.GetEnvironmentVariable("RUN_MODE")),
+    Mode = ModeTypeParser.ParseFromString(runModeEnv),
     OddsApiKey = Environment.GetEnvironmentVariable("ODDS_API_KEY") ?? string.Empty,
 };
 
 if (settings.ConnectionString.IsNullOrEmpty())
 {
     var config = new ConfigurationBuilder().AddJsonFile("appsettings.Local.json").Build();
-    settings.Mode = ModeTypeParser.ParseFromString(config["ModeSettings:RUN_MODE"]);
+    if (runModeEnv == null)
+        settings.Mode = ModeTypeParser.ParseFromString(config["ModeSettings:RUN_MODE"]);
     settings.ThrottleTimeMs = int.Parse(config["ModeSettings:THROTTLE_TIME_MS"] ?? "0");
     settings.ConnectionString = config.GetConnectionString("NHL_DATABASE") ?? string.Empty;
     if (string.IsNullOrEmpty(settings.OddsApiKey))

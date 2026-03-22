@@ -183,4 +183,14 @@ public static class OddsApiResponseMapper
         else
             return 100.0 / (americanOdds + 100.0);
     }
+
+    public static int ImpliedProbabilityToAmerican(double prob)
+    {
+        if (prob <= 0 || prob >= 1)
+            return prob >= 1 ? -10000 : 10000;
+        if (prob >= 0.5)
+            return (int)Math.Round(-(prob / (1.0 - prob)) * 100.0);
+        else
+            return (int)Math.Round((1.0 - prob) / prob * 100.0);
+    }
 }

@@ -23,7 +23,11 @@ export interface JobInfo {
 
 export interface JobStatuses {
   dataCollection: JobInfo;
+  oddsFetch: JobInfo;
   prediction: JobInfo;
+  oddsBackfill: JobInfo;
+  predictionBackfill: JobInfo;
+  kalshiFetch: JobInfo;
 }
 
 export async function getJobStatuses(): Promise<JobStatuses> {
@@ -43,6 +47,24 @@ export async function startDataCollection(): Promise<{ message: string }> {
 
 export async function startPrediction(): Promise<{ message: string }> {
   const res = await fetch(`${BASE_URL}/api/Admin/StartPrediction`, { method: 'POST' });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message || `API error: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function startOddsBackfill(): Promise<{ message: string }> {
+  const res = await fetch(`${BASE_URL}/api/Admin/StartOddsBackfill`, { method: 'POST' });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message || `API error: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function startPredictionBackfill(): Promise<{ message: string }> {
+  const res = await fetch(`${BASE_URL}/api/Admin/StartPredictionBackfill`, { method: 'POST' });
   if (!res.ok) {
     const body = await res.json().catch(() => null);
     throw new Error(body?.message || `API error: ${res.status}`);

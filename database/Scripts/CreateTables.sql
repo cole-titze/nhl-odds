@@ -803,6 +803,16 @@ CREATE TABLE [dbo].[BookmakerTotals]
     FOREIGN KEY (GameId) REFERENCES GameRaw(Id),
 );
 
+CREATE TABLE [dbo].[JobStatus]
+(
+    JobName VARCHAR(100) NOT NULL,
+    Status VARCHAR(20) NOT NULL DEFAULT 'idle',
+    StartedAt DATETIME2 NULL,
+    FinishedAt DATETIME2 NULL,
+    Error VARCHAR(MAX) NULL,
+    CONSTRAINT PK_JobStatus PRIMARY KEY(JobName)
+);
+
 CREATE TABLE [dbo].[ErrorLog]
 (
     Id INT IDENTITY(1,1) NOT NULL,

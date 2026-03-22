@@ -4,33 +4,29 @@ using Entities.ServiceModels.Mappers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Services.Kalshi;
-using Services.OddsApi;
 
 namespace BookmakerOddsGetter;
 
-public class BookmakerOddsFetcher
+public class KalshiOddsFetcher
 {
     private readonly NhlDbContext _dbContext;
     private readonly IBookmakerOddsRepository _bookmakerOddsRepo;
-    private readonly IOddsApiGetter _oddsApiGetter;
     private readonly IKalshiGetter _kalshiGetter;
-    private readonly ILogger<BookmakerOddsFetcher> _logger;
+    private readonly ILogger<KalshiOddsFetcher> _logger;
 
-    public BookmakerOddsFetcher(
+    public KalshiOddsFetcher(
         NhlDbContext dbContext,
         IBookmakerOddsRepository bookmakerOddsRepo,
-        IOddsApiGetter oddsApiGetter,
-        ILoggerFactory loggerFactory,
-        IKalshiGetter kalshiGetter)
+        IKalshiGetter kalshiGetter,
+        ILoggerFactory loggerFactory)
     {
         _dbContext = dbContext;
         _bookmakerOddsRepo = bookmakerOddsRepo;
-        _oddsApiGetter = oddsApiGetter;
         _kalshiGetter = kalshiGetter;
-        _logger = loggerFactory.CreateLogger<BookmakerOddsFetcher>();
+        _logger = loggerFactory.CreateLogger<KalshiOddsFetcher>();
     }
 
-    public async Task FetchAndSaveBookmakerOdds()
+    public async Task FetchAndSaveKalshiOdds()
     {
         var unplayedGames = await _dbContext.GameRaw
             .Where(g => !g.HasBeenPlayed)
@@ -39,7 +35,7 @@ public class BookmakerOddsFetcher
 
         if (!unplayedGames.Any())
         {
-            _logger.LogInformation("No unplayed games found. Skipping bookmaker odds fetch.");
+            _logger.LogInformation("No unplayed games found. Skipping Kalshi fetch.");
             return;
         }
 
@@ -56,33 +52,7 @@ public class BookmakerOddsFetcher
         var gameInfoList = BookmakerOddsHelper.BuildGameInfoList(
             unplayedGames.Select(g => new GameRef(g.Id, g.HomeTeamId, g.AwayTeamId)), seasonTeams, gameDates);
 
-        // Fetch from The Odds API
-        _logger.LogInformation("Fetching bookmaker odds for {Count} games...", unplayedGames.Count);
-        var apiResult = await _oddsApiGetter.GetUpcomingOdds();
-
-        if (!apiResult.Responses.Any())
-        {
-            _logger.LogWarning("No odds returned from The Odds API.");
-        }
-        else
-        {
-            await _bookmakerOddsRepo.SaveRawResponse(apiResult.RawJson);
-
-            BookmakerOddsHelper.LogMatchingDetails(_logger, apiResult.Responses, gameInfoList);
-            await BookmakerOddsHelper.MapAndSave(_logger, _bookmakerOddsRepo, apiResult.Responses, gameInfoList);
-
-            var remaining = _oddsApiGetter.GetRemainingRequests();
-            if (remaining.HasValue)
-                _logger.LogInformation("Odds API requests remaining: {Remaining}", remaining.Value);
-        }
-
-        // Fetch from Kalshi
-        await FetchAndSaveKalshiOdds(gameInfoList);
-    }
-
-    private async Task FetchAndSaveKalshiOdds(List<OddsApiResponseMapper.GameInfo> gameInfoList)
-    {
-        _logger.LogInformation("Fetching Kalshi odds...");
+        _logger.LogInformation("Fetching Kalshi odds for {Count} games...", unplayedGames.Count);
 
         var gameMarkets = await _kalshiGetter.GetOpenMarkets("KXNHLGAME");
         var spreadMarkets = await _kalshiGetter.GetOpenMarkets("KXNHLSPREAD");
@@ -96,19 +66,9 @@ public class BookmakerOddsFetcher
             return;
         }
 
-        // Deduplicate by composite key
-        var h2h = mapped.H2H
-            .GroupBy(x => (x.GameId, x.BookmakerName))
-            .Select(g => g.First())
-            .ToList();
-        var spreads = mapped.Spreads
-            .GroupBy(x => (x.GameId, x.BookmakerName))
-            .Select(g => g.First())
-            .ToList();
-        var totals = mapped.Totals
-            .GroupBy(x => (x.GameId, x.BookmakerName))
-            .Select(g => g.First())
-            .ToList();
+        var h2h = mapped.H2H.GroupBy(x => (x.GameId, x.BookmakerName)).Select(g => g.First()).ToList();
+        var spreads = mapped.Spreads.GroupBy(x => (x.GameId, x.BookmakerName)).Select(g => g.First()).ToList();
+        var totals = mapped.Totals.GroupBy(x => (x.GameId, x.BookmakerName)).Select(g => g.First()).ToList();
 
         if (h2h.Any())
             await _bookmakerOddsRepo.AddOrUpdateBookmakerOdds(h2h);

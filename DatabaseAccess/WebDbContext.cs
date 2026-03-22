@@ -18,6 +18,7 @@ public partial class GameDbContext : DbContext
     public virtual DbSet<DbGameCleaned> GameCleaned { get; set; } = null!;
     public virtual DbSet<DbBookmakerOddsResponse> BookmakerOddsResponse { get; set; } = null!;
     public virtual DbSet<DbGameSpreadTotalOdds> GameSpreadTotalOdds { get; set; } = null!;
+    public virtual DbSet<DbJobStatus> JobStatus { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

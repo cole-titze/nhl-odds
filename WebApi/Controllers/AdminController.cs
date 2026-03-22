@@ -16,6 +16,10 @@ public class AdminController
 
     private const string DataCollectionJob = "data-collection";
     private const string PredictionJob = "prediction";
+    private const string OddsFetchJob = "odds-fetch";
+    private const string OddsBackfillJob = "odds-backfill";
+    private const string PredictionBackfillJob = "prediction-backfill";
+    private const string KalshiFetchJob = "kalshi-fetch";
 
     public AdminController(IJobService jobService, IConfiguration configuration, GameDbContext db)
     {
@@ -50,7 +54,8 @@ public class AdminController
             DataCollectionJob,
             "dotnet",
             "run --project Entry --no-build",
-            repoRoot);
+            repoRoot,
+            new Dictionary<string, string> { { "RUN_MODE", "NhlAdd" } });
 
         if (!started)
             return Results.Conflict(new { message = "Data collection is already running." });
@@ -75,6 +80,56 @@ public class AdminController
             return Results.Conflict(new { message = "Prediction is already running." });
 
         return Results.Ok(new { message = "Prediction started." });
+    }
+
+    [HttpPost]
+    public IResult StartOddsBackfill()
+    {
+        if (CompletedToday(OddsBackfillJob))
+            return Results.Conflict(new { message = "Odds backfill already completed today." });
+
+        var repoRoot = GetRepoRoot();
+        var started = _jobService.TryStart(
+            OddsBackfillJob,
+            "dotnet",
+            "run --project Entry --no-build",
+            repoRoot,
+            new Dictionary<string, string> { { "RUN_MODE", "BackfillOdds" } });
+
+        if (!started)
+            return Results.Conflict(new { message = "Odds backfill is already running." });
+
+        return Results.Ok(new { message = "Odds backfill started." });
+    }
+
+    [HttpPost]
+    public IResult StartPredictionBackfill()
+    {
+        if (CompletedToday(PredictionBackfillJob))
+            return Results.Conflict(new { message = "Prediction backfill already completed today." });
+
+        var repoRoot = GetRepoRoot();
+        var defaultPython = Path.Combine(repoRoot, ".venv", "bin", "python3");
+        var pythonPath = _configuration["AdminSettings:PythonPath"]
+            ?? (File.Exists(defaultPython) ? defaultPython : "python3");
+        var started = _jobService.TryStart(
+            PredictionBackfillJob,
+            pythonPath,
+            "-m game_predictor --mode backfill",
+            repoRoot);
+
+        if (!started)
+            return Results.Conflict(new { message = "Prediction backfill is already running." });
+
+        return Results.Ok(new { message = "Prediction backfill started." });
+    }
+
+    private bool CompletedToday(string jobName)
+    {
+        var status = _jobService.GetStatus(jobName);
+        return status.Status == "completed"
+            && status.FinishedAt.HasValue
+            && status.FinishedAt.Value.Date == DateTime.UtcNow.Date;
     }
 
     [HttpGet]
@@ -168,7 +223,8 @@ public class AdminController
                     SeasonStartYear = g.Key,
                     TotalGames = allGames.Count,
                     PlayedGames = playedThroughToday.Count,
-                    MissingPredictions = allGames.Count(x => !gameOddsGameIds.Contains(x.Id))
+                    MissingPredictions = g.Key <= 2009 ? -1
+                        : allGames.Count(x => !gameOddsGameIds.Contains(x.Id))
                         + allGames.Count(x => !spreadGameIds.Contains(x.Id))
                         + allGames.Count(x => !totalGameIds.Contains(x.Id)),
                     MissingBookmakerOdds = g.Key < 2020 ? -1
@@ -176,7 +232,8 @@ public class AdminController
                         + playedThroughToday.Count(x => !spreadBookmakerGameIds.Contains(x.Id))
                         + playedThroughToday.Count(x => !totalBookmakerGameIds.Contains(x.Id)),
                     MissingGameCleaned = allGames.Count(x => !cleanedGameIds.Contains(x.Id)),
-                    MissingOddsFetchDays = gameDates.Count(d => !oddsFetchDateSet.Contains(d)),
+                    MissingOddsFetchDays = g.Key < 2020 ? -1
+                        : gameDates.Count(d => !oddsFetchDateSet.Contains(d)),
                     LiveBookmakerOdds = allGames.Count(x => liveBookmakerOddsGameIds.Contains(x.Id)),
                     ErrorCount = errorCountDict.GetValueOrDefault(g.Key, 0),
                 };
@@ -193,7 +250,11 @@ public class AdminController
         var statuses = new
         {
             dataCollection = _jobService.GetStatus(DataCollectionJob),
+            oddsFetch = _jobService.GetStatus(OddsFetchJob),
             prediction = _jobService.GetStatus(PredictionJob),
+            oddsBackfill = _jobService.GetStatus(OddsBackfillJob),
+            predictionBackfill = _jobService.GetStatus(PredictionBackfillJob),
+            kalshiFetch = _jobService.GetStatus(KalshiFetchJob),
         };
         return Results.Ok(statuses);
     }

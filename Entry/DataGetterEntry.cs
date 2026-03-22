@@ -17,6 +17,7 @@ using DataGetter.BusinessLogic;
 using Entities.Types;
 using Entities.Types.Enums;
 using Microsoft.Extensions.Logging;
+using Services.Kalshi;
 using Services.NhlData;
 using Services.OddsApi;
 using Services.RequestMaker;
@@ -69,7 +70,18 @@ public class DataGetterEntry
 
         var dataManager = new NhlDataManager(gameRepo, playerRepo, teamRepo, errorRepo, broadcasterRepo, gameEventRepo, gameGetter, playerGetter, teamGetter, _loggerFactory);
 
-        if (modeSettings.Mode == ModeType.NextDayOdds || modeSettings.Mode == ModeType.BackfillOdds)
+        if (modeSettings.Mode == ModeType.KalshiFetch)
+        {
+            var kalshiDbContext = new NhlDbContext(modeSettings.ConnectionString);
+            var kalshiOddsRepo = new BookmakerOddsRepository(kalshiDbContext);
+            var kalshiGetter = new KalshiGetter(_loggerFactory);
+            var kalshiFetcher = new KalshiOddsFetcher(kalshiDbContext, kalshiOddsRepo, kalshiGetter, _loggerFactory);
+
+            _logger.LogTrace("Starting Kalshi Odds Fetch");
+            await kalshiFetcher.FetchAndSaveKalshiOdds();
+            _logger.LogTrace("Completed Kalshi Odds Fetch");
+        }
+        else if (modeSettings.Mode == ModeType.NextDayOdds || modeSettings.Mode == ModeType.BackfillOdds)
         {
             var isBackfill = modeSettings.Mode == ModeType.BackfillOdds;
             var apiKey = isBackfill ? modeSettings.OddsApiBackfillKey : modeSettings.OddsApiKey;
@@ -92,7 +104,9 @@ public class DataGetterEntry
             }
             else
             {
-                var bookmakerFetcher = new BookmakerOddsFetcher(oddsDbContext, bookmakerOddsRepo, oddsApiGetter, _loggerFactory);
+                var kalshiGetter = new KalshiGetter(_loggerFactory);
+
+                var bookmakerFetcher = new BookmakerOddsFetcher(oddsDbContext, bookmakerOddsRepo, oddsApiGetter, _loggerFactory, kalshiGetter);
                 _logger.LogTrace("Starting Bookmaker Odds Getter");
                 await bookmakerFetcher.FetchAndSaveBookmakerOdds();
                 _logger.LogTrace("Completed Bookmaker Odds Getter");

@@ -43,7 +43,8 @@ public class DailyDataCollectionService : BackgroundService
             "data-collection",
             "dotnet",
             "run --project Entry --no-build",
-            repoRoot);
+            repoRoot,
+            new Dictionary<string, string> { { "RUN_MODE", "NhlAdd" } });
 
         if (!started)
         {

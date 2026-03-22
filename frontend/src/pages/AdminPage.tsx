@@ -3,8 +3,8 @@ import {
   getErrorLogs,
   getHealthChecks,
   getJobStatuses,
-  startDataCollection,
-  startPrediction,
+  startOddsBackfill,
+  startPredictionBackfill,
   type ErrorLog,
   type JobInfo,
   type JobStatuses,
@@ -50,8 +50,16 @@ function ElapsedTime({ startedAt }: { startedAt: string | null }) {
   return <span className="stat-number text-xs">{elapsed}</span>;
 }
 
-function JobCard({ job, label, onStart }: { job: JobInfo; label: string; onStart: () => void }) {
+function isToday(iso: string | null): boolean {
+  if (!iso) return false;
+  const d = new Date(iso);
+  const now = new Date();
+  return d.toDateString() === now.toDateString();
+}
+
+function JobCard({ job, label, onStart }: { job: JobInfo; label: string; onStart?: () => void }) {
   const isRunning = job.status === 'running';
+  const ranToday = job.status === 'completed' && isToday(job.finishedAt);
   const detailsRef = useRef<HTMLDetailsElement>(null);
 
   return (
@@ -109,17 +117,19 @@ function JobCard({ job, label, onStart }: { job: JobInfo; label: string; onStart
         </details>
       )}
 
-      <button
-        onClick={onStart}
-        disabled={isRunning}
-        className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-all ${
-          isRunning
-            ? 'bg-surface-200 dark:bg-white/[0.04] text-surface-400 dark:text-surface-500 cursor-not-allowed'
-            : 'bg-accent-500 hover:bg-accent-600 text-white shadow-lg shadow-accent-500/25'
-        }`}
-      >
-        {isRunning ? 'Running...' : `Start ${label}`}
-      </button>
+      {onStart && (
+        <button
+          onClick={onStart}
+          disabled={isRunning || ranToday}
+          className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-all ${
+            isRunning || ranToday
+              ? 'bg-surface-200 dark:bg-white/[0.04] text-surface-400 dark:text-surface-500 cursor-not-allowed'
+              : 'bg-accent-500 hover:bg-accent-600 text-white shadow-lg shadow-accent-500/25'
+          }`}
+        >
+          {isRunning ? 'Running...' : ranToday ? 'Completed Today' : `Start ${label}`}
+        </button>
+      )}
     </div>
   );
 }
@@ -182,7 +192,7 @@ function HealthCheckRow({ check }: { check: SeasonHealthCheck }) {
         <td
           className={`px-4 py-3 stat-number text-sm text-center ${countClass(check.missingPredictions)}`}
         >
-          {check.missingPredictions}
+          {cd(check.missingPredictions)}
         </td>
         <td
           className={`px-4 py-3 stat-number text-sm text-center ${countClass(check.missingBookmakerOdds)}`}
@@ -197,7 +207,7 @@ function HealthCheckRow({ check }: { check: SeasonHealthCheck }) {
         <td
           className={`px-4 py-3 stat-number text-sm text-center ${countClass(check.missingOddsFetchDays)}`}
         >
-          {check.missingOddsFetchDays}
+          {cd(check.missingOddsFetchDays)}
         </td>
         <td
           className={`px-4 py-3 stat-number text-sm text-center ${countClass(check.liveBookmakerOdds)}`}
@@ -329,19 +339,27 @@ export function AdminPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <JobCardSkeleton />
           <JobCardSkeleton />
+          <JobCardSkeleton />
+          <JobCardSkeleton />
+          <JobCardSkeleton />
+          <JobCardSkeleton />
         </div>
       ) : statuses ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <JobCard
-            job={statuses.dataCollection}
-            label="Data Collection"
-            onStart={() => handleStart(startDataCollection)}
+            job={statuses.oddsBackfill}
+            label="Odds Backfill"
+            onStart={() => handleStart(startOddsBackfill)}
           />
           <JobCard
-            job={statuses.prediction}
-            label="Prediction"
-            onStart={() => handleStart(startPrediction)}
+            job={statuses.predictionBackfill}
+            label="Prediction Backfill"
+            onStart={() => handleStart(startPredictionBackfill)}
           />
+          <JobCard job={statuses.dataCollection} label="Data Collection" />
+          <JobCard job={statuses.oddsFetch} label="Odds Fetch" />
+          <JobCard job={statuses.kalshiFetch} label="Kalshi Fetch" />
+          <JobCard job={statuses.prediction} label="Prediction" />
         </div>
       ) : null}
 

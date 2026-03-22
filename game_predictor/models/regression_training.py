@@ -116,6 +116,66 @@ def train_regression_default(train_df, target: str):
     return pipeline, save_model, save_name, residual_std
 
 
+def train_regression_for_season(train_df, target: str):
+    """Train regression model on all prior seasons' data (no residual std yet).
+
+    Called once per season during backfill. Residual std is computed per-day
+    via compute_residual_std().
+    Returns (pipeline, model, name) or None.
+    """
+    exp_name = SAVE_SPREAD_EXPERIMENT if target == "spread" else SAVE_TOTAL_EXPERIMENT
+    if not exp_name or exp_name not in REGRESSION_EXPERIMENTS:
+        return None
+
+    exp = REGRESSION_EXPERIMENTS[exp_name]
+
+    if train_df.empty or len(train_df) < 50:
+        return None
+
+    y = _compute_target(train_df, target)
+    X_raw = train_df[FEATURE_COLUMNS].values
+    w = _compute_weights(train_df["SeasonStartYear"].values, exp.decay)
+
+    from .experiment.pipeline import standard_pipeline
+
+    n_samples, n_features = X_raw.shape
+    k_best = min(exp.pipeline.named_steps["select"].k, n_features)
+    pca_components = min(exp.pipeline.named_steps["pca"].n_components, k_best, n_samples)
+    pipeline = standard_pipeline(k_best=k_best, pca_components=pca_components)
+    X_t = pipeline.fit_transform(X_raw, y)
+
+    built = build_models(exp.models)
+    for model in built.values():
+        if hasattr(model, "n_neighbors") and model.n_neighbors > n_samples:
+            model.n_neighbors = max(1, n_samples - 1)
+        _fit(model, X_t, y, w)
+
+    if exp.ensemble and len(exp.ensemble) > 1:
+        ensemble_models = [built[n] for n in exp.ensemble]
+        save_model = RegressionEnsemble(models=ensemble_models)
+        save_model.fit(X_t, y)
+        save_name = "Ensemble"
+    else:
+        save_name = next(iter(built))
+        save_model = built[save_name]
+
+    return pipeline, save_model, save_name
+
+
+MIN_RESIDUAL_GAMES = 20
+
+
+def compute_residual_std(model, pipeline, cal_df, target: str) -> float:
+    """Compute residual std from a pre-trained model using season games so far."""
+    if len(cal_df) < MIN_RESIDUAL_GAMES:
+        return 2.5  # reasonable default for NHL goal diffs / totals
+
+    y_cal = _compute_target(cal_df, target)
+    X_cal = pipeline.transform(cal_df[FEATURE_COLUMNS].values)
+    residuals = y_cal - model.predict(X_cal)
+    return float(np.std(residuals))
+
+
 def train_regression_for_day(train_df, target: str):
     """Train regression model for walk-forward backfill.
 

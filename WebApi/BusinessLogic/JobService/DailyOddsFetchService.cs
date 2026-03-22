@@ -61,6 +61,20 @@ public class DailyOddsFetchService : BackgroundService
             return;
         }
 
+        // Fetch Kalshi odds (separate from The Odds API)
+        _logger.LogInformation("Starting scheduled Kalshi fetch");
+        var kalshiStarted = _jobService.TryStart(
+            "kalshi-fetch",
+            "dotnet",
+            "run --project Entry --no-build",
+            repoRoot,
+            new Dictionary<string, string> { { "RUN_MODE", "KalshiFetch" } });
+
+        if (kalshiStarted)
+            await _jobService.WaitForCompletion("kalshi-fetch", stoppingToken);
+        else
+            _logger.LogWarning("Scheduled Kalshi fetch skipped — already running");
+
         _logger.LogInformation("Starting scheduled prediction");
         var pythonPath = GetPythonPath(repoRoot);
         var predStarted = _jobService.TryStart(

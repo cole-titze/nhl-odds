@@ -256,6 +256,83 @@ def train_default(train_df):
     return pipeline, save_model, save_name
 
 
+def train_for_season(train_df):
+    """Train the save experiment on all prior seasons' data (no calibration).
+
+    Used by walk-forward backfill — called once per season. Calibration
+    happens separately per-day via calibrate_for_day().
+    Returns (pipeline, model, name) or None.
+    """
+    if train_df.empty or len(train_df) < 50:
+        return None
+
+    exp = EXPERIMENTS[SAVE_EXPERIMENT]
+
+    X_raw = train_df[FEATURE_COLUMNS].values
+    y = train_df["Winner"].values
+    w = _compute_weights(train_df["SeasonStartYear"].values, exp.decay)
+
+    from .experiment.pipeline import standard_pipeline
+
+    n_samples, n_features = X_raw.shape
+    k_best = min(exp.pipeline.named_steps["select"].k, n_features)
+    pca_components = min(exp.pipeline.named_steps["pca"].n_components, k_best, n_samples)
+    pipeline = standard_pipeline(k_best=k_best, pca_components=pca_components)
+    X_t = pipeline.fit_transform(X_raw, y)
+
+    built = build_models(exp.models)
+    for model in built.values():
+        if hasattr(model, "n_neighbors") and model.n_neighbors > n_samples:
+            model.n_neighbors = max(1, n_samples - 1)
+        _fit(model, X_t, y, w)
+
+    if exp.ensemble and len(exp.ensemble) > 1:
+        if exp.stack:
+            from sklearn.base import clone
+
+            estimators = [(n, clone(built[n])) for n in exp.ensemble]
+            save_model = StackingClassifier(
+                estimators=estimators,
+                final_estimator=LogisticRegression(),
+                cv=5,
+                stack_method="predict_proba",
+                n_jobs=-1,
+            )
+            save_model.fit(X_t, y)
+        else:
+            ensemble_models = [built[n] for n in exp.ensemble]
+            save_model = Ensemble(models=ensemble_models)
+            save_model.fit(X_t, y)
+        save_name = "Ensemble"
+    else:
+        save_name = next(iter(built))
+        save_model = built[save_name]
+
+    return pipeline, save_model, save_name
+
+
+MIN_CAL_GAMES = 20
+
+
+def calibrate_for_day(model, pipeline, cal_df):
+    """Recalibrate a pre-trained model using the season's games played so far.
+
+    Returns the calibrated model, or the original if too few calibration games
+    or calibration is disabled.
+    """
+    exp = EXPERIMENTS[SAVE_EXPERIMENT]
+    if not exp.calibration or exp.calibration == "none":
+        return model
+    if len(cal_df) < MIN_CAL_GAMES:
+        return model
+
+    X_cal = pipeline.transform(cal_df[FEATURE_COLUMNS].values)
+    y_cal = cal_df["Winner"].values
+    w_cal = _compute_weights(cal_df["SeasonStartYear"].values, exp.decay)
+
+    return calibrate_model(model, X_cal, y_cal, X_cal, y_cal, method=exp.calibration, sample_weight=w_cal)
+
+
 def train_for_day(train_df):
     """Train the save experiment on provided data with calibration split.
 
