@@ -38,6 +38,10 @@ export interface GameOddsVM {
   logLoss: number;
   modelId: number;
   bookmakerOdds: BookmakerOddsVM[];
+  predictedSpread: number | null;
+  spreadCoverProb: number | null;
+  predictedTotal: number | null;
+  totalOverProb: number | null;
 }
 
 export interface SeasonTotalsVM {

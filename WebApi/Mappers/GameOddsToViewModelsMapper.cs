@@ -53,7 +53,11 @@ public static class GameOddsToViewModelsMapper
                     OverUnderPoint = b.OverUnderPoint,
                     OverPrice = b.OverPrice,
                     UnderPrice = b.UnderPrice,
-                }).ToList()
+                }).ToList(),
+                PredictedSpread = gameOdds.PredictedSpread,
+                SpreadCoverProb = gameOdds.SpreadCoverProb,
+                PredictedTotal = gameOdds.PredictedTotal,
+                TotalOverProb = gameOdds.TotalOverProb,
             };
             viewModelGames.Add(viewModelGame);
         }

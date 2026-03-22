@@ -35,6 +35,7 @@ public class GameOddsRepository : IGameOddsRepository
         var gameOdds = DbGameOddsToGameOddsMapper.Map(latestPerGame, seasonTeams);
 
         await AttachBookmakerOdds(gameOdds);
+        await AttachSpreadTotalPredictions(gameOdds);
         return gameOdds;
     }
 
@@ -54,6 +55,7 @@ public class GameOddsRepository : IGameOddsRepository
         var gameOdds = DbGameOddsToGameOddsMapper.Map(latestPerGame, seasonTeams);
 
         await AttachBookmakerOdds(gameOdds);
+        await AttachSpreadTotalPredictions(gameOdds);
         return gameOdds;
     }
 
@@ -66,6 +68,41 @@ public class GameOddsRepository : IGameOddsRepository
         {
             if (bookmakerOddsMap.TryGetValue(gameOdds.Game.Id, out var bookmakerOdds))
                 gameOdds.BookmakerOdds = bookmakerOdds;
+        }
+    }
+
+    private async Task AttachSpreadTotalPredictions(List<GameOdds> gameOddsList)
+    {
+        var gameIds = gameOddsList.Select(g => g.Game.Id).ToHashSet();
+
+        var latestPredictions = await _dbContext.GameSpreadTotalOdds
+            .Where(x => gameIds.Contains(x.GameId))
+            .ToListAsync();
+
+        var byGame = latestPredictions
+            .GroupBy(x => new { x.GameId, x.ModelId })
+            .Select(g => g.OrderByDescending(x => x.RunDateUTC).First())
+            .GroupBy(x => x.GameId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        foreach (var gameOdds in gameOddsList)
+        {
+            if (!byGame.TryGetValue(gameOdds.Game.Id, out var preds))
+                continue;
+
+            var spread = preds.FirstOrDefault(p => p.ModelId == 2);
+            if (spread != null)
+            {
+                gameOdds.PredictedSpread = spread.PredictedValue;
+                gameOdds.SpreadCoverProb = spread.CoverProbability;
+            }
+
+            var total = preds.FirstOrDefault(p => p.ModelId == 3);
+            if (total != null)
+            {
+                gameOdds.PredictedTotal = total.PredictedValue;
+                gameOdds.TotalOverProb = total.CoverProbability;
+            }
         }
     }
 
@@ -91,6 +128,7 @@ public class GameOddsRepository : IGameOddsRepository
         var gameOdds = DbGameOddsToGameOddsMapper.Map(latestPerGame, seasonTeams);
 
         await AttachBookmakerOdds(gameOdds);
+        await AttachSpreadTotalPredictions(gameOdds);
         return gameOdds;
     }
 

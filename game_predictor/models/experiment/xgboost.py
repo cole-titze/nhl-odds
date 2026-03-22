@@ -1,6 +1,36 @@
-from xgboost import XGBClassifier
+from xgboost import XGBClassifier, XGBRegressor
 
 from .types import ModelConfig
+
+
+def xgboost_regressor(
+    n_estimators: int = 200,
+    learning_rate: float = 0.05,
+    max_depth: int = 6,
+    min_child_weight: int = 1,
+    subsample: float = 1.0,
+    colsample_bytree: float = 1.0,
+    reg_alpha: float = 0.0,
+    reg_lambda: float = 1.0,
+    gamma: float = 0.0,
+) -> ModelConfig:
+    """Create an XGBoost regressor config."""
+    return ModelConfig(
+        cls=XGBRegressor,
+        params={
+            "n_estimators": n_estimators,
+            "learning_rate": learning_rate,
+            "max_depth": max_depth,
+            "min_child_weight": min_child_weight,
+            "subsample": subsample,
+            "colsample_bytree": colsample_bytree,
+            "reg_alpha": reg_alpha,
+            "reg_lambda": reg_lambda,
+            "gamma": gamma,
+            "random_state": 42,
+            "verbosity": 0,
+        },
+    )
 
 
 def xgboost(

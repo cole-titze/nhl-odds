@@ -17,6 +17,7 @@ public partial class GameDbContext : DbContext
     public virtual DbSet<DbErrorLog> ErrorLog { get; set; } = null!;
     public virtual DbSet<DbGameCleaned> GameCleaned { get; set; } = null!;
     public virtual DbSet<DbBookmakerOddsResponse> BookmakerOddsResponse { get; set; } = null!;
+    public virtual DbSet<DbGameSpreadTotalOdds> GameSpreadTotalOdds { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -27,6 +28,8 @@ public partial class GameDbContext : DbContext
         modelBuilder.Entity<DbBookmakerTotals>()
             .HasKey(c => new { c.GameId, c.BookmakerName });
         modelBuilder.Entity<DbGameOdds>()
+            .HasKey(c => new { c.GameId, c.ModelId, c.RunDateUTC });
+        modelBuilder.Entity<DbGameSpreadTotalOdds>()
             .HasKey(c => new { c.GameId, c.ModelId, c.RunDateUTC });
         modelBuilder.Entity<DbSeasonTeam>()
             .HasKey(c => new { c.TeamId, c.SeasonStartYear });

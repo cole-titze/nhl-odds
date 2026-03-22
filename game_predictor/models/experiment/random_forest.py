@@ -1,8 +1,29 @@
 from __future__ import annotations
 
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 
 from .types import ModelConfig
+
+
+def random_forest_regressor(
+    n_estimators: int = 200,
+    max_depth: int | None = None,
+    min_samples_split: int = 2,
+    min_samples_leaf: int = 1,
+    max_features: str | None = "sqrt",
+) -> ModelConfig:
+    """Create a Random Forest regressor config."""
+    return ModelConfig(
+        cls=RandomForestRegressor,
+        params={
+            "n_estimators": n_estimators,
+            "max_depth": max_depth,
+            "min_samples_split": min_samples_split,
+            "min_samples_leaf": min_samples_leaf,
+            "max_features": max_features,
+            "random_state": 42,
+        },
+    )
 
 
 def random_forest(

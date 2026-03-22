@@ -10,17 +10,25 @@
 #   tune_trials  — number of Optuna trials (default: 100)
 #
 # SAVE_EXPERIMENT controls which experiment is used for predictions saved to DB.
+#
+# REGRESSION_EXPERIMENTS define spread/total models (use RegressionExperiment).
+# Set SAVE_SPREAD_EXPERIMENT / SAVE_TOTAL_EXPERIMENT to None to disable.
 # ============================================================================
 
 from ..models.experiment import (
     Experiment,
+    RegressionExperiment,
     knn,
     lgbm,
+    lgbm_regressor,
     logistic_regression,
     mlp,
+    mlp_regressor,
     random_forest,
+    random_forest_regressor,
     standard_pipeline,
     xgboost,
+    xgboost_regressor,
 )
 
 EXPERIMENTS: dict[str, Experiment] = {
@@ -141,3 +149,35 @@ EXPERIMENTS: dict[str, Experiment] = {
 }
 
 SAVE_EXPERIMENT = "Default"
+
+# --- Regression experiments (spread / over-under) ---
+
+REGRESSION_EXPERIMENTS: dict[str, RegressionExperiment] = {
+    "Spread": RegressionExperiment(
+        models={
+            "LightGBM": lgbm_regressor(n_estimators=300, learning_rate=0.01, max_depth=7),
+            "XGB": xgboost_regressor(n_estimators=500, learning_rate=0.01, max_depth=5),
+            "MLP": mlp_regressor(hidden_layer_sizes=(128, 64)),
+            "RF": random_forest_regressor(n_estimators=200, max_depth=20),
+        },
+        pipeline=standard_pipeline(k_best=80, pca_components=60),
+        ensemble=["LightGBM", "XGB", "MLP", "RF"],
+        target="spread",
+        decay=0.08,
+    ),
+    "Total": RegressionExperiment(
+        models={
+            "LightGBM": lgbm_regressor(n_estimators=300, learning_rate=0.01, max_depth=7),
+            "XGB": xgboost_regressor(n_estimators=500, learning_rate=0.01, max_depth=5),
+            "MLP": mlp_regressor(hidden_layer_sizes=(128, 64)),
+            "RF": random_forest_regressor(n_estimators=200, max_depth=20),
+        },
+        pipeline=standard_pipeline(k_best=80, pca_components=60),
+        ensemble=["LightGBM", "XGB", "MLP", "RF"],
+        target="total",
+        decay=0.08,
+    ),
+}
+
+SAVE_SPREAD_EXPERIMENT = "Spread"
+SAVE_TOTAL_EXPERIMENT = "Total"

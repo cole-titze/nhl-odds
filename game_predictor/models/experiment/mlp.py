@@ -1,6 +1,28 @@
-from sklearn.neural_network import MLPClassifier
+from sklearn.neural_network import MLPClassifier, MLPRegressor
 
 from .types import ModelConfig
+
+
+def mlp_regressor(
+    hidden_layer_sizes: tuple[int, ...] = (64, 32),
+    max_iter: int = 500,
+    learning_rate_init: float = 1e-3,
+    alpha: float = 1e-4,
+    activation: str = "relu",
+) -> ModelConfig:
+    """Create an MLP regressor config."""
+    return ModelConfig(
+        cls=MLPRegressor,
+        params={
+            "hidden_layer_sizes": hidden_layer_sizes,
+            "max_iter": max_iter,
+            "learning_rate_init": learning_rate_init,
+            "alpha": alpha,
+            "activation": activation,
+            "early_stopping": True,
+            "random_state": 42,
+        },
+    )
 
 
 def mlp(

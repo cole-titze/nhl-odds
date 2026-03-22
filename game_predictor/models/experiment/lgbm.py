@@ -1,6 +1,36 @@
-from lightgbm import LGBMClassifier
+from lightgbm import LGBMClassifier, LGBMRegressor
 
 from .types import ModelConfig
+
+
+def lgbm_regressor(
+    n_estimators: int = 200,
+    learning_rate: float = 0.05,
+    max_depth: int = 6,
+    num_leaves: int = 31,
+    min_child_samples: int = 20,
+    subsample: float = 1.0,
+    colsample_bytree: float = 1.0,
+    reg_alpha: float = 0.0,
+    reg_lambda: float = 0.0,
+) -> ModelConfig:
+    """Create a LightGBM regressor config."""
+    return ModelConfig(
+        cls=LGBMRegressor,
+        params={
+            "n_estimators": n_estimators,
+            "learning_rate": learning_rate,
+            "max_depth": max_depth,
+            "num_leaves": num_leaves,
+            "min_child_samples": min_child_samples,
+            "subsample": subsample,
+            "colsample_bytree": colsample_bytree,
+            "reg_alpha": reg_alpha,
+            "reg_lambda": reg_lambda,
+            "random_state": 42,
+            "verbosity": -1,
+        },
+    )
 
 
 def lgbm(

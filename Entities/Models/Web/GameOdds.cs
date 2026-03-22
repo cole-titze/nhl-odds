@@ -10,6 +10,10 @@ public class GameOdds
     public int ModelId { get; set; }
     public Game Game { get; set; } = new Game();
     public List<BookmakerGameOdds> BookmakerOdds { get; set; } = new();
+    public double? PredictedSpread { get; set; }
+    public double? SpreadCoverProb { get; set; }
+    public double? PredictedTotal { get; set; }
+    public double? TotalOverProb { get; set; }
 
     public static double CalculateLogLoss(double homeOdds, double awayOdds, Winner winner)
     {

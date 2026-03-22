@@ -158,6 +158,48 @@ export function GamePage() {
         )}
       </div>
 
+      {/* Spread & Total Predictions */}
+      {(game.predictedSpread != null || game.predictedTotal != null) && (
+        <div className="glass rounded-xl px-6 py-5">
+          <h2 className="text-xs font-mono font-bold tracking-widest uppercase text-surface-400 dark:text-surface-500 mb-4">
+            Spread & Total Predictions
+          </h2>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            {game.predictedSpread != null && (
+              <div className="text-center">
+                <div className="text-surface-400 dark:text-surface-500 text-xs mb-1">
+                  Predicted Spread
+                </div>
+                <div className="stat-number text-lg text-accent-500">
+                  {game.predictedSpread > 0 ? '+' : ''}
+                  {game.predictedSpread.toFixed(1)}
+                </div>
+                {game.spreadCoverProb != null && (
+                  <div className="text-xs text-surface-400 dark:text-surface-500 mt-1">
+                    Cover: {(game.spreadCoverProb * 100).toFixed(0)}%
+                  </div>
+                )}
+              </div>
+            )}
+            {game.predictedTotal != null && (
+              <div className="text-center">
+                <div className="text-surface-400 dark:text-surface-500 text-xs mb-1">
+                  Predicted Total
+                </div>
+                <div className="stat-number text-lg text-accent-500">
+                  {game.predictedTotal.toFixed(1)}
+                </div>
+                {game.totalOverProb != null && (
+                  <div className="text-xs text-surface-400 dark:text-surface-500 mt-1">
+                    Over: {(game.totalOverProb * 100).toFixed(0)}%
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Bookmaker Odds Table */}
       {game.bookmakerOdds?.length > 0 && (
         <div className="glass rounded-xl overflow-hidden">

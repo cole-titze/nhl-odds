@@ -132,7 +132,8 @@ _feature_cols_sql = ", ".join(f"gc.{col}" for col in FEATURE_COLUMNS)
 TRAINING_DATA_QUERY = f"""
 SELECT {_feature_cols_sql},
        gr.Winner, gr.SeasonStartYear,
-       gr.Id AS GameId, gr.HomeTeamId, gr.AwayTeamId, gr.GameDateUTC
+       gr.Id AS GameId, gr.HomeTeamId, gr.AwayTeamId, gr.GameDateUTC,
+       gr.HomeGoals, gr.AwayGoals
 FROM GameCleaned gc
 JOIN GameRaw gr ON gc.GameId = gr.Id
 WHERE gr.HasBeenPlayed = 1
@@ -163,6 +164,37 @@ INNER JOIN (
     FROM SeasonTeam
     GROUP BY TeamId
 ) latest ON st.TeamId = latest.TeamId AND st.SeasonStartYear = latest.MaxSeason
+"""
+
+CONSENSUS_SPREAD_QUERY = """
+SELECT GameId, AVG(HomePoint) AS ConsensusSpread
+FROM BookmakerSpreads
+GROUP BY GameId
+"""
+
+CONSENSUS_TOTAL_QUERY = """
+SELECT GameId, AVG(OverUnderPoint) AS ConsensusTotal
+FROM BookmakerTotals
+GROUP BY GameId
+"""
+
+UPSERT_SPREAD_TOTAL = """
+MERGE GameSpreadTotalOdds AS target
+USING (VALUES (%s, %s, %s, %s, %s, %s, %s, %s))
+    AS source (GameId, ModelId, RunDateUTC, PredictedValue, ResidualStd, Line, CoverProbability, Notes)
+ON target.GameId = source.GameId
+   AND target.ModelId = source.ModelId
+   AND target.RunDateUTC = source.RunDateUTC
+WHEN MATCHED THEN
+    UPDATE SET PredictedValue = source.PredictedValue,
+               ResidualStd = source.ResidualStd,
+               Line = source.Line,
+               CoverProbability = source.CoverProbability,
+               Notes = source.Notes
+WHEN NOT MATCHED THEN
+    INSERT (GameId, ModelId, RunDateUTC, PredictedValue, ResidualStd, Line, CoverProbability, Notes)
+    VALUES (source.GameId, source.ModelId, source.RunDateUTC,
+            source.PredictedValue, source.ResidualStd, source.Line, source.CoverProbability, source.Notes);
 """
 
 UPSERT_GAME_ODDS = """

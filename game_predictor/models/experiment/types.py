@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from sklearn.base import ClassifierMixin
+from sklearn.base import ClassifierMixin, RegressorMixin
 from sklearn.pipeline import Pipeline
 
 
@@ -10,10 +10,10 @@ from sklearn.pipeline import Pipeline
 class ModelConfig:
     """Configuration for a single sklearn/LightGBM model."""
 
-    cls: type[ClassifierMixin]
+    cls: type[ClassifierMixin | RegressorMixin]
     params: dict = field(default_factory=dict)
 
-    def build(self) -> ClassifierMixin:
+    def build(self) -> ClassifierMixin | RegressorMixin:
         return self.cls(**self.params)
 
 
@@ -41,3 +41,23 @@ class Experiment:
     tune: bool = False
     tune_trials: int = 100
     decay: float = 0.0
+
+
+@dataclass
+class RegressionExperiment:
+    """A regression experiment for spread/total prediction.
+
+    target controls which value to predict:
+      "spread" — HomeGoals - AwayGoals (positive = home won by N)
+      "total"  — HomeGoals + AwayGoals
+
+    No calibration (classification concept). Evaluation uses MAE/RMSE.
+    """
+
+    models: dict[str, ModelConfig]
+    pipeline: Pipeline
+    target: str
+    ensemble: list[str] | None = None
+    decay: float = 0.0
+    tune: bool = False
+    tune_trials: int = 100

@@ -8,9 +8,13 @@ _REPO_ROOT = Path(__file__).parent.parent
 # Keep in sync with frontend/src/utils/modelNames.ts
 MODEL_IDS = {
     1: "Homegrown",
+    2: "Spread",
+    3: "Total",
 }
 
 HOMEGROWN_MODEL_ID = 1
+SPREAD_MODEL_ID = 2
+TOTAL_MODEL_ID = 3
 
 
 def get_db_config() -> dict:

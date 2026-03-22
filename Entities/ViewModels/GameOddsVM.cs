@@ -13,4 +13,8 @@ public class GameOddsVM
     public double LogLoss { get; set; }
     public int ModelId { get; set; }
     public List<BookmakerOddsVM> BookmakerOdds { get; set; } = new();
+    public double? PredictedSpread { get; set; }
+    public double? SpreadCoverProb { get; set; }
+    public double? PredictedTotal { get; set; }
+    public double? TotalOverProb { get; set; }
 }

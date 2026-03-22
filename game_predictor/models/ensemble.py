@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.utils._tags import ClassifierTags
 
 
@@ -33,3 +33,17 @@ class Ensemble(BaseEstimator, ClassifierMixin):
 
     def predict(self, X):
         return np.argmax(self.predict_proba(X), axis=1)
+
+
+class RegressionEnsemble(BaseEstimator, RegressorMixin):
+    """Average-prediction ensemble for regression models."""
+
+    def __init__(self, models: list | None = None):
+        self.models = models or []
+
+    def fit(self, X, y=None):
+        return self
+
+    def predict(self, X):
+        preds = np.array([m.predict(X) for m in self.models])
+        return preds.mean(axis=0)
