@@ -276,10 +276,7 @@ def train_for_day(train_df):
     cal_mask = train_df["SeasonStartYear"] == current_season
 
     can_calibrate = (
-        exp.calibration
-        and exp.calibration != "none"
-        and train_mask.sum() >= 50
-        and cal_mask.sum() >= MIN_CAL_GAMES
+        exp.calibration and exp.calibration != "none" and train_mask.sum() >= 50 and cal_mask.sum() >= MIN_CAL_GAMES
     )
 
     if can_calibrate:
@@ -322,8 +319,7 @@ def train_for_day(train_df):
     if can_calibrate:
         X_cal_t = pipeline.transform(X_cal_raw)
         save_model = calibrate_model(
-            save_model, X_cal_t, y_cal, X_cal_t, y_cal,
-            method=exp.calibration, sample_weight=w_cal
+            save_model, X_cal_t, y_cal, X_cal_t, y_cal, method=exp.calibration, sample_weight=w_cal
         )
 
     return pipeline, save_model, save_name
