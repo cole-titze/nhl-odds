@@ -114,6 +114,13 @@ public class AdminController
 
         var gameOddsGameIds = new HashSet<int>(
             await _db.GameOdds.Select(go => go.GameId).Distinct().ToListAsync());
+        var liveBookmakerOddsGameIds = new HashSet<int>(
+            await _db.BookmakerOdds
+                .Join(_db.GameRaw, bo => bo.GameId, g => g.Id, (bo, g) => new { bo.GameId, bo.MarketLastUpdate, g.GameDateUTC })
+                .Where(x => x.MarketLastUpdate > x.GameDateUTC)
+                .Select(x => x.GameId)
+                .Distinct()
+                .ToListAsync());
         var bookmakerGameIds = new HashSet<int>(
             await _db.BookmakerOdds.Select(bo => bo.GameId).Distinct().ToListAsync());
         var cleanedGameIds = new HashSet<int>(
@@ -153,6 +160,7 @@ public class AdminController
                     MissingBookmakerOdds = playedThroughToday.Count(x => !bookmakerGameIds.Contains(x.Id)),
                     MissingGameCleaned = allGames.Count(x => !cleanedGameIds.Contains(x.Id)),
                     MissingOddsFetchDays = gameDates.Count(d => !oddsFetchDateSet.Contains(d)),
+                    LiveBookmakerOdds = allGames.Count(x => liveBookmakerOddsGameIds.Contains(x.Id)),
                     ErrorCount = errorCountDict.GetValueOrDefault(g.Key, 0),
                 };
             })

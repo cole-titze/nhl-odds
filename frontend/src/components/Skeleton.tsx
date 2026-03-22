@@ -28,6 +28,54 @@ export function CardSkeleton() {
   );
 }
 
+export function JobCardSkeleton() {
+  return (
+    <div className="glass rounded-xl p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-5 w-32" />
+        <Skeleton className="h-6 w-20 !rounded-lg" />
+      </div>
+      <div className="space-y-2">
+        <div className="flex justify-between">
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-4 w-36" />
+        </div>
+        <div className="flex justify-between">
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-4 w-36" />
+        </div>
+      </div>
+      <Skeleton className="h-10 w-full !rounded-lg" />
+    </div>
+  );
+}
+
+export function HealthCheckTableSkeleton() {
+  return (
+    <div className="glass rounded-xl overflow-hidden">
+      <div className="px-4 py-3 border-b border-surface-200 dark:border-white/[0.06]">
+        <div className="flex gap-4">
+          {Array.from({ length: 9 }).map((_, i) => (
+            <Skeleton key={i} className={`h-3 ${i === 0 ? 'w-16' : 'w-10'}`} />
+          ))}
+        </div>
+      </div>
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div
+          key={i}
+          className="px-4 py-3 border-b border-surface-200 dark:border-white/[0.04] last:border-0"
+        >
+          <div className="flex gap-4">
+            {Array.from({ length: 9 }).map((_, j) => (
+              <Skeleton key={j} className={`h-4 ${j === 0 ? 'w-16' : 'w-10'}`} />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function StatCardSkeleton() {
   return (
     <div className="glass rounded-xl p-5 text-center">

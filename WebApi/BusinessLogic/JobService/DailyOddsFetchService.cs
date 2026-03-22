@@ -5,7 +5,7 @@ public class DailyOddsFetchService : BackgroundService
     private readonly IJobService _jobService;
     private readonly IConfiguration _configuration;
     private readonly ILogger<DailyOddsFetchService> _logger;
-    private readonly TimeOnly _runTime = new(22, 0);
+    private readonly TimeOnly _runTime = new(6, 0);
 
     public DailyOddsFetchService(IJobService jobService, IConfiguration configuration, ILogger<DailyOddsFetchService> logger)
     {
@@ -53,6 +53,34 @@ public class DailyOddsFetchService : BackgroundService
         }
 
         await _jobService.WaitForCompletion("odds-fetch", stoppingToken);
+
+        var status = _jobService.GetStatus("odds-fetch");
+        if (status.Status != "completed")
+        {
+            _logger.LogWarning("Odds fetch did not complete successfully — skipping prediction");
+            return;
+        }
+
+        _logger.LogInformation("Starting scheduled prediction");
+        var pythonPath = GetPythonPath(repoRoot);
+        var predStarted = _jobService.TryStart(
+            "prediction",
+            pythonPath,
+            "-m game_predictor --mode predict",
+            repoRoot);
+
+        if (!predStarted)
+            _logger.LogWarning("Scheduled prediction skipped — already running");
+    }
+
+    private string GetPythonPath(string repoRoot)
+    {
+        var configured = _configuration["AdminSettings:PythonPath"];
+        if (!string.IsNullOrEmpty(configured))
+            return configured;
+
+        var venvPython = Path.Combine(repoRoot, ".venv", "bin", "python3");
+        return File.Exists(venvPython) ? venvPython : "python3";
     }
 
     private TimeSpan GetDelayUntilNextRun()

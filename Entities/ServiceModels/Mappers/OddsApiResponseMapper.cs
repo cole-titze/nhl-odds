@@ -21,12 +21,18 @@ public static class OddsApiResponseMapper
         public List<DbBookmakerTotals> Totals { get; set; } = new();
     }
 
-    public static MappedOdds Map(List<OddsApiResponse> responses, List<GameInfo> games)
+    public static MappedOdds Map(List<OddsApiResponse> responses, List<GameInfo> games,
+        DateTime? asOfUtc = null)
     {
         var result = new MappedOdds();
+        var cutoff = asOfUtc ?? DateTime.UtcNow;
 
         foreach (var response in responses)
         {
+            // Skip games that have already commenced — their odds are live/in-play, not pre-game
+            if (response.CommenceTime.ToUniversalTime() <= cutoff)
+                continue;
+
             var gameId = MatchGameId(response, games);
             if (gameId == null)
                 continue;

@@ -58,6 +58,7 @@ export interface SeasonHealthCheck {
   missingBookmakerOdds: number;
   missingGameCleaned: number;
   missingOddsFetchDays: number;
+  liveBookmakerOdds: number;
   errorCount: number;
 }
 

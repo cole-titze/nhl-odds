@@ -106,7 +106,7 @@ public class BookmakerOddsBackfiller
             _logger.LogInformation("Date {Date}: {GameCount} DB games, {ResponseCount} API games",
                 gameDate.ToString("yyyy-MM-dd"), gameInfoList.Count, responses.Count);
 
-            await BookmakerOddsHelper.MapAndSave(_logger, _bookmakerOddsRepo, responses, gameInfoList);
+            await BookmakerOddsHelper.MapAndSave(_logger, _bookmakerOddsRepo, responses, gameInfoList, queryDate);
         }
     }
 
@@ -114,26 +114,9 @@ public class BookmakerOddsBackfiller
     {
         var cached = await _bookmakerOddsRepo.GetCachedResponse(queryDate);
 
-        // Also check old query time (10pm Central night before) for backwards compatibility
-        if (cached == null)
-        {
-            var centralZone = TimeZoneInfo.FindSystemTimeZoneById("America/Chicago");
-            var oldPriorNight = new DateTime(gameDate.Year, gameDate.Month, gameDate.Day, 22, 0, 0).AddDays(-1);
-            var oldQueryDate = TimeZoneInfo.ConvertTimeToUtc(oldPriorNight, centralZone);
-            cached = await _bookmakerOddsRepo.GetCachedResponse(oldQueryDate);
-        }
-
         if (cached != null)
         {
             _logger.LogInformation("Using cached response for {Date}", gameDate.ToString("yyyy-MM-dd"));
-
-            // Cached response could be historical format ({data: [...]}) or flat array format
-            var trimmed = cached.RawJson.TrimStart();
-            if (trimmed.StartsWith('['))
-            {
-                return JsonConvert.DeserializeObject<List<OddsApiResponse>>(cached.RawJson)
-                    ?? new List<OddsApiResponse>();
-            }
 
             var wrapper = JsonConvert.DeserializeObject<OddsApiHistoricalResponse>(cached.RawJson);
             return wrapper?.Data ?? new List<OddsApiResponse>();

@@ -32,9 +32,16 @@ public static class BookmakerOddsHelper
     }
 
     public static async Task MapAndSave(ILogger logger, IBookmakerOddsRepository repo,
-        List<OddsApiResponse> responses, List<OddsApiResponseMapper.GameInfo> gameInfoList)
+        List<OddsApiResponse> responses, List<OddsApiResponseMapper.GameInfo> gameInfoList,
+        DateTime? asOfUtc = null)
     {
-        var mapped = OddsApiResponseMapper.Map(responses, gameInfoList);
+        var cutoff = asOfUtc ?? DateTime.UtcNow;
+        var skipped = responses.Where(r => r.CommenceTime.ToUniversalTime() <= cutoff).ToList();
+        foreach (var r in skipped)
+            logger.LogInformation("  Skipped (already commenced): {Home} vs {Away} ({Commence})",
+                r.HomeTeam, r.AwayTeam, r.CommenceTime.ToString("yyyy-MM-dd HH:mm"));
+
+        var mapped = OddsApiResponseMapper.Map(responses, gameInfoList, asOfUtc);
 
         // Log which games matched
         var matchedGameIds = mapped.H2H.Select(h => h.GameId).Distinct().ToHashSet();

@@ -11,6 +11,7 @@ import {
   type SeasonHealthCheck,
 } from '../api/admin';
 import { formatSeasonLabel } from '../utils/season';
+import { JobCardSkeleton, HealthCheckTableSkeleton } from '../components/Skeleton';
 
 const STATUS_STYLES: Record<string, string> = {
   idle: 'bg-surface-200 dark:bg-white/[0.06] text-surface-500 dark:text-surface-400',
@@ -154,6 +155,7 @@ function HealthCheckRow({ check }: { check: SeasonHealthCheck }) {
     check.missingBookmakerOdds > 0 ||
     check.missingGameCleaned > 0 ||
     check.missingOddsFetchDays > 0 ||
+    check.liveBookmakerOdds > 0 ||
     check.errorCount > 0;
 
   return (
@@ -190,6 +192,11 @@ function HealthCheckRow({ check }: { check: SeasonHealthCheck }) {
         >
           {check.missingOddsFetchDays}
         </td>
+        <td
+          className={`px-4 py-3 stat-number text-sm text-center ${countClass(check.liveBookmakerOdds)}`}
+        >
+          {check.liveBookmakerOdds}
+        </td>
         <td className={`px-4 py-3 stat-number text-sm text-center ${countClass(check.errorCount)}`}>
           {check.errorCount}
         </td>
@@ -203,7 +210,7 @@ function HealthCheckRow({ check }: { check: SeasonHealthCheck }) {
       </tr>
       {expanded && (
         <tr>
-          <td colSpan={9} className="p-0">
+          <td colSpan={10} className="p-0">
             <div className="px-4 py-3 bg-surface-50/50 dark:bg-white/[0.01]">
               {loadingErrors && (
                 <div className="text-xs text-surface-400 dark:text-surface-500 py-2">
@@ -267,6 +274,7 @@ export function AdminPage() {
   const [statuses, setStatuses] = useState<JobStatuses | null>(null);
   const [healthChecks, setHealthChecks] = useState<SeasonHealthCheck[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     try {
@@ -276,6 +284,8 @@ export function AdminPage() {
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to fetch statuses');
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -308,7 +318,12 @@ export function AdminPage() {
         <div className="glass rounded-xl text-center text-red-500 py-4 mb-6 text-sm">{error}</div>
       )}
 
-      {statuses && (
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <JobCardSkeleton />
+          <JobCardSkeleton />
+        </div>
+      ) : statuses ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <JobCard
             job={statuses.dataCollection}
@@ -321,11 +336,13 @@ export function AdminPage() {
             onStart={() => handleStart(startPrediction)}
           />
         </div>
-      )}
+      ) : null}
 
       <div className="mt-10">
         <h2 className="font-display text-xl font-semibold mb-4">Health Checks</h2>
-        {healthChecks.length === 0 ? (
+        {loading ? (
+          <HealthCheckTableSkeleton />
+        ) : healthChecks.length === 0 ? (
           <div className="glass rounded-xl p-6 text-sm text-surface-500 dark:text-surface-400 text-center">
             No data available.
           </div>
@@ -341,6 +358,7 @@ export function AdminPage() {
                   <th className="px-4 py-3 text-center">No Bookmaker Odds</th>
                   <th className="px-4 py-3 text-center">No Cleaned Data</th>
                   <th className="px-4 py-3 text-center">No Odds Fetch</th>
+                  <th className="px-4 py-3 text-center">Live Odds</th>
                   <th className="px-4 py-3 text-center">Errors</th>
                   <th className="px-4 py-3 text-center w-10"></th>
                 </tr>

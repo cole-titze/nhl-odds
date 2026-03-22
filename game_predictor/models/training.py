@@ -257,9 +257,11 @@ def train_default(train_df):
 
 
 def train_for_day(train_df):
-    """Train the save experiment on provided data without splitting.
+    """Train the save experiment on provided data with calibration split.
 
-    Used by walk-forward backfill. No calibration or stacking for speed.
+    Used by walk-forward backfill. Splits most recent season as calibration
+    set (matching train_default behavior). Skips calibration when there
+    aren't enough seasons or calibration samples.
     Returns (pipeline, model, model_name) or None.
     """
     if train_df.empty or len(train_df) < 50:
@@ -267,34 +269,62 @@ def train_for_day(train_df):
 
     exp = EXPERIMENTS[SAVE_EXPERIMENT]
 
-    X_raw = train_df[FEATURE_COLUMNS].values
-    y = train_df["Winner"].values
-    w = _compute_weights(train_df["SeasonStartYear"].values, exp.decay)
+    # Split into train / cal using the most recent season
+    MIN_CAL_GAMES = 20
+    current_season = train_df["SeasonStartYear"].max()
+    train_mask = train_df["SeasonStartYear"] < current_season
+    cal_mask = train_df["SeasonStartYear"] == current_season
+
+    can_calibrate = (
+        exp.calibration
+        and exp.calibration != "none"
+        and train_mask.sum() >= 50
+        and cal_mask.sum() >= MIN_CAL_GAMES
+    )
+
+    if can_calibrate:
+        X_train_raw = train_df.loc[train_mask, FEATURE_COLUMNS].values
+        y_train = train_df.loc[train_mask, "Winner"].values
+        w_train = _compute_weights(train_df.loc[train_mask, "SeasonStartYear"].values, exp.decay)
+        X_cal_raw = train_df.loc[cal_mask, FEATURE_COLUMNS].values
+        y_cal = train_df.loc[cal_mask, "Winner"].values
+        w_cal = _compute_weights(train_df.loc[cal_mask, "SeasonStartYear"].values, exp.decay)
+    else:
+        X_train_raw = train_df[FEATURE_COLUMNS].values
+        y_train = train_df["Winner"].values
+        w_train = _compute_weights(train_df["SeasonStartYear"].values, exp.decay)
 
     # Cap pipeline params to fit available data size
     from .experiment.pipeline import standard_pipeline
 
-    n_samples, n_features = X_raw.shape
+    n_samples, n_features = X_train_raw.shape
     k_best = min(exp.pipeline.named_steps["select"].k, n_features)
     pca_components = min(exp.pipeline.named_steps["pca"].n_components, k_best, n_samples)
     pipeline = standard_pipeline(k_best=k_best, pca_components=pca_components)
-    X_t = pipeline.fit_transform(X_raw, y)
+    X_train_t = pipeline.fit_transform(X_train_raw, y_train)
 
     built = build_models(exp.models)
     for model in built.values():
         # Cap KNN neighbors to training size
         if hasattr(model, "n_neighbors") and model.n_neighbors > n_samples:
             model.n_neighbors = max(1, n_samples - 1)
-        _fit(model, X_t, y, w)
+        _fit(model, X_train_t, y_train, w_train)
 
     if exp.ensemble and len(exp.ensemble) > 1:
         ensemble_models = [built[n] for n in exp.ensemble]
         save_model = Ensemble(models=ensemble_models)
-        save_model.fit(X_t, y)
+        save_model.fit(X_train_t, y_train)
         save_name = "Ensemble"
     else:
         save_name = next(iter(built))
         save_model = built[save_name]
+
+    if can_calibrate:
+        X_cal_t = pipeline.transform(X_cal_raw)
+        save_model = calibrate_model(
+            save_model, X_cal_t, y_cal, X_cal_t, y_cal,
+            method=exp.calibration, sample_weight=w_cal
+        )
 
     return pipeline, save_model, save_name
 

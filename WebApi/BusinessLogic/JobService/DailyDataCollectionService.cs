@@ -52,24 +52,6 @@ public class DailyDataCollectionService : BackgroundService
         }
 
         await _jobService.WaitForCompletion("data-collection", stoppingToken);
-
-        var status = _jobService.GetStatus("data-collection");
-        if (status.Status != "completed")
-        {
-            _logger.LogWarning("Data collection did not complete successfully — skipping prediction");
-            return;
-        }
-
-        _logger.LogInformation("Starting scheduled prediction");
-        var pythonPath = GetPythonPath(repoRoot);
-        var predStarted = _jobService.TryStart(
-            "prediction",
-            pythonPath,
-            "-m game_predictor --mode predict",
-            repoRoot);
-
-        if (!predStarted)
-            _logger.LogWarning("Scheduled prediction skipped — already running");
     }
 
     private TimeSpan GetDelayUntilNextRun()
@@ -79,16 +61,6 @@ public class DailyDataCollectionService : BackgroundService
         if (next <= now)
             next = next.AddDays(1);
         return next - now;
-    }
-
-    private string GetPythonPath(string repoRoot)
-    {
-        var configured = _configuration["AdminSettings:PythonPath"];
-        if (!string.IsNullOrEmpty(configured))
-            return configured;
-
-        var venvPython = Path.Combine(repoRoot, ".venv", "bin", "python3");
-        return File.Exists(venvPython) ? venvPython : "python3";
     }
 
     private string GetRepoRoot()

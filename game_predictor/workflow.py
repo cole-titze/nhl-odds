@@ -59,9 +59,12 @@ def _run_backfill(conn, train_df):
     train_df = train_df.sort_values("GameDateUTC").reset_index(drop=True)
     train_df["GameDate"] = pd.to_datetime(train_df["GameDateUTC"]).dt.date
 
+    SAVE_INTERVAL = 50
+
     game_days = sorted(train_df["GameDate"].unique())
     run_date = datetime.now(timezone.utc)
-    all_predictions = []
+    batch_predictions = []
+    total_saved = 0
     total_correct = 0
     total_log_loss = 0.0
 
@@ -94,7 +97,7 @@ def _run_backfill(conn, train_df):
                 total_correct += 1
             total_log_loss += game_log_loss
 
-            all_predictions.append(
+            batch_predictions.append(
                 {
                     "GameId": int(row["GameId"]),
                     "ModelId": HOMEGROWN_MODEL_ID,
@@ -106,23 +109,24 @@ def _run_backfill(conn, train_df):
                 }
             )
 
-        if (day_idx + 1) % 50 == 0 or day_idx == len(game_days) - 1:
-            n = len(all_predictions)
+        if (day_idx + 1) % SAVE_INTERVAL == 0 or day_idx == len(game_days) - 1:
+            n = total_saved + len(batch_predictions)
             avg_ll = total_log_loss / n if n > 0 else 0
             acc = total_correct / n if n > 0 else 0
             print(
                 f"  Day {day_idx + 1}/{len(game_days)} ({day}): {n} games, log loss: {avg_ll:.4f}, accuracy: {acc:.4f}"
             )
+            if batch_predictions:
+                save_predictions(conn, batch_predictions)
+                total_saved += len(batch_predictions)
+                batch_predictions = []
 
-    if all_predictions:
-        n = len(all_predictions)
-        avg_ll = total_log_loss / n
-        acc = total_correct / n
-        print(f"\nBackfill complete: {n} games predicted")
+    if total_saved > 0:
+        avg_ll = total_log_loss / total_saved
+        acc = total_correct / total_saved
+        print(f"\nBackfill complete: {total_saved} games predicted")
         print(f"  Accuracy: {acc:.4f}")
         print(f"  Log Loss: {avg_ll:.4f}")
-        print(f"\nSaving {n} predictions to GameOdds...")
-        save_predictions(conn, all_predictions)
 
 
 def run(mode: str = "predict"):
