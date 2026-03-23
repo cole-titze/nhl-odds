@@ -1,8 +1,10 @@
 using DatabaseAccess;
+using DatabaseAccess.WebAdminRepository;
 using DatabaseAccess.WebBookmakerOddsRepository;
 using DatabaseAccess.WebGameOddsRepository;
 using DatabaseAccess.WebTeamRepository;
 using Microsoft.EntityFrameworkCore;
+using WebApi.BusinessLogic.AdminService;
 using WebApi.BusinessLogic.GameOddsGetter;
 using WebApi.BusinessLogic.JobService;
 using WebApi.BusinessLogic.TeamGetter;
@@ -28,6 +30,8 @@ builder.Services.AddScoped<IGameOddsGetter, GameOddsGetter>();
 builder.Services.AddScoped<ITeamRepository, TeamRepository>();
 builder.Services.AddScoped<IWebBookmakerOddsRepository, WebBookmakerOddsRepository>();
 builder.Services.AddScoped<IGameOddsRepository, GameOddsRepository>();
+builder.Services.AddScoped<IWebAdminRepository, WebAdminRepository>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddDbContext<GameDbContext>(x => x.UseSqlServer(_connectionString));
 builder.Services.AddLogging();
 

@@ -293,11 +293,21 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
           </div>
           {game.bookmakerOdds?.length > 0 &&
             (() => {
-              const dk = game.bookmakerOdds.find((bm) => bm.bookmakerName === 'DraftKings');
-              const rest = game.bookmakerOdds.filter((bm) => bm.bookmakerName !== 'DraftKings');
+              const pinned = ['DraftKings', 'Kalshi'];
+              const shown = pinned
+                .map((name) => game.bookmakerOdds.find((bm) => bm.bookmakerName === name))
+                .filter(Boolean) as BookmakerOddsVM[];
+              const rest = game.bookmakerOdds.filter((bm) => !pinned.includes(bm.bookmakerName));
               return (
                 <>
-                  {dk && <BookmakerOddsRow bm={dk} oddsType={oddsType} format={format} />}
+                  {shown.map((bm) => (
+                    <BookmakerOddsRow
+                      key={bm.bookmakerName}
+                      bm={bm}
+                      oddsType={oddsType}
+                      format={format}
+                    />
+                  ))}
                   {rest.length > 0 && (
                     <details className="mt-1">
                       <summary className="text-[10px] text-center text-surface-400 dark:text-surface-500 cursor-pointer hover:text-surface-600 dark:hover:text-surface-300 select-none">

@@ -1,9 +1,9 @@
-using Entities.Models.Web;
+using Entities.ViewModels;
 
 namespace WebApi.BusinessLogic.TeamGetter;
 
 public interface ITeamGetter
 {
-    Task<IEnumerable<TeamStats>> GetAllTeamsStats(int seasonStartYear);
-    Task<TeamStats> GetTeamStats(int teamId, int seasonStartYear);
+    Task<TeamsVM> GetAllTeamsStats(int seasonStartYear);
+    Task<TeamVM> GetTeamStats(int teamId, int seasonStartYear);
 }

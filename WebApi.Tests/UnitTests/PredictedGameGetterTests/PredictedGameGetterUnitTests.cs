@@ -17,6 +17,7 @@ public class GameOddsGetterUnitTests
     };
     private readonly DateTime dateInRange = DateTime.Parse("1/1/2005");
     private readonly DateTime dateOutOfRange = DateTime.Parse("1/1/2020");
+
     public List<GameOdds> GamesFactory(int numberOfGamesInDateRange, int numberOfGamesOutOfDateRange)
     {
         var gameList = new List<GameOdds>();
@@ -26,7 +27,9 @@ public class GameOddsGetterUnitTests
             {
                 Game = new Game()
                 {
-                    GameDate = dateInRange
+                    GameDate = dateInRange,
+                    HomeTeam = new Team { Id = 1 },
+                    AwayTeam = new Team { Id = 2 },
                 }
             };
             gameList.Add(game);
@@ -37,13 +40,16 @@ public class GameOddsGetterUnitTests
             {
                 Game = new Game()
                 {
-                    GameDate = dateOutOfRange
+                    GameDate = dateOutOfRange,
+                    HomeTeam = new Team { Id = 1 },
+                    AwayTeam = new Team { Id = 2 },
                 }
             };
             gameList.Add(game);
         }
         return gameList;
     }
+
     public GameOddsGetter Factory(int numberOfGamesInDateRange, int numberOfGamesOutOfDateRange)
     {
         var gameList = GamesFactory(numberOfGamesInDateRange, numberOfGamesOutOfDateRange);
@@ -53,8 +59,9 @@ public class GameOddsGetterUnitTests
 
         return cut;
     }
+
     [TestMethod]
-    public async Task CallToGetPredictedGamesInDateRange_WithNoGamesInDateRange_ShouldGetNoGames()
+    public async Task CallToGetGameOddsInDateRange_WithNoGamesInDateRange_ShouldGetNoGames()
     {
         int numberOfGamesInDateRange = 0;
         int numberOfGamesOutOfDateRange = 5;
@@ -63,8 +70,9 @@ public class GameOddsGetterUnitTests
         var games = await cut.GetGameOddsInDateRange(dateRange, SEASON);
         games.Should().HaveCount(0);
     }
+
     [TestMethod]
-    public async Task CallToGetPredictedGamesInDateRange_WithFiveGamesInDateRange_ShouldGetFiveGames()
+    public async Task CallToGetGameOddsInDateRange_WithFiveGamesInDateRange_ShouldGetFiveGames()
     {
         int numberOfGamesInDateRange = 5;
         int numberOfGamesOutOfDateRange = 0;
@@ -73,8 +81,9 @@ public class GameOddsGetterUnitTests
         var games = await cut.GetGameOddsInDateRange(dateRange, SEASON);
         games.Should().HaveCount(5);
     }
+
     [TestMethod]
-    public async Task CallToGetPredictedGamesInDateRange_WithFiveGamesInDateRangeAndFiftyGamesOutOfDateRange_ShouldGetFiveGames()
+    public async Task CallToGetGameOddsInDateRange_WithFiveGamesInDateRangeAndFiftyGamesOutOfDateRange_ShouldGetFiveGames()
     {
         int numberOfGamesInDateRange = 5;
         int numberOfGamesOutOfDateRange = 50;
@@ -83,8 +92,9 @@ public class GameOddsGetterUnitTests
         var games = await cut.GetGameOddsInDateRange(dateRange, SEASON);
         games.Should().HaveCount(5);
     }
+
     [TestMethod]
-    public async Task CallToGetPredictedGamesInDateRange_WitZeroGamesInDateRangeAndZeroGamesOutOfDateRange_ShouldGetZeroGames()
+    public async Task CallToGetGameOddsInDateRange_WitZeroGamesInDateRangeAndZeroGamesOutOfDateRange_ShouldGetZeroGames()
     {
         int numberOfGamesInDateRange = 0;
         int numberOfGamesOutOfDateRange = 0;

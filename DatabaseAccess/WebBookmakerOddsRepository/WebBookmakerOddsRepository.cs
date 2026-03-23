@@ -1,3 +1,4 @@
+using DatabaseAccess.WebBookmakerOddsRepository.Mappers;
 using Entities.Models.Web;
 using Microsoft.EntityFrameworkCore;
 
@@ -40,29 +41,9 @@ public class WebBookmakerOddsRepository : IWebBookmakerOddsRepository
                 g => g.Key,
                 g => g.Select(o =>
                 {
-                    var odds = new BookmakerGameOdds
-                    {
-                        BookmakerName = o.BookmakerName,
-                        HomeOdds = o.HomeOdds,
-                        AwayOdds = o.AwayOdds,
-                    };
-
-                    if (spreadsLookup.TryGetValue((o.GameId, o.BookmakerName), out var spread))
-                    {
-                        odds.HomePoint = spread.HomePoint;
-                        odds.HomePrice = spread.HomePrice;
-                        odds.AwayPoint = spread.AwayPoint;
-                        odds.AwayPrice = spread.AwayPrice;
-                    }
-
-                    if (totalsLookup.TryGetValue((o.GameId, o.BookmakerName), out var total))
-                    {
-                        odds.OverUnderPoint = total.OverUnderPoint;
-                        odds.OverPrice = total.OverPrice;
-                        odds.UnderPrice = total.UnderPrice;
-                    }
-
-                    return odds;
+                    spreadsLookup.TryGetValue((o.GameId, o.BookmakerName), out var spread);
+                    totalsLookup.TryGetValue((o.GameId, o.BookmakerName), out var total);
+                    return DbBookmakerOddsToBookmakerGameOddsMapper.Map(o, spread, total);
                 }).ToList()
             );
     }

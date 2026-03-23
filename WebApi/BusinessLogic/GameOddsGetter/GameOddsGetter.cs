@@ -1,6 +1,8 @@
 using DatabaseAccess.WebGameOddsRepository;
 using Entities.Models.Web;
 using Entities.Types;
+using Entities.ViewModels;
+using WebApi.Mappers;
 
 namespace WebApi.BusinessLogic.GameOddsGetter;
 
@@ -13,9 +15,10 @@ public class GameOddsGetter : IGameOddsGetter
         _gameOddsRepository = predictedGameRepository;
     }
 
-    public async Task<IEnumerable<GameOdds>> GetGameOddsInDateRange(DateRange dateRange, int seasonStartYear)
+    public async Task<IEnumerable<GameOddsVM>> GetGameOddsInDateRange(DateRange dateRange, int seasonStartYear)
     {
-        return await _gameOddsRepository.GetGameOddsInDateRange(dateRange, seasonStartYear);
+        var gameOdds = await _gameOddsRepository.GetGameOddsInDateRange(dateRange, seasonStartYear);
+        return GameOddsToViewModelsMapper.Map(gameOdds);
     }
 
     public async Task<IEnumerable<TeamStats>> BuildAllTeamsGameOdds(IEnumerable<TeamStats> teams, int seasonStartYear)
@@ -35,12 +38,7 @@ public class GameOddsGetter : IGameOddsGetter
 
     public async Task<TeamStats> BuildTeamGameOdds(TeamStats team, int seasonStartYear)
     {
-        team.GameOdds = await GetTeamGameOdds(team.Team.Id, seasonStartYear);
+        team.GameOdds = await _gameOddsRepository.GetTeamGameOdds(team.Team.Id, seasonStartYear);
         return team;
-    }
-
-    public async Task<IEnumerable<GameOdds>> GetTeamGameOdds(int teamId, int seasonStartYear)
-    {
-        return await _gameOddsRepository.GetTeamGameOdds(teamId, seasonStartYear);
     }
 }

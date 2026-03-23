@@ -6,25 +6,31 @@ namespace WebApi.Tests.BusinessLogic.Fakes;
 
 public class FakeGameOddsRepository : IGameOddsRepository
 {
-    private readonly IList<GameOdds> _predictedGames;
-    public FakeGameOddsRepository(List<GameOdds> predictedGames)
+    private readonly IList<GameOdds> _gameOdds;
+
+    public FakeGameOddsRepository(List<GameOdds> gameOdds)
     {
-        _predictedGames = predictedGames;
+        _gameOdds = gameOdds;
     }
-    public async Task<IEnumerable<GameOdds>> GetGameOddsInDateRange(DateRange dateRange, int seasonStartYear)
+
+    public Task<IEnumerable<GameOdds>> GetGameOddsInDateRange(DateRange dateRange, int seasonStartYear)
     {
-        return await Task.FromResult(_predictedGames
+        var result = _gameOdds
             .Where(x => x.Game.GameDate.Date >= dateRange.StartDate && x.Game.GameDate.Date <= dateRange.EndDate)
-            .ToList());
+            .ToList();
+        return Task.FromResult<IEnumerable<GameOdds>>(result);
     }
 
     public Task<IEnumerable<GameOdds>> GetTeamGameOdds(int teamId, int seasonStartYear)
     {
-        throw new NotImplementedException();
+        var result = _gameOdds
+            .Where(x => x.Game.HomeTeam.Id == teamId || x.Game.AwayTeam.Id == teamId)
+            .ToList();
+        return Task.FromResult<IEnumerable<GameOdds>>(result);
     }
 
     public Task<List<GameOdds>> GetAllGameOddsForSeason(int seasonStartYear)
     {
-        return Task.FromResult(_predictedGames.ToList());
+        return Task.FromResult(_gameOdds.ToList());
     }
 }

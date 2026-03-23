@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using DatabaseAccess;
 using Entities.DbModels;
-using Entities.ViewModels;
+using Entities.Models.Web;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 
@@ -10,7 +10,7 @@ namespace WebApi.BusinessLogic.JobService;
 
 public class JobService : IJobService
 {
-    private readonly ConcurrentDictionary<string, JobInfoVM> _jobs = new();
+    private readonly ConcurrentDictionary<string, JobInfo> _jobs = new();
     private readonly ConcurrentDictionary<string, object> _locks = new();
     private readonly ConcurrentDictionary<string, TaskCompletionSource> _completionSources = new();
     private readonly ILogger<JobService> _logger;
@@ -25,13 +25,13 @@ public class JobService : IJobService
         _appStopping = lifetime.ApplicationStopping;
     }
 
-    public JobInfoVM GetStatus(string jobName)
+    public JobInfo GetStatus(string jobName)
     {
         LoadFromDb();
-        return _jobs.GetOrAdd(jobName, name => new JobInfoVM { Id = name, Name = name });
+        return _jobs.GetOrAdd(jobName, name => new JobInfo { Id = name, Name = name });
     }
 
-    public IEnumerable<JobInfoVM> GetAllStatuses()
+    public IEnumerable<JobInfo> GetAllStatuses()
     {
         return _jobs.Values;
     }
@@ -42,7 +42,7 @@ public class JobService : IJobService
 
         lock (lockObj)
         {
-            var job = _jobs.GetOrAdd(jobName, name => new JobInfoVM { Id = name, Name = name });
+            var job = _jobs.GetOrAdd(jobName, name => new JobInfo { Id = name, Name = name });
 
             if (job.Status == "running")
                 return false;
@@ -71,7 +71,7 @@ public class JobService : IJobService
             await tcs.Task.WaitAsync(cancellationToken);
     }
 
-    private async Task RunProcess(JobInfoVM job, string command, string args, string workingDirectory, Dictionary<string, string>? environmentVariables = null)
+    private async Task RunProcess(JobInfo job, string command, string args, string workingDirectory, Dictionary<string, string>? environmentVariables = null)
     {
         try
         {
@@ -167,7 +167,7 @@ public class JobService : IJobService
 
             foreach (var row in rows)
             {
-                var job = _jobs.GetOrAdd(row.JobName, name => new JobInfoVM { Id = name, Name = name });
+                var job = _jobs.GetOrAdd(row.JobName, name => new JobInfo { Id = name, Name = name });
                 job.Status = row.Status;
                 job.StartedAt = row.StartedAt;
                 job.FinishedAt = row.FinishedAt;
@@ -180,7 +180,7 @@ public class JobService : IJobService
         }
     }
 
-    private void SaveToDb(JobInfoVM job)
+    private void SaveToDb(JobInfo job)
     {
         try
         {

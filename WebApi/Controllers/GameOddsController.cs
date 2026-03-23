@@ -1,7 +1,6 @@
 using Entities.Types;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.BusinessLogic.GameOddsGetter;
-using WebApi.Mappers;
 
 namespace WebApi.Controllers;
 
@@ -9,12 +8,10 @@ namespace WebApi.Controllers;
 [ApiController]
 public class GameOddsController
 {
-    private readonly ILogger<GameOddsController> _logger;
     private readonly IGameOddsGetter _gameOddsGetter;
 
-    public GameOddsController(ILogger<GameOddsController> logger, IGameOddsGetter predictedGameBL)
+    public GameOddsController(IGameOddsGetter predictedGameBL)
     {
-        _logger = logger;
         _gameOddsGetter = predictedGameBL;
     }
 
@@ -26,8 +23,7 @@ public class GameOddsController
             StartDate = startDate.Date,
             EndDate = endDate.Date
         };
-        var predictedGames = await _gameOddsGetter.GetGameOddsInDateRange(dateRange, seasonStartYear);
-        var predictedGamesVM = GameOddsToViewModelsMapper.Map(predictedGames);
+        var predictedGamesVM = await _gameOddsGetter.GetGameOddsInDateRange(dateRange, seasonStartYear);
         return Results.Ok(predictedGamesVM);
     }
 }
