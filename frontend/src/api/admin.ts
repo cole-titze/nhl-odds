@@ -28,6 +28,7 @@ export interface JobStatuses {
   oddsBackfill: JobInfo;
   predictionBackfill: JobInfo;
   kalshiFetch: JobInfo;
+  kalshiBackfill: JobInfo;
 }
 
 export async function getJobStatuses(): Promise<JobStatuses> {
@@ -72,6 +73,15 @@ export async function startPredictionBackfill(): Promise<{ message: string }> {
   return res.json();
 }
 
+export async function startKalshiBackfill(): Promise<{ message: string }> {
+  const res = await fetch(`${BASE_URL}/api/Admin/StartKalshiBackfill`, { method: 'POST' });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message || `API error: ${res.status}`);
+  }
+  return res.json();
+}
+
 export interface SeasonHealthCheck {
   seasonStartYear: number;
   totalGames: number;
@@ -81,6 +91,7 @@ export interface SeasonHealthCheck {
   missingGameCleaned: number;
   missingOddsFetchDays: number;
   liveBookmakerOdds: number;
+  missingKalshiOdds: number;
   errorCount: number;
 }
 

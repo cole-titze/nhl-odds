@@ -19,6 +19,7 @@ public class AdminController
     private const string OddsBackfillJob = "odds-backfill";
     private const string PredictionBackfillJob = "prediction-backfill";
     private const string KalshiFetchJob = "kalshi-fetch";
+    private const string KalshiBackfillJob = "kalshi-backfill";
 
     public AdminController(IJobService jobService, IAdminService adminService, IConfiguration configuration)
     {
@@ -47,6 +48,9 @@ public class AdminController
     [HttpPost]
     public IResult StartDataCollection()
     {
+        if (CompletedToday(DataCollectionJob))
+            return Results.Conflict(new { message = "Data collection already completed today." });
+
         var repoRoot = GetRepoRoot();
         var started = _jobService.TryStart(
             DataCollectionJob,
@@ -122,6 +126,27 @@ public class AdminController
         return Results.Ok(new { message = "Prediction backfill started." });
     }
 
+    [HttpPost]
+    public IResult StartKalshiBackfill()
+    {
+        // TODO: re-enable once-per-day guard after Kalshi backfill is stable
+        // if (CompletedToday(KalshiBackfillJob))
+        //     return Results.Conflict(new { message = "Kalshi backfill already completed today." });
+
+        var repoRoot = GetRepoRoot();
+        var started = _jobService.TryStart(
+            KalshiBackfillJob,
+            "dotnet",
+            "run --project Entry --no-build",
+            repoRoot,
+            new Dictionary<string, string> { { "RUN_MODE", "BackfillKalshi" } });
+
+        if (!started)
+            return Results.Conflict(new { message = "Kalshi backfill is already running." });
+
+        return Results.Ok(new { message = "Kalshi backfill started." });
+    }
+
     private bool CompletedToday(string jobName)
     {
         var status = _jobService.GetStatus(jobName);
@@ -155,6 +180,7 @@ public class AdminController
             oddsBackfill = JobInfoToJobInfoVmMapper.Map(_jobService.GetStatus(OddsBackfillJob)),
             predictionBackfill = JobInfoToJobInfoVmMapper.Map(_jobService.GetStatus(PredictionBackfillJob)),
             kalshiFetch = JobInfoToJobInfoVmMapper.Map(_jobService.GetStatus(KalshiFetchJob)),
+            kalshiBackfill = JobInfoToJobInfoVmMapper.Map(_jobService.GetStatus(KalshiBackfillJob)),
         };
         return Results.Ok(statuses);
     }

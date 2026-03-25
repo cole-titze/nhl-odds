@@ -6,10 +6,51 @@ import { Skeleton, StatCardSkeleton } from '../components/Skeleton';
 import { useFetch } from '../hooks/useFetch';
 import { getAllTeams } from '../api/teams';
 import { getCurrentSeason } from '../utils/season';
+import { calculateLogLoss } from '../utils/predictions';
+import { Winner } from '../types';
 import type { TeamVM } from '../types';
 
-type SortKey = 'name' | 'points' | 'record' | 'accuracy' | 'logLoss' | 'dkAccuracy' | 'dkLogLoss';
+type SortKey =
+  | 'name'
+  | 'points'
+  | 'record'
+  | 'accuracy'
+  | 'logLoss'
+  | 'dkAccuracy'
+  | 'dkLogLoss'
+  | 'kalshiAccuracy'
+  | 'kalshiLogLoss';
 type SortDir = 'asc' | 'desc';
+
+interface KalshiTeamStats {
+  games: number;
+  accurate: number;
+  logLoss: number;
+  accuracyPct: string;
+}
+
+function computeKalshiStats(team: TeamVM): KalshiTeamStats {
+  let games = 0;
+  let accurate = 0;
+  let totalLoss = 0;
+  for (const g of team.gameOddsVM) {
+    if (!g.hasBeenPlayed) continue;
+    const k = g.bookmakerOdds?.find((b) => b.bookmakerName === 'Kalshi');
+    if (!k || k.homeOdds <= 0 || k.awayOdds <= 0) continue;
+    games++;
+    const loss = calculateLogLoss(k.homeOdds, k.awayOdds, g.winner);
+    totalLoss += loss;
+    const kPredictedHome = k.homeOdds > k.awayOdds;
+    const homeWon = g.winner === Winner.HOME;
+    if (kPredictedHome === homeWon) accurate++;
+  }
+  return {
+    games,
+    accurate,
+    logLoss: games > 0 ? totalLoss / games : 0,
+    accuracyPct: games > 0 ? ((accurate / games) * 100).toFixed(1) : '0.0',
+  };
+}
 
 export function TeamsPage() {
   const [season, setSeason] = useState(getCurrentSeason);
@@ -23,6 +64,37 @@ export function TeamsPage() {
     return data.teams.flatMap((t) => t.gameOddsVM);
   }, [data]);
 
+  const kalshiByTeamId = useMemo(() => {
+    if (!data) return new Map<number, KalshiTeamStats>();
+    const map = new Map<number, KalshiTeamStats>();
+    for (const t of data.teams) {
+      map.set(t.id, computeKalshiStats(t));
+    }
+    return map;
+  }, [data]);
+
+  const kalshiSeasonTotals = useMemo(() => {
+    if (!data) return { games: 0, accurate: 0, logLoss: 0 };
+    let games = 0;
+    let accurate = 0;
+    let totalLoss = 0;
+    const seen = new Set<number>();
+    for (const t of data.teams) {
+      for (const g of t.gameOddsVM) {
+        if (!g.hasBeenPlayed || seen.has(g.id)) continue;
+        seen.add(g.id);
+        const k = g.bookmakerOdds?.find((b) => b.bookmakerName === 'Kalshi');
+        if (!k || k.homeOdds <= 0 || k.awayOdds <= 0) continue;
+        games++;
+        totalLoss += calculateLogLoss(k.homeOdds, k.awayOdds, g.winner);
+        const kPredictedHome = k.homeOdds > k.awayOdds;
+        const homeWon = g.winner === Winner.HOME;
+        if (kPredictedHome === homeWon) accurate++;
+      }
+    }
+    return { games, accurate, logLoss: games > 0 ? totalLoss / games : 0 };
+  }, [data]);
+
   const sorted = useMemo(() => {
     if (!data) return [];
     const teams = [...data.teams];
@@ -33,8 +105,6 @@ export function TeamsPage() {
           cmp = `${a.locationName} ${a.teamName}`.localeCompare(`${b.locationName} ${b.teamName}`);
           break;
         case 'points':
-          cmp = points(a) - points(b);
-          break;
         case 'record':
           cmp = points(a) - points(b);
           break;
@@ -50,20 +120,37 @@ export function TeamsPage() {
         case 'dkLogLoss':
           cmp = a.draftKingsLogLoss - b.draftKingsLogLoss;
           break;
+        case 'kalshiAccuracy': {
+          const ka = kalshiByTeamId.get(a.id);
+          const kb = kalshiByTeamId.get(b.id);
+          cmp =
+            (ka && ka.games > 0 ? ka.accurate / ka.games : 0) -
+            (kb && kb.games > 0 ? kb.accurate / kb.games : 0);
+          break;
+        }
+        case 'kalshiLogLoss': {
+          const ka = kalshiByTeamId.get(a.id);
+          const kb = kalshiByTeamId.get(b.id);
+          cmp = (ka?.logLoss ?? 0) - (kb?.logLoss ?? 0);
+          break;
+        }
       }
       return sortDir === 'asc' ? cmp : -cmp;
     });
     return teams;
-  }, [data, sortKey, sortDir]);
+  }, [data, sortKey, sortDir, kalshiByTeamId]);
 
   const hasDk = data ? data.seasonTotals.draftKingsGameCount > 0 : false;
+  const hasKalshi = kalshiSeasonTotals.games > 0;
 
   function handleSort(key: SortKey) {
     if (sortKey === key) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortKey(key);
-      setSortDir(key === 'logLoss' || key === 'dkLogLoss' ? 'asc' : 'desc');
+      setSortDir(
+        key === 'logLoss' || key === 'dkLogLoss' || key === 'kalshiLogLoss' ? 'asc' : 'desc',
+      );
     }
   }
 
@@ -76,6 +163,8 @@ export function TeamsPage() {
         <h1 className="font-display text-3xl font-bold tracking-tight">Teams</h1>
         <SeasonSelector value={season} onChange={setSeason} />
       </div>
+
+      <LogLossChart games={allGames} deduplicateById />
 
       {data && (
         <>
@@ -112,8 +201,8 @@ export function TeamsPage() {
               </div>
             </div>
           </div>
-          {data.seasonTotals.draftKingsGameCount > 0 && (
-            <div className="grid grid-cols-3 gap-4 mb-8">
+          {hasDk && (
+            <div className="grid grid-cols-3 gap-4 mb-4">
               <div className="glass rounded-xl p-5 text-center">
                 <div className="stat-number text-3xl text-surface-900 dark:text-white">
                   {data.seasonTotals.draftKingsGameCount}
@@ -145,10 +234,37 @@ export function TeamsPage() {
               </div>
             </div>
           )}
+          {hasKalshi && (
+            <div className="grid grid-cols-3 gap-4 mb-8">
+              <div className="glass rounded-xl p-5 text-center">
+                <div className="stat-number text-3xl text-surface-900 dark:text-white">
+                  {kalshiSeasonTotals.games}
+                </div>
+                <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                  Kalshi Games
+                </div>
+              </div>
+              <div className="glass rounded-xl p-5 text-center">
+                <div className="stat-number text-3xl text-accent-500">
+                  {((kalshiSeasonTotals.accurate / kalshiSeasonTotals.games) * 100).toFixed(1)}%
+                </div>
+                <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                  Kalshi Accuracy
+                </div>
+              </div>
+              <div className="glass rounded-xl p-5 text-center">
+                <div className="stat-number text-3xl text-surface-900 dark:text-white">
+                  {kalshiSeasonTotals.logLoss.toFixed(4)}
+                </div>
+                <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                  Kalshi Log Loss
+                </div>
+              </div>
+            </div>
+          )}
+          {!hasKalshi && <div className="mb-4" />}
         </>
       )}
-
-      <LogLossChart games={allGames} deduplicateById />
 
       {error && <div className="glass rounded-xl text-center text-red-500 py-8">{error}</div>}
 
@@ -220,11 +336,34 @@ export function TeamsPage() {
                       DK Loss{arrow('dkLogLoss')}
                     </th>
                   )}
+                  {hasKalshi && (
+                    <th
+                      className="py-3 px-4 text-center cursor-pointer select-none hover:text-surface-900 dark:hover:text-white transition-colors font-semibold"
+                      onClick={() => handleSort('kalshiAccuracy')}
+                    >
+                      Kalshi Acc{arrow('kalshiAccuracy')}
+                    </th>
+                  )}
+                  {hasKalshi && (
+                    <th
+                      className="py-3 px-4 text-center cursor-pointer select-none hover:text-surface-900 dark:hover:text-white transition-colors font-semibold"
+                      onClick={() => handleSort('kalshiLogLoss')}
+                    >
+                      Kalshi Loss{arrow('kalshiLogLoss')}
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody>
                 {sorted.map((team) => (
-                  <TeamRow key={team.id} team={team} season={season} showDk={hasDk} />
+                  <TeamRow
+                    key={team.id}
+                    team={team}
+                    season={season}
+                    showDk={hasDk}
+                    showKalshi={hasKalshi}
+                    kalshiStats={kalshiByTeamId.get(team.id)}
+                  />
                 ))}
               </tbody>
             </table>

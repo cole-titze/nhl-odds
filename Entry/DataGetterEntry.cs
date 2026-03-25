@@ -81,6 +81,17 @@ public class DataGetterEntry
             await kalshiFetcher.FetchAndSaveKalshiOdds();
             _logger.LogTrace("Completed Kalshi Odds Fetch");
         }
+        else if (modeSettings.Mode == ModeType.BackfillKalshi)
+        {
+            var kalshiDbContext = new NhlDbContext(modeSettings.ConnectionString);
+            var kalshiOddsRepo = new BookmakerOddsRepository(kalshiDbContext);
+            var kalshiGetter = new KalshiGetter(_loggerFactory);
+            var kalshiBackfiller = new KalshiOddsBackfiller(kalshiDbContext, kalshiOddsRepo, kalshiGetter, _loggerFactory);
+
+            _logger.LogTrace("Starting Kalshi Odds Backfill");
+            await kalshiBackfiller.BackfillKalshiOdds();
+            _logger.LogTrace("Completed Kalshi Odds Backfill");
+        }
         else if (modeSettings.Mode == ModeType.NextDayOdds || modeSettings.Mode == ModeType.BackfillOdds)
         {
             var isBackfill = modeSettings.Mode == ModeType.BackfillOdds;

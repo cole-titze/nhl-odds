@@ -53,6 +53,12 @@ public class WebAdminRepository : IWebAdminRepository
             await _db.BookmakerSpreads.Select(bs => bs.GameId).Distinct().ToListAsync());
         var totalBookmakerGameIds = new HashSet<int>(
             await _db.BookmakerTotals.Select(bt => bt.GameId).Distinct().ToListAsync());
+        var kalshiGameIds = new HashSet<int>(
+            await _db.BookmakerOdds.Where(bo => bo.BookmakerKey == "kalshi").Select(bo => bo.GameId).Distinct().ToListAsync());
+        var kalshiSpreadGameIds = new HashSet<int>(
+            await _db.BookmakerSpreads.Where(bs => bs.BookmakerKey == "kalshi").Select(bs => bs.GameId).Distinct().ToListAsync());
+        var kalshiTotalGameIds = new HashSet<int>(
+            await _db.BookmakerTotals.Where(bt => bt.BookmakerKey == "kalshi").Select(bt => bt.GameId).Distinct().ToListAsync());
         var cleanedGameIds = new HashSet<int>(
             await _db.GameCleaned.Select(gc => gc.GameId).Distinct().ToListAsync());
 
@@ -100,6 +106,10 @@ public class WebAdminRepository : IWebAdminRepository
                     MissingOddsFetchDays = g.Key < 2020 ? -1
                         : gameDates.Count(d => !oddsFetchDateSet.Contains(d)),
                     LiveBookmakerOdds = allGames.Count(x => liveBookmakerOddsGameIds.Contains(x.Id)),
+                    MissingKalshiOdds = g.Key < 2025 ? -1
+                        : playedThroughToday.Count(x => !kalshiGameIds.Contains(x.Id))
+                        + playedThroughToday.Count(x => !kalshiSpreadGameIds.Contains(x.Id))
+                        + playedThroughToday.Count(x => !kalshiTotalGameIds.Contains(x.Id)),
                     ErrorCount = errorCountDict.GetValueOrDefault(g.Key, 0),
                 };
             })

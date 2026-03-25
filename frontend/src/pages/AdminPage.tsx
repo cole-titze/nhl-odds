@@ -3,8 +3,10 @@ import {
   getErrorLogs,
   getHealthChecks,
   getJobStatuses,
+  startDataCollection,
   startOddsBackfill,
   startPredictionBackfill,
+  startKalshiBackfill,
   type ErrorLog,
   type JobInfo,
   type JobStatuses,
@@ -171,6 +173,7 @@ function HealthCheckRow({ check }: { check: SeasonHealthCheck }) {
     check.missingGameCleaned > 0 ||
     check.missingOddsFetchDays > 0 ||
     check.liveBookmakerOdds > 0 ||
+    check.missingKalshiOdds > 0 ||
     check.errorCount > 0;
 
   const cd = countDisplay;
@@ -213,6 +216,11 @@ function HealthCheckRow({ check }: { check: SeasonHealthCheck }) {
           className={`px-4 py-3 stat-number text-sm text-center ${countClass(check.liveBookmakerOdds)}`}
         >
           {check.liveBookmakerOdds}
+        </td>
+        <td
+          className={`px-4 py-3 stat-number text-sm text-center ${countClass(check.missingKalshiOdds)}`}
+        >
+          {cd(check.missingKalshiOdds)}
         </td>
         <td className={`px-4 py-3 stat-number text-sm text-center ${countClass(check.errorCount)}`}>
           {check.errorCount}
@@ -343,6 +351,7 @@ export function AdminPage() {
           <JobCardSkeleton />
           <JobCardSkeleton />
           <JobCardSkeleton />
+          <JobCardSkeleton />
         </div>
       ) : statuses ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -356,9 +365,18 @@ export function AdminPage() {
             label="Prediction Backfill"
             onStart={() => handleStart(startPredictionBackfill)}
           />
-          <JobCard job={statuses.dataCollection} label="Data Collection" />
-          <JobCard job={statuses.oddsFetch} label="Odds Fetch" />
+          <JobCard
+            job={statuses.dataCollection}
+            label="Data Collection"
+            onStart={() => handleStart(startDataCollection)}
+          />
+          <JobCard
+            job={statuses.kalshiBackfill}
+            label="Kalshi Backfill"
+            onStart={() => handleStart(startKalshiBackfill)}
+          />
           <JobCard job={statuses.kalshiFetch} label="Kalshi Fetch" />
+          <JobCard job={statuses.oddsFetch} label="Odds Fetch" />
           <JobCard job={statuses.prediction} label="Prediction" />
         </div>
       ) : null}
@@ -384,6 +402,7 @@ export function AdminPage() {
                   <th className="px-4 py-3 text-center">No Cleaned Data</th>
                   <th className="px-4 py-3 text-center">No Odds Fetch</th>
                   <th className="px-4 py-3 text-center">Live Odds</th>
+                  <th className="px-4 py-3 text-center">No Kalshi</th>
                   <th className="px-4 py-3 text-center">Errors</th>
                   <th className="px-4 py-3 text-center w-10"></th>
                 </tr>

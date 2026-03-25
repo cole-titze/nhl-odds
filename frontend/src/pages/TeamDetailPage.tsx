@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useFetch } from '../hooks/useFetch';
 import { getTeam } from '../api/teams';
@@ -11,6 +12,28 @@ import { Winner } from '../types';
 import { useOddsFormatContext } from '../contexts/OddsFormatContext';
 import { formatOdds } from '../utils/oddsFormat';
 
+function StatCard({
+  label,
+  value,
+  sub,
+  accent,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  accent?: boolean;
+}) {
+  return (
+    <div className="glass rounded-xl p-4 text-center">
+      <div className={`stat-number text-2xl font-bold ${accent ? 'text-accent-500' : ''}`}>
+        {value}
+      </div>
+      <div className="text-xs text-surface-500 dark:text-surface-400 mt-1">{label}</div>
+      {sub && <div className="text-xs text-surface-400 dark:text-surface-500 mt-0.5">{sub}</div>}
+    </div>
+  );
+}
+
 export function TeamDetailPage() {
   const { format } = useOddsFormatContext();
   const { teamId } = useParams();
@@ -23,6 +46,30 @@ export function TeamDetailPage() {
     loading,
     error,
   } = useFetch(() => getTeam(Number(teamId), season), [teamId, season]);
+
+  const kalshiStats = useMemo(() => {
+    if (!team) return null;
+    let games = 0;
+    let accurate = 0;
+    let totalLoss = 0;
+    for (const g of team.gameOddsVM) {
+      if (!g.hasBeenPlayed) continue;
+      const k = g.bookmakerOdds?.find((b) => b.bookmakerName === 'Kalshi');
+      if (!k || k.homeOdds <= 0 || k.awayOdds <= 0) continue;
+      games++;
+      const loss = calculateLogLoss(k.homeOdds, k.awayOdds, g.winner);
+      totalLoss += loss;
+      const kPredictedHome = k.homeOdds > k.awayOdds;
+      const homeWon = g.winner === Winner.HOME;
+      if (kPredictedHome === homeWon) accurate++;
+    }
+    return {
+      games,
+      accurate,
+      logLoss: games > 0 ? totalLoss / games : 0,
+      accuracyPct: games > 0 ? ((accurate / games) * 100).toFixed(1) : '0.0',
+    };
+  }, [team]);
 
   if (loading) {
     return (
@@ -39,6 +86,10 @@ export function TeamDetailPage() {
   const accuracyPct =
     team.totalGameCount > 0
       ? ((team.totalModelAccurateGameCount / team.totalGameCount) * 100).toFixed(1)
+      : '0.0';
+  const dkAccuracyPct =
+    team.draftKingsGameCount > 0
+      ? ((team.draftKingsAccurateGameCount / team.draftKingsGameCount) * 100).toFixed(1)
       : '0.0';
 
   return (
@@ -57,39 +108,44 @@ export function TeamDetailPage() {
             <h1 className="font-display text-3xl font-bold tracking-tight">
               {team.locationName} {team.teamName}
             </h1>
-            <div className="flex items-center gap-4 mt-1.5">
-              <span className="stat-number text-sm text-surface-500 dark:text-surface-400">
-                {team.seasonWins}-{team.seasonLosses}-{team.seasonOvertimeLosses}
-              </span>
-              <span className="w-1 h-1 rounded-full bg-surface-300 dark:bg-surface-600" />
-              <span className="stat-number text-sm text-accent-500">{accuracyPct}% home acc</span>
-              <span className="w-1 h-1 rounded-full bg-surface-300 dark:bg-surface-600" />
-              <span className="stat-number text-sm text-surface-500 dark:text-surface-400">
-                {team.modelLogLoss.toFixed(4)} home loss
-              </span>
-              {team.draftKingsGameCount > 0 && (
-                <>
-                  <span className="w-1 h-1 rounded-full bg-surface-300 dark:bg-surface-600" />
-                  <span className="stat-number text-sm text-surface-500 dark:text-surface-400">
-                    DK{' '}
-                    {((team.draftKingsAccurateGameCount / team.draftKingsGameCount) * 100).toFixed(
-                      1,
-                    )}
-                    %
-                  </span>
-                  <span className="w-1 h-1 rounded-full bg-surface-300 dark:bg-surface-600" />
-                  <span className="stat-number text-sm text-surface-500 dark:text-surface-400">
-                    DK {team.draftKingsLogLoss.toFixed(4)} log loss
-                  </span>
-                </>
-              )}
-            </div>
+            <span className="stat-number text-sm text-surface-500 dark:text-surface-400">
+              {team.seasonWins}-{team.seasonLosses}-{team.seasonOvertimeLosses}
+            </span>
           </div>
         </div>
         <SeasonSelector value={season} onChange={(s) => setSearchParams({ season: String(s) })} />
       </div>
 
       <LogLossChart games={team.gameOddsVM} />
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
+        <StatCard label="In-House Accuracy" value={`${accuracyPct}%`} accent />
+        <StatCard
+          label="In-House Log Loss"
+          value={team.modelLogLoss.toFixed(4)}
+          sub={`${team.totalGameCount} games`}
+        />
+        {team.draftKingsGameCount > 0 && (
+          <>
+            <StatCard label="DK Accuracy" value={`${dkAccuracyPct}%`} />
+            <StatCard
+              label="DK Log Loss"
+              value={team.draftKingsLogLoss.toFixed(4)}
+              sub={`${team.draftKingsGameCount} games`}
+            />
+          </>
+        )}
+        {kalshiStats && kalshiStats.games > 0 && (
+          <>
+            <StatCard label="Kalshi Accuracy" value={`${kalshiStats.accuracyPct}%`} />
+            <StatCard
+              label="Kalshi Log Loss"
+              value={kalshiStats.logLoss.toFixed(4)}
+              sub={`${kalshiStats.games} games`}
+            />
+          </>
+        )}
+      </div>
 
       {team.gameOddsVM.length > 0 && (
         <div className="glass rounded-xl overflow-hidden">
@@ -102,10 +158,12 @@ export function TeamDetailPage() {
                   <th className="py-3 px-4 text-center font-semibold">H/A</th>
                   <th className="py-3 px-4 text-center font-semibold">Home Odds</th>
                   <th className="py-3 px-4 text-center font-semibold">DK Odds</th>
+                  <th className="py-3 px-4 text-center font-semibold">Kalshi Odds</th>
                   <th className="py-3 px-4 text-center font-semibold">Score</th>
                   <th className="py-3 px-4 text-center font-semibold">Result</th>
                   <th className="py-3 px-4 text-center font-semibold">Home Loss</th>
                   <th className="py-3 px-4 text-center font-semibold">DK Loss</th>
+                  <th className="py-3 px-4 text-center font-semibold">Kalshi Loss</th>
                 </tr>
               </thead>
               <tbody>
@@ -114,7 +172,13 @@ export function TeamDetailPage() {
                   const opponent = isHome ? game.awayTeam : game.homeTeam;
                   const teamSide = isHome ? game.homeTeam : game.awayTeam;
                   const dk = game.bookmakerOdds?.find((b) => b.bookmakerName === 'DraftKings');
+                  const kalshi = game.bookmakerOdds?.find((b) => b.bookmakerName === 'Kalshi');
                   const dkTeamOdds = dk ? (isHome ? dk.homeOdds : dk.awayOdds) : null;
+                  const kalshiTeamOdds = kalshi
+                    ? isHome
+                      ? kalshi.homeOdds
+                      : kalshi.awayOdds
+                    : null;
                   const correct = game.hasBeenPlayed && wasCorrectlyPredicted(game);
                   const incorrect = game.hasBeenPlayed && !wasCorrectlyPredicted(game);
                   const won =
@@ -172,6 +236,9 @@ export function TeamDetailPage() {
                         {dkTeamOdds != null ? formatOdds(dkTeamOdds, format) : '-'}
                       </td>
                       <td className="py-3 px-4 text-center stat-number">
+                        {kalshiTeamOdds != null ? formatOdds(kalshiTeamOdds, format) : '-'}
+                      </td>
+                      <td className="py-3 px-4 text-center stat-number">
                         {game.hasBeenPlayed
                           ? `${game.awayTeam?.goals ?? 0}-${game.homeTeam?.goals ?? 0}`
                           : '-'}
@@ -195,6 +262,13 @@ export function TeamDetailPage() {
                       <td className="py-3 px-4 text-center stat-number text-xs">
                         {game.hasBeenPlayed && dk
                           ? calculateLogLoss(dk.homeOdds, dk.awayOdds, game.winner).toFixed(4)
+                          : '-'}
+                      </td>
+                      <td className="py-3 px-4 text-center stat-number text-xs">
+                        {game.hasBeenPlayed && kalshi && kalshi.homeOdds > 0 && kalshi.awayOdds > 0
+                          ? calculateLogLoss(kalshi.homeOdds, kalshi.awayOdds, game.winner).toFixed(
+                              4,
+                            )
                           : '-'}
                       </td>
                     </tr>

@@ -1,13 +1,22 @@
 import { useNavigate } from 'react-router-dom';
 import type { TeamVM } from '../types';
 
+interface KalshiTeamStats {
+  games: number;
+  accurate: number;
+  logLoss: number;
+  accuracyPct: string;
+}
+
 interface TeamRowProps {
   team: TeamVM;
   season: number;
   showDk?: boolean;
+  showKalshi?: boolean;
+  kalshiStats?: KalshiTeamStats;
 }
 
-export function TeamRow({ team, season, showDk }: TeamRowProps) {
+export function TeamRow({ team, season, showDk, showKalshi, kalshiStats }: TeamRowProps) {
   const navigate = useNavigate();
   const accuracy =
     team.totalGameCount > 0
@@ -56,6 +65,16 @@ export function TeamRow({ team, season, showDk }: TeamRowProps) {
       {showDk && (
         <td className="py-3.5 px-4 text-center stat-number text-sm">
           {team.draftKingsGameCount > 0 ? team.draftKingsLogLoss.toFixed(4) : '-'}
+        </td>
+      )}
+      {showKalshi && (
+        <td className="py-3.5 px-4 text-center stat-number text-sm">
+          {kalshiStats && kalshiStats.games > 0 ? `${kalshiStats.accuracyPct}%` : '-'}
+        </td>
+      )}
+      {showKalshi && (
+        <td className="py-3.5 px-4 text-center stat-number text-sm">
+          {kalshiStats && kalshiStats.games > 0 ? kalshiStats.logLoss.toFixed(4) : '-'}
         </td>
       )}
     </tr>

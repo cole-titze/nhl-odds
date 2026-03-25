@@ -20,6 +20,67 @@ public class KalshiGetter : IKalshiGetter
 
     public async Task<List<KalshiMarket>> GetOpenMarkets(string seriesTicker)
     {
+        return await FetchMarketsPaginated($"/markets?series_ticker={seriesTicker}&status=open&limit=1000", seriesTicker);
+    }
+
+    public async Task<KalshiCutoffResponse?> GetCutoff()
+    {
+        try
+        {
+            await Throttle();
+            var response = await _httpClient.GetAsync(BASE_URL + "/historical/cutoff");
+            _lastRequestCompleted = DateTime.UtcNow;
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Kalshi cutoff request failed with status {StatusCode}", response.StatusCode);
+                return null;
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<KalshiCutoffResponse>(json);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to fetch Kalshi cutoff");
+            return null;
+        }
+    }
+
+    public async Task<List<KalshiMarket>> GetSettledMarkets(string seriesTicker)
+    {
+        return await FetchMarketsPaginated($"/markets?series_ticker={seriesTicker}&status=settled&limit=1000", seriesTicker);
+    }
+
+    public async Task<List<KalshiMarket>> GetHistoricalMarkets(string seriesTicker)
+    {
+        return await FetchMarketsPaginated($"/historical/markets?series_ticker={seriesTicker}&limit=1000", seriesTicker);
+    }
+
+    public async Task<KalshiCandlestickResponse?> GetCandlesticks(string seriesTicker, string ticker, long startTs, long endTs, int periodInterval)
+    {
+        try
+        {
+            await Throttle();
+            var url = $"{BASE_URL}/series/{seriesTicker}/markets/{ticker}/candlesticks?start_ts={startTs}&end_ts={endTs}&period_interval={periodInterval}";
+            var response = await _httpClient.GetAsync(url);
+            _lastRequestCompleted = DateTime.UtcNow;
+
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var json = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<KalshiCandlestickResponse>(json);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to fetch candlesticks for {Ticker}", ticker);
+            return null;
+        }
+    }
+
+    private async Task<List<KalshiMarket>> FetchMarketsPaginated(string basePath, string seriesTicker)
+    {
         var allMarkets = new List<KalshiMarket>();
         var cursor = "";
 
@@ -28,11 +89,10 @@ public class KalshiGetter : IKalshiGetter
             do
             {
                 await Throttle();
-                var query = $"?series_ticker={seriesTicker}&status=open&limit=1000";
+                var url = BASE_URL + basePath;
                 if (!string.IsNullOrEmpty(cursor))
-                    query += $"&cursor={cursor}";
+                    url += $"&cursor={cursor}";
 
-                var url = BASE_URL + "/markets" + query;
                 var response = await _httpClient.GetAsync(url);
                 _lastRequestCompleted = DateTime.UtcNow;
 

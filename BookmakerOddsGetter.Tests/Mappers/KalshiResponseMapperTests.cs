@@ -39,8 +39,8 @@ public class KalshiResponseMapperTests
         result.H2H.Should().HaveCount(1);
         result.H2H[0].GameId.Should().Be(2024020001);
         result.H2H[0].BookmakerName.Should().Be("Kalshi");
-        result.H2H[0].HomeOdds.Should().BeApproximately(0.61, 0.01); // (0.60 + 0.62) / 2
-        result.H2H[0].AwayOdds.Should().BeApproximately(0.39, 0.01); // (0.38 + 0.40) / 2
+        result.H2H[0].HomeOdds.Should().BeApproximately(0.62, 0.01); // yes_ask
+        result.H2H[0].AwayOdds.Should().BeApproximately(0.40, 0.01); // yes_ask
     }
 
     [TestMethod]

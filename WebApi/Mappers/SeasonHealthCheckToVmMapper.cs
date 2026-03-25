@@ -17,6 +17,7 @@ public static class SeasonHealthCheckToVmMapper
             MissingGameCleaned = healthCheck.MissingGameCleaned,
             MissingOddsFetchDays = healthCheck.MissingOddsFetchDays,
             LiveBookmakerOdds = healthCheck.LiveBookmakerOdds,
+            MissingKalshiOdds = healthCheck.MissingKalshiOdds,
             ErrorCount = healthCheck.ErrorCount,
         };
     }

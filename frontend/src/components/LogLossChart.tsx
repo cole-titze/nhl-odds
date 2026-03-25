@@ -18,6 +18,7 @@ const LINE_COLORS: Record<string, string> = {
   Caesars: '#0a4d3c',
   Unibet: '#14805e',
   BetOnline: '#8b0000',
+  Kalshi: '#7c3aed',
 };
 
 const FALLBACK_COLORS = [
@@ -37,7 +38,7 @@ function getColor(name: string, index: number): string {
   return LINE_COLORS[name] ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length];
 }
 
-const DEFAULT_ENABLED = new Set([HOMEGROWN, 'DraftKings']);
+const DEFAULT_ENABLED = new Set([HOMEGROWN, 'DraftKings', 'Kalshi']);
 
 interface Props {
   games: GameOddsVM[];

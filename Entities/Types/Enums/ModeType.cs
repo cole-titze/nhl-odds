@@ -6,7 +6,8 @@ public enum ModeType
     NhlUpdate,
     NextDayOdds,
     BackfillOdds,
-    KalshiFetch
+    KalshiFetch,
+    BackfillKalshi
 }
 public static class ModeTypeParser
 {
@@ -25,6 +26,8 @@ public static class ModeTypeParser
                 return ModeType.BackfillOdds;
             case "KalshiFetch":
                 return ModeType.KalshiFetch;
+            case "BackfillKalshi":
+                return ModeType.BackfillKalshi;
             default:
                 throw new ArgumentException($"Invalid ModeType value: {modeType}", nameof(modeType));
         }

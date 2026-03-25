@@ -10,5 +10,6 @@ public class SeasonHealthCheckVM
     public int MissingGameCleaned { get; set; }
     public int MissingOddsFetchDays { get; set; }
     public int LiveBookmakerOdds { get; set; }
+    public int MissingKalshiOdds { get; set; }
     public int ErrorCount { get; set; }
 }
