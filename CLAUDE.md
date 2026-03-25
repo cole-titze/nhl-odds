@@ -42,8 +42,10 @@ The app reads config in priority order:
 
 1. **Environment variables** (production):
    - `NHL_DATABASE` — full SQL Server connection string
-   - `RUN_MODE` — `"Add"` or `"Update"`
+   - `RUN_MODE` — `"NhlAdd"`, `"NhlUpdate"`, `"NextDayOdds"`, `"BackfillOdds"`, `"KalshiFetch"`, or `"BackfillKalshi"`
    - `THROTTLE_TIME_MS` — delay between NHL API requests (ms)
+   - `ODDS_API_KEY` — The Odds API key (for `NextDayOdds` mode)
+   - `API_BACKFILL_KEY` — The Odds API key for backfill (can be different quota)
 
 2. **`Entry/appsettings.Local.json`** (local dev, gitignored):
    - Copy the structure from `Entry/appsettings.json` and fill in the connection string.
@@ -80,6 +82,7 @@ Then connect and run the scripts in order:
 | `database` | SQL scripts for schema (not a C# project) |
 | `WebApi` | ASP.NET Core Web API — controllers, view model mappers, Swagger |
 | `WebBusinessLogic` | Web API business logic — team stats, game odds, log loss orchestration |
+| `BookmakerOddsGetter` | Fetches and backfills odds from The Odds API and Kalshi (no API key needed for Kalshi) |
 | `frontend` | React 19 + TypeScript + Vite + Tailwind CSS v4 frontend — game odds, team stats, team detail pages |
 
 ### Data Flow
@@ -130,8 +133,12 @@ HTTP Request
 - `WebApi/Mappers/` — web domain model → view model
 
 **Run modes** (`ModeType` enum):
-- `Add` — skips seasons/games that already exist in the DB (fast incremental)
-- `Update` — re-fetches and overwrites existing records
+- `NhlAdd` — skips seasons/games that already exist in the DB (fast incremental)
+- `NhlUpdate` — re-fetches and overwrites existing records
+- `NextDayOdds` — fetches upcoming game odds from The Odds API + Kalshi open markets
+- `BackfillOdds` — backfills historical odds from The Odds API (rate-limited, uses caching)
+- `KalshiFetch` — fetches current Kalshi open market odds for upcoming games
+- `BackfillKalshi` — backfills historical Kalshi odds using candlestick data at 6am CT on game day (no API key needed)
 
 **Game ID encoding** (`NhlApiDataGetter.GetGameId`):
 ```
