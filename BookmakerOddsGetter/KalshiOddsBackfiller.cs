@@ -50,36 +50,21 @@ public class KalshiOddsBackfiller
 
     public async Task BackfillKalshiOdds()
     {
-        // 1. Find games needing backfill
-        var existingKalshiH2H = (await _dbContext.BookmakerOdds
-            .Where(o => o.BookmakerKey == BOOKMAKER_KEY).Select(o => o.GameId).Distinct().ToListAsync()).ToHashSet();
-        var existingKalshiSpreads = (await _dbContext.BookmakerSpreads
-            .Where(o => o.BookmakerKey == BOOKMAKER_KEY).Select(o => o.GameId).Distinct().ToListAsync()).ToHashSet();
-        var existingKalshiTotals = (await _dbContext.BookmakerTotals
-            .Where(o => o.BookmakerKey == BOOKMAKER_KEY).Select(o => o.GameId).Distinct().ToListAsync()).ToHashSet();
-
+        // 1. Find all played games — always process everything so cached data
+        // gets re-matched when matching logic is updated. AddOrUpdate handles dedup.
         var playedGames = await _dbContext.GameRaw
             .Where(g => g.HasBeenPlayed && g.SeasonStartYear >= BACKFILL_START_YEAR)
             .Select(g => new { g.Id, g.HomeTeamId, g.AwayTeamId, g.SeasonStartYear, g.GameDateUTC })
             .ToListAsync();
 
-        var gamesToBackfill = playedGames
-            .Where(g => !existingKalshiH2H.Contains(g.Id)
-                      || !existingKalshiSpreads.Contains(g.Id)
-                      || !existingKalshiTotals.Contains(g.Id))
-            .ToList();
-
-        if (!gamesToBackfill.Any())
+        if (!playedGames.Any())
         {
-            _logger.LogInformation("All played games already have Kalshi odds. Nothing to backfill.");
+            _logger.LogInformation("No played games found for backfill.");
             return;
         }
 
-        _logger.LogInformation("Found {Total} played games, {NeedBackfill} need Kalshi backfill (missing h2h: {H2H}, spreads: {Spreads}, totals: {Totals})",
-            playedGames.Count, gamesToBackfill.Count,
-            playedGames.Count(g => !existingKalshiH2H.Contains(g.Id)),
-            playedGames.Count(g => !existingKalshiSpreads.Contains(g.Id)),
-            playedGames.Count(g => !existingKalshiTotals.Contains(g.Id)));
+        _logger.LogInformation("Found {Total} played games for Kalshi backfill", playedGames.Count);
+        var gamesToBackfill = playedGames;
 
         // 2. Load season teams for name matching
         var seasonYears = gamesToBackfill.Select(g => g.SeasonStartYear).Distinct().ToList();
@@ -146,14 +131,11 @@ public class KalshiOddsBackfiller
         var totalRecords = new List<DbBookmakerTotals>();
 
         var processed = 0;
-        var totalMarketCount = h2hEventToGame.Values.SelectMany(v => v.Markets).Count()
-            + spreadEventToGame.Values.SelectMany(v => v.Markets).Count()
-            + totalEventToGame.Values.SelectMany(v => v.Markets).Count();
+        var totalEvents = h2hEventToGame.Count + spreadEventToGame.Count + totalEventToGame.Count;
 
         // H2H: fetch candlesticks for each event's market pair
         foreach (var (eventTicker, match) in h2hEventToGame)
         {
-            if (existingKalshiH2H.Contains(match.GameId)) continue;
             if (match.Markets.Count != 2) continue;
 
             var gameDate = gameDatesAll[match.GameId];
@@ -163,7 +145,7 @@ public class KalshiOddsBackfiller
 
             var homeCandle = await FetchGameDayCandle("KXNHLGAME", homeMarket.Ticker, gameDate);
             var awayCandle = await FetchGameDayCandle("KXNHLGAME", awayMarket.Ticker, gameDate);
-            processed += 2;
+            processed++;
 
             if (homeCandle == null || awayCandle == null) continue;
             // Each h2h market is "Team wins?" — use yes_ask as the implied probability (includes vig)
@@ -185,13 +167,12 @@ public class KalshiOddsBackfiller
             });
 
             if (processed % 100 == 0)
-                _logger.LogInformation("Progress: {Processed}/{Total} candlestick requests", processed, totalMarketCount);
+                _logger.LogInformation("Progress: {Processed}/{Total} events", processed, totalEvents);
         }
 
         // Spreads
         foreach (var (eventTicker, match) in spreadEventToGame)
         {
-            if (existingKalshiSpreads.Contains(match.GameId)) continue;
             if (match.Markets.Count != 2) continue;
 
             var gameDate = gameDatesAll[match.GameId];
@@ -204,7 +185,7 @@ public class KalshiOddsBackfiller
 
             var homeCandle = await FetchGameDayCandle("KXNHLSPREAD", homeMarket.Ticker, gameDate);
             var awayCandle = await FetchGameDayCandle("KXNHLSPREAD", awayMarket.Ticker, gameDate);
-            processed += 2;
+            processed++;
 
             if (homeCandle == null) continue;
             var yesBid = homeCandle.YesBid.Close;
@@ -231,13 +212,12 @@ public class KalshiOddsBackfiller
             });
 
             if (processed % 100 == 0)
-                _logger.LogInformation("Progress: {Processed}/{Total} candlestick requests", processed, totalMarketCount);
+                _logger.LogInformation("Progress: {Processed}/{Total} events", processed, totalEvents);
         }
 
         // Totals
         foreach (var (eventTicker, match) in totalEventToGame)
         {
-            if (existingKalshiTotals.Contains(match.GameId)) continue;
             if (match.Markets.Count == 0) continue;
 
             var gameDate = gameDatesAll[match.GameId];
@@ -272,7 +252,7 @@ public class KalshiOddsBackfiller
             });
 
             if (processed % 100 == 0)
-                _logger.LogInformation("Progress: {Processed}/{Total} candlestick requests", processed, totalMarketCount);
+                _logger.LogInformation("Progress: {Processed}/{Total} events", processed, totalEvents);
         }
 
         // 7. Save candlestick cache to DB

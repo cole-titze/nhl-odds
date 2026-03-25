@@ -173,7 +173,6 @@ function HealthCheckRow({ check }: { check: SeasonHealthCheck }) {
     check.missingGameCleaned > 0 ||
     check.missingOddsFetchDays > 0 ||
     check.liveBookmakerOdds > 0 ||
-    check.missingKalshiOdds > 0 ||
     check.errorCount > 0;
 
   const cd = countDisplay;

@@ -305,12 +305,15 @@ public static class KalshiResponseMapper
     /// </summary>
     public static List<string> ExtractTotalTeamNames(string title)
     {
-        // Strip suffix like ": Total Goals"
+        // Strip suffix like ": Total Goals" or ": Total Points"
         var colonIdx = title.IndexOf(':');
         var matchup = colonIdx >= 0 ? title[..colonIdx].Trim() : title;
 
-        // Split on " vs "
+        // Kalshi uses "vs" for newer titles and "at" for older ones
         var parts = matchup.Split(" vs ", StringSplitOptions.TrimEntries);
+        if (parts.Length == 2) return parts.ToList();
+
+        parts = matchup.Split(" at ", StringSplitOptions.TrimEntries);
         return parts.Length == 2 ? parts.ToList() : new List<string> { title };
     }
 

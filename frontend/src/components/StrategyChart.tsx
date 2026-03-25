@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   LineChart,
   Line,
@@ -30,6 +30,12 @@ export function StrategyChart({ results }: Props) {
   const strategyNames = useMemo(() => results.map((r) => r.name), [results]);
 
   const [enabled, setEnabled] = useState<Set<string>>(() => new Set(strategyNames));
+
+  // Reset enabled set when strategy names change (e.g. switching from moneyline to spread)
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setEnabled(new Set(strategyNames));
+  }, [strategyNames]);
 
   const toggle = (name: string) => {
     setEnabled((prev) => {
