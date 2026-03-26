@@ -50,10 +50,7 @@ export function CrossBookStrategyPage() {
     return Array.from(names).sort();
   }, [games]);
 
-  const refOptions = useMemo(
-    () => [MODEL_REFERENCE, ...bookmakerNames],
-    [bookmakerNames],
-  );
+  const refOptions = useMemo(() => [MODEL_REFERENCE, ...bookmakerNames], [bookmakerNames]);
 
   // Fall back if selected bookmaker isn't in the data
   useEffect(() => {
@@ -66,8 +63,7 @@ export function CrossBookStrategyPage() {
     }
   }, [bookmakerNames, refBookmaker, betBookmaker]);
 
-  const sameBookmaker =
-    refBookmaker === betBookmaker && refBookmaker !== MODEL_REFERENCE;
+  const sameBookmaker = refBookmaker === betBookmaker && refBookmaker !== MODEL_REFERENCE;
 
   const refLabel = refBookmaker === MODEL_REFERENCE ? 'In-House' : refBookmaker;
   const renameLabel = (label: string) =>
@@ -79,7 +75,9 @@ export function CrossBookStrategyPage() {
 
   const strategyResult = useMemo(() => {
     if (!games || sameBookmaker) return null;
-    return renameResult(runStrategy(games, strategy.type, refBookmaker, betBookmaker, strategy.threshold));
+    return renameResult(
+      runStrategy(games, strategy.type, refBookmaker, betBookmaker, strategy.threshold),
+    );
   }, [games, strategy.type, strategy.threshold, refBookmaker, betBookmaker, sameBookmaker]);
 
   const coverage = useMemo(() => {
@@ -93,7 +91,10 @@ export function CrossBookStrategyPage() {
   }, [games, strategy.type, strategy.threshold, refBookmaker, betBookmaker, sameBookmaker]);
 
   const upcomingEntries = useMemo(() => logEntries.filter((e) => e.upcoming), [logEntries]);
-  const playedEntries = useMemo(() => [...logEntries.filter((e) => !e.upcoming)].reverse(), [logEntries]);
+  const playedEntries = useMemo(
+    () => [...logEntries.filter((e) => !e.upcoming)].reverse(),
+    [logEntries],
+  );
 
   const rankings = useMemo(() => {
     if (!games || sameBookmaker) return [];
@@ -104,7 +105,9 @@ export function CrossBookStrategyPage() {
           : opt.thresholds
             ? opt.thresholds[Math.floor((opt.thresholds.length - 1) / 2)]
             : 0;
-      const result = renameResult(runStrategy(games, opt.type, refBookmaker, betBookmaker, threshold));
+      const result = renameResult(
+        runStrategy(games, opt.type, refBookmaker, betBookmaker, threshold),
+      );
       return { opt, threshold, result };
     })
       .filter((r) => r.result.totalBets > 0)
@@ -161,7 +164,12 @@ export function CrossBookStrategyPage() {
           aria-label="Swap bookmakers"
           title="Swap"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
             <path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z" />
           </svg>
         </button>
@@ -222,19 +230,32 @@ export function CrossBookStrategyPage() {
                         : 'hover:bg-surface-100 dark:hover:bg-white/[0.03]'
                     }`}
                   >
-                    <td className={`py-2 pr-4 font-semibold ${isSelected ? 'text-accent-500' : 'text-surface-800 dark:text-surface-200'}`}>
-                      {result.name}{thresholdLabel}
+                    <td
+                      className={`py-2 pr-4 font-semibold ${isSelected ? 'text-accent-500' : 'text-surface-800 dark:text-surface-200'}`}
+                    >
+                      {result.name}
+                      {thresholdLabel}
                     </td>
-                    <td className="py-2 pr-4 text-surface-500 dark:text-surface-400">{typeLabel}</td>
-                    <td className="py-2 pr-4 text-right text-surface-500 dark:text-surface-400">{result.totalBets}</td>
+                    <td className="py-2 pr-4 text-surface-500 dark:text-surface-400">
+                      {typeLabel}
+                    </td>
+                    <td className="py-2 pr-4 text-right text-surface-500 dark:text-surface-400">
+                      {result.totalBets}
+                    </td>
                     <td className="py-2 pr-4 text-right text-surface-500 dark:text-surface-400">
                       {(result.winRate * 100).toFixed(1)}%
                     </td>
-                    <td className={`py-2 pr-4 text-right font-semibold ${result.totalPL >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                      {result.totalPL >= 0 ? '+' : ''}{result.totalPL.toFixed(2)}u
+                    <td
+                      className={`py-2 pr-4 text-right font-semibold ${result.totalPL >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
+                    >
+                      {result.totalPL >= 0 ? '+' : ''}
+                      {result.totalPL.toFixed(2)}u
                     </td>
-                    <td className={`py-2 text-right font-semibold ${result.roi >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                      {result.roi >= 0 ? '+' : ''}{result.roi.toFixed(1)}%
+                    <td
+                      className={`py-2 text-right font-semibold ${result.roi >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
+                    >
+                      {result.roi >= 0 ? '+' : ''}
+                      {result.roi.toFixed(1)}%
                     </td>
                   </tr>
                 );
@@ -309,9 +330,16 @@ export function CrossBookStrategyPage() {
               </thead>
               <tbody>
                 {upcomingEntries.map((e) => (
-                  <tr key={e.gameId} className="border-b border-surface-200/50 dark:border-white/[0.03]">
-                    <td className="py-1.5 pr-3 text-surface-500 dark:text-surface-400">{formatShortDate(e.gameDate)}</td>
-                    <td className="py-1.5 pr-3 text-surface-800 dark:text-surface-200">{e.awayTeam} @ {e.homeTeam}</td>
+                  <tr
+                    key={e.gameId}
+                    className="border-b border-surface-200/50 dark:border-white/[0.03]"
+                  >
+                    <td className="py-1.5 pr-3 text-surface-500 dark:text-surface-400">
+                      {formatShortDate(e.gameDate)}
+                    </td>
+                    <td className="py-1.5 pr-3 text-surface-800 dark:text-surface-200">
+                      {e.awayTeam} @ {e.homeTeam}
+                    </td>
                     <td className="py-1.5 pr-3 font-semibold text-emerald-500">{e.betSide}</td>
                     <td className="py-1.5 pr-3 text-right text-surface-500 dark:text-surface-400">
                       {isMoneyline ? (e.refValue * 100).toFixed(1) + '%' : e.refValue.toFixed(1)}
@@ -346,7 +374,11 @@ export function CrossBookStrategyPage() {
               viewBox="0 0 20 20"
               fill="currentColor"
             >
-              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                clipRule="evenodd"
+              />
             </svg>
           </button>
           {showLog && (
@@ -366,10 +398,19 @@ export function CrossBookStrategyPage() {
                 </thead>
                 <tbody>
                   {playedEntries.map((e) => (
-                    <tr key={e.gameId} className="border-b border-surface-200/50 dark:border-white/[0.03]">
-                      <td className="py-1.5 pr-3 text-surface-500 dark:text-surface-400">{formatShortDate(e.gameDate)}</td>
-                      <td className="py-1.5 pr-3 text-surface-800 dark:text-surface-200">{e.awayTeam} @ {e.homeTeam}</td>
-                      <td className="py-1.5 pr-3 font-semibold text-surface-800 dark:text-surface-200">{e.betSide}</td>
+                    <tr
+                      key={e.gameId}
+                      className="border-b border-surface-200/50 dark:border-white/[0.03]"
+                    >
+                      <td className="py-1.5 pr-3 text-surface-500 dark:text-surface-400">
+                        {formatShortDate(e.gameDate)}
+                      </td>
+                      <td className="py-1.5 pr-3 text-surface-800 dark:text-surface-200">
+                        {e.awayTeam} @ {e.homeTeam}
+                      </td>
+                      <td className="py-1.5 pr-3 font-semibold text-surface-800 dark:text-surface-200">
+                        {e.betSide}
+                      </td>
                       <td className="py-1.5 pr-3 text-right text-surface-500 dark:text-surface-400">
                         {isMoneyline ? (e.refValue * 100).toFixed(1) + '%' : e.refValue.toFixed(1)}
                       </td>
@@ -379,11 +420,16 @@ export function CrossBookStrategyPage() {
                       <td className="py-1.5 pr-3 text-right text-surface-500 dark:text-surface-400">
                         {isMoneyline ? (e.edge * 100).toFixed(1) + '%' : e.edge.toFixed(2)}
                       </td>
-                      <td className={`py-1.5 pr-3 text-right font-semibold ${e.won ? 'text-emerald-500' : 'text-red-500'}`}>
+                      <td
+                        className={`py-1.5 pr-3 text-right font-semibold ${e.won ? 'text-emerald-500' : 'text-red-500'}`}
+                      >
                         {e.won ? 'W' : 'L'}
                       </td>
-                      <td className={`py-1.5 text-right font-semibold ${e.payout! >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                        {e.payout! >= 0 ? '+' : ''}{e.payout!.toFixed(2)}u
+                      <td
+                        className={`py-1.5 text-right font-semibold ${e.payout! >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
+                      >
+                        {e.payout! >= 0 ? '+' : ''}
+                        {e.payout!.toFixed(2)}u
                       </td>
                     </tr>
                   ))}
@@ -442,8 +488,8 @@ export function CrossBookStrategyPage() {
                   Confidence
                 </h3>
                 <p>
-                  Only bets when the reference's confidence in its pick exceeds the threshold.
-                  Skips coin-flip games.
+                  Only bets when the reference's confidence in its pick exceeds the threshold. Skips
+                  coin-flip games.
                 </p>
               </div>
             </div>
@@ -495,8 +541,8 @@ export function CrossBookStrategyPage() {
           <div className="border-t border-surface-200 dark:border-white/[0.06] pt-4 text-xs text-surface-400 dark:text-surface-500">
             <p>
               <strong>Win Rate</strong> = wins / total bets. <strong>P/L</strong> = total units won
-              minus total units lost. <strong>ROI</strong> = P/L / total bets as a percentage.
-              The chart shows cumulative P/L over the season; above the dashed line is profit.
+              minus total units lost. <strong>ROI</strong> = P/L / total bets as a percentage. The
+              chart shows cumulative P/L over the season; above the dashed line is profit.
             </p>
           </div>
         </div>

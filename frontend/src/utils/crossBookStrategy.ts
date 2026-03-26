@@ -73,7 +73,13 @@ export function crossBookMoneyline(
     const ref = getRefOdds(g, refBookmaker);
     const bet = findBookmaker(g, betBookmaker);
     if (!ref || !bet) continue;
-    if ((ref.homeOdds ?? 0) <= 0 || (ref.awayOdds ?? 0) <= 0 || bet.homeOdds <= 0 || bet.awayOdds <= 0) continue;
+    if (
+      (ref.homeOdds ?? 0) <= 0 ||
+      (ref.awayOdds ?? 0) <= 0 ||
+      bet.homeOdds <= 0 ||
+      bet.awayOdds <= 0
+    )
+      continue;
 
     const trueRef = getRefProbs(ref, refBookmaker);
     const homeEdge = trueRef.home - bet.homeOdds;
@@ -88,11 +94,14 @@ export function crossBookMoneyline(
     const betProb = isHome ? bet.homeOdds : bet.awayOdds;
     const won = g.winner === (isHome ? Winner.HOME : Winner.AWAY);
     bets.push({
-      gameId: g.id, gameDate: g.gameDate, betSide: side,
+      gameId: g.id,
+      gameDate: g.gameDate,
+      betSide: side,
       modelProb: isHome ? trueRef.home : trueRef.away,
       bookmakerProb: betProb,
       payout: +(won ? 1 / betProb - 1 : -1).toFixed(4),
-      won, cumulativePL: 0,
+      won,
+      cumulativePL: 0,
     });
   }
   return computeStrategyResult('Value Bets', bets);
@@ -109,7 +118,13 @@ export function crossBookWinner(
     const ref = getRefOdds(g, refBookmaker);
     const bet = findBookmaker(g, betBookmaker);
     if (!ref || !bet) continue;
-    if ((ref.homeOdds ?? 0) <= 0 || (ref.awayOdds ?? 0) <= 0 || bet.homeOdds <= 0 || bet.awayOdds <= 0) continue;
+    if (
+      (ref.homeOdds ?? 0) <= 0 ||
+      (ref.awayOdds ?? 0) <= 0 ||
+      bet.homeOdds <= 0 ||
+      bet.awayOdds <= 0
+    )
+      continue;
 
     const trueRef = getRefProbs(ref, refBookmaker);
     const side: 'home' | 'away' = trueRef.home >= 0.5 ? 'home' : 'away';
@@ -117,11 +132,14 @@ export function crossBookWinner(
     const betProb = isHome ? bet.homeOdds : bet.awayOdds;
     const won = g.winner === (isHome ? Winner.HOME : Winner.AWAY);
     bets.push({
-      gameId: g.id, gameDate: g.gameDate, betSide: side,
+      gameId: g.id,
+      gameDate: g.gameDate,
+      betSide: side,
       modelProb: isHome ? trueRef.home : trueRef.away,
       bookmakerProb: betProb,
       payout: +(won ? 1 / betProb - 1 : -1).toFixed(4),
-      won, cumulativePL: 0,
+      won,
+      cumulativePL: 0,
     });
   }
   return computeStrategyResult('In-House Winner', bets);
@@ -138,7 +156,13 @@ export function crossBookUnderdog(
     const ref = getRefOdds(g, refBookmaker);
     const bet = findBookmaker(g, betBookmaker);
     if (!ref || !bet) continue;
-    if ((ref.homeOdds ?? 0) <= 0 || (ref.awayOdds ?? 0) <= 0 || bet.homeOdds <= 0 || bet.awayOdds <= 0) continue;
+    if (
+      (ref.homeOdds ?? 0) <= 0 ||
+      (ref.awayOdds ?? 0) <= 0 ||
+      bet.homeOdds <= 0 ||
+      bet.awayOdds <= 0
+    )
+      continue;
 
     const trueRef = getRefProbs(ref, refBookmaker);
     const side: 'home' | 'away' = trueRef.home >= 0.5 ? 'home' : 'away';
@@ -148,11 +172,14 @@ export function crossBookUnderdog(
     if (betProb >= 0.5) continue;
     const won = g.winner === (isHome ? Winner.HOME : Winner.AWAY);
     bets.push({
-      gameId: g.id, gameDate: g.gameDate, betSide: side,
+      gameId: g.id,
+      gameDate: g.gameDate,
+      betSide: side,
       modelProb: isHome ? trueRef.home : trueRef.away,
       bookmakerProb: betProb,
       payout: +(won ? 1 / betProb - 1 : -1).toFixed(4),
-      won, cumulativePL: 0,
+      won,
+      cumulativePL: 0,
     });
   }
   return computeStrategyResult('In-House Underdog', bets);
@@ -170,7 +197,13 @@ export function crossBookConfidence(
     const ref = getRefOdds(g, refBookmaker);
     const bet = findBookmaker(g, betBookmaker);
     if (!ref || !bet) continue;
-    if ((ref.homeOdds ?? 0) <= 0 || (ref.awayOdds ?? 0) <= 0 || bet.homeOdds <= 0 || bet.awayOdds <= 0) continue;
+    if (
+      (ref.homeOdds ?? 0) <= 0 ||
+      (ref.awayOdds ?? 0) <= 0 ||
+      bet.homeOdds <= 0 ||
+      bet.awayOdds <= 0
+    )
+      continue;
 
     const trueRef = getRefProbs(ref, refBookmaker);
     let side: 'home' | 'away' | null = null;
@@ -182,11 +215,14 @@ export function crossBookConfidence(
     const betProb = isHome ? bet.homeOdds : bet.awayOdds;
     const won = g.winner === (isHome ? Winner.HOME : Winner.AWAY);
     bets.push({
-      gameId: g.id, gameDate: g.gameDate, betSide: side,
+      gameId: g.id,
+      gameDate: g.gameDate,
+      betSide: side,
       modelProb: isHome ? trueRef.home : trueRef.away,
       bookmakerProb: betProb,
       payout: +(won ? 1 / betProb - 1 : -1).toFixed(4),
-      won, cumulativePL: 0,
+      won,
+      cumulativePL: 0,
     });
   }
   return computeStrategyResult('Confidence', bets);
@@ -214,15 +250,16 @@ export function crossBookSpread(
     const betHome = lineDiff > 0;
     const price = betHome ? bet.homePrice : bet.awayPrice;
     const actualMargin = g.homeTeam.goals - g.awayTeam.goals;
-    const covered = betHome
-      ? actualMargin + bet.homePoint > 0
-      : actualMargin + bet.awayPoint > 0;
+    const covered = betHome ? actualMargin + bet.homePoint > 0 : actualMargin + bet.awayPoint > 0;
     bets.push({
-      gameId: g.id, gameDate: g.gameDate,
+      gameId: g.id,
+      gameDate: g.gameDate,
       betSide: betHome ? 'home' : 'away',
-      modelProb: ref.homePoint, bookmakerProb: bet.homePoint,
+      modelProb: ref.homePoint,
+      bookmakerProb: bet.homePoint,
       payout: +(covered ? americanToDecimalPayout(price) : -1).toFixed(4),
-      won: covered, cumulativePL: 0,
+      won: covered,
+      cumulativePL: 0,
     });
   }
   return computeStrategyResult('Spread Value', bets);
@@ -258,15 +295,16 @@ export function crossBookTotal(
     const betOver = lineDiff > 0;
     const price = betOver ? bet.overPrice : bet.underPrice;
     const actualTotal = g.homeTeam.goals + g.awayTeam.goals;
-    const won = betOver
-      ? actualTotal > bet.overUnderPoint
-      : actualTotal < bet.overUnderPoint;
+    const won = betOver ? actualTotal > bet.overUnderPoint : actualTotal < bet.overUnderPoint;
     bets.push({
-      gameId: g.id, gameDate: g.gameDate,
+      gameId: g.id,
+      gameDate: g.gameDate,
       betSide: betOver ? 'home' : 'away',
-      modelProb: ref.overUnderPoint, bookmakerProb: bet.overUnderPoint,
+      modelProb: ref.overUnderPoint,
+      bookmakerProb: bet.overUnderPoint,
       payout: +(won ? americanToDecimalPayout(price) : -1).toFixed(4),
-      won, cumulativePL: 0,
+      won,
+      cumulativePL: 0,
     });
   }
   return computeStrategyResult('O/U Value', bets);
@@ -337,7 +375,13 @@ export function crossBookLog(
     const awayName = `${g.awayTeam.locationName} ${g.awayTeam.teamName}`;
 
     if (betType === 'moneyline') {
-      if ((ref.homeOdds ?? 0) <= 0 || (ref.awayOdds ?? 0) <= 0 || bet.homeOdds <= 0 || bet.awayOdds <= 0) continue;
+      if (
+        (ref.homeOdds ?? 0) <= 0 ||
+        (ref.awayOdds ?? 0) <= 0 ||
+        bet.homeOdds <= 0 ||
+        bet.awayOdds <= 0
+      )
+        continue;
       const trueRef = getRefProbs(ref, refBookmaker);
 
       let side: 'home' | 'away' | null = null;
@@ -349,9 +393,15 @@ export function crossBookLog(
         const homeEdge = trueRef.home - bet.homeOdds;
         const awayEdge = trueRef.away - bet.awayOdds;
         if (homeEdge >= threshold && homeEdge >= awayEdge) {
-          side = 'home'; edge = homeEdge; refValue = trueRef.home; betValue = bet.homeOdds;
+          side = 'home';
+          edge = homeEdge;
+          refValue = trueRef.home;
+          betValue = bet.homeOdds;
         } else if (awayEdge >= threshold) {
-          side = 'away'; edge = awayEdge; refValue = trueRef.away; betValue = bet.awayOdds;
+          side = 'away';
+          edge = awayEdge;
+          refValue = trueRef.away;
+          betValue = bet.awayOdds;
         }
       } else if (strategyType === 'modelWinner') {
         side = trueRef.home >= 0.5 ? 'home' : 'away';
@@ -366,9 +416,13 @@ export function crossBookLog(
         edge = refValue - betValue;
       } else if (strategyType === 'confidence') {
         if (trueRef.home >= threshold) {
-          side = 'home'; refValue = trueRef.home; betValue = bet.homeOdds;
+          side = 'home';
+          refValue = trueRef.home;
+          betValue = bet.homeOdds;
         } else if (trueRef.away >= threshold) {
-          side = 'away'; refValue = trueRef.away; betValue = bet.awayOdds;
+          side = 'away';
+          refValue = trueRef.away;
+          betValue = bet.awayOdds;
         }
         if (side) edge = refValue - betValue;
       }
@@ -378,9 +432,33 @@ export function crossBookLog(
       if (g.hasBeenPlayed) {
         const won = g.winner === (side === 'home' ? Winner.HOME : Winner.AWAY);
         const payout = won ? 1 / betValue - 1 : -1;
-        entries.push({ gameId: g.id, gameDate: g.gameDate, homeTeam: homeName, awayTeam: awayName, betSide: side, refValue, betValue, edge, payout: +payout.toFixed(4), won, upcoming: false });
+        entries.push({
+          gameId: g.id,
+          gameDate: g.gameDate,
+          homeTeam: homeName,
+          awayTeam: awayName,
+          betSide: side,
+          refValue,
+          betValue,
+          edge,
+          payout: +payout.toFixed(4),
+          won,
+          upcoming: false,
+        });
       } else {
-        entries.push({ gameId: g.id, gameDate: g.gameDate, homeTeam: homeName, awayTeam: awayName, betSide: side, refValue, betValue, edge, payout: null, won: null, upcoming: true });
+        entries.push({
+          gameId: g.id,
+          gameDate: g.gameDate,
+          homeTeam: homeName,
+          awayTeam: awayName,
+          betSide: side,
+          refValue,
+          betValue,
+          edge,
+          payout: null,
+          won: null,
+          upcoming: true,
+        });
       }
     } else if (betType === 'spread') {
       if (!ref.homePoint || !bet.homePoint) continue;
@@ -394,11 +472,37 @@ export function crossBookLog(
       if (g.hasBeenPlayed) {
         const price = betHome ? bet.homePrice : bet.awayPrice;
         const actualMargin = g.homeTeam.goals - g.awayTeam.goals;
-        const covered = betHome ? actualMargin + bet.homePoint > 0 : actualMargin + bet.awayPoint > 0;
+        const covered = betHome
+          ? actualMargin + bet.homePoint > 0
+          : actualMargin + bet.awayPoint > 0;
         const payout = covered ? americanToDecimalPayout(price) : -1;
-        entries.push({ gameId: g.id, gameDate: g.gameDate, homeTeam: homeName, awayTeam: awayName, betSide: side, refValue: ref.homePoint, betValue: bet.homePoint, edge: Math.abs(lineDiff), payout: +payout.toFixed(4), won: covered, upcoming: false });
+        entries.push({
+          gameId: g.id,
+          gameDate: g.gameDate,
+          homeTeam: homeName,
+          awayTeam: awayName,
+          betSide: side,
+          refValue: ref.homePoint,
+          betValue: bet.homePoint,
+          edge: Math.abs(lineDiff),
+          payout: +payout.toFixed(4),
+          won: covered,
+          upcoming: false,
+        });
       } else {
-        entries.push({ gameId: g.id, gameDate: g.gameDate, homeTeam: homeName, awayTeam: awayName, betSide: side, refValue: ref.homePoint, betValue: bet.homePoint, edge: Math.abs(lineDiff), payout: null, won: null, upcoming: true });
+        entries.push({
+          gameId: g.id,
+          gameDate: g.gameDate,
+          homeTeam: homeName,
+          awayTeam: awayName,
+          betSide: side,
+          refValue: ref.homePoint,
+          betValue: bet.homePoint,
+          edge: Math.abs(lineDiff),
+          payout: null,
+          won: null,
+          upcoming: true,
+        });
       }
     } else {
       if (!ref.overUnderPoint || !bet.overUnderPoint) continue;
@@ -414,9 +518,33 @@ export function crossBookLog(
         const actualTotal = g.homeTeam.goals + g.awayTeam.goals;
         const won = betOver ? actualTotal > bet.overUnderPoint : actualTotal < bet.overUnderPoint;
         const payout = won ? americanToDecimalPayout(price) : -1;
-        entries.push({ gameId: g.id, gameDate: g.gameDate, homeTeam: homeName, awayTeam: awayName, betSide: side, refValue: ref.overUnderPoint, betValue: bet.overUnderPoint, edge: Math.abs(lineDiff), payout: +payout.toFixed(4), won, upcoming: false });
+        entries.push({
+          gameId: g.id,
+          gameDate: g.gameDate,
+          homeTeam: homeName,
+          awayTeam: awayName,
+          betSide: side,
+          refValue: ref.overUnderPoint,
+          betValue: bet.overUnderPoint,
+          edge: Math.abs(lineDiff),
+          payout: +payout.toFixed(4),
+          won,
+          upcoming: false,
+        });
       } else {
-        entries.push({ gameId: g.id, gameDate: g.gameDate, homeTeam: homeName, awayTeam: awayName, betSide: side, refValue: ref.overUnderPoint, betValue: bet.overUnderPoint, edge: Math.abs(lineDiff), payout: null, won: null, upcoming: true });
+        entries.push({
+          gameId: g.id,
+          gameDate: g.gameDate,
+          homeTeam: homeName,
+          awayTeam: awayName,
+          betSide: side,
+          refValue: ref.overUnderPoint,
+          betValue: bet.overUnderPoint,
+          edge: Math.abs(lineDiff),
+          payout: null,
+          won: null,
+          upcoming: true,
+        });
       }
     }
   }
