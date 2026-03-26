@@ -163,16 +163,28 @@ public class JobService : IJobService
         {
             using var scope = _scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<GameDbContext>();
-            var rows = db.JobStatus.AsNoTracking().ToList();
+            var rows = db.JobStatus.ToList();
+            var dirty = false;
 
             foreach (var row in rows)
             {
                 var job = _jobs.GetOrAdd(row.JobName, name => new JobInfo { Id = name, Name = name });
+                // If a job was "running" when the API shut down, no process exists now — mark it failed
+                if (row.Status == "running")
+                {
+                    row.Status = "failed";
+                    row.FinishedAt = row.StartedAt;
+                    row.Error = "Interrupted by API restart";
+                    dirty = true;
+                }
+
                 job.Status = row.Status;
                 job.StartedAt = row.StartedAt;
                 job.FinishedAt = row.FinishedAt;
                 job.Error = row.Error;
             }
+
+            if (dirty) db.SaveChanges();
         }
         catch (Exception ex)
         {

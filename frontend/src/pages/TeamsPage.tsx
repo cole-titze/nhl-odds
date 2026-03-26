@@ -164,6 +164,29 @@ export function TeamsPage() {
         <SeasonSelector value={season} onChange={setSeason} />
       </div>
 
+      {error && <div className="glass rounded-xl text-center text-red-500 py-8">{error}</div>}
+
+      {loading && (
+        <>
+          <Skeleton className="h-[310px] w-full mb-4 rounded-xl" />
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </div>
+          <div className="grid grid-cols-3 gap-4 mb-8">
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </div>
+          <div className="space-y-3">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="h-14 w-full rounded-xl" />
+            ))}
+          </div>
+        </>
+      )}
+
       <LogLossChart games={allGames} deduplicateById />
 
       {data && (
@@ -263,24 +286,6 @@ export function TeamsPage() {
             </div>
           )}
           {!hasKalshi && <div className="mb-4" />}
-        </>
-      )}
-
-      {error && <div className="glass rounded-xl text-center text-red-500 py-8">{error}</div>}
-
-      {loading && (
-        <>
-          <div className="grid grid-cols-3 gap-4 mb-8">
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-          </div>
-          <Skeleton className="h-[310px] w-full mb-8" />
-          <div className="space-y-3">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-14 w-full" />
-            ))}
-          </div>
         </>
       )}
 

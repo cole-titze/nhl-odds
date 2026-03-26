@@ -129,9 +129,8 @@ public class AdminController
     [HttpPost]
     public IResult StartKalshiBackfill()
     {
-        // TODO: re-enable once-per-day guard after Kalshi backfill is stable
-        // if (CompletedToday(KalshiBackfillJob))
-        //     return Results.Conflict(new { message = "Kalshi backfill already completed today." });
+        if (CompletedToday(KalshiBackfillJob))
+            return Results.Conflict(new { message = "Kalshi backfill already completed today." });
 
         var repoRoot = GetRepoRoot();
         var started = _jobService.TryStart(

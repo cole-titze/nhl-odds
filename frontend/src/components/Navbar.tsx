@@ -3,9 +3,9 @@ import { useTheme } from '../hooks/useTheme';
 import { useOddsFormatContext } from '../contexts/OddsFormatContext';
 
 const links = [
+  { to: '/strategies', label: 'Strategies' },
   { to: '/', label: 'Games' },
   { to: '/teams', label: 'Teams' },
-  { to: '/strategies', label: 'Strategies' },
   { to: '/about', label: 'About' },
   { to: '/admin', label: 'Admin' },
 ];

@@ -9,4 +9,5 @@ public class JobInfoVM
     public DateTime? FinishedAt { get; set; }
     public string? Error { get; set; }
     public string Output { get; set; } = string.Empty;
+    public bool CompletedToday { get; set; }
 }

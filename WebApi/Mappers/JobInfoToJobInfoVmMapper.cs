@@ -16,6 +16,9 @@ public static class JobInfoToJobInfoVmMapper
             FinishedAt = jobInfo.FinishedAt,
             Error = jobInfo.Error,
             Output = jobInfo.Output,
+            CompletedToday = jobInfo.Status == "completed"
+                && jobInfo.FinishedAt.HasValue
+                && jobInfo.FinishedAt.Value.Date == DateTime.UtcNow.Date,
         };
     }
 }

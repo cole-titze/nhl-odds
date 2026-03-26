@@ -19,6 +19,7 @@ export interface JobInfo {
   finishedAt: string | null;
   error: string | null;
   output: string;
+  completedToday: boolean;
 }
 
 export interface JobStatuses {

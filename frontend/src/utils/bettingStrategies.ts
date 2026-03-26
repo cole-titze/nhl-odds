@@ -66,7 +66,7 @@ function makeBet(gwo: GameWithOdds, side: 'home' | 'away'): BetResult {
   };
 }
 
-function computeStrategyResult(name: string, bets: BetResult[]): StrategyResult {
+export function computeStrategyResult(name: string, bets: BetResult[]): StrategyResult {
   let cumPL = 0;
   for (const bet of bets) {
     cumPL += bet.payout;
@@ -231,7 +231,7 @@ export function checkStrategy(
   }
 }
 
-function americanToDecimalPayout(price: number): number {
+export function americanToDecimalPayout(price: number): number {
   if (price > 0) return price / 100;
   return 100 / Math.abs(price);
 }

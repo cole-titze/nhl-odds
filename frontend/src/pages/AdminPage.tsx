@@ -24,7 +24,9 @@ const STATUS_STYLES: Record<string, string> = {
 
 function formatTime(iso: string | null) {
   if (!iso) return '-';
-  const d = new Date(iso);
+  // Server stores UTC — ensure the string is parsed as UTC if no timezone indicator
+  const normalized = iso.endsWith('Z') || iso.includes('+') ? iso : iso + 'Z';
+  const d = new Date(normalized);
   if (isNaN(d.getTime())) return '-';
   return d.toLocaleString();
 }
@@ -52,16 +54,9 @@ function ElapsedTime({ startedAt }: { startedAt: string | null }) {
   return <span className="stat-number text-xs">{elapsed}</span>;
 }
 
-function isToday(iso: string | null): boolean {
-  if (!iso) return false;
-  const d = new Date(iso);
-  const now = new Date();
-  return d.toDateString() === now.toDateString();
-}
-
 function JobCard({ job, label, onStart }: { job: JobInfo; label: string; onStart?: () => void }) {
   const isRunning = job.status === 'running';
-  const ranToday = job.status === 'completed' && isToday(job.finishedAt);
+  const ranToday = job.completedToday;
   const detailsRef = useRef<HTMLDetailsElement>(null);
 
   return (
@@ -355,9 +350,9 @@ export function AdminPage() {
       ) : statuses ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <JobCard
-            job={statuses.oddsBackfill}
-            label="Odds Backfill"
-            onStart={() => handleStart(startOddsBackfill)}
+            job={statuses.dataCollection}
+            label="Data Collection"
+            onStart={() => handleStart(startDataCollection)}
           />
           <JobCard
             job={statuses.predictionBackfill}
@@ -365,9 +360,9 @@ export function AdminPage() {
             onStart={() => handleStart(startPredictionBackfill)}
           />
           <JobCard
-            job={statuses.dataCollection}
-            label="Data Collection"
-            onStart={() => handleStart(startDataCollection)}
+            job={statuses.oddsBackfill}
+            label="Odds Backfill"
+            onStart={() => handleStart(startOddsBackfill)}
           />
           <JobCard
             job={statuses.kalshiBackfill}

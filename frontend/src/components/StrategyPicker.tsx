@@ -8,16 +8,19 @@ import {
 
 interface Props {
   betType?: BetTypeCategory;
+  renameLabel?: (label: string) => string;
 }
 
-export function StrategyPicker({ betType = 'moneyline' }: Props) {
+export function StrategyPicker({ betType, renameLabel }: Props) {
   const { strategy, setStrategy } = useStrategy();
-  const filtered = STRATEGY_OPTIONS.filter((o) => o.betType === betType);
+  const filtered = betType
+    ? STRATEGY_OPTIONS.filter((o) => o.betType === betType)
+    : STRATEGY_OPTIONS;
   const current = filtered.find((o) => o.type === strategy.type);
 
   // When betType changes, switch to the first strategy of that type
   useEffect(() => {
-    if (!filtered.some((o) => o.type === strategy.type)) {
+    if (betType && !filtered.some((o) => o.type === strategy.type)) {
       const first = filtered[0];
       const threshold = first?.thresholds?.[Math.floor((first.thresholds.length - 1) / 2)] ?? 0;
       setStrategy({ type: first.type, threshold });
@@ -38,7 +41,7 @@ export function StrategyPicker({ betType = 'moneyline' }: Props) {
       >
         {filtered.map((opt) => (
           <option key={opt.type} value={opt.type}>
-            {opt.label}
+            {renameLabel ? renameLabel(opt.label) : opt.label}
           </option>
         ))}
       </select>
