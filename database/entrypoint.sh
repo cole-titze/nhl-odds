@@ -5,15 +5,15 @@ set -e
 /opt/mssql/bin/sqlservr &
 SQL_PID=$!
 
-# Wait for SQL Server to accept connections (up to 60 seconds)
+# Wait for SQL Server to accept connections (up to 300 seconds)
 echo "Waiting for SQL Server to start..."
-for i in $(seq 1 60); do
+for i in $(seq 1 300); do
     if /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -Q "SELECT 1" > /dev/null 2>&1; then
         echo "SQL Server is ready."
         break
     fi
-    if [ "$i" -eq 60 ]; then
-        echo "ERROR: SQL Server did not start within 60 seconds."
+    if [ "$i" -eq 300 ]; then
+        echo "ERROR: SQL Server did not start within 300 seconds."
         exit 1
     fi
     sleep 1
