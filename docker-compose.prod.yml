@@ -9,11 +9,11 @@ services:
     volumes:
       - sql-data:/var/opt/mssql
     healthcheck:
-      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/1433'"]
+      test: /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -Q "SELECT 1" -b -o /dev/null
       interval: 15s
       timeout: 10s
-      retries: 10
-      start_period: 60s
+      retries: 15
+      start_period: 120s
 
   webapi:
     image: ghcr.io/cole-titze/nhl-odds/webapi:latest
