@@ -9,7 +9,7 @@ services:
     volumes:
       - sql-data:/var/opt/mssql
     healthcheck:
-      test: ["CMD-SHELL", "echo > /dev/tcp/localhost/1433"]
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/1433'"]
       interval: 15s
       timeout: 10s
       retries: 10
