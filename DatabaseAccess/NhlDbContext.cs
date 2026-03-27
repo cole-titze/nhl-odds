@@ -52,7 +52,8 @@ public partial class NhlDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseSqlServer(_connectionString);
+        optionsBuilder.UseSqlServer(_connectionString, options =>
+            options.CommandTimeout(120));
     }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

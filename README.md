@@ -27,12 +27,11 @@ sudo docker run --restart=always --cap-add SYS_PTRACE -e 'ACCEPT_EULA=1' -e 'MSS
 1. CreateDatabase.sql
 2. CreateTables.sql
 
-- Or restore from a backup:
+- Or restore from a bacpac:
 
 ```
-docker exec azuresqledge mkdir -p /var/opt/mssql/backup
-docker cp ./nhl.bak azuresqledge:/var/opt/mssql/backup/nhl.bak
-docker exec azuresqledge /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P '<YOUR PASSWORD>' -Q "RESTORE DATABASE [nhl] FROM DISK = N'/var/opt/mssql/backup/nhl.bak' WITH REPLACE"
+docker cp ./nhl.bacpac azuresqledge:/tmp/nhl.bacpac
+docker exec azuresqledge /opt/sqlpackage/sqlpackage /Action:Import /TargetServerName:localhost /TargetDatabaseName:nhl /TargetUser:SA /TargetPassword:'<YOUR PASSWORD>' /SourceFile:/tmp/nhl.bacpac /TargetTrustServerCertificate:True
 ```
 
 ### Run Data Models
@@ -47,9 +46,8 @@ python -m game_predictor
 ### Backup Database
 
 ```
-docker exec azuresqledge mkdir -p /var/opt/mssql/backup
-docker exec azuresqledge /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P '<YOUR PASSWORD>' -Q "BACKUP DATABASE [nhl] TO DISK = N'/var/opt/mssql/backup/nhl.bak' WITH FORMAT"
-docker cp azuresqledge:/var/opt/mssql/backup/nhl.bak ./nhl.bak
+docker exec azuresqledge /opt/sqlpackage/sqlpackage /Action:Export /SourceServerName:localhost /SourceDatabaseName:nhl /SourceUser:SA /SourcePassword:'<YOUR PASSWORD>' /TargetFile:/tmp/nhl.bacpac /SourceTrustServerCertificate:True
+docker cp azuresqledge:/tmp/nhl.bacpac ./nhl.bacpac
 ```
 
 # Docker Deployment
@@ -131,18 +129,18 @@ Jobs can also be triggered manually from the Admin page.
 
 ```bash
 # Backup
-docker exec nhl-odds-database-1 mkdir -p /var/opt/mssql/backup
-docker exec nhl-odds-database-1 /opt/mssql-tools18/bin/sqlcmd -C \
-  -S localhost -U SA -P '<PASSWORD>' \
-  -Q "BACKUP DATABASE [nhl] TO DISK = N'/var/opt/mssql/backup/nhl.bak' WITH FORMAT"
-docker cp nhl-odds-database-1:/var/opt/mssql/backup/nhl.bak ./nhl.bak
+docker exec nhl-odds-database-1 /opt/sqlpackage/sqlpackage \
+  /Action:Export /SourceServerName:localhost /SourceDatabaseName:nhl \
+  /SourceUser:SA /SourcePassword:'<PASSWORD>' \
+  /TargetFile:/tmp/nhl.bacpac /SourceTrustServerCertificate:True
+docker cp nhl-odds-database-1:/tmp/nhl.bacpac ./nhl.bacpac
 
 # Restore
-docker exec nhl-odds-database-1 mkdir -p /var/opt/mssql/backup
-docker cp nhl.bak nhl-odds-database-1:/var/opt/mssql/backup/nhl.bak
-docker exec nhl-odds-database-1 /opt/mssql-tools18/bin/sqlcmd -C \
-  -S localhost -U SA -P '<PASSWORD>' \
-  -Q "RESTORE DATABASE [nhl] FROM DISK = N'/var/opt/mssql/backup/nhl.bak' WITH REPLACE"
+docker cp nhl.bacpac nhl-odds-database-1:/tmp/nhl.bacpac
+docker exec nhl-odds-database-1 /opt/sqlpackage/sqlpackage \
+  /Action:Import /TargetServerName:localhost /TargetDatabaseName:nhl \
+  /TargetUser:SA /TargetPassword:'<PASSWORD>' \
+  /SourceFile:/tmp/nhl.bacpac /TargetTrustServerCertificate:True
 ```
 
 ## CI/CD

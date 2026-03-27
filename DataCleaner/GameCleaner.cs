@@ -84,7 +84,9 @@ public class GameCleaner
                 currentMissedShots.Concat(lastMissedShots),
                 seasonGames.Concat(lastSeasonGames));
 
+            const int batchSize = 200;
             var cleanedGames = new List<DbGameCleaned>();
+            int totalCleaned = 0;
             foreach (var game in gamesToClean)
             {
                 try
@@ -92,6 +94,14 @@ public class GameCleaner
                     var cleanedGame = MapGameToDbGameCleaned.Map(game, gameMap, rosterScorer);
                     MapEventToDbGameCleaned.Apply(cleanedGame, eventAggregator, game);
                     cleanedGames.Add(cleanedGame);
+
+                    if (cleanedGames.Count >= batchSize)
+                    {
+                        await _cleanedGameRepo.AddUpdateCleanedGames(cleanedGames);
+                        await _cleanedGameRepo.Commit();
+                        totalCleaned += cleanedGames.Count;
+                        cleanedGames.Clear();
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -112,9 +122,13 @@ public class GameCleaner
                 }
             }
 
-            await _cleanedGameRepo.AddUpdateCleanedGames(cleanedGames);
-            await _cleanedGameRepo.Commit();
-            _logger.LogInformation("Number of Games Added To Season " + seasonStartYear.ToString() + ": " + cleanedGames.Count.ToString());
+            if (cleanedGames.Count > 0)
+            {
+                await _cleanedGameRepo.AddUpdateCleanedGames(cleanedGames);
+                await _cleanedGameRepo.Commit();
+                totalCleaned += cleanedGames.Count;
+            }
+            _logger.LogInformation("Number of Games Added To Season " + seasonStartYear.ToString() + ": " + totalCleaned.ToString());
         }
     }
 
