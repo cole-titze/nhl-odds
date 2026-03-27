@@ -27,13 +27,12 @@ sudo docker run --restart=always --cap-add SYS_PTRACE -e 'ACCEPT_EULA=1' -e 'MSS
 1. CreateDatabase.sql
 2. CreateTables.sql
 
-- Or restore from a bacpac:
+- Or restore from a bacpac (requires [sqlpackage](https://learn.microsoft.com/en-us/sql/tools/sqlpackage/sqlpackage-download): `dotnet tool install --global Microsoft.SqlPackage`):
 
 ```
-docker run --rm -v "$(pwd):/out" --network host mcr.microsoft.com/sqlpackage \
-  /Action:Import /TargetServerName:localhost,1433 /TargetDatabaseName:nhl \
+sqlpackage /Action:Import /TargetServerName:localhost,1433 /TargetDatabaseName:nhl \
   /TargetUser:SA /TargetPassword:'<YOUR PASSWORD>' \
-  /SourceFile:/out/nhl.bacpac /TargetTrustServerCertificate:True
+  /SourceFile:./nhl.bacpac /TargetTrustServerCertificate:True
 ```
 
 ### Run Data Models
@@ -48,10 +47,9 @@ python -m game_predictor
 ### Backup Database
 
 ```
-docker run --rm -v "$(pwd):/out" --network host mcr.microsoft.com/sqlpackage \
-  /Action:Export /SourceServerName:localhost,1433 /SourceDatabaseName:nhl \
+sqlpackage /Action:Export /SourceServerName:localhost,1433 /SourceDatabaseName:nhl \
   /SourceUser:SA /SourcePassword:'<YOUR PASSWORD>' \
-  /TargetFile:/out/nhl.bacpac /SourceTrustServerCertificate:True
+  /TargetFile:./nhl.bacpac /SourceTrustServerCertificate:True
 ```
 
 # Docker Deployment
@@ -131,18 +129,18 @@ Jobs can also be triggered manually from the Admin page.
 
 ## Database Backup / Restore
 
+Requires [sqlpackage](https://learn.microsoft.com/en-us/sql/tools/sqlpackage/sqlpackage-download): `dotnet tool install --global Microsoft.SqlPackage`
+
 ```bash
 # Backup
-docker run --rm -v "$(pwd):/out" --network host mcr.microsoft.com/sqlpackage \
-  /Action:Export /SourceServerName:localhost,1433 /SourceDatabaseName:nhl \
+sqlpackage /Action:Export /SourceServerName:localhost,1433 /SourceDatabaseName:nhl \
   /SourceUser:SA /SourcePassword:'<PASSWORD>' \
-  /TargetFile:/out/nhl.bacpac /SourceTrustServerCertificate:True
+  /TargetFile:./nhl.bacpac /SourceTrustServerCertificate:True
 
 # Restore
-docker run --rm -v "$(pwd):/out" --network host mcr.microsoft.com/sqlpackage \
-  /Action:Import /TargetServerName:localhost,1433 /TargetDatabaseName:nhl \
+sqlpackage /Action:Import /TargetServerName:localhost,1433 /TargetDatabaseName:nhl \
   /TargetUser:SA /TargetPassword:'<PASSWORD>' \
-  /SourceFile:/out/nhl.bacpac /TargetTrustServerCertificate:True
+  /SourceFile:./nhl.bacpac /TargetTrustServerCertificate:True
 ```
 
 ## CI/CD
