@@ -71,8 +71,10 @@ public class BookmakerOddsBackfiller
             .Select(g => new { g.Id, g.HomeTeamId, g.AwayTeamId, g.GameDateUTC })
             .ToListAsync();
 
+        var today = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, centralZone).Date;
         var gameDates = allGames
             .Select(g => TimeZoneInfo.ConvertTimeFromUtc(g.GameDateUTC, centralZone).Date)
+            .Where(d => d < today)
             .Distinct()
             .OrderBy(d => d)
             .ToList();
