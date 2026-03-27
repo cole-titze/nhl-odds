@@ -17,9 +17,9 @@ The nhl project. This repo collects nhl data from the nhl api, cleans it, and th
 
 ```bash
 sudo apt-get update && sudo apt-get install -y wget
-wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+wget https://packages.microsoft.com/config/debian/$(cat /etc/debian_version | cut -d. -f1)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
 sudo dpkg -i packages-microsoft-prod.deb && rm packages-microsoft-prod.deb
-sudo apt-get update && sudo apt-get install -y dotnet-sdk-9.0
+sudo apt-get update && sudo apt-get install -y dotnet-sdk-10.0
 ```
 
 ## Setup Database
