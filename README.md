@@ -13,7 +13,14 @@ The nhl project. This repo collects nhl data from the nhl api, cleans it, and th
 ## Prerequisites
 
 - [Install docker desktop](https://www.docker.com/products/docker-desktop/)
-- [Install dotnet](https://dotnet.microsoft.com/en-us/download)
+- Install dotnet:
+
+```bash
+sudo apt-get update && sudo apt-get install -y wget
+wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+sudo dpkg -i packages-microsoft-prod.deb && rm packages-microsoft-prod.deb
+sudo apt-get update && sudo apt-get install -y dotnet-sdk-9.0
+```
 
 ## Setup Database
 
