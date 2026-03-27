@@ -30,8 +30,10 @@ sudo docker run --restart=always --cap-add SYS_PTRACE -e 'ACCEPT_EULA=1' -e 'MSS
 - Or restore from a bacpac:
 
 ```
-docker cp ./nhl.bacpac azuresqledge:/tmp/nhl.bacpac
-docker exec azuresqledge /opt/sqlpackage/sqlpackage /Action:Import /TargetServerName:localhost /TargetDatabaseName:nhl /TargetUser:SA /TargetPassword:'<YOUR PASSWORD>' /SourceFile:/tmp/nhl.bacpac /TargetTrustServerCertificate:True
+docker run --rm -v "$(pwd):/out" --network host mcr.microsoft.com/sqlpackage \
+  /Action:Import /TargetServerName:localhost,1433 /TargetDatabaseName:nhl \
+  /TargetUser:SA /TargetPassword:'<YOUR PASSWORD>' \
+  /SourceFile:/out/nhl.bacpac /TargetTrustServerCertificate:True
 ```
 
 ### Run Data Models
@@ -46,8 +48,10 @@ python -m game_predictor
 ### Backup Database
 
 ```
-docker exec azuresqledge /opt/sqlpackage/sqlpackage /Action:Export /SourceServerName:localhost /SourceDatabaseName:nhl /SourceUser:SA /SourcePassword:'<YOUR PASSWORD>' /TargetFile:/tmp/nhl.bacpac /SourceTrustServerCertificate:True
-docker cp azuresqledge:/tmp/nhl.bacpac ./nhl.bacpac
+docker run --rm -v "$(pwd):/out" --network host mcr.microsoft.com/sqlpackage \
+  /Action:Export /SourceServerName:localhost,1433 /SourceDatabaseName:nhl \
+  /SourceUser:SA /SourcePassword:'<YOUR PASSWORD>' \
+  /TargetFile:/out/nhl.bacpac /SourceTrustServerCertificate:True
 ```
 
 # Docker Deployment
@@ -129,18 +133,16 @@ Jobs can also be triggered manually from the Admin page.
 
 ```bash
 # Backup
-docker exec nhl-odds-database-1 /opt/sqlpackage/sqlpackage \
-  /Action:Export /SourceServerName:localhost /SourceDatabaseName:nhl \
+docker run --rm -v "$(pwd):/out" --network host mcr.microsoft.com/sqlpackage \
+  /Action:Export /SourceServerName:localhost,1433 /SourceDatabaseName:nhl \
   /SourceUser:SA /SourcePassword:'<PASSWORD>' \
-  /TargetFile:/tmp/nhl.bacpac /SourceTrustServerCertificate:True
-docker cp nhl-odds-database-1:/tmp/nhl.bacpac ./nhl.bacpac
+  /TargetFile:/out/nhl.bacpac /SourceTrustServerCertificate:True
 
 # Restore
-docker cp nhl.bacpac nhl-odds-database-1:/tmp/nhl.bacpac
-docker exec nhl-odds-database-1 /opt/sqlpackage/sqlpackage \
-  /Action:Import /TargetServerName:localhost /TargetDatabaseName:nhl \
+docker run --rm -v "$(pwd):/out" --network host mcr.microsoft.com/sqlpackage \
+  /Action:Import /TargetServerName:localhost,1433 /TargetDatabaseName:nhl \
   /TargetUser:SA /TargetPassword:'<PASSWORD>' \
-  /SourceFile:/tmp/nhl.bacpac /TargetTrustServerCertificate:True
+  /SourceFile:/out/nhl.bacpac /TargetTrustServerCertificate:True
 ```
 
 ## CI/CD

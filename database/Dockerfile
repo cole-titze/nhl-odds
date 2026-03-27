@@ -4,23 +4,12 @@ ENV ACCEPT_EULA=Y
 
 USER root
 RUN apt-get update && \
-    apt-get install -y curl gnupg2 unzip && \
+    apt-get install -y curl gnupg2 && \
     curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg && \
     curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/prod.list | tee /etc/apt/sources.list.d/mssql-release.list && \
     apt-get update && \
     ACCEPT_EULA=Y apt-get install -y mssql-tools18 unixodbc-dev && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install SqlPackage for cross-architecture bacpac export/import
-RUN ARCH=$(dpkg --print-architecture) && \
-    if [ "$ARCH" = "arm64" ]; then \
-        curl -fsSL -o /tmp/sqlpackage.zip "https://aka.ms/sqlpackage-linux-arm64"; \
-    else \
-        curl -fsSL -o /tmp/sqlpackage.zip "https://aka.ms/sqlpackage-linux"; \
-    fi && \
-    unzip /tmp/sqlpackage.zip -d /opt/sqlpackage && \
-    chmod +x /opt/sqlpackage/sqlpackage && \
-    rm /tmp/sqlpackage.zip
 
 COPY Scripts/CreateTables.sql /usr/src/app/CreateTables.sql
 COPY entrypoint.sh /usr/src/app/entrypoint.sh
