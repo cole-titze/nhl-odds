@@ -37,6 +37,7 @@ sudo docker run --restart=always --cap-add SYS_PTRACE -e 'ACCEPT_EULA=1' -e 'MSS
 - Or restore from a bacpac (requires [sqlpackage](https://learn.microsoft.com/en-us/sql/tools/sqlpackage/sqlpackage-download): `dotnet tool install --global Microsoft.SqlPackage`):
 
 ```
+/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P '<YOUR PASSWORD>' -Q "DROP DATABASE nhl"
 sqlpackage /Action:Import /TargetServerName:localhost,1433 /TargetDatabaseName:nhl \
   /TargetUser:SA /TargetPassword:'<YOUR PASSWORD>' \
   /SourceFile:./nhl.bacpac /TargetTrustServerCertificate:True
@@ -144,7 +145,8 @@ sqlpackage /Action:Export /SourceServerName:localhost,1433 /SourceDatabaseName:n
   /SourceUser:SA /SourcePassword:'<PASSWORD>' \
   /TargetFile:./nhl.bacpac /SourceTrustServerCertificate:True
 
-# Restore
+# Restore (drop existing DB first — bacpac import requires a fresh database)
+/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P '<PASSWORD>' -Q "DROP DATABASE nhl"
 sqlpackage /Action:Import /TargetServerName:localhost,1433 /TargetDatabaseName:nhl \
   /TargetUser:SA /TargetPassword:'<PASSWORD>' \
   /SourceFile:./nhl.bacpac /TargetTrustServerCertificate:True
