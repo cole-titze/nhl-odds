@@ -3,23 +3,25 @@ services:
     image: ghcr.io/cole-titze/nhl-odds/database:latest
     restart: always
     environment:
-      - MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in your environment}
+      - POSTGRES_DB=nhl
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your environment}
     ports:
-      - "1433:1433"
+      - "5432:5432"
     volumes:
-      - sql-data:/var/opt/mssql
+      - pg-data:/var/lib/postgresql/data
     healthcheck:
-      test: /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -Q "SELECT 1" -b -o /dev/null
-      interval: 15s
-      timeout: 10s
-      retries: 15
-      start_period: 120s
+      test: ["CMD-SHELL", "pg_isready -U postgres -d nhl"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   webapi:
     image: ghcr.io/cole-titze/nhl-odds/webapi:latest
     restart: always
     environment:
-      - NHL_DATABASE=Server=database;Database=nhl;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;Command Timeout=120
+      - NHL_DATABASE=Host=database;Database=nhl;Username=postgres;Password=${POSTGRES_PASSWORD}
       - ODDS_API_KEY=${ODDS_API_KEY:-}
       - API_BACKFILL_KEY=${API_BACKFILL_KEY:-}
     depends_on:
@@ -35,4 +37,4 @@ services:
       - webapi
 
 volumes:
-  sql-data:
+  pg-data:

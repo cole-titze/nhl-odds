@@ -3,7 +3,7 @@ using Entry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
+
 
 ServiceProvider serviceProvider = new ServiceCollection()
     .AddLogging((loggingBuilder) => loggingBuilder
@@ -23,7 +23,7 @@ var settings = new ModeSettings()
     OddsApiKey = Environment.GetEnvironmentVariable("ODDS_API_KEY") ?? string.Empty,
 };
 
-if (settings.ConnectionString.IsNullOrEmpty())
+if (string.IsNullOrEmpty(settings.ConnectionString))
 {
     var config = new ConfigurationBuilder().AddJsonFile("appsettings.Local.json").Build();
     if (runModeEnv == null)
@@ -36,7 +36,7 @@ if (settings.ConnectionString.IsNullOrEmpty())
         settings.OddsApiBackfillKey = config["OddsApi:API_BACKFILL_KEY"] ?? string.Empty;
 }
 
-if (settings.ConnectionString.IsNullOrEmpty())
+if (string.IsNullOrEmpty(settings.ConnectionString))
     throw new Exception("Connection String Null");
 
 await dataGetter.Main(settings);

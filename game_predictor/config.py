@@ -45,9 +45,9 @@ def _parse_connection_string(conn_str: str) -> dict:
         parts[key.strip().lower()] = value.strip()
 
     key_map = {
-        "server": ["server", "data source"],
-        "database": ["database", "initial catalog"],
-        "user": ["user id", "uid"],
+        "host": ["host", "server", "data source"],
+        "dbname": ["database", "dbname", "initial catalog"],
+        "user": ["username", "user", "user id", "uid"],
         "password": ["password", "pwd"],
     }
 

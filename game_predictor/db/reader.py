@@ -1,5 +1,4 @@
 import pandas as pd
-import pytds
 
 from .queries import (
     CONSENSUS_SPREAD_QUERY,
@@ -11,7 +10,7 @@ from .queries import (
 )
 
 
-def _query_to_dataframe(conn: pytds.Connection, query: str) -> pd.DataFrame:
+def _query_to_dataframe(conn, query: str) -> pd.DataFrame:
     with conn.cursor() as cursor:
         cursor.execute(query)
         columns = [desc[0] for desc in cursor.description]
@@ -19,19 +18,19 @@ def _query_to_dataframe(conn: pytds.Connection, query: str) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=columns)
 
 
-def load_training_data(conn: pytds.Connection) -> pd.DataFrame:
+def load_training_data(conn) -> pd.DataFrame:
     return _query_to_dataframe(conn, TRAINING_DATA_QUERY)
 
 
-def load_unplayed_games(conn: pytds.Connection) -> pd.DataFrame:
+def load_unplayed_games(conn) -> pd.DataFrame:
     return _query_to_dataframe(conn, UNPLAYED_GAMES_QUERY)
 
 
-def load_current_season_games(conn: pytds.Connection) -> pd.DataFrame:
+def load_current_season_games(conn) -> pd.DataFrame:
     return _query_to_dataframe(conn, CURRENT_SEASON_GAMES_QUERY)
 
 
-def load_consensus_lines(conn: pytds.Connection) -> dict[int, dict[str, float]]:
+def load_consensus_lines(conn) -> dict[int, dict[str, float]]:
     """Load consensus spread and total lines keyed by GameId.
 
     Returns {GameId: {"spread": avg_home_spread, "total": avg_ou_point}}.
@@ -47,6 +46,6 @@ def load_consensus_lines(conn: pytds.Connection) -> dict[int, dict[str, float]]:
     return lines
 
 
-def load_team_names(conn: pytds.Connection) -> dict[int, str]:
+def load_team_names(conn) -> dict[int, str]:
     df = _query_to_dataframe(conn, TEAM_NAMES_QUERY)
     return dict(zip(df["TeamId"], df["Name"]))

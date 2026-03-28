@@ -24,23 +24,20 @@ sudo apt-get update && sudo apt-get install -y dotnet-sdk-10.0
 
 ## Setup Database
 
+```bash
+docker run --restart=always -e POSTGRES_DB=nhl -e POSTGRES_PASSWORD=<YOUR PASSWORD> -p 5432:5432 --name nhl-postgres -d postgres:17-alpine
 ```
-sudo docker pull mcr.microsoft.com/azure-sql-edge:latest
-sudo docker run --restart=always --cap-add SYS_PTRACE -e 'ACCEPT_EULA=1' -e 'MSSQL_SA_PASSWORD=<YOUR PASSWORD>' -p 1433:1433 --name azuresqledge -d mcr.microsoft.com/azure-sql-edge
+
+Connect to PostgreSQL and run the schema script:
+
+```bash
+psql -h localhost -U postgres -d nhl -f database/Scripts/CreateTables.sql
 ```
 
-- Connect to sql server and run database scripts (connecting to 'localhost' from mssql extension works well)
+Or restore from a backup:
 
-1. CreateDatabase.sql
-2. CreateTables.sql
-
-- Or restore from a bacpac (requires [sqlpackage](https://learn.microsoft.com/en-us/sql/tools/sqlpackage/sqlpackage-download): `dotnet tool install --global Microsoft.SqlPackage`):
-
-```
-docker exec azuresqledge /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P '<YOUR PASSWORD>' -Q "DROP DATABASE nhl"
-sqlpackage /Action:Import /TargetServerName:localhost,1433 /TargetDatabaseName:nhl \
-  /TargetUser:SA /TargetPassword:'<YOUR PASSWORD>' \
-  /SourceFile:./nhl.bacpac /TargetTrustServerCertificate:True
+```bash
+pg_restore -h localhost -U postgres -d nhl < nhl.dump
 ```
 
 ### Run Data Models
@@ -54,10 +51,8 @@ python -m game_predictor
 
 ### Backup Database
 
-```
-sqlpackage /Action:Export /SourceServerName:localhost,1433 /SourceDatabaseName:nhl \
-  /SourceUser:SA /SourcePassword:'<YOUR PASSWORD>' \
-  /TargetFile:./nhl.bacpac /SourceTrustServerCertificate:True
+```bash
+pg_dump -h localhost -U postgres -Fc nhl > nhl.dump
 ```
 
 # Docker Deployment
@@ -80,7 +75,7 @@ curl -o docker-compose.yml https://raw.githubusercontent.com/cole-titze/nhl-odds
 
 ```bash
 cat > .env <<'EOF'
-MSSQL_SA_PASSWORD=YourSecurePassword123!
+POSTGRES_PASSWORD=YourSecurePassword123!
 ODDS_API_KEY=your-odds-api-key
 API_BACKFILL_KEY=your-backfill-api-key
 EOF
@@ -88,7 +83,7 @@ EOF
 
 | Variable | Required | Description |
 |---|---|---|
-| `MSSQL_SA_PASSWORD` | Yes | Database password for the SA account |
+| `POSTGRES_PASSWORD` | Yes | Database password for the postgres user |
 | `ODDS_API_KEY` | No | The Odds API key for daily odds fetching |
 | `API_BACKFILL_KEY` | No | The Odds API key for historical odds backfill |
 
@@ -110,7 +105,7 @@ The site will be available at `http://<host-ip>:8081`.
 
 | Service | Port | Description |
 |---|---|---|
-| `database` | 1433 | Azure SQL Edge — auto-creates schema on first run |
+| `database` | 5432 | PostgreSQL — auto-creates schema on first run |
 | `webapi` | 8080 (internal) | .NET API + Python predictor + scheduled jobs |
 | `frontend` | 8081 | Nginx serving React app, proxies `/api/` to webapi |
 
@@ -137,24 +132,17 @@ Jobs can also be triggered manually from the Admin page.
 
 ## Database Backup / Restore
 
-Requires [sqlpackage](https://learn.microsoft.com/en-us/sql/tools/sqlpackage/sqlpackage-download): `dotnet tool install --global Microsoft.SqlPackage`
-
 ```bash
 # Backup
-sqlpackage /Action:Export /SourceServerName:localhost,1433 /SourceDatabaseName:nhl \
-  /SourceUser:SA /SourcePassword:'<PASSWORD>' \
-  /TargetFile:./nhl.bacpac /SourceTrustServerCertificate:True
+pg_dump -h localhost -U postgres -Fc nhl > nhl.dump
 
-# Restore (drop existing DB first — bacpac import requires a fresh database)
-docker exec nhl-odds-database-1 /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P '<PASSWORD>' -Q "DROP DATABASE nhl"
-sqlpackage /Action:Import /TargetServerName:localhost,1433 /TargetDatabaseName:nhl \
-  /TargetUser:SA /TargetPassword:'<PASSWORD>' \
-  /SourceFile:./nhl.bacpac /TargetTrustServerCertificate:True
+# Restore
+pg_restore -h localhost -U postgres --clean --if-exists -d nhl < nhl.dump
 ```
 
 ### Nightly Backup Cron Job
 
-Automatically export a bacpac backup every night, keeping the last 7 days:
+Automatically back up the database every night, keeping the last 7 days:
 
 ```bash
 mkdir -p ~/Backups
@@ -164,7 +152,7 @@ crontab -e
 Add this line (runs at 1:00 AM, before the 2 AM auto-update):
 
 ```
-0 1 * * * sqlpackage /Action:Export /SourceServerName:localhost,1433 /SourceDatabaseName:nhl /SourceUser:SA /SourcePassword:'<PASSWORD>' /TargetFile:~/Backups/nhl-$(date +\%Y\%m\%d).bacpac /SourceTrustServerCertificate:True >> /var/log/nhl-odds-backup.log 2>&1 && find ~/Backups -name "nhl-*.bacpac" -mtime +7 -delete
+0 1 * * * PGPASSWORD='<PASSWORD>' pg_dump -h localhost -U postgres -Fc nhl > ~/Backups/nhl-$(date +\%Y\%m\%d).dump 2>> /var/log/nhl-odds-backup.log && find ~/Backups -name "nhl-*.dump" -mtime +7 -delete
 ```
 
 ## CI/CD

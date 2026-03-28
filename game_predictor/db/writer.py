@@ -1,9 +1,7 @@
-import pytds
-
 from .queries import UPSERT_GAME_ODDS, UPSERT_SPREAD_TOTAL
 
 
-def save_predictions(conn: pytds.Connection, predictions: list[dict]):
+def save_predictions(conn, predictions: list[dict]):
     with conn.cursor() as cursor:
         for pred in predictions:
             cursor.execute(
@@ -21,7 +19,7 @@ def save_predictions(conn: pytds.Connection, predictions: list[dict]):
     conn.commit()
 
 
-def save_spread_total_predictions(conn: pytds.Connection, predictions: list[dict]):
+def save_spread_total_predictions(conn, predictions: list[dict]):
     with conn.cursor() as cursor:
         for pred in predictions:
             cursor.execute(

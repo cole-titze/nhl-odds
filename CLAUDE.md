@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-A .NET 9 C# solution that collects NHL game data from the NHL public API, stores it in an Azure SQL Edge database, and is intended to feed data-cleaning and machine learning pipelines for game outcome prediction. Also includes an ASP.NET Core Web API that serves game odds, team stats, and log loss data to a React frontend.
+A .NET 9 C# solution that collects NHL game data from the NHL public API, stores it in a PostgreSQL database, and is intended to feed data-cleaning and machine learning pipelines for game outcome prediction. Also includes an ASP.NET Core Web API that serves game odds, team stats, and log loss data to a React frontend.
 
 ## Commands
 
@@ -41,7 +41,7 @@ python -m game_predictor
 The app reads config in priority order:
 
 1. **Environment variables** (production):
-   - `NHL_DATABASE` — full SQL Server connection string
+   - `NHL_DATABASE` — full PostgreSQL connection string (e.g. `Host=localhost;Database=nhl;Username=postgres;Password=...`)
    - `RUN_MODE` — `"NhlAdd"`, `"NhlUpdate"`, `"NextDayOdds"`, `"BackfillOdds"`, `"KalshiFetch"`, or `"BackfillKalshi"`
    - `THROTTLE_TIME_MS` — delay between NHL API requests (ms)
    - `ODDS_API_KEY` — The Odds API key (for `NextDayOdds` mode)
@@ -55,17 +55,18 @@ The app reads config in priority order:
 
 ## Database Setup
 
-Requires Azure SQL Edge running in Docker:
+Requires PostgreSQL running in Docker:
 
 ```bash
-docker run --restart=always --cap-add SYS_PTRACE \
-  -e 'ACCEPT_EULA=1' -e 'MSSQL_SA_PASSWORD=<YOUR PASSWORD>' \
-  -p 1433:1433 --name azuresqledge -d mcr.microsoft.com/azure-sql-edge
+docker run --restart=always -e POSTGRES_DB=nhl -e POSTGRES_PASSWORD=<YOUR PASSWORD> \
+  -p 5432:5432 --name nhl-postgres -d postgres:17-alpine
 ```
 
-Then connect and run the scripts in order:
-1. `database/Scripts/CreateDatabase.sql`
-2. `database/Scripts/CreateTables.sql`
+Then run the schema script:
+
+```bash
+psql -h localhost -U postgres -d nhl -f database/Scripts/CreateTables.sql
+```
 
 ## Architecture
 
@@ -93,7 +94,7 @@ NHL API
   → Entities/ServiceModels/Mappers (ServiceModels → domain Models)
   → DataGetter/BusinessLogic (orchestration, caching, deduplication)
   → Entities/Mappers (domain Models → DbModels)
-  → DatabaseAccess repositories (EF Core upserts → SQL Server)
+  → DatabaseAccess repositories (EF Core upserts → PostgreSQL)
 ```
 
 ### Web API Data Flow
@@ -102,7 +103,7 @@ NHL API
 HTTP Request
   → WebApi/Controllers (ASP.NET Core controllers)
   → WebBusinessLogic (orchestration, stats aggregation)
-  → DatabaseAccess/Web*Repository (EF Core queries → SQL Server)
+  → DatabaseAccess/Web*Repository (EF Core queries → PostgreSQL)
   → WebApi/Mappers (domain models → ViewModels)
   → JSON Response
 ```
