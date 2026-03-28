@@ -43,7 +43,7 @@ psql -h localhost -U postgres -d nhl -f database/Scripts/CreateTables.sql
 Or restore from a backup:
 
 ```bash
-pg_restore -h localhost -U postgres -d nhl < nhl.dump
+docker exec -i nhl-postgres pg_restore -U postgres -d nhl < nhl.dump
 ```
 
 ### Run Data Models
@@ -143,7 +143,7 @@ Jobs can also be triggered manually from the Admin page.
 docker exec nhl-postgres pg_dump -U postgres -Fc nhl > nhl.dump
 
 # Restore
-pg_restore -h localhost -U postgres --clean --if-exists -d nhl < nhl.dump
+docker exec -i nhl-postgres pg_restore -U postgres --clean --if-exists -d nhl < nhl.dump
 ```
 
 ### Nightly Backup Cron Job
