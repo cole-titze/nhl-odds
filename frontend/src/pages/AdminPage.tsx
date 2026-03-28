@@ -20,6 +20,7 @@ const STATUS_STYLES: Record<string, string> = {
   running: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
   completed: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
   failed: 'bg-red-500/15 text-red-600 dark:text-red-400',
+  requested: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
 };
 
 function formatTime(iso: string | null) {
@@ -36,7 +37,9 @@ function ElapsedTime({ startedAt }: { startedAt: string | null }) {
 
   useEffect(() => {
     if (!startedAt) return;
-    const start = new Date(startedAt).getTime();
+    const normalized =
+      startedAt.endsWith('Z') || startedAt.includes('+') ? startedAt : startedAt + 'Z';
+    const start = new Date(normalized).getTime();
     if (isNaN(start)) return;
 
     function update() {
@@ -56,6 +59,7 @@ function ElapsedTime({ startedAt }: { startedAt: string | null }) {
 
 function JobCard({ job, label, onStart }: { job: JobInfo; label: string; onStart?: () => void }) {
   const isRunning = job.status === 'running';
+  const isRequested = job.status === 'requested';
   const ranToday = job.completedToday;
   const detailsRef = useRef<HTMLDetailsElement>(null);
 
@@ -117,14 +121,20 @@ function JobCard({ job, label, onStart }: { job: JobInfo; label: string; onStart
       {onStart && (
         <button
           onClick={onStart}
-          disabled={isRunning || ranToday}
+          disabled={isRunning || isRequested || ranToday}
           className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-all ${
-            isRunning || ranToday
+            isRunning || isRequested || ranToday
               ? 'bg-surface-200 dark:bg-white/[0.04] text-surface-400 dark:text-surface-500 cursor-not-allowed'
               : 'bg-accent-500 hover:bg-accent-600 text-white shadow-lg shadow-accent-500/25'
           }`}
         >
-          {isRunning ? 'Running...' : ranToday ? 'Completed Today' : `Start ${label}`}
+          {isRunning
+            ? 'Running...'
+            : isRequested
+              ? 'Requested...'
+              : ranToday
+                ? 'Completed Today'
+                : `Start ${label}`}
         </button>
       )}
     </div>

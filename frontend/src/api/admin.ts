@@ -14,7 +14,7 @@ export interface ErrorLog {
 export interface JobInfo {
   id: string;
   name: string;
-  status: 'idle' | 'running' | 'completed' | 'failed';
+  status: 'idle' | 'running' | 'completed' | 'failed' | 'requested';
   startedAt: string | null;
   finishedAt: string | null;
   error: string | null;

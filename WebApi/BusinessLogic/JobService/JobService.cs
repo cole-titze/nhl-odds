@@ -82,7 +82,6 @@ public class JobService : IJobService
                     return false;
 
                 existing.Status = "requested";
-                existing.StartedAt = DateTime.UtcNow;
                 existing.FinishedAt = null;
                 existing.Error = null;
             }
@@ -92,7 +91,6 @@ public class JobService : IJobService
                 {
                     JobName = jobName,
                     Status = "requested",
-                    StartedAt = DateTime.UtcNow,
                     FinishedAt = null,
                     Error = null,
                 });

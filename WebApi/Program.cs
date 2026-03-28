@@ -25,6 +25,8 @@ if (_connectionString == null)
 // Add services to the container
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<IJobService, JobService>();
+if (builder.Environment.IsDevelopment())
+    builder.Services.AddHostedService<LocalJobRunner>();
 builder.Services.AddScoped<ITeamGetter, TeamGetter>();
 builder.Services.AddScoped<IGameOddsGetter, GameOddsGetter>();
 builder.Services.AddScoped<ITeamRepository, TeamRepository>();
