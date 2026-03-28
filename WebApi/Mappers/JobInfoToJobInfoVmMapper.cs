@@ -5,6 +5,8 @@ namespace WebApi.Mappers;
 
 public static class JobInfoToJobInfoVmMapper
 {
+    private static readonly TimeZoneInfo CentralTime = TimeZoneInfo.FindSystemTimeZoneById("America/Chicago");
+
     public static JobInfoVM Map(JobInfo jobInfo)
     {
         return new JobInfoVM
@@ -18,7 +20,8 @@ public static class JobInfoToJobInfoVmMapper
             Output = jobInfo.Output,
             CompletedToday = jobInfo.Status == "completed"
                 && jobInfo.FinishedAt.HasValue
-                && jobInfo.FinishedAt.Value.Date == DateTime.UtcNow.Date,
+                && TimeZoneInfo.ConvertTimeFromUtc(jobInfo.FinishedAt.Value, CentralTime).Date
+                    == TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, CentralTime).Date,
         };
     }
 }

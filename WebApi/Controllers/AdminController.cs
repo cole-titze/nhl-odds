@@ -83,12 +83,15 @@ public class AdminController
         return Results.Ok(new { message = "Kalshi backfill requested." });
     }
 
+    private static readonly TimeZoneInfo CentralTime = TimeZoneInfo.FindSystemTimeZoneById("America/Chicago");
+
     private bool CompletedToday(string jobName)
     {
         var status = _jobService.GetStatus(jobName);
         return status.Status == "completed"
             && status.FinishedAt.HasValue
-            && status.FinishedAt.Value.Date == DateTime.UtcNow.Date;
+            && TimeZoneInfo.ConvertTimeFromUtc(status.FinishedAt.Value, CentralTime).Date
+                == TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, CentralTime).Date;
     }
 
     [HttpGet]
