@@ -13,6 +13,12 @@ The nhl project. This repo collects nhl data from the nhl api, cleans it, and th
 ## Prerequisites
 
 - [Install docker desktop](https://www.docker.com/products/docker-desktop/)
+- Install PostgreSQL client tools:
+
+```bash
+sudo apt-get update && sudo apt-get install -y postgresql-client
+```
+
 - Install dotnet:
 
 ```bash
