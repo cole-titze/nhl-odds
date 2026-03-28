@@ -53,7 +53,7 @@ services:
     restart: always
     environment:
       - TZ=America/Chicago
-      - COMPOSE_FILE=/compose/docker-compose.prod.yml
+      - COMPOSE_FILE=/compose/docker-compose.yml
       - NHL_DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@database:5432/nhl
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
