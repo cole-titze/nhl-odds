@@ -62,6 +62,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     environment:
+      - TZ=America/Chicago
       - COMPOSE_FILE=/compose/docker-compose.yml
       - NHL_DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@database:5432/nhl
     volumes:

@@ -1,4 +1,15 @@
+import numpy as np
+
 from .queries import UPSERT_GAME_ODDS, UPSERT_SPREAD_TOTAL
+
+
+def _native(value):
+    """Convert numpy scalars to Python native types for psycopg2."""
+    if isinstance(value, np.integer):
+        return int(value)
+    if isinstance(value, np.floating):
+        return float(value)
+    return value
 
 
 def save_predictions(conn, predictions: list[dict]):
@@ -7,12 +18,12 @@ def save_predictions(conn, predictions: list[dict]):
             cursor.execute(
                 UPSERT_GAME_ODDS,
                 (
-                    pred["GameId"],
-                    pred["ModelId"],
+                    _native(pred["GameId"]),
+                    _native(pred["ModelId"]),
                     pred["RunDateUTC"],
-                    pred["HomeOdds"],
-                    pred["AwayOdds"],
-                    pred["LogLoss"],
+                    _native(pred["HomeOdds"]),
+                    _native(pred["AwayOdds"]),
+                    _native(pred["LogLoss"]),
                     pred["Notes"],
                 ),
             )
@@ -25,13 +36,13 @@ def save_spread_total_predictions(conn, predictions: list[dict]):
             cursor.execute(
                 UPSERT_SPREAD_TOTAL,
                 (
-                    pred["GameId"],
-                    pred["ModelId"],
+                    _native(pred["GameId"]),
+                    _native(pred["ModelId"]),
                     pred["RunDateUTC"],
-                    pred["PredictedValue"],
-                    pred["ResidualStd"],
-                    pred.get("Line"),
-                    pred.get("CoverProbability"),
+                    _native(pred["PredictedValue"]),
+                    _native(pred["ResidualStd"]),
+                    _native(pred.get("Line")),
+                    _native(pred.get("CoverProbability")),
                     pred["Notes"],
                 ),
             )

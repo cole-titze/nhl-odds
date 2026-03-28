@@ -52,6 +52,7 @@ services:
     image: ghcr.io/cole-titze/nhl-odds/scheduler:latest
     restart: always
     environment:
+      - TZ=America/Chicago
       - COMPOSE_FILE=/compose/docker-compose.prod.yml
       - NHL_DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@database:5432/nhl
     volumes:
