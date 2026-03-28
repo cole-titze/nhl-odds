@@ -309,7 +309,7 @@ CREATE TABLE "GameSkaterStats"
     "Hits" INTEGER NOT NULL,
     "PowerPlayGoals" INTEGER NOT NULL,
     "ShotsOnGoal" INTEGER NOT NULL,
-    "FaceoffWinningPctg" DOUBLE PRECISION NOT NULL,
+    "FaceOffWinningPctg" DOUBLE PRECISION NOT NULL,
     "BlockedShots" INTEGER NOT NULL,
     "Giveaways" INTEGER NOT NULL,
     "Takeaways" INTEGER NOT NULL,

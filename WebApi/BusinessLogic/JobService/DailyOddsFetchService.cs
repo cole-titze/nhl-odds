@@ -42,7 +42,7 @@ public class DailyOddsFetchService : BackgroundService
         var started = _jobService.TryStart(
             "odds-fetch",
             "dotnet",
-            "run --project Entry --no-build -c Release",
+            GetEntryArgs(repoRoot),
             repoRoot,
             new Dictionary<string, string> { { "RUN_MODE", "NextDayOdds" } });
 
@@ -63,7 +63,7 @@ public class DailyOddsFetchService : BackgroundService
         var kalshiStarted = _jobService.TryStart(
             "kalshi-fetch",
             "dotnet",
-            "run --project Entry --no-build -c Release",
+            GetEntryArgs(repoRoot),
             repoRoot,
             new Dictionary<string, string> { { "RUN_MODE", "KalshiFetch" } });
 
@@ -92,6 +92,14 @@ public class DailyOddsFetchService : BackgroundService
 
         var venvPython = Path.Combine(repoRoot, ".venv", "bin", "python3");
         return File.Exists(venvPython) ? venvPython : "python3";
+    }
+
+    private static string GetEntryArgs(string repoRoot)
+    {
+        var releaseBin = Path.Combine(repoRoot, "Entry", "bin", "Release");
+        return Directory.Exists(releaseBin)
+            ? "run --project Entry --no-build -c Release"
+            : "run --project Entry";
     }
 
     private TimeSpan GetDelayUntilNextRun()

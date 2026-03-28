@@ -58,7 +58,7 @@ python -m game_predictor
 ### Backup Database
 
 ```bash
-pg_dump -h localhost -U postgres -Fc nhl > nhl.dump
+docker exec nhl-postgres pg_dump -U postgres -Fc nhl > nhl.dump
 ```
 
 # Docker Deployment
@@ -139,8 +139,8 @@ Jobs can also be triggered manually from the Admin page.
 ## Database Backup / Restore
 
 ```bash
-# Backup
-pg_dump -h localhost -U postgres -Fc nhl > nhl.dump
+# Backup (runs pg_dump inside the container to avoid client/server version mismatch)
+docker exec nhl-postgres pg_dump -U postgres -Fc nhl > nhl.dump
 
 # Restore
 pg_restore -h localhost -U postgres --clean --if-exists -d nhl < nhl.dump
@@ -158,7 +158,7 @@ crontab -e
 Add this line (runs at 1:00 AM, before the 2 AM auto-update):
 
 ```
-0 1 * * * PGPASSWORD='<PASSWORD>' pg_dump -h localhost -U postgres -Fc nhl > ~/Backups/nhl-$(date +\%Y\%m\%d).dump 2>> /var/log/nhl-odds-backup.log && find ~/Backups -name "nhl-*.dump" -mtime +7 -delete
+0 1 * * * docker exec nhl-postgres pg_dump -U postgres -Fc nhl > ~/Backups/nhl-$(date +\%Y\%m\%d).dump 2>> /var/log/nhl-odds-backup.log && find ~/Backups -name "nhl-*.dump" -mtime +7 -delete
 ```
 
 ## CI/CD

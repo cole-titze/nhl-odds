@@ -28,6 +28,14 @@ public class AdminController
         _configuration = configuration;
     }
 
+    private static string GetEntryArgs(string repoRoot)
+    {
+        var releaseBin = Path.Combine(repoRoot, "Entry", "bin", "Release");
+        return Directory.Exists(releaseBin)
+            ? "run --project Entry --no-build -c Release"
+            : "run --project Entry";
+    }
+
     private string GetRepoRoot()
     {
         var configured = _configuration["AdminSettings:RepoRoot"];
@@ -55,7 +63,7 @@ public class AdminController
         var started = _jobService.TryStart(
             DataCollectionJob,
             "dotnet",
-            "run --project Entry --no-build -c Release",
+            GetEntryArgs(repoRoot),
             repoRoot,
             new Dictionary<string, string> { { "RUN_MODE", "NhlAdd" } });
 
@@ -94,7 +102,7 @@ public class AdminController
         var started = _jobService.TryStart(
             OddsBackfillJob,
             "dotnet",
-            "run --project Entry --no-build -c Release",
+            GetEntryArgs(repoRoot),
             repoRoot,
             new Dictionary<string, string> { { "RUN_MODE", "BackfillOdds" } });
 
@@ -136,7 +144,7 @@ public class AdminController
         var started = _jobService.TryStart(
             KalshiBackfillJob,
             "dotnet",
-            "run --project Entry --no-build -c Release",
+            GetEntryArgs(repoRoot),
             repoRoot,
             new Dictionary<string, string> { { "RUN_MODE", "BackfillKalshi" } });
 

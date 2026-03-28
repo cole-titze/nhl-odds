@@ -42,7 +42,7 @@ public class DailyDataCollectionService : BackgroundService
         var started = _jobService.TryStart(
             "data-collection",
             "dotnet",
-            "run --project Entry --no-build -c Release",
+            GetEntryArgs(repoRoot),
             repoRoot,
             new Dictionary<string, string> { { "RUN_MODE", "NhlAdd" } });
 
@@ -62,6 +62,14 @@ public class DailyDataCollectionService : BackgroundService
         if (next <= now)
             next = next.AddDays(1);
         return next - now;
+    }
+
+    private static string GetEntryArgs(string repoRoot)
+    {
+        var releaseBin = Path.Combine(repoRoot, "Entry", "bin", "Release");
+        return Directory.Exists(releaseBin)
+            ? "run --project Entry --no-build -c Release"
+            : "run --project Entry";
     }
 
     private string GetRepoRoot()
