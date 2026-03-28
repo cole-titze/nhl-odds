@@ -42,7 +42,7 @@ public class DailyOddsFetchService : BackgroundService
         var started = _jobService.TryStart(
             "odds-fetch",
             "dotnet",
-            "run --project Entry --no-build",
+            "run --project Entry --no-build -c Release",
             repoRoot,
             new Dictionary<string, string> { { "RUN_MODE", "NextDayOdds" } });
 
@@ -63,7 +63,7 @@ public class DailyOddsFetchService : BackgroundService
         var kalshiStarted = _jobService.TryStart(
             "kalshi-fetch",
             "dotnet",
-            "run --project Entry --no-build",
+            "run --project Entry --no-build -c Release",
             repoRoot,
             new Dictionary<string, string> { { "RUN_MODE", "KalshiFetch" } });
 

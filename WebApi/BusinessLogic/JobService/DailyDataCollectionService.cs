@@ -42,7 +42,7 @@ public class DailyDataCollectionService : BackgroundService
         var started = _jobService.TryStart(
             "data-collection",
             "dotnet",
-            "run --project Entry --no-build",
+            "run --project Entry --no-build -c Release",
             repoRoot,
             new Dictionary<string, string> { { "RUN_MODE", "NhlAdd" } });
 

@@ -55,7 +55,7 @@ public class AdminController
         var started = _jobService.TryStart(
             DataCollectionJob,
             "dotnet",
-            "run --project Entry --no-build",
+            "run --project Entry --no-build -c Release",
             repoRoot,
             new Dictionary<string, string> { { "RUN_MODE", "NhlAdd" } });
 
@@ -94,7 +94,7 @@ public class AdminController
         var started = _jobService.TryStart(
             OddsBackfillJob,
             "dotnet",
-            "run --project Entry --no-build",
+            "run --project Entry --no-build -c Release",
             repoRoot,
             new Dictionary<string, string> { { "RUN_MODE", "BackfillOdds" } });
 
@@ -136,7 +136,7 @@ public class AdminController
         var started = _jobService.TryStart(
             KalshiBackfillJob,
             "dotnet",
-            "run --project Entry --no-build",
+            "run --project Entry --no-build -c Release",
             repoRoot,
             new Dictionary<string, string> { { "RUN_MODE", "BackfillKalshi" } });
 
