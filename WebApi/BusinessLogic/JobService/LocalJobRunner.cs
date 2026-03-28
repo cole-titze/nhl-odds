@@ -87,8 +87,6 @@ public class LocalJobRunner : BackgroundService
                 FileName = command,
                 Arguments = cmd.args,
                 WorkingDirectory = repoRoot,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
             };
