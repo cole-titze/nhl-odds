@@ -5,6 +5,9 @@
 ![Database Container](https://github.com/cole-titze/nhl-odds/actions/workflows/docker-build.yml/badge.svg)
 ![Web API Container](https://github.com/cole-titze/nhl-odds/actions/workflows/webapi-build.yml/badge.svg)
 ![Frontend Container](https://github.com/cole-titze/nhl-odds/actions/workflows/frontend-build.yml/badge.svg)
+![Entry Container](https://github.com/cole-titze/nhl-odds/actions/workflows/entry-build.yml/badge.svg)
+![Predictor Container](https://github.com/cole-titze/nhl-odds/actions/workflows/predictor-build.yml/badge.svg)
+![Scheduler Container](https://github.com/cole-titze/nhl-odds/actions/workflows/scheduler-build.yml/badge.svg)
 
 The nhl project. This repo collects nhl data from the nhl api, cleans it, and then runs machine learning models on the data to predict outcomes. There is also a full-stack web app to access the information.
 
@@ -112,8 +115,11 @@ The site will be available at `http://<host-ip>:8081`.
 | Service | Port | Description |
 |---|---|---|
 | `database` | 5432 | PostgreSQL — auto-creates schema on first run |
-| `webapi` | 8080 (internal) | .NET API + Python predictor + scheduled jobs |
+| `webapi` | 8080 (internal) | Lightweight .NET API (Alpine) |
 | `frontend` | 8081 | Nginx serving React app, proxies `/api/` to webapi |
+| `scheduler` | — | Cron-based job scheduler, triggers entry/predictor containers |
+| `entry` | — | One-shot data collection container (NHL API, odds, Kalshi) |
+| `predictor` | — | One-shot ML prediction container (Python) |
 
 ## 6. Auto-update nightly
 
@@ -129,12 +135,12 @@ Add this line (runs at 2:00 AM, before the 3 AM data collection):
 
 ## Scheduled Jobs
 
-The API container runs two daily jobs automatically:
+The scheduler container runs two daily jobs via cron:
 
-- **3:00 AM** — Data collection (fetches latest game data from NHL API)
-- **6:00 AM** — Odds fetch + prediction (fetches bookmaker odds, then runs the ML predictor)
+- **3:00 AM UTC** — Data collection (`entry` container with `RUN_MODE=NhlAdd`)
+- **6:00 AM UTC** — Odds fetch pipeline: fetches bookmaker odds, Kalshi odds, then runs the ML predictor (sequential `entry` + `predictor` containers)
 
-Jobs can also be triggered manually from the Admin page.
+Jobs can also be triggered manually from the Admin page. The API writes a `requested` status to the database, and the scheduler picks it up within ~60 seconds.
 
 ## Database Backup / Restore
 
@@ -167,9 +173,12 @@ Images are automatically built and pushed to GHCR on every push to `main`:
 
 | Image | Workflow | Triggers |
 |-------|----------|----------|
-| `ghcr.io/cole-titze/nhl-odds/webapi` | `webapi-build.yml` | WebApi, DatabaseAccess, Entities, WebBusinessLogic changes |
+| `ghcr.io/cole-titze/nhl-odds/webapi` | `webapi-build.yml` | WebApi, DatabaseAccess, Entities changes |
 | `ghcr.io/cole-titze/nhl-odds/frontend` | `frontend-build.yml` | frontend/ changes |
 | `ghcr.io/cole-titze/nhl-odds/database` | `docker-build.yml` | database/ changes |
+| `ghcr.io/cole-titze/nhl-odds/entry` | `entry-build.yml` | Entry, DataGetter, DatabaseAccess, Entities, Services, BookmakerOddsGetter changes |
+| `ghcr.io/cole-titze/nhl-odds/predictor` | `predictor-build.yml` | game_predictor/ changes |
+| `ghcr.io/cole-titze/nhl-odds/scheduler` | `scheduler-build.yml` | scheduler/ changes |
 
 ## Cloudflare Tunnel
 

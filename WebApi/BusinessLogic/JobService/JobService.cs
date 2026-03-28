@@ -1,229 +1,111 @@
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using DatabaseAccess;
 using Entities.DbModels;
 using Entities.Models.Web;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 
 namespace WebApi.BusinessLogic.JobService;
 
 public class JobService : IJobService
 {
-    private readonly ConcurrentDictionary<string, JobInfo> _jobs = new();
-    private readonly ConcurrentDictionary<string, object> _locks = new();
-    private readonly ConcurrentDictionary<string, TaskCompletionSource> _completionSources = new();
     private readonly ILogger<JobService> _logger;
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly CancellationToken _appStopping;
-    private bool _loaded;
 
-    public JobService(ILogger<JobService> logger, IHostApplicationLifetime lifetime, IServiceScopeFactory scopeFactory)
+    public JobService(ILogger<JobService> logger, IServiceScopeFactory scopeFactory)
     {
         _logger = logger;
         _scopeFactory = scopeFactory;
-        _appStopping = lifetime.ApplicationStopping;
     }
 
     public JobInfo GetStatus(string jobName)
     {
-        LoadFromDb();
-        return _jobs.GetOrAdd(jobName, name => new JobInfo { Id = name, Name = name });
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<GameDbContext>();
+            var row = db.JobStatus.Find(jobName);
+            if (row != null)
+            {
+                return new JobInfo
+                {
+                    Id = row.JobName,
+                    Name = row.JobName,
+                    Status = row.Status,
+                    StartedAt = row.StartedAt,
+                    FinishedAt = row.FinishedAt,
+                    Error = row.Error,
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to load job status for {JobName}", jobName);
+        }
+
+        return new JobInfo { Id = jobName, Name = jobName };
     }
 
     public IEnumerable<JobInfo> GetAllStatuses()
     {
-        return _jobs.Values;
-    }
-
-    public bool TryStart(string jobName, string command, string args, string workingDirectory, Dictionary<string, string>? environmentVariables = null)
-    {
-        var lockObj = _locks.GetOrAdd(jobName, _ => new object());
-
-        lock (lockObj)
-        {
-            var job = _jobs.GetOrAdd(jobName, name => new JobInfo { Id = name, Name = name });
-
-            if (job.Status == "running")
-                return false;
-
-            job.Status = "running";
-            job.StartedAt = DateTime.UtcNow;
-            job.FinishedAt = null;
-            job.Error = null;
-            job.Output = string.Empty;
-
-            var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            _completionSources[jobName] = tcs;
-
-            _ = Task.Run(async () =>
-            {
-                await RunProcess(job, command, args, workingDirectory, environmentVariables);
-                tcs.TrySetResult();
-            });
-            return true;
-        }
-    }
-
-    public async Task WaitForCompletion(string jobName, CancellationToken cancellationToken = default)
-    {
-        if (_completionSources.TryGetValue(jobName, out var tcs))
-            await tcs.Task.WaitAsync(cancellationToken);
-    }
-
-    private async Task RunProcess(JobInfo job, string command, string args, string workingDirectory, Dictionary<string, string>? environmentVariables = null)
-    {
-        try
-        {
-            _logger.LogInformation("Starting job {JobName}: {Command} {Args}", job.Name, command, args);
-
-            var psi = new ProcessStartInfo
-            {
-                FileName = command,
-                Arguments = args,
-                WorkingDirectory = workingDirectory,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            };
-            psi.Environment["PYTHONUNBUFFERED"] = "1";
-            if (environmentVariables != null)
-            {
-                foreach (var (key, value) in environmentVariables)
-                    psi.Environment[key] = value;
-            }
-
-            using var process = Process.Start(psi);
-            if (process == null)
-            {
-                job.Status = "failed";
-                job.Error = "Failed to start process";
-                job.FinishedAt = DateTime.UtcNow;
-                return;
-            }
-
-            process.OutputDataReceived += (_, e) =>
-            {
-                if (e.Data != null)
-                    job.Output += e.Data + "\n";
-            };
-            process.ErrorDataReceived += (_, e) =>
-            {
-                if (e.Data != null)
-                    job.Output += e.Data + "\n";
-            };
-            process.BeginOutputReadLine();
-            process.BeginErrorReadLine();
-
-            try
-            {
-                await process.WaitForExitAsync(_appStopping);
-            }
-            catch (OperationCanceledException)
-            {
-                process.Kill(entireProcessTree: true);
-                job.Status = "cancelled";
-                job.Error = "Application shutting down";
-                job.FinishedAt = DateTime.UtcNow;
-                return;
-            }
-
-            if (process.ExitCode == 0)
-            {
-                job.Status = "completed";
-                _logger.LogInformation("Job {JobName} completed successfully", job.Name);
-            }
-            else
-            {
-                job.Status = "failed";
-                job.Error = $"Process exited with code {process.ExitCode}";
-                _logger.LogError("Job {JobName} failed (exit code {ExitCode})", job.Name, process.ExitCode);
-            }
-        }
-        catch (Exception ex)
-        {
-            job.Status = "failed";
-            job.Error = ex.Message;
-            _logger.LogError(ex, "Job {JobName} threw an exception", job.Name);
-        }
-        finally
-        {
-            job.FinishedAt = DateTime.UtcNow;
-            SaveToDb(job);
-        }
-    }
-
-    private void LoadFromDb()
-    {
-        if (_loaded) return;
-        _loaded = true;
-
         try
         {
             using var scope = _scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<GameDbContext>();
-            var rows = db.JobStatus.ToList();
-            var dirty = false;
-
-            foreach (var row in rows)
+            return db.JobStatus.Select(row => new JobInfo
             {
-                var job = _jobs.GetOrAdd(row.JobName, name => new JobInfo { Id = name, Name = name });
-                // If a job was "running" when the API shut down, no process exists now — mark it failed
-                if (row.Status == "running")
-                {
-                    row.Status = "failed";
-                    row.FinishedAt = row.StartedAt;
-                    row.Error = "Interrupted by API restart";
-                    dirty = true;
-                }
-
-                job.Status = row.Status;
-                job.StartedAt = row.StartedAt;
-                job.FinishedAt = row.FinishedAt;
-                job.Error = row.Error;
-            }
-
-            if (dirty) db.SaveChanges();
+                Id = row.JobName,
+                Name = row.JobName,
+                Status = row.Status,
+                StartedAt = row.StartedAt,
+                FinishedAt = row.FinishedAt,
+                Error = row.Error,
+            }).ToList();
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to load job statuses from database");
+            return [];
         }
     }
 
-    private void SaveToDb(JobInfo job)
+    public bool RequestJob(string jobName)
     {
         try
         {
             using var scope = _scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<GameDbContext>();
-            var existing = db.JobStatus.Find(job.Name);
+            var existing = db.JobStatus.Find(jobName);
 
             if (existing != null)
             {
-                existing.Status = job.Status;
-                existing.StartedAt = job.StartedAt;
-                existing.FinishedAt = job.FinishedAt;
-                existing.Error = job.Error;
+                if (existing.Status == "running" || existing.Status == "requested")
+                    return false;
+
+                existing.Status = "requested";
+                existing.StartedAt = DateTime.UtcNow;
+                existing.FinishedAt = null;
+                existing.Error = null;
             }
             else
             {
                 db.JobStatus.Add(new DbJobStatus
                 {
-                    JobName = job.Name,
-                    Status = job.Status,
-                    StartedAt = job.StartedAt,
-                    FinishedAt = job.FinishedAt,
-                    Error = job.Error,
+                    JobName = jobName,
+                    Status = "requested",
+                    StartedAt = DateTime.UtcNow,
+                    FinishedAt = null,
+                    Error = null,
                 });
             }
 
             db.SaveChanges();
+            _logger.LogInformation("Job {JobName} requested", jobName);
+            return true;
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to save job status for {JobName}", job.Name);
+            _logger.LogError(ex, "Failed to request job {JobName}", jobName);
+            return false;
         }
     }
 }

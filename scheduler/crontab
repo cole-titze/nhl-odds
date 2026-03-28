@@ -1,0 +1,3 @@
+0 3 * * * /app/daily-data-collection.sh
+0 6 * * * /app/daily-odds-fetch.sh
+* * * * * /app/poll-requests.sh

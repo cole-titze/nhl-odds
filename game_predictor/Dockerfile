@@ -4,4 +4,5 @@ RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 && rm 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
-ENTRYPOINT ["python", "-m", "game_predictor", "--mode", "predict"]
+ENV PREDICTOR_MODE=predict
+ENTRYPOINT ["sh", "-c", "python -m game_predictor --mode $PREDICTOR_MODE"]

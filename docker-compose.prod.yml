@@ -22,8 +22,39 @@ services:
     restart: always
     environment:
       - NHL_DATABASE=Host=database;Database=nhl;Username=postgres;Password=${POSTGRES_PASSWORD}
+    depends_on:
+      database:
+        condition: service_healthy
+
+  entry:
+    image: ghcr.io/cole-titze/nhl-odds/entry:latest
+    profiles: ["jobs"]
+    environment:
+      - NHL_DATABASE=Host=database;Database=nhl;Username=postgres;Password=${POSTGRES_PASSWORD}
       - ODDS_API_KEY=${ODDS_API_KEY:-}
       - API_BACKFILL_KEY=${API_BACKFILL_KEY:-}
+    depends_on:
+      database:
+        condition: service_healthy
+
+  predictor:
+    image: ghcr.io/cole-titze/nhl-odds/predictor:latest
+    profiles: ["jobs"]
+    environment:
+      - NHL_DATABASE=Host=database;Database=nhl;Username=postgres;Password=${POSTGRES_PASSWORD}
+    depends_on:
+      database:
+        condition: service_healthy
+
+  scheduler:
+    image: ghcr.io/cole-titze/nhl-odds/scheduler:latest
+    restart: always
+    environment:
+      - COMPOSE_FILE=/compose/docker-compose.prod.yml
+      - NHL_DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@database:5432/nhl
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/compose:ro
     depends_on:
       database:
         condition: service_healthy

@@ -26,8 +26,45 @@ services:
     restart: always
     environment:
       - NHL_DATABASE=Host=database;Database=nhl;Username=postgres;Password=${POSTGRES_PASSWORD}
+    depends_on:
+      database:
+        condition: service_healthy
+
+  entry:
+    build:
+      context: .
+      dockerfile: Entry/Dockerfile
+    profiles: ["jobs"]
+    environment:
+      - NHL_DATABASE=Host=database;Database=nhl;Username=postgres;Password=${POSTGRES_PASSWORD}
       - ODDS_API_KEY=${ODDS_API_KEY:-}
       - API_BACKFILL_KEY=${API_BACKFILL_KEY:-}
+    depends_on:
+      database:
+        condition: service_healthy
+
+  predictor:
+    build:
+      context: ./game_predictor
+      dockerfile: Dockerfile
+    profiles: ["jobs"]
+    environment:
+      - NHL_DATABASE=Host=database;Database=nhl;Username=postgres;Password=${POSTGRES_PASSWORD}
+    depends_on:
+      database:
+        condition: service_healthy
+
+  scheduler:
+    build:
+      context: ./scheduler
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      - COMPOSE_FILE=/compose/docker-compose.yml
+      - NHL_DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@database:5432/nhl
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/compose:ro
     depends_on:
       database:
         condition: service_healthy
