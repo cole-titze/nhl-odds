@@ -9,6 +9,8 @@ using WebApi.BusinessLogic.GameOddsGetter;
 using WebApi.BusinessLogic.JobService;
 using WebApi.BusinessLogic.TeamGetter;
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 string? _connectionString = Environment.GetEnvironmentVariable("NHL_DATABASE");

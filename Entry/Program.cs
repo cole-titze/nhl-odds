@@ -5,6 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 ServiceProvider serviceProvider = new ServiceCollection()
     .AddLogging((loggingBuilder) => loggingBuilder
         .SetMinimumLevel(LogLevel.Trace)
