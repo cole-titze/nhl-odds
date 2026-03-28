@@ -363,7 +363,7 @@ export function CrossBookStrategyPage() {
         <div className="glass rounded-xl p-5 mt-8">
           <button
             onClick={() => setShowLog(!showLog)}
-            className="w-full flex items-center justify-between"
+            className="w-full flex items-center justify-between cursor-pointer"
           >
             <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500">
               Bet Log ({playedEntries.length})

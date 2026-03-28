@@ -56,10 +56,7 @@ public class DailyOddsFetchService : BackgroundService
 
         var status = _jobService.GetStatus("odds-fetch");
         if (status.Status != "completed")
-        {
-            _logger.LogWarning("Odds fetch did not complete successfully — skipping prediction");
-            return;
-        }
+            _logger.LogWarning("Odds fetch did not complete successfully — prediction will still run");
 
         // Fetch Kalshi odds (separate from The Odds API)
         _logger.LogInformation("Starting scheduled Kalshi fetch");

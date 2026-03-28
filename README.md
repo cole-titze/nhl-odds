@@ -152,6 +152,21 @@ sqlpackage /Action:Import /TargetServerName:localhost,1433 /TargetDatabaseName:n
   /SourceFile:./nhl.bacpac /TargetTrustServerCertificate:True
 ```
 
+### Nightly Backup Cron Job
+
+Automatically export a bacpac backup every night, keeping the last 7 days:
+
+```bash
+mkdir -p ~/Backups
+crontab -e
+```
+
+Add this line (runs at 1:00 AM, before the 2 AM auto-update):
+
+```
+0 1 * * * sqlpackage /Action:Export /SourceServerName:localhost,1433 /SourceDatabaseName:nhl /SourceUser:SA /SourcePassword:'<PASSWORD>' /TargetFile:~/Backups/nhl-$(date +\%Y\%m\%d).bacpac /SourceTrustServerCertificate:True >> /var/log/nhl-odds-backup.log 2>&1 && find ~/Backups -name "nhl-*.bacpac" -mtime +7 -delete
+```
+
 ## CI/CD
 
 Images are automatically built and pushed to GHCR on every push to `main`:

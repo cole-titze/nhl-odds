@@ -169,12 +169,12 @@ export function TeamsPage() {
       {loading && (
         <>
           <Skeleton className="h-[310px] w-full mb-4 rounded-xl" />
-          <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
             <StatCardSkeleton />
             <StatCardSkeleton />
             <StatCardSkeleton />
           </div>
-          <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-8">
             <StatCardSkeleton />
             <StatCardSkeleton />
             <StatCardSkeleton />
@@ -191,17 +191,17 @@ export function TeamsPage() {
 
       {data && (
         <>
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            <div className="glass rounded-xl p-5 text-center">
-              <div className="stat-number text-3xl text-surface-900 dark:text-white">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
+            <div className="glass rounded-xl p-4 sm:p-5 text-center">
+              <div className="stat-number text-2xl sm:text-3xl text-surface-900 dark:text-white">
                 {data.seasonTotals.totalGameCount}
               </div>
-              <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+              <div className="text-[10px] sm:text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
                 Total Games
               </div>
             </div>
-            <div className="glass rounded-xl p-5 text-center">
-              <div className="stat-number text-3xl text-accent-500">
+            <div className="glass rounded-xl p-4 sm:p-5 text-center">
+              <div className="stat-number text-2xl sm:text-3xl text-accent-500">
                 {data.seasonTotals.totalGameCount > 0
                   ? (
                       (data.seasonTotals.totalModelAccurateGameCount /
@@ -211,31 +211,31 @@ export function TeamsPage() {
                   : '0.0'}
                 %
               </div>
-              <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
-                Home Accuracy
+              <div className="text-[10px] sm:text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                Home Acc
               </div>
             </div>
-            <div className="glass rounded-xl p-5 text-center">
-              <div className="stat-number text-3xl text-surface-900 dark:text-white">
+            <div className="glass rounded-xl p-4 sm:p-5 text-center">
+              <div className="stat-number text-2xl sm:text-3xl text-surface-900 dark:text-white">
                 {data.seasonTotals.modelLogLoss.toFixed(4)}
               </div>
-              <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
-                Home Log Loss
+              <div className="text-[10px] sm:text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                Home Loss
               </div>
             </div>
           </div>
           {hasDk && (
-            <div className="grid grid-cols-3 gap-4 mb-4">
-              <div className="glass rounded-xl p-5 text-center">
-                <div className="stat-number text-3xl text-surface-900 dark:text-white">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
+              <div className="glass rounded-xl p-4 sm:p-5 text-center">
+                <div className="stat-number text-2xl sm:text-3xl text-surface-900 dark:text-white">
                   {data.seasonTotals.draftKingsGameCount}
                 </div>
-                <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                <div className="text-[10px] sm:text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
                   DK Games
                 </div>
               </div>
-              <div className="glass rounded-xl p-5 text-center">
-                <div className="stat-number text-3xl text-accent-500">
+              <div className="glass rounded-xl p-4 sm:p-5 text-center">
+                <div className="stat-number text-2xl sm:text-3xl text-accent-500">
                   {(
                     (data.seasonTotals.draftKingsAccurateGameCount /
                       data.seasonTotals.draftKingsGameCount) *
@@ -243,44 +243,44 @@ export function TeamsPage() {
                   ).toFixed(1)}
                   %
                 </div>
-                <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
-                  DK Accuracy
+                <div className="text-[10px] sm:text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                  DK Acc
                 </div>
               </div>
-              <div className="glass rounded-xl p-5 text-center">
-                <div className="stat-number text-3xl text-surface-900 dark:text-white">
+              <div className="glass rounded-xl p-4 sm:p-5 text-center">
+                <div className="stat-number text-2xl sm:text-3xl text-surface-900 dark:text-white">
                   {data.seasonTotals.draftKingsLogLoss.toFixed(4)}
                 </div>
-                <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
-                  DK Log Loss
+                <div className="text-[10px] sm:text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                  DK Loss
                 </div>
               </div>
             </div>
           )}
           {hasKalshi && (
-            <div className="grid grid-cols-3 gap-4 mb-8">
-              <div className="glass rounded-xl p-5 text-center">
-                <div className="stat-number text-3xl text-surface-900 dark:text-white">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-8">
+              <div className="glass rounded-xl p-4 sm:p-5 text-center">
+                <div className="stat-number text-2xl sm:text-3xl text-surface-900 dark:text-white">
                   {kalshiSeasonTotals.games}
                 </div>
-                <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                <div className="text-[10px] sm:text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
                   Kalshi Games
                 </div>
               </div>
-              <div className="glass rounded-xl p-5 text-center">
-                <div className="stat-number text-3xl text-accent-500">
+              <div className="glass rounded-xl p-4 sm:p-5 text-center">
+                <div className="stat-number text-2xl sm:text-3xl text-accent-500">
                   {((kalshiSeasonTotals.accurate / kalshiSeasonTotals.games) * 100).toFixed(1)}%
                 </div>
-                <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
-                  Kalshi Accuracy
+                <div className="text-[10px] sm:text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                  Kalshi Acc
                 </div>
               </div>
-              <div className="glass rounded-xl p-5 text-center">
-                <div className="stat-number text-3xl text-surface-900 dark:text-white">
+              <div className="glass rounded-xl p-4 sm:p-5 text-center">
+                <div className="stat-number text-2xl sm:text-3xl text-surface-900 dark:text-white">
                   {kalshiSeasonTotals.logLoss.toFixed(4)}
                 </div>
-                <div className="text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
-                  Kalshi Log Loss
+                <div className="text-[10px] sm:text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                  Kalshi Loss
                 </div>
               </div>
             </div>

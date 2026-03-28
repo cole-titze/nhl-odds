@@ -384,8 +384,8 @@ export function AdminPage() {
             No data available.
           </div>
         ) : (
-          <div className="glass rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
+          <div className="glass rounded-xl overflow-x-auto">
+            <table className="w-full text-sm min-w-[700px]">
               <thead>
                 <tr className="border-b border-surface-200 dark:border-white/[0.06] text-left text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">
                   <th className="px-4 py-3">Season</th>
