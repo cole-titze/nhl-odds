@@ -1,4 +1,5 @@
 #!/bin/bash
+. /app/.env
 
 # Poll the JobStatus table for rows with status='requested' and kick off the appropriate container.
 # Runs every minute via cron.

@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+. /app/.env
 
 echo "$(date -u '+%Y-%m-%d %H:%M:%S') Starting scheduled odds fetch"
 docker compose -f "$COMPOSE_FILE" run --rm -e RUN_MODE=NextDayOdds entry

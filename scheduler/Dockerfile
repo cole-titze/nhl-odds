@@ -7,4 +7,4 @@ COPY crontab /etc/crontabs/root
 COPY *.sh ./
 RUN chmod +x *.sh
 
-ENTRYPOINT ["crond", "-f", "-l", "2"]
+ENTRYPOINT ["/app/entrypoint.sh"]
