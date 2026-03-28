@@ -1,3 +1,5 @@
+name: nhl-odds
+
 services:
   database:
     image: ghcr.io/cole-titze/nhl-odds/database:latest

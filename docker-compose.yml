@@ -1,3 +1,5 @@
+name: nhl-odds
+
 services:
   database:
     build:

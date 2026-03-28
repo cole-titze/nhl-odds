@@ -3,7 +3,7 @@
 # Poll the JobStatus table for rows with status='requested' and kick off the appropriate container.
 # Runs every minute via cron.
 
-REQUESTED=$(psql "$NHL_DATABASE_URL" -Atc "SELECT \"JobName\" FROM \"JobStatus\" WHERE \"Status\" = 'requested' LIMIT 1" 2>/dev/null)
+REQUESTED=$(psql "$NHL_DATABASE_URL" -Atc "SELECT \"JobName\" FROM \"JobStatus\" WHERE \"Status\" = 'requested' LIMIT 1")
 
 if [ -z "$REQUESTED" ]; then
     exit 0
