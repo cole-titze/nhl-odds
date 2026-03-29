@@ -5,6 +5,7 @@ import {
   getJobStatuses,
   startDataCollection,
   startOddsBackfill,
+  startPrediction,
   startPredictionBackfill,
   startKalshiBackfill,
   type ErrorLog,
@@ -383,7 +384,11 @@ export function AdminPage() {
           />
           <JobCard job={statuses.kalshiFetch} label="Kalshi Fetch" />
           <JobCard job={statuses.oddsFetch} label="Odds Fetch" />
-          <JobCard job={statuses.prediction} label="Prediction" />
+          <JobCard
+            job={statuses.prediction}
+            label="Prediction"
+            onStart={import.meta.env.DEV ? () => handleStart(startPrediction) : undefined}
+          />
         </div>
       ) : null}
 

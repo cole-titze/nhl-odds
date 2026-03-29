@@ -42,6 +42,7 @@ services:
   predictor:
     image: ghcr.io/cole-titze/nhl-odds/predictor:latest
     profiles: ["jobs"]
+    cpus: ${PREDICTOR_CPUS:-2}
     environment:
       - NHL_DATABASE=Host=database;Database=nhl;Username=postgres;Password=${POSTGRES_PASSWORD}
     depends_on:
