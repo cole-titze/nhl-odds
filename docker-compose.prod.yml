@@ -5,6 +5,7 @@ services:
     image: ghcr.io/cole-titze/nhl-odds/database:latest
     restart: always
     environment:
+      - TZ=America/Chicago
       - POSTGRES_DB=nhl
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your environment}
@@ -23,6 +24,7 @@ services:
     image: ghcr.io/cole-titze/nhl-odds/webapi:latest
     restart: always
     environment:
+      - TZ=America/Chicago
       - NHL_DATABASE=Host=database;Database=nhl;Username=postgres;Password=${POSTGRES_PASSWORD}
     depends_on:
       database:
@@ -32,6 +34,7 @@ services:
     image: ghcr.io/cole-titze/nhl-odds/entry:latest
     profiles: ["jobs"]
     environment:
+      - TZ=America/Chicago
       - NHL_DATABASE=Host=database;Database=nhl;Username=postgres;Password=${POSTGRES_PASSWORD}
       - ODDS_API_KEY=${ODDS_API_KEY:-}
       - API_BACKFILL_KEY=${API_BACKFILL_KEY:-}
@@ -44,6 +47,7 @@ services:
     profiles: ["jobs"]
     cpus: ${PREDICTOR_CPUS:-2}
     environment:
+      - TZ=America/Chicago
       - NHL_DATABASE=Host=database;Database=nhl;Username=postgres;Password=${POSTGRES_PASSWORD}
     depends_on:
       database:
