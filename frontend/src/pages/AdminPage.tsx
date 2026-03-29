@@ -364,10 +364,13 @@ export function AdminPage() {
             label="Data Collection"
             onStart={() => handleStart(startDataCollection)}
           />
-          <JobCard
-            job={statuses.predictionBackfill}
-            label="Prediction Backfill"
-          />
+          {import.meta.env.DEV && (
+            <JobCard
+              job={statuses.predictionBackfill}
+              label="Prediction Backfill"
+              onStart={() => handleStart(startPredictionBackfill)}
+            />
+          )}
           <JobCard
             job={statuses.oddsBackfill}
             label="Odds Backfill"
