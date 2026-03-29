@@ -367,7 +367,6 @@ export function AdminPage() {
           <JobCard
             job={statuses.predictionBackfill}
             label="Prediction Backfill"
-            onStart={() => handleStart(startPredictionBackfill)}
           />
           <JobCard
             job={statuses.oddsBackfill}
