@@ -130,7 +130,7 @@ crontab -e
 Add this line (runs at 2:00 AM, before the 3 AM data collection):
 
 ```
-0 2 * * * cd ~/nhl-odds && docker compose pull -q && docker compose up -d --remove-orphans >> /var/log/nhl-odds-update.log 2>&1
+0 2 * * * cd ~/nhl-odds && docker compose --profile jobs pull -q && docker compose up -d --remove-orphans >> /var/log/nhl-odds-update.log 2>&1
 ```
 
 ## Scheduled Jobs
