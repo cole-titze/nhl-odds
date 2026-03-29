@@ -61,7 +61,7 @@ EXPERIMENTS: dict[str, Experiment] = {
                 reg_lambda=0.0333008,
                 gamma=2.56812e-07,
             ),
-            "LR": logistic_regression(C=0.0768651, penalty="l1"),
+            "LR": logistic_regression(C=0.0768651, l1_ratio=1.0),
         },
         pipeline=standard_pipeline(k_best=99, pca_components=90),
         ensemble=["MLP", "LightGBM", "RF", "KNN", "XGB", "LR"],
@@ -139,7 +139,7 @@ EXPERIMENTS: dict[str, Experiment] = {
     ),
     "Logistic": Experiment(
         models={
-            "LR": logistic_regression(C=0.0768651, penalty="l1"),
+            "LR": logistic_regression(C=0.0768651, l1_ratio=1.0),
         },
         pipeline=standard_pipeline(k_best=124, pca_components=98),
         calibration="none",
