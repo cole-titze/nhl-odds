@@ -8,6 +8,7 @@
 ![Entry Container](https://github.com/cole-titze/nhl-odds/actions/workflows/entry-build.yml/badge.svg)
 ![Predictor Container](https://github.com/cole-titze/nhl-odds/actions/workflows/predictor-build.yml/badge.svg)
 ![Scheduler Container](https://github.com/cole-titze/nhl-odds/actions/workflows/scheduler-build.yml/badge.svg)
+![Security Scan](https://github.com/cole-titze/nhl-odds/actions/workflows/security-scan.yml/badge.svg)
 
 The nhl project. This repo collects nhl data from the nhl api, cleans it, and then runs machine learning models on the data to predict outcomes. There is also a full-stack web app to access the information.
 
@@ -178,7 +179,7 @@ Add this line (runs at 1:00 AM, before the 2 AM auto-update):
 
 ## CI/CD
 
-Images are automatically built and pushed to GHCR on every push to `main`:
+Images are automatically built and pushed to GHCR on every push to `main` and rebuilt weekly (Sundays) to pick up base image security updates.
 
 | Image | Workflow | Triggers |
 |-------|----------|----------|
@@ -188,6 +189,8 @@ Images are automatically built and pushed to GHCR on every push to `main`:
 | `ghcr.io/cole-titze/nhl-odds/entry` | `entry-build.yml` | Entry, DataGetter, DatabaseAccess, Entities, Services, BookmakerOddsGetter changes |
 | `ghcr.io/cole-titze/nhl-odds/predictor` | `predictor-build.yml` | game_predictor/ changes |
 | `ghcr.io/cole-titze/nhl-odds/scheduler` | `scheduler-build.yml` | scheduler/ changes |
+
+A weekly [Trivy](https://github.com/aquasecurity/trivy) security scan (`security-scan.yml`) runs after the rebuilds and fails if any CRITICAL or HIGH vulnerabilities are found.
 
 ## Cloudflare Tunnel
 
