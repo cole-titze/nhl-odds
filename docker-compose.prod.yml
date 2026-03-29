@@ -75,5 +75,15 @@ services:
     depends_on:
       - webapi
 
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: always
+    profiles: ["tunnel"]
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - frontend
+
 volumes:
   pg-data:
