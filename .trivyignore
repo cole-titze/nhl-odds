@@ -1,0 +1,10 @@
+# CVEs in gosu binary bundled with postgres:17-alpine base image.
+# gosu is a privilege-dropping utility used internally by postgres entrypoint.
+# These cannot be fixed in our Dockerfile - requires upstream postgres image update.
+# Tracked: https://github.com/tianon/gosu/issues
+CVE-2025-68121
+CVE-2025-58183
+CVE-2025-61726
+CVE-2025-61728
+CVE-2025-61729
+CVE-2026-25679
