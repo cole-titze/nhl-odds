@@ -38,8 +38,7 @@ builder.Services.AddDbContext<GameDbContext>(x => x.UseNpgsql(_connectionString)
 builder.Services.AddLogging();
 
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddOpenApi();
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>
@@ -58,8 +57,7 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapOpenApi();
 }
 app.UseCors(MyAllowSpecificOrigins);
 
