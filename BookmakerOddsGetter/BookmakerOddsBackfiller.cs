@@ -1,9 +1,9 @@
+using System.Text.Json;
 using DatabaseAccess;
 using DatabaseAccess.BookmakerOddsRepository;
 using Entities.ServiceModels.OddsApi;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 using Services.OddsApi;
 
 namespace BookmakerOddsGetter;

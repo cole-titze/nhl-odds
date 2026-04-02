@@ -1,3 +1,4 @@
+using System.Text.Json;
 using DatabaseAccess;
 using DatabaseAccess.BookmakerOddsRepository;
 using Entities.DbModels;
@@ -5,7 +6,6 @@ using Entities.ServiceModels.Kalshi;
 using Entities.ServiceModels.Mappers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 using Services.Kalshi;
 
 namespace BookmakerOddsGetter;
