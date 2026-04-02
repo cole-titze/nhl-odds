@@ -17,16 +17,3 @@ public static class ToiExtensions
         return (minutes * 60) + seconds;
     }
 }
-public static class SituationCodeParser
-{
-    public static int ParseFromString(string situationCode)
-    {
-        if (string.IsNullOrWhiteSpace(situationCode))
-            return -1;
-
-        if (int.TryParse(situationCode, out int result))
-            return result;
-
-        throw new FormatException("situationCode is not a valid integer: " + situationCode);
-    }
-}

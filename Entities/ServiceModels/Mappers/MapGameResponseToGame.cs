@@ -16,7 +16,7 @@ public static class MapGameResponseToGame
         game.HomeTeamAbbr = messageGameSummary["homeTeam"]!["abbrev"]!.GetValue<string>();
         game.AwayTeamAbbr = messageGameSummary["awayTeam"]!["abbrev"]!.GetValue<string>();
         game.Id = messageGameSummary["id"]!.GetValue<int>();
-        game.SeasonStartYear = GetSeason(messageGameSummary["season"]!.GetValue<string>());
+        game.SeasonStartYear = messageGameSummary["season"]!.GetCoercedInt() / 10000;
         game.GameDateUTC = DateTime.Parse(messageGameSummary["startTimeUTC"]!.GetValue<string>());
         game.HasBeenPlayed = messageGameSummary["gameState"]!.GetValue<string>() == "OFF";
 
@@ -95,9 +95,4 @@ public static class MapGameResponseToGame
         return Winner.AWAY;
     }
 
-    private static int GetSeason(string season)
-    {
-        var yearStr = season.Substring(0, 4);
-        return int.Parse(yearStr);
-    }
 }

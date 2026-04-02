@@ -17,7 +17,7 @@ public static class MapGameEndEvent
             Id = responseGameEvent["eventId"]!.GetValue<int>(),
             TypeCode = responseGameEvent["typeCode"]!.GetValue<int>(),
             SortOrder = responseGameEvent["sortOrder"]!.GetValue<int>(),
-            SituationCode = SituationCodeParser.ParseFromString(responseGameEvent["situationCode"]!.GetValue<string>()),
+            SituationCode = responseGameEvent["situationCode"]?.GetCoercedInt() ?? -1,
             PeriodNumber = responseGameEvent["periodDescriptor"]!["number"]!.GetValue<int>(),
             PeriodType = PeriodTypeParser.ParseFromString(responseGameEvent["periodDescriptor"]!["periodType"]!.GetValue<string>()),
             EventTypeName = responseGameEvent["typeDescKey"]!.GetValue<string>(),
