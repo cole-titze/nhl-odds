@@ -1,7 +1,8 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace Services.RequestMaker;
 
@@ -9,7 +10,7 @@ public class RequestMaker : IRequestMaker
 {
     private readonly IHttpClient _client;
     private readonly ILogger<RequestMaker> _logger;
-    private readonly Dictionary<string, dynamic> _cachedResponses = new Dictionary<string, dynamic>();
+    private readonly Dictionary<string, JsonNode> _cachedResponses = new Dictionary<string, JsonNode>();
     private int _cacheSize;
     private const int _cacheByteSizeLimit = 1000000000; // 1 GB cache size limit
     private DateTime _lastRequestCompleted = DateTime.MinValue;
@@ -27,7 +28,7 @@ public class RequestMaker : IRequestMaker
     /// <param name="url">Base url to call</param>
     /// <param name="query">Query parameters to append to url</param>
     /// <returns>Dynamic response object</returns>
-    public async Task<dynamic?> MakeRequest(string url, string query)
+    public async Task<JsonNode?> MakeRequest(string url, string query)
     {
         return await MakeRequest(url, query, _throttleTimeMs);
     }
@@ -38,7 +39,7 @@ public class RequestMaker : IRequestMaker
     /// <param name="query">Query parameters to append to url</param>
     /// <param name="throttleTimeMs">How much time should elapse before making another request</param>
     /// <returns>Dynamic response object</returns>
-    public async Task<dynamic?> MakeRequest(string url, string query, int throttleTimeMs)
+    public async Task<JsonNode?> MakeRequest(string url, string query, int throttleTimeMs)
     {
         string key = url + query;
         if (_cachedResponses.ContainsKey(key))
@@ -90,12 +91,12 @@ public class RequestMaker : IRequestMaker
     /// </summary>
     /// <param name="key">The request</param>
     /// <param name="jsonResponse">The response to cache</param>
-    private void AddToCache(string key, dynamic? serviceResponse)
+    private void AddToCache(string key, JsonNode? serviceResponse)
     {
         if (serviceResponse != null)
         {
             _cachedResponses[key] = serviceResponse;
-            string responseString = JsonConvert.SerializeObject(serviceResponse);
+            string responseString = serviceResponse.ToJsonString();
             _cacheSize += Encoding.UTF8.GetByteCount(responseString);
             if (_cacheSize > _cacheByteSizeLimit)
             {
@@ -111,7 +112,7 @@ public class RequestMaker : IRequestMaker
     /// </summary>
     /// <param name="response">The raw http response message</param>
     /// <returns>Dynamic object</returns>
-    private static async Task<dynamic?> ParseResponse(HttpResponseMessage response)
+    private static async Task<JsonNode?> ParseResponse(HttpResponseMessage response)
     {
         if (!response.IsSuccessStatusCode)
             return null;
@@ -119,7 +120,7 @@ public class RequestMaker : IRequestMaker
         // Get data as Json string 
         string data = await response.Content.ReadAsStringAsync();
         // Add Json string conversion to hard object
-        var message = JsonConvert.DeserializeObject<dynamic>(data);
+        var message = JsonNode.Parse(data);
 
         return message;
     }

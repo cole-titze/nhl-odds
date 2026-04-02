@@ -3,6 +3,7 @@ using DatabaseAccess.BookmakerOddsRepository;
 using Entities.ServiceModels.Mappers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 using Services.Kalshi;
 using Services.OddsApi;
 
@@ -67,6 +68,7 @@ public class BookmakerOddsFetcher
         else
         {
             await _bookmakerOddsRepo.SaveRawResponse(apiResult.RawJson);
+            await CacheResponseByGameDate(apiResult.RawJson, gameDates.Values);
 
             BookmakerOddsHelper.LogMatchingDetails(_logger, apiResult.Responses, gameInfoList);
             await BookmakerOddsHelper.MapAndSave(_logger, _bookmakerOddsRepo, apiResult.Responses, gameInfoList);
@@ -78,6 +80,34 @@ public class BookmakerOddsFetcher
 
         // Fetch from Kalshi
         await FetchAndSaveKalshiOdds(gameInfoList);
+    }
+
+    private async Task CacheResponseByGameDate(string rawJson, IEnumerable<DateTime> gameDatesUtc)
+    {
+        var centralZone = TimeZoneInfo.FindSystemTimeZoneById("America/Chicago");
+
+        // Wrap the upcoming odds array in the historical response format so the
+        // backfiller can deserialize it with the same OddsApiHistoricalResponse type
+        var wrappedJson = JsonSerializer.Serialize(new { data = JsonSerializer.Deserialize<JsonElement>(rawJson) });
+
+        var distinctDates = gameDatesUtc
+            .Select(d => TimeZoneInfo.ConvertTimeFromUtc(d, centralZone).Date)
+            .Distinct();
+
+        foreach (var gameDate in distinctDates)
+        {
+            var centralMorning = new DateTime(gameDate.Year, gameDate.Month, gameDate.Day, 6, 0, 0);
+            var queryDate = TimeZoneInfo.ConvertTimeToUtc(centralMorning, centralZone);
+
+            var existing = await _bookmakerOddsRepo.GetCachedResponse(queryDate);
+            if (existing != null)
+                continue;
+
+            await _bookmakerOddsRepo.SaveRawResponse(wrappedJson, queryDate);
+            _logger.LogInformation("Cached upcoming odds response for game date {Date}", gameDate.ToString("yyyy-MM-dd"));
+        }
+
+        await _bookmakerOddsRepo.Commit();
     }
 
     private async Task FetchAndSaveKalshiOdds(List<OddsApiResponseMapper.GameInfo> gameInfoList)

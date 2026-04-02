@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Entities.Models;
 using Entities.Types.Mappers;
 
@@ -5,15 +6,7 @@ namespace Entities.ServiceModels.Mappers;
 
 public static class MapCurrentRosterResponseToGamePlayerStats
 {
-    /// <summary>
-    /// Maps the roster response to a list of player stats
-    /// Example call that could get mapped: 
-    /// https://api-web.nhle.com/v1/roster/TOR/current
-    /// </summary>
-    /// <param name="rosterResponse">Nhl response that contains a teams roster</param>
-    /// <param name="playerResponse">Player response in the roster response</param>
-    /// <returns>List of player game stats</returns>
-    public static GameRosterStats Map(dynamic homeRosterResponse, dynamic awayRosterResponse, int homeTeamId, int awayTeamId)
+    public static GameRosterStats Map(JsonNode? homeRosterResponse, JsonNode? awayRosterResponse, int homeTeamId, int awayTeamId)
     {
         var gameRosterStats = new GameRosterStats()
         {
@@ -27,69 +20,48 @@ public static class MapCurrentRosterResponseToGamePlayerStats
 
         return gameRosterStats;
     }
-    /// <summary>
-    /// Gets the goalies for a team from the roster response.
-    /// </summary>
-    /// <param name="teamRosterResponse">The roster response from the NHL api</param>
-    /// <param name="teamId">The team id</param>
-    /// <returns>List of goalie stats for the game</returns>
-    private static IEnumerable<IGamePlayerStats> GetTeamGoalies(dynamic teamRosterResponse, int teamId)
+
+    private static IEnumerable<IGamePlayerStats> GetTeamGoalies(JsonNode? teamRosterResponse, int teamId)
     {
         var gameGoalieStats = new List<IGamePlayerStats>();
-        foreach (dynamic forwardsResponse in teamRosterResponse.goalies)
+        foreach (var goalieResponse in teamRosterResponse!["goalies"]!.AsArray())
         {
-            var gamePlayer = GetGoalie(forwardsResponse, teamId);
+            var gamePlayer = GetGoalie(goalieResponse!, teamId);
             gameGoalieStats.Add(gamePlayer);
         }
 
         return gameGoalieStats;
     }
-    /// <summary>
-    /// Gets the defensemen for a team from the roster response.
-    /// </summary>
-    /// <param name="teamRosterResponse">The roster response from the nhl api</param>
-    /// <param name="teamId">The team id</param>
-    /// <returns>List of defensemen stats for the game</returns>
-    private static IEnumerable<IGamePlayerStats> GetTeamDefensemen(dynamic teamRosterResponse, int teamId)
+
+    private static IEnumerable<IGamePlayerStats> GetTeamDefensemen(JsonNode? teamRosterResponse, int teamId)
     {
         var gameDefensemenStats = new List<IGamePlayerStats>();
-        foreach (dynamic forwardsResponse in teamRosterResponse.defensemen)
+        foreach (var defensemanResponse in teamRosterResponse!["defensemen"]!.AsArray())
         {
-            var gamePlayer = GetSkater(forwardsResponse, teamId);
+            var gamePlayer = GetSkater(defensemanResponse!, teamId);
             gameDefensemenStats.Add(gamePlayer);
         }
 
         return gameDefensemenStats;
     }
-    /// <summary>
-    /// Gets the forwards for a team from the roster response.
-    /// </summary>
-    /// <param name="teamRosterResponse">The roster response from the nhl api</param>
-    /// <param name="teamId">The team id</param>
-    /// <returns>List of forwards stats for the game</returns>
-    private static IEnumerable<IGamePlayerStats> GetTeamForwards(dynamic teamRosterResponse, int teamId)
+
+    private static IEnumerable<IGamePlayerStats> GetTeamForwards(JsonNode? teamRosterResponse, int teamId)
     {
         var gameForwardsStats = new List<IGamePlayerStats>();
-        foreach (dynamic forwardsResponse in teamRosterResponse.forwards)
+        foreach (var forwardResponse in teamRosterResponse!["forwards"]!.AsArray())
         {
-            var gamePlayer = GetSkater(forwardsResponse, teamId);
+            var gamePlayer = GetSkater(forwardResponse!, teamId);
             gameForwardsStats.Add(gamePlayer);
         }
 
         return gameForwardsStats;
     }
 
-    /// <summary>
-    /// Creates a GameGoalieStats object from the roster and player response.
-    /// </summary>
-    /// <param name="goalieResponse">Nhl response for a goalie</param>
-    /// <param name="teamId">The team id</param>
-    /// <returns>The game goalie stats</returns>
-    private static IGamePlayerStats GetGoalie(dynamic goalieResponse, int teamId)
+    private static IGamePlayerStats GetGoalie(JsonNode goalieResponse, int teamId)
     {
         return new GameGoalieStats()
         {
-            PlayerId = (int)goalieResponse.id,
+            PlayerId = goalieResponse["id"]!.GetValue<int>(),
             TeamId = teamId,
             EvenStrengthShotsSaved = 0,
             PowerPlayShotsSaved = 0,
@@ -97,20 +69,15 @@ public static class MapCurrentRosterResponseToGamePlayerStats
             PowerPlayGoalsAllowed = 0,
             TimeOnIceSeconds = 0,
             IsStarter = false,
-            Position = MapPositionStrToPosition.Map((string)goalieResponse.position),
+            Position = MapPositionStrToPosition.Map(goalieResponse["position"]!.GetValue<string>()),
         };
     }
-    /// <summary>
-    /// Creates a GameSkaterStats object from the roster and player response.
-    /// </summary>
-    /// <param name="skaterResponse">Response for a skater on a roster</param>
-    /// <param name="teamId">The team id</param>
-    /// <returns>The empty game skater stats</returns>
-    private static GameSkaterStats GetSkater(dynamic skaterResponse, int teamId)
+
+    private static GameSkaterStats GetSkater(JsonNode skaterResponse, int teamId)
     {
         return new GameSkaterStats()
         {
-            PlayerId = (int)skaterResponse.id,
+            PlayerId = skaterResponse["id"]!.GetValue<int>(),
             TeamId = teamId,
             Goals = 0,
             Assists = 0,
@@ -124,7 +91,7 @@ public static class MapCurrentRosterResponseToGamePlayerStats
             Giveaways = 0,
             Takeaways = 0,
             TimeOnIceSeconds = 0,
-            Position = MapPositionStrToPosition.Map((string)skaterResponse.positionCode),
+            Position = MapPositionStrToPosition.Map(skaterResponse["positionCode"]!.GetValue<string>()),
         };
     }
 }

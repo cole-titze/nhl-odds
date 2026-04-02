@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Entities.Models.GamePlayEvents;
 using Entities.Types;
 using Entities.Types.Enums;
@@ -6,41 +7,36 @@ namespace Entities.ServiceModels.Mappers.GameEventMappers;
 
 public static class MapGoalEvent
 {
-    /// <summary>
-    /// Maps a goal event
-    /// </summary>
-    /// <param name="responseGameEvent">The event response from the NHL api</param>
-    /// <returns>The goal event</returns>
-    public static Goal Map(dynamic responseGameEvent)
+    public static Goal Map(JsonNode responseGameEvent)
     {
-        string timeInPeriod = responseGameEvent.timeInPeriod;
-        string timeLeftInPeriod = responseGameEvent.timeRemaining;
+        string timeInPeriod = responseGameEvent["timeInPeriod"]!.GetValue<string>();
+        string timeLeftInPeriod = responseGameEvent["timeRemaining"]!.GetValue<string>();
 
         return new Goal
         {
-            Id = (int)responseGameEvent.eventId,
-            TypeCode = (int)responseGameEvent.typeCode,
-            SortOrder = (int)responseGameEvent.sortOrder,
-            SituationCode = SituationCodeParser.ParseFromString((string)responseGameEvent.situationCode),
-            PeriodNumber = (int)responseGameEvent.periodDescriptor.number,
-            PeriodType = PeriodTypeParser.ParseFromString((string)responseGameEvent.periodDescriptor.periodType),
-            EventTypeName = responseGameEvent.typeDescKey,
-            HomeTeamDefendingSide = HomeTeamDefendingSideParser.ParseFromString((string)responseGameEvent.homeTeamDefendingSide),
+            Id = responseGameEvent["eventId"]!.GetValue<int>(),
+            TypeCode = responseGameEvent["typeCode"]!.GetValue<int>(),
+            SortOrder = responseGameEvent["sortOrder"]!.GetValue<int>(),
+            SituationCode = SituationCodeParser.ParseFromString(responseGameEvent["situationCode"]!.GetValue<string>()),
+            PeriodNumber = responseGameEvent["periodDescriptor"]!["number"]!.GetValue<int>(),
+            PeriodType = PeriodTypeParser.ParseFromString(responseGameEvent["periodDescriptor"]!["periodType"]!.GetValue<string>()),
+            EventTypeName = responseGameEvent["typeDescKey"]!.GetValue<string>(),
+            HomeTeamDefendingSide = HomeTeamDefendingSideParser.ParseFromString(responseGameEvent["homeTeamDefendingSide"]!.GetValue<string>()),
             SecondsIntoPeriod = timeInPeriod.ParseIceTimeToSeconds(),
             SecondsLeftInPeriod = timeLeftInPeriod.ParseIceTimeToSeconds(),
-            ShotType = ShotTypeParser.ParseFromString((string)responseGameEvent.details.shotType),
-            ScoringPlayerTeamId = (int)responseGameEvent.details.eventOwnerTeamId,
-            ScoringPlayerId = (int)responseGameEvent.details.scoringPlayerId,
-            GoalieId = (int?)responseGameEvent.details.goalieInNetId,
-            AssistOnePlayerId = (int?)responseGameEvent.details.assist1PlayerId,
-            AssistTwoPlayerId = (int?)responseGameEvent.details.assist2PlayerId,
-            Zone = ZoneParser.ParseFromString((string)responseGameEvent.details.zoneCode),
-            XCoordinate = (int?)responseGameEvent.details.xCoord,
-            YCoordinate = (int?)responseGameEvent.details.yCoord,
-            HighlightClipSharingUrl = (string)responseGameEvent.details.highlightClipSharingUrl ?? "",
-            HighlightClipId = (long?)responseGameEvent.details.highlightClip ?? -1,
-            DiscreetClipId = (long?)responseGameEvent.details.discreteClip ?? -1,
-            PptReplayUrl = (string)responseGameEvent.pptReplayUrl ?? "",
+            ShotType = ShotTypeParser.ParseFromString(responseGameEvent["details"]!["shotType"]!.GetValue<string>()),
+            ScoringPlayerTeamId = responseGameEvent["details"]!["eventOwnerTeamId"]!.GetValue<int>(),
+            ScoringPlayerId = responseGameEvent["details"]!["scoringPlayerId"]!.GetValue<int>(),
+            GoalieId = responseGameEvent["details"]!["goalieInNetId"]?.GetValue<int>(),
+            AssistOnePlayerId = responseGameEvent["details"]!["assist1PlayerId"]?.GetValue<int>(),
+            AssistTwoPlayerId = responseGameEvent["details"]!["assist2PlayerId"]?.GetValue<int>(),
+            Zone = ZoneParser.ParseFromString(responseGameEvent["details"]!["zoneCode"]!.GetValue<string>()),
+            XCoordinate = responseGameEvent["details"]!["xCoord"]?.GetValue<int>(),
+            YCoordinate = responseGameEvent["details"]!["yCoord"]?.GetValue<int>(),
+            HighlightClipSharingUrl = responseGameEvent["details"]!["highlightClipSharingUrl"]?.GetValue<string>() ?? "",
+            HighlightClipId = responseGameEvent["details"]!["highlightClip"]?.GetValue<long>() ?? -1,
+            DiscreetClipId = responseGameEvent["details"]!["discreteClip"]?.GetValue<long>() ?? -1,
+            PptReplayUrl = responseGameEvent["pptReplayUrl"]?.GetValue<string>() ?? "",
         };
     }
 }

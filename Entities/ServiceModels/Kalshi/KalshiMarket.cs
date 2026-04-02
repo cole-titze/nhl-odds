@@ -1,36 +1,36 @@
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Entities.ServiceModels.Kalshi;
 
 public class KalshiMarket
 {
-    [JsonProperty("ticker")]
+    [JsonPropertyName("ticker")]
     public string Ticker { get; set; } = string.Empty;
-    [JsonProperty("event_ticker")]
+    [JsonPropertyName("event_ticker")]
     public string EventTicker { get; set; } = string.Empty;
-    [JsonProperty("title")]
+    [JsonPropertyName("title")]
     public string Title { get; set; } = string.Empty;
-    [JsonProperty("yes_sub_title")]
+    [JsonPropertyName("yes_sub_title")]
     public string YesSubTitle { get; set; } = string.Empty;
-    [JsonProperty("no_sub_title")]
+    [JsonPropertyName("no_sub_title")]
     public string NoSubTitle { get; set; } = string.Empty;
-    [JsonProperty("yes_bid_dollars")]
+    [JsonPropertyName("yes_bid_dollars")]
     public string YesBidDollars { get; set; } = "0";
-    [JsonProperty("yes_ask_dollars")]
+    [JsonPropertyName("yes_ask_dollars")]
     public string YesAskDollars { get; set; } = "0";
-    [JsonProperty("no_bid_dollars")]
+    [JsonPropertyName("no_bid_dollars")]
     public string NoBidDollars { get; set; } = "0";
-    [JsonProperty("no_ask_dollars")]
+    [JsonPropertyName("no_ask_dollars")]
     public string NoAskDollars { get; set; } = "0";
-    [JsonProperty("last_price_dollars")]
+    [JsonPropertyName("last_price_dollars")]
     public string LastPriceDollars { get; set; } = "0";
-    [JsonProperty("floor_strike")]
+    [JsonPropertyName("floor_strike")]
     public double? FloorStrike { get; set; }
-    [JsonProperty("expected_expiration_time")]
+    [JsonPropertyName("expected_expiration_time")]
     public DateTime? ExpectedExpirationTime { get; set; }
-    [JsonProperty("status")]
+    [JsonPropertyName("status")]
     public string Status { get; set; } = string.Empty;
-    [JsonProperty("updated_time")]
+    [JsonPropertyName("updated_time")]
     public DateTime? UpdatedTime { get; set; }
 
     public double YesBid => double.TryParse(YesBidDollars, out var v) ? v : 0;
@@ -49,21 +49,21 @@ public class KalshiMarket
 
 public class KalshiMarketsResponse
 {
-    [JsonProperty("markets")]
+    [JsonPropertyName("markets")]
     public List<KalshiMarket> Markets { get; set; } = new();
-    [JsonProperty("cursor")]
+    [JsonPropertyName("cursor")]
     public string Cursor { get; set; } = string.Empty;
 }
 
 public class KalshiOhlc
 {
-    [JsonProperty("open_dollars")]
+    [JsonPropertyName("open_dollars")]
     public string OpenDollars { get; set; } = "0";
-    [JsonProperty("high_dollars")]
+    [JsonPropertyName("high_dollars")]
     public string HighDollars { get; set; } = "0";
-    [JsonProperty("low_dollars")]
+    [JsonPropertyName("low_dollars")]
     public string LowDollars { get; set; } = "0";
-    [JsonProperty("close_dollars")]
+    [JsonPropertyName("close_dollars")]
     public string CloseDollars { get; set; } = "0";
 
     public double Close => double.TryParse(CloseDollars, out var v) ? v : 0;
@@ -71,15 +71,15 @@ public class KalshiOhlc
 
 public class KalshiCandlestick
 {
-    [JsonProperty("end_period_ts")]
+    [JsonPropertyName("end_period_ts")]
     public long EndPeriodTs { get; set; }
-    [JsonProperty("yes_bid")]
+    [JsonPropertyName("yes_bid")]
     public KalshiOhlc YesBid { get; set; } = new();
-    [JsonProperty("yes_ask")]
+    [JsonPropertyName("yes_ask")]
     public KalshiOhlc YesAsk { get; set; } = new();
-    [JsonProperty("price")]
+    [JsonPropertyName("price")]
     public KalshiOhlc Price { get; set; } = new();
-    [JsonProperty("volume_fp")]
+    [JsonPropertyName("volume_fp")]
     public string VolumeFp { get; set; } = "0";
 
     public double MidPrice
@@ -94,18 +94,18 @@ public class KalshiCandlestick
 
 public class KalshiCandlestickResponse
 {
-    [JsonProperty("candlesticks")]
+    [JsonPropertyName("candlesticks")]
     public List<KalshiCandlestick> Candlesticks { get; set; } = new();
-    [JsonProperty("ticker")]
+    [JsonPropertyName("ticker")]
     public string Ticker { get; set; } = string.Empty;
 }
 
 public class KalshiCutoffResponse
 {
-    [JsonProperty("market_settled_ts")]
+    [JsonPropertyName("market_settled_ts")]
     public DateTime? MarketSettledTs { get; set; }
-    [JsonProperty("trades_created_ts")]
+    [JsonPropertyName("trades_created_ts")]
     public DateTime? TradesCreatedTs { get; set; }
-    [JsonProperty("orders_updated_ts")]
+    [JsonPropertyName("orders_updated_ts")]
     public DateTime? OrdersUpdatedTs { get; set; }
 }

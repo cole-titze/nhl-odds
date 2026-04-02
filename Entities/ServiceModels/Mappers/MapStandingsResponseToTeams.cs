@@ -1,33 +1,27 @@
+using System.Text.Json.Nodes;
 using Entities.Models.Teams;
 
 namespace Entities.ServiceModels.Mappers;
 
 public static class MapStandingsResponseToSeasonTeams
 {
-    /// <summary>
-    /// Maps the standings response to a list of teams.
-    /// Example response:
-    /// https://api-web.nhle.com/v1/standings/2025-01-01
-    /// </summary>
-    /// <param name="standingsResponse">Nhl response that contains standings for teams</param>
-    /// <returns>The list of teams</returns>
-    public static IEnumerable<SeasonTeam>? Map(dynamic standingsResponse)
+    public static IEnumerable<SeasonTeam>? Map(JsonNode? standingsResponse)
     {
         var teamList = new List<SeasonTeam>();
-        foreach (var teamResponse in standingsResponse.standings)
+        foreach (var teamResponse in standingsResponse!["standings"]!.AsArray())
         {
             var team = new SeasonTeam()
             {
-                SeasonStartYear = (int)teamResponse.seasonId / 10000, // Assuming seasonId is in the format YYYYYYYY
-                Name = teamResponse.teamName.@default,
-                Abbreviation = teamResponse.teamAbbrev.@default,
-                CommonName = teamResponse.teamCommonName.@default,
-                LogoUri = teamResponse.teamLogo,
-                Division = teamResponse.divisionName,
-                DivisionAbbreviation = teamResponse.divisionAbbrev,
-                Conference = (string?)teamResponse.conferenceName ?? "",
-                ConferenceAbbreviation = (string?)teamResponse.conferenceAbbrev ?? "",
-                PlaceName = teamResponse.placeName.@default,
+                SeasonStartYear = teamResponse!["seasonId"]!.GetValue<int>() / 10000,
+                Name = teamResponse["teamName"]!["default"]!.GetValue<string>(),
+                Abbreviation = teamResponse["teamAbbrev"]!["default"]!.GetValue<string>(),
+                CommonName = teamResponse["teamCommonName"]!["default"]!.GetValue<string>(),
+                LogoUri = teamResponse["teamLogo"]!.GetValue<string>(),
+                Division = teamResponse["divisionName"]!.GetValue<string>(),
+                DivisionAbbreviation = teamResponse["divisionAbbrev"]!.GetValue<string>(),
+                Conference = teamResponse["conferenceName"]?.GetValue<string>() ?? "",
+                ConferenceAbbreviation = teamResponse["conferenceAbbrev"]?.GetValue<string>() ?? "",
+                PlaceName = teamResponse["placeName"]!["default"]!.GetValue<string>(),
             };
 
             teamList.Add(team);

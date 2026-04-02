@@ -1,6 +1,6 @@
+using System.Text.Json;
 using Entities.ServiceModels.Kalshi;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace Services.Kalshi;
 
@@ -38,7 +38,7 @@ public class KalshiGetter : IKalshiGetter
             }
 
             var json = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<KalshiCutoffResponse>(json);
+            return JsonSerializer.Deserialize<KalshiCutoffResponse>(json);
         }
         catch (Exception ex)
         {
@@ -70,7 +70,7 @@ public class KalshiGetter : IKalshiGetter
                 return null;
 
             var json = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<KalshiCandlestickResponse>(json);
+            return JsonSerializer.Deserialize<KalshiCandlestickResponse>(json);
         }
         catch (Exception ex)
         {
@@ -104,7 +104,7 @@ public class KalshiGetter : IKalshiGetter
                 }
 
                 var json = await response.Content.ReadAsStringAsync();
-                var result = JsonConvert.DeserializeObject<KalshiMarketsResponse>(json);
+                var result = JsonSerializer.Deserialize<KalshiMarketsResponse>(json);
 
                 if (result?.Markets == null || result.Markets.Count == 0)
                     break;

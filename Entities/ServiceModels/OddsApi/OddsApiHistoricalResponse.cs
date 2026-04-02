@@ -1,15 +1,15 @@
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Entities.ServiceModels.OddsApi;
 
 public class OddsApiHistoricalResponse
 {
-    [JsonProperty("timestamp")]
+    [JsonPropertyName("timestamp")]
     public DateTime? Timestamp { get; set; }
-    [JsonProperty("previous_timestamp")]
+    [JsonPropertyName("previous_timestamp")]
     public DateTime? PreviousTimestamp { get; set; }
-    [JsonProperty("next_timestamp")]
+    [JsonPropertyName("next_timestamp")]
     public DateTime? NextTimestamp { get; set; }
-    [JsonProperty("data")]
+    [JsonPropertyName("data")]
     public List<OddsApiResponse> Data { get; set; } = new();
 }

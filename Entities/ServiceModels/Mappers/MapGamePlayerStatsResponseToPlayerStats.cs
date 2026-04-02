@@ -1,4 +1,5 @@
-﻿using Entities.Models;
+using System.Text.Json.Nodes;
+using Entities.Models;
 using Entities.Types;
 using Entities.Types.Mappers;
 
@@ -6,35 +7,28 @@ namespace Entities.ServiceModels.Mappers;
 
 public static class MapGamePlayerStatsResponseToGamePlayerStats
 {
-    /// <summary>
-    /// Builds a player stats object
-    /// Example response:
-    /// https://api-web.nhle.com/v1/gamecenter/2023020204/right-rail
-    /// </summary>
-    /// <param name="playerStatResponse">Player stat response</param>
-    /// <returns>Player stats object</returns>
-    public static GameRosterStats Map(dynamic gameSummaryResponse, dynamic gamePlayerStatResponse)
+    public static GameRosterStats Map(JsonNode? gameSummaryResponse, JsonNode? gamePlayerStatResponse)
     {
-        var homeTeamId = (int)gameSummaryResponse.homeTeam.id;
-        var awayTeamId = (int)gameSummaryResponse.awayTeam.id;
+        var homeTeamId = gameSummaryResponse!["homeTeam"]!["id"]!.GetValue<int>();
+        var awayTeamId = gameSummaryResponse["awayTeam"]!["id"]!.GetValue<int>();
 
-        var homeCoachName = gamePlayerStatResponse.gameInfo.homeTeam.headCoach != null
-            ? (string)gamePlayerStatResponse.gameInfo.homeTeam.headCoach.@default
+        var homeCoachName = gamePlayerStatResponse!["gameInfo"]!["homeTeam"]!["headCoach"] != null
+            ? gamePlayerStatResponse["gameInfo"]!["homeTeam"]!["headCoach"]!["default"]!.GetValue<string>()
             : "Unknown";
-        var awayCoachName = gamePlayerStatResponse.gameInfo.awayTeam.headCoach != null
-            ? (string)gamePlayerStatResponse.gameInfo.awayTeam.headCoach.@default
+        var awayCoachName = gamePlayerStatResponse["gameInfo"]!["awayTeam"]!["headCoach"] != null
+            ? gamePlayerStatResponse["gameInfo"]!["awayTeam"]!["headCoach"]!["default"]!.GetValue<string>()
             : "Unknown";
 
         var gameRosterStats = new GameRosterStats()
         {
             HomeTeamCoach = new Coach() { Name = homeCoachName },
             AwayTeamCoach = new Coach() { Name = awayCoachName },
-            HomeTeamForwards = GetGameSkaters(gameSummaryResponse.playerByGameStats.homeTeam.forwards, homeTeamId),
-            AwayTeamForwards = GetGameSkaters(gameSummaryResponse.playerByGameStats.awayTeam.forwards, awayTeamId),
-            HomeTeamDefensemen = GetGameSkaters(gameSummaryResponse.playerByGameStats.homeTeam.defense, homeTeamId),
-            AwayTeamDefensemen = GetGameSkaters(gameSummaryResponse.playerByGameStats.awayTeam.defense, awayTeamId),
-            HomeTeamGoalies = GetGameGoalies(gameSummaryResponse.playerByGameStats.homeTeam.goalies, homeTeamId),
-            AwayTeamGoalies = GetGameGoalies(gameSummaryResponse.playerByGameStats.awayTeam.goalies, awayTeamId)
+            HomeTeamForwards = GetGameSkaters(gameSummaryResponse["playerByGameStats"]!["homeTeam"]!["forwards"]!, homeTeamId),
+            AwayTeamForwards = GetGameSkaters(gameSummaryResponse["playerByGameStats"]!["awayTeam"]!["forwards"]!, awayTeamId),
+            HomeTeamDefensemen = GetGameSkaters(gameSummaryResponse["playerByGameStats"]!["homeTeam"]!["defense"]!, homeTeamId),
+            AwayTeamDefensemen = GetGameSkaters(gameSummaryResponse["playerByGameStats"]!["awayTeam"]!["defense"]!, awayTeamId),
+            HomeTeamGoalies = GetGameGoalies(gameSummaryResponse["playerByGameStats"]!["homeTeam"]!["goalies"]!, homeTeamId),
+            AwayTeamGoalies = GetGameGoalies(gameSummaryResponse["playerByGameStats"]!["awayTeam"]!["goalies"]!, awayTeamId)
         };
 
         BuildOfficials(gameRosterStats, gamePlayerStatResponse);
@@ -42,25 +36,25 @@ public static class MapGamePlayerStatsResponseToGamePlayerStats
         return gameRosterStats;
     }
 
-    private static IEnumerable<IGamePlayerStats> GetGameGoalies(dynamic goalies, int homeTeamId)
+    private static IEnumerable<IGamePlayerStats> GetGameGoalies(JsonNode goalies, int homeTeamId)
     {
         var gameGoalies = new List<IGamePlayerStats>();
-        foreach (var goalie in goalies)
+        foreach (var goalie in goalies.AsArray())
         {
-            var evenStrengthShotsSaved = goalie.evenStrengthShotsAgainst == null ? 0 :
-                int.Parse(new string(((string)goalie.evenStrengthShotsAgainst).TakeWhile(Char.IsDigit).ToArray()));
-            var powerPlayShotsSaved = goalie.powerPlayShotsAgainst == null ? 0 :
-                int.Parse(new string(((string)goalie.powerPlayShotsAgainst).TakeWhile(Char.IsDigit).ToArray()));
-            var shortHandedShotsSaved = goalie.shortHandedShotsAgainst == null ? 0 :
-                int.Parse(new string(((string)goalie.shortHandedShotsAgainst).TakeWhile(Char.IsDigit).ToArray()));
-            var evenStrengthGoalsAllowed = goalie.evenStrengthGoalsAgainst == null ? 0 : (int)goalie.evenStrengthGoalsAgainst;
-            var powerPlayGoalsAllowed = goalie.powerPlayGoalsAgainst == null ? 0 : (int)goalie.powerPlayGoalsAgainst;
-            var shortHandedGoalsAllowed = goalie.shortHandedGoalsAgainst == null ? 0 : (int)goalie.shortHandedGoalsAgainst;
-            var timeOnIceSeconds = goalie.toi == null ? 0 : ((string)goalie.toi).ParseIceTimeToSeconds();
+            var evenStrengthShotsSaved = goalie!["evenStrengthShotsAgainst"] == null ? 0 :
+                int.Parse(new string(goalie["evenStrengthShotsAgainst"]!.GetValue<string>().TakeWhile(Char.IsDigit).ToArray()));
+            var powerPlayShotsSaved = goalie["powerPlayShotsAgainst"] == null ? 0 :
+                int.Parse(new string(goalie["powerPlayShotsAgainst"]!.GetValue<string>().TakeWhile(Char.IsDigit).ToArray()));
+            var shortHandedShotsSaved = goalie["shortHandedShotsAgainst"] == null ? 0 :
+                int.Parse(new string(goalie["shortHandedShotsAgainst"]!.GetValue<string>().TakeWhile(Char.IsDigit).ToArray()));
+            var evenStrengthGoalsAllowed = goalie["evenStrengthGoalsAgainst"] == null ? 0 : goalie["evenStrengthGoalsAgainst"]!.GetValue<int>();
+            var powerPlayGoalsAllowed = goalie["powerPlayGoalsAgainst"] == null ? 0 : goalie["powerPlayGoalsAgainst"]!.GetValue<int>();
+            var shortHandedGoalsAllowed = goalie["shortHandedGoalsAgainst"] == null ? 0 : goalie["shortHandedGoalsAgainst"]!.GetValue<int>();
+            var timeOnIceSeconds = goalie["toi"] == null ? 0 : goalie["toi"]!.GetValue<string>().ParseIceTimeToSeconds();
 
             var goalieStats = new GameGoalieStats()
             {
-                PlayerId = (int)goalie.playerId,
+                PlayerId = goalie["playerId"]!.GetValue<int>(),
                 TeamId = homeTeamId,
                 EvenStrengthShotsSaved = evenStrengthShotsSaved,
                 PowerPlayShotsSaved = powerPlayShotsSaved,
@@ -69,7 +63,7 @@ public static class MapGamePlayerStatsResponseToGamePlayerStats
                 PowerPlayGoalsAllowed = powerPlayGoalsAllowed,
                 ShortHandedGoalsAllowed = shortHandedGoalsAllowed,
                 TimeOnIceSeconds = timeOnIceSeconds,
-                IsStarter = (bool)goalie.starter,
+                IsStarter = goalie["starter"]!.GetValue<bool>(),
                 Position = POSITION.Goalie
             };
             gameGoalies.Add(goalieStats);
@@ -78,28 +72,28 @@ public static class MapGamePlayerStatsResponseToGamePlayerStats
         return gameGoalies;
     }
 
-    private static IEnumerable<IGamePlayerStats> GetGameSkaters(dynamic players, int teamId)
+    private static IEnumerable<IGamePlayerStats> GetGameSkaters(JsonNode players, int teamId)
     {
         var gamePlayers = new List<IGamePlayerStats>();
-        foreach (var player in players)
+        foreach (var player in players.AsArray())
         {
             var playerStats = new GameSkaterStats()
             {
-                PlayerId = (int)player.playerId,
+                PlayerId = player!["playerId"]!.GetValue<int>(),
                 TeamId = teamId,
-                Goals = (int)player.goals,
-                Assists = (int)player.assists,
-                ShotsOnGoal = (int)player.sog,
-                BlockedShots = (int)player.blockedShots,
-                PenaltyMinutes = (int)player.pim,
-                PowerPlayGoals = (int)player.powerPlayGoals,
-                PlusMinus = (int)player.plusMinus,
-                FaceOffWinningPctg = (double)player.faceoffWinningPctg,
-                Hits = (int)player.hits,
-                Giveaways = (int)player.giveaways,
-                Takeaways = (int)player.takeaways,
-                TimeOnIceSeconds = ((string)player.toi).ParseIceTimeToSeconds(),
-                Position = MapPositionStrToPosition.Map((string)player.position)
+                Goals = player["goals"]!.GetValue<int>(),
+                Assists = player["assists"]!.GetValue<int>(),
+                ShotsOnGoal = player["sog"]!.GetValue<int>(),
+                BlockedShots = player["blockedShots"]!.GetValue<int>(),
+                PenaltyMinutes = player["pim"]!.GetValue<int>(),
+                PowerPlayGoals = player["powerPlayGoals"]!.GetValue<int>(),
+                PlusMinus = player["plusMinus"]!.GetValue<int>(),
+                FaceOffWinningPctg = player["faceoffWinningPctg"]!.GetValue<double>(),
+                Hits = player["hits"]!.GetValue<int>(),
+                Giveaways = player["giveaways"]!.GetValue<int>(),
+                Takeaways = player["takeaways"]!.GetValue<int>(),
+                TimeOnIceSeconds = player["toi"]!.GetValue<string>().ParseIceTimeToSeconds(),
+                Position = MapPositionStrToPosition.Map(player["position"]!.GetValue<string>())
             };
             gamePlayers.Add(playerStats);
         }
@@ -107,26 +101,24 @@ public static class MapGamePlayerStatsResponseToGamePlayerStats
         return gamePlayers;
     }
 
-    private static void BuildOfficials(GameRosterStats gameRosterStats, dynamic gamePlayerStatResponse)
+    private static void BuildOfficials(GameRosterStats gameRosterStats, JsonNode gamePlayerStatResponse)
     {
-        // Add Referees
         var referees = new List<IOfficial>();
-        foreach (var referee in gamePlayerStatResponse.gameInfo.referees)
+        foreach (var referee in gamePlayerStatResponse["gameInfo"]!["referees"]!.AsArray())
         {
             referees.Add(new Referee()
             {
-                Name = (string)referee.@default
+                Name = referee!["default"]!.GetValue<string>()
             });
         }
         gameRosterStats.Referees = referees;
 
-        // Add linesmen
         var linesmen = new List<IOfficial>();
-        foreach (var linesman in gamePlayerStatResponse.gameInfo.linesmen)
+        foreach (var linesman in gamePlayerStatResponse["gameInfo"]!["linesmen"]!.AsArray())
         {
             linesmen.Add(new Linesman()
             {
-                Name = (string)linesman.@default
+                Name = linesman!["default"]!.GetValue<string>()
             });
         }
         gameRosterStats.Linesmen = linesmen;

@@ -1,4 +1,5 @@
-﻿using Entities.Models;
+using System.Text.Json.Nodes;
+using Entities.Models;
 using Entities.Types;
 using Entities.Types.Enums;
 
@@ -6,37 +7,30 @@ namespace Entities.ServiceModels.Mappers;
 
 public static class MapGameResponseToGame
 {
-    /// <summary>
-    /// Maps the response from the nhl's api to a game object
-    /// </summary>
-    /// <param name="message">Response from nhl api</param>
-    /// <returns>Game Object</returns>
-    public static Game Map(dynamic messageGameSummary, dynamic messageGamesStats, dynamic messageGameEvents)
+    public static Game Map(JsonNode? messageGameSummary, JsonNode? messageGamesStats, JsonNode? messageGameEvents)
     {
         var game = new Game();
 
-        // Get game summary data
-        game.HomeTeamId = (int)messageGameSummary.homeTeam.id;
-        game.AwayTeamId = (int)messageGameSummary.awayTeam.id;
-        game.HomeTeamAbbr = (string)messageGameSummary.homeTeam.abbrev;
-        game.AwayTeamAbbr = (string)messageGameSummary.awayTeam.abbrev;
-        game.Id = (int)messageGameSummary.id;
-        game.SeasonStartYear = GetSeason((string)messageGameSummary.season);
-        game.GameDateUTC = DateTime.Parse((string)messageGameSummary.startTimeUTC);
-        game.HasBeenPlayed = (messageGameSummary.gameState == "OFF") ? true : false;
+        game.HomeTeamId = messageGameSummary!["homeTeam"]!["id"]!.GetValue<int>();
+        game.AwayTeamId = messageGameSummary["awayTeam"]!["id"]!.GetValue<int>();
+        game.HomeTeamAbbr = messageGameSummary["homeTeam"]!["abbrev"]!.GetValue<string>();
+        game.AwayTeamAbbr = messageGameSummary["awayTeam"]!["abbrev"]!.GetValue<string>();
+        game.Id = messageGameSummary["id"]!.GetValue<int>();
+        game.SeasonStartYear = GetSeason(messageGameSummary["season"]!.GetValue<string>());
+        game.GameDateUTC = DateTime.Parse(messageGameSummary["startTimeUTC"]!.GetValue<string>());
+        game.HasBeenPlayed = messageGameSummary["gameState"]!.GetValue<string>() == "OFF";
 
         if (game.HasBeenPlayed)
         {
-            // Get game stats data
-            int homeGoals = (int)messageGamesStats.linescore.totals.home;
-            int awayGoals = (int)messageGamesStats.linescore.totals.away;
+            int homeGoals = messageGamesStats!["linescore"]!["totals"]!["home"]!.GetValue<int>();
+            int awayGoals = messageGamesStats["linescore"]!["totals"]!["away"]!.GetValue<int>();
             game.HomeGoals = homeGoals;
             game.AwayGoals = awayGoals;
             game.Winner = GetWinner(homeGoals, awayGoals);
-            game.EndPeriod = PeriodTypeParser.ParseFromString((string)messageGameSummary.periodDescriptor.periodType);
-            foreach (dynamic statCategory in messageGamesStats.teamGameStats)
+            game.EndPeriod = PeriodTypeParser.ParseFromString(messageGameSummary["periodDescriptor"]!["periodType"]!.GetValue<string>());
+            foreach (var statCategory in messageGamesStats["teamGameStats"]!.AsArray())
             {
-                game = BuildGameStat(statCategory, game);
+                game = BuildGameStat(statCategory!, game);
             }
 
             game.ExtendedInfo = MapGameSummaryToGameExtendedInfo.Map(messageGameSummary);
@@ -46,51 +40,45 @@ public static class MapGameResponseToGame
         return game;
     }
 
-    /// <summary>
-    /// Given a stat category from the API response, updates the game object with the relevant stats.
-    /// </summary>
-    /// <param name="statCategory">The category from the API response</param>
-    /// <param name="game">The game object to build</param>
-    /// <returns>game</returns>
-    private static Game BuildGameStat(dynamic statCategory, Game game)
+    private static Game BuildGameStat(JsonNode statCategory, Game game)
     {
-        string categoryName = (string)statCategory.category;
+        string categoryName = statCategory["category"]!.GetValue<string>();
         switch (categoryName)
         {
             case "sog":
-                game.HomeSOG = (int)statCategory.homeValue;
-                game.AwaySOG = (int)statCategory.awayValue;
+                game.HomeSOG = statCategory["homeValue"]!.GetValue<int>();
+                game.AwaySOG = statCategory["awayValue"]!.GetValue<int>();
                 break;
             case "faceoffWinningPctg":
-                game.HomeFaceOffWinPercent = (double)statCategory.homeValue;
-                game.AwayFaceOffWinPercent = (double)statCategory.awayValue;
+                game.HomeFaceOffWinPercent = statCategory["homeValue"]!.GetValue<double>();
+                game.AwayFaceOffWinPercent = statCategory["awayValue"]!.GetValue<double>();
                 break;
             case "pim":
-                game.HomePIM = (int)statCategory.homeValue;
-                game.AwayPIM = (int)statCategory.awayValue;
+                game.HomePIM = statCategory["homeValue"]!.GetValue<int>();
+                game.AwayPIM = statCategory["awayValue"]!.GetValue<int>();
                 break;
             case "hits":
-                game.HomeHits = (int)statCategory.homeValue;
-                game.AwayHits = (int)statCategory.awayValue;
+                game.HomeHits = statCategory["homeValue"]!.GetValue<int>();
+                game.AwayHits = statCategory["awayValue"]!.GetValue<int>();
                 break;
             case "blockedShots":
-                game.HomeBlockedShots = (int)statCategory.homeValue;
-                game.AwayBlockedShots = (int)statCategory.awayValue;
+                game.HomeBlockedShots = statCategory["homeValue"]!.GetValue<int>();
+                game.AwayBlockedShots = statCategory["awayValue"]!.GetValue<int>();
                 break;
             case "powerPlay":
-                string homePowerPlayConversionStr = (string)statCategory.homeValue;
-                string awayPowerPlayConversionStr = (string)statCategory.awayValue;
+                string homePowerPlayConversionStr = statCategory["homeValue"]!.GetValue<string>();
+                string awayPowerPlayConversionStr = statCategory["awayValue"]!.GetValue<string>();
 
                 game.HomePPG = int.Parse(new string(homePowerPlayConversionStr.TakeWhile(Char.IsDigit).ToArray()));
                 game.AwayPPG = int.Parse(new string(awayPowerPlayConversionStr.TakeWhile(Char.IsDigit).ToArray()));
                 break;
             case "giveaways":
-                game.HomeGiveaways = (int)statCategory.homeValue;
-                game.AwayGiveaways = (int)statCategory.awayValue;
+                game.HomeGiveaways = statCategory["homeValue"]!.GetValue<int>();
+                game.AwayGiveaways = statCategory["awayValue"]!.GetValue<int>();
                 break;
             case "takeaways":
-                game.HomeTakeaways = (int)statCategory.homeValue;
-                game.AwayTakeaways = (int)statCategory.awayValue;
+                game.HomeTakeaways = statCategory["homeValue"]!.GetValue<int>();
+                game.AwayTakeaways = statCategory["awayValue"]!.GetValue<int>();
                 break;
 
             default:
@@ -100,23 +88,13 @@ public static class MapGameResponseToGame
         return game;
     }
 
-    /// <summary>
-    /// Determines who won the game.
-    /// </summary>
-    /// <param name="homeGoals">Home team goals</param>
-    /// <param name="awayGoals">Away team goals</param>
-    /// <returns>Winner.Home if home won and Winner.Away if away won</returns>
     private static Winner GetWinner(int homeGoals, int awayGoals)
     {
         if (homeGoals > awayGoals)
             return Winner.HOME;
         return Winner.AWAY;
     }
-    /// <summary>
-    /// Gets the season start year from season string
-    /// </summary>
-    /// <param name="season">Season string (ex. 20212022)</param>
-    /// <returns>Season start year</returns>
+
     private static int GetSeason(string season)
     {
         var yearStr = season.Substring(0, 4);

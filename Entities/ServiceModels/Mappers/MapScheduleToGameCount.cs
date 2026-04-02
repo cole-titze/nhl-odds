@@ -1,21 +1,17 @@
-﻿namespace Entities.ServiceModels.Mappers;
+using System.Text.Json.Nodes;
+
+namespace Entities.ServiceModels.Mappers;
 
 public static class MapScheduleResponseToGameCount
 {
-    /// <summary>
-    /// Gets the number of games from a schedule response
-    /// </summary>
-    /// <param name="scheduleResponse">Response from Nhl api</param>
-    /// <returns>Number of games in the season</returns>
-    public static int Map(dynamic scheduleResponse, int seasonId)
+    public static int Map(JsonNode? scheduleResponse, int seasonId)
     {
         int seasonGameCount = 0;
-        foreach (var season in scheduleResponse.data)
+        foreach (var season in scheduleResponse!["data"]!.AsArray())
         {
-            if (season.id == seasonId)
-                seasonGameCount = (int)season.totalRegularSeasonGames;
+            if (season!["id"]!.GetValue<int>() == seasonId)
+                seasonGameCount = season["totalRegularSeasonGames"]!.GetValue<int>();
         }
         return seasonGameCount;
     }
 }
-

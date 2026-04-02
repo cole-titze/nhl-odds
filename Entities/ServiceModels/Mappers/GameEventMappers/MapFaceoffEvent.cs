@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Entities.Models.GamePlayEvents;
 using Entities.Types;
 using Entities.Types.Enums;
@@ -6,34 +7,29 @@ namespace Entities.ServiceModels.Mappers.GameEventMappers;
 
 public static class MapFaceoffEvent
 {
-    /// <summary>
-    ///   Maps a faceoff event from the response to a Faceoff object.
-    /// </summary>
-    /// <param name="responseGameEvent">The event response from the NHL api</param>
-    /// <returns>The mapped faceoff event</returns>
-    public static Faceoff Map(dynamic responseGameEvent)
+    public static Faceoff Map(JsonNode responseGameEvent)
     {
-        string timeInPeriod = responseGameEvent.timeInPeriod;
-        string timeLeftInPeriod = responseGameEvent.timeRemaining;
+        string timeInPeriod = responseGameEvent["timeInPeriod"]!.GetValue<string>();
+        string timeLeftInPeriod = responseGameEvent["timeRemaining"]!.GetValue<string>();
 
         return new Faceoff
         {
-            Id = (int)responseGameEvent.eventId,
-            TypeCode = (int)responseGameEvent.typeCode,
-            SortOrder = (int)responseGameEvent.sortOrder,
-            SituationCode = SituationCodeParser.ParseFromString((string)responseGameEvent.situationCode),
-            PeriodNumber = (int)responseGameEvent.periodDescriptor.number,
-            PeriodType = PeriodTypeParser.ParseFromString((string)responseGameEvent.periodDescriptor.periodType),
-            EventTypeName = (string)responseGameEvent.typeDescKey,
-            HomeTeamDefendingSide = HomeTeamDefendingSideParser.ParseFromString((string?)responseGameEvent.homeTeamDefendingSide),
+            Id = responseGameEvent["eventId"]!.GetValue<int>(),
+            TypeCode = responseGameEvent["typeCode"]!.GetValue<int>(),
+            SortOrder = responseGameEvent["sortOrder"]!.GetValue<int>(),
+            SituationCode = SituationCodeParser.ParseFromString(responseGameEvent["situationCode"]!.GetValue<string>()),
+            PeriodNumber = responseGameEvent["periodDescriptor"]!["number"]!.GetValue<int>(),
+            PeriodType = PeriodTypeParser.ParseFromString(responseGameEvent["periodDescriptor"]!["periodType"]!.GetValue<string>()),
+            EventTypeName = responseGameEvent["typeDescKey"]!.GetValue<string>(),
+            HomeTeamDefendingSide = HomeTeamDefendingSideParser.ParseFromString(responseGameEvent["homeTeamDefendingSide"]?.GetValue<string>()),
             SecondsIntoPeriod = timeInPeriod.ParseIceTimeToSeconds(),
             SecondsLeftInPeriod = timeLeftInPeriod.ParseIceTimeToSeconds(),
-            WinningTeamId = responseGameEvent.details.eventOwnerTeamId,
-            WinningPlayerId = responseGameEvent.details.winningPlayerId,
-            LosingPlayerId = responseGameEvent.details.losingPlayerId,
-            XCoordinate = responseGameEvent.details.xCoord,
-            YCoordinate = responseGameEvent.details.yCoord,
-            Zone = ZoneParser.ParseFromString((string)responseGameEvent.details.zoneCode),
+            WinningTeamId = responseGameEvent["details"]!["eventOwnerTeamId"]!.GetValue<int>(),
+            WinningPlayerId = responseGameEvent["details"]!["winningPlayerId"]!.GetValue<int>(),
+            LosingPlayerId = responseGameEvent["details"]!["losingPlayerId"]!.GetValue<int>(),
+            XCoordinate = responseGameEvent["details"]!["xCoord"]?.GetValue<int>(),
+            YCoordinate = responseGameEvent["details"]!["yCoord"]?.GetValue<int>(),
+            Zone = ZoneParser.ParseFromString(responseGameEvent["details"]!["zoneCode"]!.GetValue<string>()),
         };
     }
 }

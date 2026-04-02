@@ -5,7 +5,7 @@ using Entities.ServiceModels.Kalshi;
 using Entities.ServiceModels.Mappers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using System.Text.Json;
 using Services.Kalshi;
 
 namespace BookmakerOddsGetter;
@@ -356,7 +356,7 @@ public class KalshiOddsBackfiller
             var cached = await _bookmakerOddsRepo.GetCachedResponse(sentinel);
             if (cached == null) continue;
 
-            var dict = JsonConvert.DeserializeObject<Dictionary<string, KalshiCandlestick?>>(cached.RawJson);
+            var dict = JsonSerializer.Deserialize<Dictionary<string, KalshiCandlestick?>>(cached.RawJson);
             if (dict == null) continue;
 
             foreach (var (ticker, candle) in dict)
@@ -387,7 +387,7 @@ public class KalshiOddsBackfiller
         foreach (var (key, dict) in groups)
         {
             if (!dict.Any()) continue;
-            var json = JsonConvert.SerializeObject(dict);
+            var json = JsonSerializer.Serialize(dict);
             await _bookmakerOddsRepo.SaveRawResponse(json, CacheSentinels[key]);
             _logger.LogInformation("Saved {Count} candlesticks to cache {Key}", dict.Count, key);
         }
@@ -406,7 +406,7 @@ public class KalshiOddsBackfiller
             if (cacheAge.TotalDays < 7)
             {
                 _logger.LogInformation("Using cached settled markets for {Key} (age: {Days:F1} days)", sentinelKey, cacheAge.TotalDays);
-                return JsonConvert.DeserializeObject<List<KalshiMarket>>(cached.RawJson) ?? new List<KalshiMarket>();
+                return JsonSerializer.Deserialize<List<KalshiMarket>>(cached.RawJson) ?? new List<KalshiMarket>();
             }
 
             _logger.LogInformation("Cache for {Key} is {Days:F1} days old — re-fetching", sentinelKey, cacheAge.TotalDays);
@@ -415,7 +415,7 @@ public class KalshiOddsBackfiller
         _logger.LogInformation("Fetching settled markets for {Key}...", sentinelKey);
         var markets = await _kalshiGetter.GetSettledMarkets(seriesTicker);
 
-        var json = JsonConvert.SerializeObject(markets);
+        var json = JsonSerializer.Serialize(markets);
         await _bookmakerOddsRepo.SaveRawResponse(json, sentinelDate);
         await _bookmakerOddsRepo.Commit();
 

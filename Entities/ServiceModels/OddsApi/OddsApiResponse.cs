@@ -1,53 +1,53 @@
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Entities.ServiceModels.OddsApi;
 
 public class OddsApiResponse
 {
-    [JsonProperty("id")]
+    [JsonPropertyName("id")]
     public string Id { get; set; } = string.Empty;
-    [JsonProperty("sport_key")]
+    [JsonPropertyName("sport_key")]
     public string SportKey { get; set; } = string.Empty;
-    [JsonProperty("sport_title")]
+    [JsonPropertyName("sport_title")]
     public string SportTitle { get; set; } = string.Empty;
-    [JsonProperty("commence_time")]
+    [JsonPropertyName("commence_time")]
     public DateTime CommenceTime { get; set; }
-    [JsonProperty("home_team")]
+    [JsonPropertyName("home_team")]
     public string HomeTeam { get; set; } = string.Empty;
-    [JsonProperty("away_team")]
+    [JsonPropertyName("away_team")]
     public string AwayTeam { get; set; } = string.Empty;
-    [JsonProperty("bookmakers")]
+    [JsonPropertyName("bookmakers")]
     public List<OddsApiBookmaker> Bookmakers { get; set; } = new();
 }
 
 public class OddsApiBookmaker
 {
-    [JsonProperty("key")]
+    [JsonPropertyName("key")]
     public string Key { get; set; } = string.Empty;
-    [JsonProperty("title")]
+    [JsonPropertyName("title")]
     public string Title { get; set; } = string.Empty;
-    [JsonProperty("last_update")]
+    [JsonPropertyName("last_update")]
     public DateTime LastUpdate { get; set; }
-    [JsonProperty("markets")]
+    [JsonPropertyName("markets")]
     public List<OddsApiMarket> Markets { get; set; } = new();
 }
 
 public class OddsApiMarket
 {
-    [JsonProperty("key")]
+    [JsonPropertyName("key")]
     public string Key { get; set; } = string.Empty;
-    [JsonProperty("last_update")]
+    [JsonPropertyName("last_update")]
     public DateTime LastUpdate { get; set; }
-    [JsonProperty("outcomes")]
+    [JsonPropertyName("outcomes")]
     public List<OddsApiOutcome> Outcomes { get; set; } = new();
 }
 
 public class OddsApiOutcome
 {
-    [JsonProperty("name")]
+    [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
-    [JsonProperty("price")]
+    [JsonPropertyName("price")]
     public int Price { get; set; }
-    [JsonProperty("point")]
+    [JsonPropertyName("point")]
     public double? Point { get; set; }
 }

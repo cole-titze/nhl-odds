@@ -1,7 +1,7 @@
 using System.Net;
+using System.Text.Json;
 using Entities.ServiceModels.OddsApi;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace Services.OddsApi;
 
@@ -41,7 +41,7 @@ public class OddsApiGetter : IOddsApiGetter
             }
 
             var json = await response.Content.ReadAsStringAsync();
-            var results = JsonConvert.DeserializeObject<List<OddsApiResponse>>(json);
+            var results = JsonSerializer.Deserialize<List<OddsApiResponse>>(json);
             return new OddsApiResult
             {
                 Responses = results ?? new List<OddsApiResponse>(),
@@ -77,7 +77,7 @@ public class OddsApiGetter : IOddsApiGetter
             }
 
             var json = await response.Content.ReadAsStringAsync();
-            var wrapper = JsonConvert.DeserializeObject<OddsApiHistoricalResponse>(json);
+            var wrapper = JsonSerializer.Deserialize<OddsApiHistoricalResponse>(json);
             return new OddsApiResult
             {
                 Responses = wrapper?.Data ?? new List<OddsApiResponse>(),

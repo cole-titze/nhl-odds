@@ -3,7 +3,7 @@ using DatabaseAccess.BookmakerOddsRepository;
 using Entities.ServiceModels.OddsApi;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using System.Text.Json;
 using Services.OddsApi;
 
 namespace BookmakerOddsGetter;
@@ -127,7 +127,7 @@ public class BookmakerOddsBackfiller
         {
             _logger.LogInformation("Using cached response for {Date}", gameDate.ToString("yyyy-MM-dd"));
 
-            var wrapper = JsonConvert.DeserializeObject<OddsApiHistoricalResponse>(cached.RawJson);
+            var wrapper = JsonSerializer.Deserialize<OddsApiHistoricalResponse>(cached.RawJson);
             return wrapper?.Data ?? new List<OddsApiResponse>();
         }
 

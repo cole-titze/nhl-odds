@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Entities.Models.GamePlayEvents;
 using Entities.Types;
 using Entities.Types.Enums;
@@ -6,34 +7,29 @@ namespace Entities.ServiceModels.Mappers.GameEventMappers;
 
 public static class MapHitEvent
 {
-    /// <summary>
-    /// Maps a hit event
-    /// </summary>
-    /// <param name="responseGameEvent">The event response from the NHL api</param>
-    /// <returns>The hit event</returns>
-    public static Hit Map(dynamic responseGameEvent)
+    public static Hit Map(JsonNode responseGameEvent)
     {
-        string timeInPeriod = responseGameEvent.timeInPeriod;
-        string timeLeftInPeriod = responseGameEvent.timeRemaining;
+        string timeInPeriod = responseGameEvent["timeInPeriod"]!.GetValue<string>();
+        string timeLeftInPeriod = responseGameEvent["timeRemaining"]!.GetValue<string>();
 
         return new Hit
         {
-            Id = (int)responseGameEvent.eventId,
-            TypeCode = (int)responseGameEvent.typeCode,
-            SortOrder = (int)responseGameEvent.sortOrder,
-            SituationCode = int.Parse((string)responseGameEvent.situationCode ?? "1551"),
-            PeriodNumber = (int)responseGameEvent.periodDescriptor.number,
-            PeriodType = PeriodTypeParser.ParseFromString((string)responseGameEvent.periodDescriptor.periodType),
-            EventTypeName = responseGameEvent.typeDescKey,
-            HomeTeamDefendingSide = HomeTeamDefendingSideParser.ParseFromString((string)responseGameEvent.homeTeamDefendingSide),
+            Id = responseGameEvent["eventId"]!.GetValue<int>(),
+            TypeCode = responseGameEvent["typeCode"]!.GetValue<int>(),
+            SortOrder = responseGameEvent["sortOrder"]!.GetValue<int>(),
+            SituationCode = int.Parse(responseGameEvent["situationCode"]?.GetValue<string>() ?? "1551"),
+            PeriodNumber = responseGameEvent["periodDescriptor"]!["number"]!.GetValue<int>(),
+            PeriodType = PeriodTypeParser.ParseFromString(responseGameEvent["periodDescriptor"]!["periodType"]!.GetValue<string>()),
+            EventTypeName = responseGameEvent["typeDescKey"]!.GetValue<string>(),
+            HomeTeamDefendingSide = HomeTeamDefendingSideParser.ParseFromString(responseGameEvent["homeTeamDefendingSide"]!.GetValue<string>()),
             SecondsIntoPeriod = timeInPeriod.ParseIceTimeToSeconds(),
             SecondsLeftInPeriod = timeLeftInPeriod.ParseIceTimeToSeconds(),
-            HittingPlayerTeamId = (int)responseGameEvent.details.eventOwnerTeamId,
-            HittingPlayerId = (int)responseGameEvent.details.hittingPlayerId,
-            HitteePlayerId = (int)responseGameEvent.details.hitteePlayerId,
-            Zone = ZoneParser.ParseFromString((string)responseGameEvent.details.zoneCode),
-            XCoordinate = (int?)responseGameEvent.details.xCoord,
-            YCoordinate = (int?)responseGameEvent.details.yCoord,
+            HittingPlayerTeamId = responseGameEvent["details"]!["eventOwnerTeamId"]!.GetValue<int>(),
+            HittingPlayerId = responseGameEvent["details"]!["hittingPlayerId"]!.GetValue<int>(),
+            HitteePlayerId = responseGameEvent["details"]!["hitteePlayerId"]!.GetValue<int>(),
+            Zone = ZoneParser.ParseFromString(responseGameEvent["details"]!["zoneCode"]!.GetValue<string>()),
+            XCoordinate = responseGameEvent["details"]!["xCoord"]?.GetValue<int>(),
+            YCoordinate = responseGameEvent["details"]!["yCoord"]?.GetValue<int>(),
         };
     }
 }

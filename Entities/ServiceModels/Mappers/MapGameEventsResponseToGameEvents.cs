@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Entities.Models.GamePlayEvents;
 using Entities.ServiceModels.Mappers.GameEventMappers;
 using Entities.Types.Enums;
@@ -6,12 +7,12 @@ namespace Entities.ServiceModels.Mappers;
 
 public static class MapGameEventsResponseToGameEvents
 {
-    public static GameEvents Map(dynamic response)
+    public static GameEvents Map(JsonNode? response)
     {
         var gameEvents = new List<IGameEvent>();
-        foreach (var responseGameEvent in response.plays)
+        foreach (var responseGameEvent in response!["plays"]!.AsArray())
         {
-            var gameEvent = GetGameEvent(responseGameEvent);
+            var gameEvent = GetGameEvent(responseGameEvent!);
             if (gameEvent != null)
             {
                 gameEvents.Add(gameEvent);
@@ -21,17 +22,11 @@ public static class MapGameEventsResponseToGameEvents
         return new GameEvents(gameEvents);
     }
 
-    /// <summary>
-    ///  Maps a single game event from the response to a GameEvent object.
-    /// </summary>
-    /// <param name="responseGameEvent">A game event from the nhl api</param>
-    /// <returns>The Game Event</returns>
-    private static IGameEvent? GetGameEvent(dynamic responseGameEvent)
+    private static IGameEvent? GetGameEvent(JsonNode responseGameEvent)
     {
-        var eventType = EventTypeParser.Parse((string)responseGameEvent.typeDescKey);
+        var eventType = EventTypeParser.Parse(responseGameEvent["typeDescKey"]!.GetValue<string>());
 
-        // Some event types require details; skip if details is missing
-        if (responseGameEvent.details == null)
+        if (responseGameEvent["details"] == null)
         {
             switch (eventType)
             {
@@ -39,9 +34,9 @@ public static class MapGameEventsResponseToGameEvents
                 case EventType.PeriodEnd:
                 case EventType.GameEnd:
                 case EventType.ShootoutComplete:
-                    break; // These don't need details
+                    break;
                 default:
-                    return null; // Skip events that need details but don't have them
+                    return null;
             }
         }
 

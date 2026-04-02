@@ -1,27 +1,21 @@
+using System.Text.Json.Nodes;
 using Entities.Models.Teams;
 
 namespace Entities.ServiceModels.Mappers;
 
 public static class MapAllTeamsResponseToTeams
 {
-    /// <summary>
-    /// Maps the standings response to a list of teams.
-    /// Example response:
-    /// https://api-web.nhle.com/v1/standings/2025-01-01
-    /// </summary>
-    /// <param name="standingsResponse">Nhl response that contains standings for teams</param>
-    /// <returns>The list of teams</returns>
-    public static IEnumerable<Team>? Map(dynamic standingsResponse)
+    public static IEnumerable<Team> Map(JsonNode? standingsResponse)
     {
         var teamList = new List<Team>();
-        foreach (var teamResponse in standingsResponse.data)
+        foreach (var teamResponse in standingsResponse!["data"]!.AsArray())
         {
             var team = new Team()
             {
-                Id = (int)teamResponse.id,
-                FranchiseId = (int?)teamResponse.franchiseId ?? -1,
-                LeagueId = (int)teamResponse.leagueId,
-                Abbreviation = (string)teamResponse.triCode,
+                Id = teamResponse!["id"]!.GetValue<int>(),
+                FranchiseId = teamResponse["franchiseId"]?.GetValue<int>() ?? -1,
+                LeagueId = teamResponse["leagueId"]!.GetValue<int>(),
+                Abbreviation = teamResponse["triCode"]!.GetValue<string>(),
             };
 
             teamList.Add(team);
