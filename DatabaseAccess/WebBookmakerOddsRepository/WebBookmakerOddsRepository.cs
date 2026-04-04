@@ -18,14 +18,17 @@ public class WebBookmakerOddsRepository : IWebBookmakerOddsRepository
         var gameIdSet = gameIds.ToHashSet();
 
         var dbOdds = await _dbContext.BookmakerOdds
+            .AsNoTracking()
             .Where(x => gameIdSet.Contains(x.GameId))
             .ToListAsync();
 
         var dbSpreads = await _dbContext.BookmakerSpreads
+            .AsNoTracking()
             .Where(x => gameIdSet.Contains(x.GameId))
             .ToListAsync();
 
         var dbTotals = await _dbContext.BookmakerTotals
+            .AsNoTracking()
             .Where(x => gameIdSet.Contains(x.GameId))
             .ToListAsync();
 
