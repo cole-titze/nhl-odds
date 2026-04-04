@@ -9,8 +9,6 @@ namespace WebApi.Controllers;
 [ApiController]
 public class GameOddsController
 {
-    private static readonly TimeZoneInfo CentralTime = TimeZoneInfo.FindSystemTimeZoneById("America/Chicago");
-
     private readonly IGameOddsGetter _gameOddsGetter;
     private readonly IMemoryCache _cache;
 
@@ -29,21 +27,12 @@ public class GameOddsController
             EndDate = endDate.Date
         };
 
-        var today = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, CentralTime).Date;
-        var isToday = dateRange.StartDate == today && dateRange.EndDate == today;
+        var cacheKey = $"GameOdds_{dateRange.StartDate:yyyy-MM-dd}_{dateRange.EndDate:yyyy-MM-dd}_{seasonStartYear}";
+        if (_cache.TryGetValue(cacheKey, out object? cached))
+            return Results.Ok(cached);
 
-        if (isToday)
-        {
-            var cacheKey = $"GameOdds_{today:yyyy-MM-dd}_{seasonStartYear}";
-            if (_cache.TryGetValue(cacheKey, out object? cached))
-                return Results.Ok(cached);
-
-            var result = await _gameOddsGetter.GetGameOddsInDateRange(dateRange, seasonStartYear);
-            _cache.Set(cacheKey, result);
-            return Results.Ok(result);
-        }
-
-        var predictedGamesVM = await _gameOddsGetter.GetGameOddsInDateRange(dateRange, seasonStartYear);
-        return Results.Ok(predictedGamesVM);
+        var result = await _gameOddsGetter.GetGameOddsInDateRange(dateRange, seasonStartYear);
+        _cache.Set(cacheKey, result);
+        return Results.Ok(result);
     }
 }

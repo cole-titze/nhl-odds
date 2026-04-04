@@ -65,9 +65,16 @@ public class StartupCacheWarmer : BackgroundService
         try
         {
             var gameOddsGetter = scope.ServiceProvider.GetRequiredService<IGameOddsGetter>();
-            var dateRange = new DateRange { StartDate = today, EndDate = today };
-            var gameOdds = await gameOddsGetter.GetGameOddsInDateRange(dateRange, seasonStartYear);
-            _cache.Set($"GameOdds_{today:yyyy-MM-dd}_{seasonStartYear}", gameOdds);
+
+            var todayRange = new DateRange { StartDate = today, EndDate = today };
+            var todayOdds = await gameOddsGetter.GetGameOddsInDateRange(todayRange, seasonStartYear);
+            _cache.Set($"GameOdds_{today:yyyy-MM-dd}_{today:yyyy-MM-dd}_{seasonStartYear}", todayOdds);
+
+            var seasonStart = new DateTime(seasonStartYear, 9, 1);
+            var seasonEnd = new DateTime(seasonStartYear + 1, 7, 31);
+            var seasonRange = new DateRange { StartDate = seasonStart, EndDate = seasonEnd };
+            var seasonOdds = await gameOddsGetter.GetGameOddsInDateRange(seasonRange, seasonStartYear);
+            _cache.Set($"GameOdds_{seasonStart:yyyy-MM-dd}_{seasonEnd:yyyy-MM-dd}_{seasonStartYear}", seasonOdds);
         }
         catch (Exception ex)
         {
