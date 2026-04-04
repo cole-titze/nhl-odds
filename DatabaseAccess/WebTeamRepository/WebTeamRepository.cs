@@ -15,6 +15,7 @@ public class TeamRepository : ITeamRepository
     public async Task<IEnumerable<TeamStats>> GetAllTeams(int seasonStartYear)
     {
         var dbTeams = await _dbContext.SeasonTeam
+            .AsNoTracking()
             .Where(x => x.SeasonStartYear == seasonStartYear)
             .ToListAsync();
         return DbSeasonTeamToTeamStatsMapper.MapList(dbTeams);
@@ -23,6 +24,7 @@ public class TeamRepository : ITeamRepository
     public async Task<TeamStats> GetTeam(int teamId, int seasonStartYear)
     {
         var dbTeam = await _dbContext.SeasonTeam
+            .AsNoTracking()
             .Where(x => x.TeamId == teamId && x.SeasonStartYear == seasonStartYear)
             .FirstAsync();
         return DbSeasonTeamToTeamStatsMapper.Map(dbTeam);

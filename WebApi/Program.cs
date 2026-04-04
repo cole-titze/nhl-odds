@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using WebApi.BusinessLogic.AdminService;
 using WebApi.BusinessLogic.GameOddsGetter;
 using WebApi.BusinessLogic.JobService;
+using WebApi.BusinessLogic.StartupCacheWarmer;
 using WebApi.BusinessLogic.TeamGetter;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -25,6 +26,7 @@ if (_connectionString == null)
 // Add services to the container
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<IJobService, JobService>();
+builder.Services.AddHostedService<StartupCacheWarmer>();
 if (builder.Environment.IsDevelopment())
     builder.Services.AddHostedService<LocalJobRunner>();
 builder.Services.AddScoped<ITeamGetter, TeamGetter>();

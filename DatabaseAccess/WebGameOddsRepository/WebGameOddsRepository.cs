@@ -24,6 +24,7 @@ public class GameOddsRepository : IGameOddsRepository
         var seasonTeams = await GetSeasonTeams(seasonStartYear);
 
         var dbGameOdds = await _dbContext.GameOdds
+            .AsNoTracking()
             .Include(x => x.Game)
             .Where(x => x.Game != null
                 && x.Game.GameDateUTC.AddHours(-6).Date >= dateRange.StartDate.Date
@@ -44,6 +45,7 @@ public class GameOddsRepository : IGameOddsRepository
         var seasonTeams = await GetSeasonTeams(seasonStartYear);
 
         var dbGameOdds = await _dbContext.GameOdds
+            .AsNoTracking()
             .Include(x => x.Game)
             .Where(x => x.Game != null
                 && (x.Game.AwayTeamId == teamId || x.Game.HomeTeamId == teamId)
@@ -76,6 +78,7 @@ public class GameOddsRepository : IGameOddsRepository
         var gameIds = gameOddsList.Select(g => g.Game.Id).ToHashSet();
 
         var latestPredictions = await _dbContext.GameSpreadTotalOdds
+            .AsNoTracking()
             .Where(x => gameIds.Contains(x.GameId))
             .ToListAsync();
 
@@ -109,6 +112,7 @@ public class GameOddsRepository : IGameOddsRepository
     private async Task<Dictionary<int, DbSeasonTeam>> GetSeasonTeams(int seasonStartYear)
     {
         var teams = await _dbContext.SeasonTeam
+            .AsNoTracking()
             .Where(x => x.SeasonStartYear == seasonStartYear)
             .ToListAsync();
         return teams.ToDictionary(t => t.TeamId);
@@ -119,6 +123,7 @@ public class GameOddsRepository : IGameOddsRepository
         var seasonTeams = await GetSeasonTeams(seasonStartYear);
 
         var dbGameOdds = await _dbContext.GameOdds
+            .AsNoTracking()
             .Include(x => x.Game)
             .Where(x => x.Game != null
                 && x.Game.SeasonStartYear == seasonStartYear)
