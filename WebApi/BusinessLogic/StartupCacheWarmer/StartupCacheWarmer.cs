@@ -1,4 +1,6 @@
+using Entities.Types;
 using Microsoft.Extensions.Caching.Memory;
+using WebApi.BusinessLogic.GameOddsGetter;
 using WebApi.BusinessLogic.TeamGetter;
 
 namespace WebApi.BusinessLogic.StartupCacheWarmer;
@@ -43,22 +45,36 @@ public class StartupCacheWarmer : BackgroundService
     private async Task RefreshCache()
     {
         var seasonStartYear = GetCurrentSeasonStartYear();
-        var cacheKey = $"AllTeams_{seasonStartYear}";
+        var today = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, CentralTime).Date;
 
         _logger.LogInformation("Refreshing cache for season {Season}...", seasonStartYear);
 
+        using var scope = _scopeFactory.CreateScope();
+
         try
         {
-            using var scope = _scopeFactory.CreateScope();
             var teamGetter = scope.ServiceProvider.GetRequiredService<ITeamGetter>();
             var teamsVm = await teamGetter.GetAllTeamsStats(seasonStartYear);
-            _cache.Set(cacheKey, teamsVm);
-            _logger.LogInformation("Cache refreshed for season {Season}.", seasonStartYear);
+            _cache.Set($"AllTeams_{seasonStartYear}", teamsVm);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to refresh cache for season {Season}.", seasonStartYear);
+            _logger.LogError(ex, "Failed to refresh AllTeams cache for season {Season}.", seasonStartYear);
         }
+
+        try
+        {
+            var gameOddsGetter = scope.ServiceProvider.GetRequiredService<IGameOddsGetter>();
+            var dateRange = new DateRange { StartDate = today, EndDate = today };
+            var gameOdds = await gameOddsGetter.GetGameOddsInDateRange(dateRange, seasonStartYear);
+            _cache.Set($"GameOdds_{today:yyyy-MM-dd}_{seasonStartYear}", gameOdds);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to refresh GameOdds cache for {Date}.", today);
+        }
+
+        _logger.LogInformation("Cache refreshed for season {Season}.", seasonStartYear);
     }
 
     // Returns the delay until the next 7am Central time.
