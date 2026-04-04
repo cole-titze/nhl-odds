@@ -3,8 +3,10 @@ using WebApi.BusinessLogic.TeamGetter;
 
 namespace WebApi.BusinessLogic.StartupCacheWarmer;
 
-public class StartupCacheWarmer : IHostedService
+public class StartupCacheWarmer : BackgroundService
 {
+    private static readonly TimeZoneInfo CentralTime = TimeZoneInfo.FindSystemTimeZoneById("America/Chicago");
+
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IMemoryCache _cache;
     private readonly ILogger<StartupCacheWarmer> _logger;
@@ -16,28 +18,58 @@ public class StartupCacheWarmer : IHostedService
         _logger = logger;
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        await RefreshCache();
+
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            var delay = GetDelayUntil7AmCentral();
+            _logger.LogInformation("Next cache refresh in {Hours:F1} hours.", delay.TotalHours);
+
+            try
+            {
+                await Task.Delay(delay, stoppingToken);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+
+            await RefreshCache();
+        }
+    }
+
+    private async Task RefreshCache()
     {
         var seasonStartYear = GetCurrentSeasonStartYear();
         var cacheKey = $"AllTeams_{seasonStartYear}";
 
-        _logger.LogInformation("Warming cache for season {Season}...", seasonStartYear);
+        _logger.LogInformation("Refreshing cache for season {Season}...", seasonStartYear);
 
         try
         {
             using var scope = _scopeFactory.CreateScope();
             var teamGetter = scope.ServiceProvider.GetRequiredService<ITeamGetter>();
             var teamsVm = await teamGetter.GetAllTeamsStats(seasonStartYear);
-            _cache.Set(cacheKey, teamsVm, TimeSpan.FromMinutes(5));
-            _logger.LogInformation("Cache warmed for season {Season}.", seasonStartYear);
+            _cache.Set(cacheKey, teamsVm);
+            _logger.LogInformation("Cache refreshed for season {Season}.", seasonStartYear);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to warm cache for season {Season}.", seasonStartYear);
+            _logger.LogError(ex, "Failed to refresh cache for season {Season}.", seasonStartYear);
         }
     }
 
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    // Returns the delay until the next 7am Central time.
+    private static TimeSpan GetDelayUntil7AmCentral()
+    {
+        var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, CentralTime);
+        var next7am = now.Date.AddHours(7);
+        if (now >= next7am)
+            next7am = next7am.AddDays(1);
+        return next7am - now;
+    }
 
     // NHL season starts in October — if it's before October, the season began last year.
     private static int GetCurrentSeasonStartYear()

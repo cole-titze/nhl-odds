@@ -26,7 +26,7 @@ public class TeamController
 
         var teamsVm = await _teamGetter.GetAllTeamsStats(seasonStartYear);
 
-        _cache.Set(cacheKey, teamsVm, TimeSpan.FromMinutes(5));
+        _cache.Set(cacheKey, teamsVm);
         return Results.Ok(teamsVm);
     }
 
