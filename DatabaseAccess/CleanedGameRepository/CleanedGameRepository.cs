@@ -28,6 +28,7 @@ public class CleanedGameRepository : ICleanedGameRepository
             else if (!dbGame.IsEquivalentTo(game))
             {
                 dbGame.Clone(game);
+                _dbContext.GameCleaned.Update(dbGame);
             }
         }
         await _dbContext.GameCleaned.AddRangeAsync(addList);
@@ -38,11 +39,16 @@ public class CleanedGameRepository : ICleanedGameRepository
         if (_cachedSeasonYear != seasonStartYear)
         {
             _cachedSeasonsGames = await _dbContext.GameCleaned
-                .Include(x => x.Game)
-                .Where(x => x.Game!.SeasonStartYear == seasonStartYear)
+                .AsNoTracking()
+                .Where(x => x.GameId / 1000000 == seasonStartYear)
                 .ToListAsync();
             _cachedSeasonYear = seasonStartYear;
         }
+    }
+
+    public void ClearTracking()
+    {
+        _dbContext.ChangeTracker.Clear();
     }
 
     public async Task<IEnumerable<DbGameCleaned>> GetSeasonOfCleanedGames(int seasonStartYear)

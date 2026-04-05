@@ -106,6 +106,8 @@ public class GameCleaner
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error cleaning game {GameId} in season {Season}. Skipping.", game.Id, seasonStartYear);
+                    cleanedGames.Clear();
+                    _cleanedGameRepo.ClearTracking();
                     var stackTrace = ex.StackTrace ?? string.Empty;
                     var stackFrames = stackTrace.Split('\n', StringSplitOptions.RemoveEmptyEntries);
                     var topFrames = string.Join(" | ", stackFrames.Take(10).Select(f => f.Trim()));
@@ -124,9 +126,16 @@ public class GameCleaner
 
             if (cleanedGames.Count > 0)
             {
-                await _cleanedGameRepo.AddUpdateCleanedGames(cleanedGames);
-                await _cleanedGameRepo.Commit();
-                totalCleaned += cleanedGames.Count;
+                try
+                {
+                    await _cleanedGameRepo.AddUpdateCleanedGames(cleanedGames);
+                    await _cleanedGameRepo.Commit();
+                    totalCleaned += cleanedGames.Count;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error saving final batch for season {Season}.", seasonStartYear);
+                }
             }
             _logger.LogInformation("Number of Games Added To Season " + seasonStartYear.ToString() + ": " + totalCleaned.ToString());
         }
