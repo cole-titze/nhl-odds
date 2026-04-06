@@ -85,5 +85,16 @@ services:
     depends_on:
       - frontend
 
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    profiles: ["monitoring"]
+    volumes:
+      - uptime-kuma-data:/app/data
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+
 volumes:
   pg-data:
+  uptime-kuma-data:

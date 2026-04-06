@@ -130,6 +130,7 @@ The site will be available at `http://<host-ip>:8081`.
 | `entry` | — | One-shot data collection container (NHL API, odds, Kalshi) |
 | `predictor` | — | One-shot ML prediction container (Python) |
 | `cloudflared` | — | Cloudflare Tunnel (optional, requires `tunnel` profile) |
+| `uptime-kuma` | 3001 | Uptime monitoring UI (optional, requires `monitoring` profile) |
 
 ## 6. Auto-update nightly
 
@@ -140,7 +141,7 @@ crontab -e
 Add this line (runs at 2:00 AM, before the 3 AM data collection):
 
 ```
-0 2 * * * cd ~/nhl-odds && export PREDICTOR_CPUS=$(($(nproc)/2)) && docker compose --profile jobs --profile tunnel pull -q && docker compose --profile tunnel up -d --remove-orphans >> /var/log/nhl-odds-update.log 2>&1
+0 2 * * * cd ~/nhl-odds && export PREDICTOR_CPUS=$(($(nproc)/2)) && docker compose --profile jobs --profile tunnel --profile monitoring pull -q && docker compose --profile tunnel --profile monitoring up -d --remove-orphans >> /var/log/nhl-odds-update.log 2>&1
 ```
 
 ## Scheduled Jobs
@@ -201,3 +202,15 @@ To expose the site publicly via [Cloudflare Tunnel](https://developers.cloudflar
 3. Start (or restart) with the tunnel profile: `docker compose --profile tunnel up -d`
 
 If no token is set, the `cloudflared` container simply won't start.
+
+## Uptime Monitoring
+
+To track availability of the public Cloudflare Tunnel URL, start the monitoring profile:
+
+```bash
+docker compose --profile monitoring up -d
+```
+
+Then open `http://<host-ip>:3001` to complete the [Uptime Kuma](https://github.com/louislam/uptime-kuma) setup. Add a monitor with type **HTTP(s)**, point it at your Cloudflare Tunnel URL, and set the check interval (default 60s).
+
+Uptime Kuma stores its data in a named Docker volume (`uptime-kuma-data`) separate from the NHL database, so uptime history is preserved across container restarts. The nightly auto-update cron job (step 6) includes the `monitoring` profile and will keep the image up to date.
