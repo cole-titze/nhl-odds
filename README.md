@@ -141,7 +141,7 @@ crontab -e
 Add this line (runs at 2:00 AM, before the 3 AM data collection):
 
 ```
-0 2 * * * cd ~/nhl-odds && export PREDICTOR_CPUS=$(($(nproc)/2)) && docker compose --profile jobs --profile tunnel --profile monitoring pull -q && docker compose --profile tunnel --profile monitoring up -d --remove-orphans >> /var/log/nhl-odds-update.log 2>&1
+0 2 * * * cd ~/nhl-odds && curl -fsSL -o docker-compose.yml https://raw.githubusercontent.com/cole-titze/nhl-odds/main/docker-compose.prod.yml && export PREDICTOR_CPUS=$(($(nproc)/2)) && docker compose --profile jobs --profile tunnel --profile monitoring pull -q && docker compose --profile tunnel --profile monitoring up -d --remove-orphans >> /var/log/nhl-odds-update.log 2>&1
 ```
 
 ## Scheduled Jobs
