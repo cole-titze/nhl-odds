@@ -178,6 +178,24 @@ Add this line (runs at 1:00 AM, before the 2 AM auto-update):
 0 1 * * * docker exec nhl-odds-database-1 pg_dump -U postgres -Fc nhl > ~/Backups/nhl-$(date +\%Y\%m\%d).dump 2>> /var/log/nhl-odds-backup.log && find ~/Backups -name "nhl-*.dump" -mtime +7 -delete
 ```
 
+## Kubernetes Deployment
+
+For deploying to a Kubernetes cluster, see the [ansible-setup](https://github.com/cole-titze/ansible-setup) repo. The playbook at `raspberry-pi-playbooks/cluster/kubernetes/nhl-odds/nhl-odds.yml` deploys the full stack to a K3s cluster, including:
+
+- PostgreSQL database with a persistent volume
+- Web API and frontend (with Traefik ingress at `nhl-odds.kubecluster`)
+- CronJobs replacing the scheduler container (NHL data collection at 3 AM, odds fetch + prediction at 6 AM CT)
+
+The following variables must be set in `group_vars` or ansible-vault before running:
+
+| Variable | Description |
+|---|---|
+| `nhl_odds_postgres_password` | Database password for the postgres user |
+| `nhl_odds_odds_api_key` | The Odds API key for daily odds fetching |
+| `nhl_odds_api_backfill_key` | The Odds API key for historical odds backfill |
+
+> **Note:** The on-demand job dispatch (Admin page buttons) is not supported in the Kubernetes deployment — jobs run on their cron schedules only.
+
 ## CI/CD
 
 Images are automatically built and pushed to GHCR on every push to `main` and rebuilt weekly (Sundays) to pick up base image security updates.
