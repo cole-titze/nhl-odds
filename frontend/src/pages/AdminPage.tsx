@@ -363,7 +363,7 @@ export function AdminPage() {
           <JobCard
             job={statuses.dataCollection}
             label="Data Collection"
-            onStart={() => handleStart(startDataCollection)}
+            onStart={import.meta.env.DEV ? () => handleStart(startDataCollection) : undefined}
           />
           {import.meta.env.DEV && (
             <JobCard
@@ -375,12 +375,12 @@ export function AdminPage() {
           <JobCard
             job={statuses.oddsBackfill}
             label="Odds Backfill"
-            onStart={() => handleStart(startOddsBackfill)}
+            onStart={import.meta.env.DEV ? () => handleStart(startOddsBackfill) : undefined}
           />
           <JobCard
             job={statuses.kalshiBackfill}
             label="Kalshi Backfill"
-            onStart={() => handleStart(startKalshiBackfill)}
+            onStart={import.meta.env.DEV ? () => handleStart(startKalshiBackfill) : undefined}
           />
           <JobCard job={statuses.kalshiFetch} label="Kalshi Fetch" />
           <JobCard job={statuses.oddsFetch} label="Odds Fetch" />
