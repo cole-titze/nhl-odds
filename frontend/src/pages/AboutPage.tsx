@@ -55,10 +55,33 @@ export function AboutPage() {
         </section>
 
         <section className="glass rounded-xl p-6 space-y-3">
-          <h2 className="font-display text-lg font-bold tracking-tight">Data source</h2>
+          <h2 className="font-display text-lg font-bold tracking-tight">Data sources</h2>
           <p className="text-surface-600 dark:text-surface-400 leading-relaxed">
-            All game data is collected from the NHL's public API. Data is available from the 2009-10
+            Game data is collected from the NHL's public API. Data is available from the 2009-10
             season onwards (the first season with modern play-by-play statistics).
+          </p>
+          <p className="text-surface-600 dark:text-surface-400 leading-relaxed">
+            Bookmaker odds are sourced from{' '}
+            <a
+              href="https://the-odds-api.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent-500 hover:underline"
+            >
+              The Odds API
+            </a>
+            . Per their terms of service, odds displayed here are for informational purposes only
+            and may not be redistributed or used as a data source. If you need odds data for your
+            own project, please use{' '}
+            <a
+              href="https://the-odds-api.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent-500 hover:underline"
+            >
+              The Odds API
+            </a>{' '}
+            or another licensed provider directly.
           </p>
         </section>
 
