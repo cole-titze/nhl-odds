@@ -41,6 +41,9 @@ builder.Services.AddLogging();
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddMcpServer()
+    .WithHttpTransport()
+    .WithToolsFromAssembly();
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 builder.Services.AddCors(options =>
@@ -72,5 +75,6 @@ if (app.Environment.IsDevelopment())
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapMcp("/mcp");
 
 app.Run();

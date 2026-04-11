@@ -61,6 +61,59 @@ export function AboutPage() {
             season onwards (the first season with modern play-by-play statistics).
           </p>
         </section>
+
+        <section className="glass rounded-xl p-6 space-y-3">
+          <h2 className="font-display text-lg font-bold tracking-tight">
+            Using MCP tools with Claude
+          </h2>
+          <p className="text-surface-600 dark:text-surface-400 leading-relaxed">
+            This API exposes an{' '}
+            <a
+              href="https://modelcontextprotocol.io"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent-500 hover:underline"
+            >
+              MCP (Model Context Protocol)
+            </a>{' '}
+            server that lets AI agents like Claude query NHL game data directly. To connect, add the
+            following to your Claude Desktop config:
+          </p>
+          <pre className="bg-surface-100 dark:bg-surface-800 rounded-lg p-4 text-sm font-mono text-surface-700 dark:text-surface-300 overflow-x-auto whitespace-pre">
+            {`{
+  "mcpServers": {
+    "nhl-odds": {
+      "url": "https://odds.nhl-wager.com/mcp"
+    }
+  }
+}`}
+          </pre>
+          <p className="text-surface-600 dark:text-surface-400 text-sm">
+            Once connected, Claude can use the following tools:
+          </p>
+          <ul className="text-surface-600 dark:text-surface-400 text-sm space-y-2">
+            <li>
+              <span className="font-mono text-accent-500">GetTodaysGames</span> — today's matchups
+              with model odds and bookmaker lines
+            </li>
+            <li>
+              <span className="font-mono text-accent-500">GetGamesInDateRange</span> — game odds and
+              predictions for any date range
+            </li>
+            <li>
+              <span className="font-mono text-accent-500">GetAllTeams</span> — all team stats,
+              win/loss records, and model accuracy for a season
+            </li>
+            <li>
+              <span className="font-mono text-accent-500">GetTeamStats</span> — detailed stats and
+              game history for a specific team
+            </li>
+            <li>
+              <span className="font-mono text-accent-500">GetHealthChecks</span> — data completeness
+              status per season
+            </li>
+          </ul>
+        </section>
       </div>
     </div>
   );
