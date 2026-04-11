@@ -1,10 +1,10 @@
 using System.Threading.RateLimiting;
-using Microsoft.AspNetCore.RateLimiting;
 using DatabaseAccess;
 using DatabaseAccess.WebAdminRepository;
 using DatabaseAccess.WebBookmakerOddsRepository;
 using DatabaseAccess.WebGameOddsRepository;
 using DatabaseAccess.WebTeamRepository;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using WebApi.BusinessLogic.AdminService;
 using WebApi.BusinessLogic.GameOddsGetter;
