@@ -106,7 +106,7 @@ export function AboutPage() {
             {`{
   "mcpServers": {
     "nhl-odds": {
-      "url": "https://odds.nhl-wager.com/mcp"
+      "url": "https://odds.nhlwager.com/mcp"
     }
   }
 }`}
