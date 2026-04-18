@@ -1,0 +1,1 @@
+* * * * * . /app/.env && /app/poll-requests.sh >> /proc/1/fd/1 2>&1
