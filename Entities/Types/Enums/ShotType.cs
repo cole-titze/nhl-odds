@@ -17,7 +17,7 @@ public enum ShotType
 }
 public static class ShotTypeParser
 {
-    public static ShotType ParseFromString(string shotType)
+    public static ShotType ParseFromString(string? shotType)
     {
         switch (shotType)
         {

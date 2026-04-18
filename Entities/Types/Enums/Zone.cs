@@ -9,7 +9,7 @@ public enum Zone
 }
 public static class ZoneParser
 {
-    public static Zone ParseFromString(string zoneType)
+    public static Zone ParseFromString(string? zoneType)
     {
         switch (zoneType)
         {
