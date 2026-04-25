@@ -1327,4 +1327,6 @@ appsettings.Development.json
 
 # Frontend
 frontend/node_modules/
-frontend/dist/
+frontend/dist/.env
+.env
+*.dump
