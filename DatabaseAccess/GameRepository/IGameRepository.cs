@@ -16,4 +16,3 @@ public interface IGameRepository
     Task<int> GetSavedGameCountForSeason(int seasonStartYear);
     Task<int?> GetGameCountForSeason(int seasonStartYear);
 }
-

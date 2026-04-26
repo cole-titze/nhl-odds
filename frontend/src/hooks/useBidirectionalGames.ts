@@ -35,7 +35,12 @@ interface BidiState {
 type Action =
   | { type: 'INIT'; seasonStartYear: number; explicitAnchor?: string | null }
   | { type: 'ANCHOR_RESOLVED'; anchorDate: string | null }
-  | { type: 'INIT_CHUNK_SUCCESS'; gamesByDate: Map<string, GameOddsVM[]>; lower: string; upper: string }
+  | {
+      type: 'INIT_CHUNK_SUCCESS';
+      gamesByDate: Map<string, GameOddsVM[]>;
+      lower: string;
+      upper: string;
+    }
   | { type: 'INIT_CHUNK_ERROR'; error: string }
   | { type: 'LOAD_OLDER_START' }
   | { type: 'LOAD_OLDER_SUCCESS'; games: GameOddsVM[]; newEarliest: string; isEmpty: boolean }
@@ -169,27 +174,24 @@ export function useBidirectionalGames(seasonStartYear: number) {
     stateRef.current = state;
   });
 
-  const loadInitialChunk = useCallback(
-    async (anchor: string, season: number, myEpoch: number) => {
-      const lower = addDaysIso(anchor, -HALF_CHUNK);
-      const upper = addDaysIso(anchor, HALF_CHUNK);
-      try {
-        const games = await getGameOddsInDateRange(lower, upper, season);
-        if (epochRef.current !== myEpoch) return;
-        const map = new Map<string, GameOddsVM[]>();
-        for (const g of games) {
-          const k = gameDateBucket(g.gameDate);
-          const prev = map.get(k);
-          map.set(k, prev ? [...prev, g] : [g]);
-        }
-        dispatch({ type: 'INIT_CHUNK_SUCCESS', gamesByDate: map, lower, upper });
-      } catch (err) {
-        if (epochRef.current !== myEpoch) return;
-        dispatch({ type: 'INIT_CHUNK_ERROR', error: (err as Error).message });
+  const loadInitialChunk = useCallback(async (anchor: string, season: number, myEpoch: number) => {
+    const lower = addDaysIso(anchor, -HALF_CHUNK);
+    const upper = addDaysIso(anchor, HALF_CHUNK);
+    try {
+      const games = await getGameOddsInDateRange(lower, upper, season);
+      if (epochRef.current !== myEpoch) return;
+      const map = new Map<string, GameOddsVM[]>();
+      for (const g of games) {
+        const k = gameDateBucket(g.gameDate);
+        const prev = map.get(k);
+        map.set(k, prev ? [...prev, g] : [g]);
       }
-    },
-    [],
-  );
+      dispatch({ type: 'INIT_CHUNK_SUCCESS', gamesByDate: map, lower, upper });
+    } catch (err) {
+      if (epochRef.current !== myEpoch) return;
+      dispatch({ type: 'INIT_CHUNK_ERROR', error: (err as Error).message });
+    }
+  }, []);
 
   // Resolve anchor + initial chunk whenever season changes.
   useEffect(() => {

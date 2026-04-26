@@ -53,4 +53,3 @@ public class NhlApiGameGetter : INhlGameGetter
         return gameSummaryResponse.GameSummaryResponseToGame(gameStatResponse, gameEventResponse);
     }
 }
-

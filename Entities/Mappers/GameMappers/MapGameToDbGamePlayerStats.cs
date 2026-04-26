@@ -92,4 +92,3 @@ public static class MapGameToDbGamePlayerStats
         };
     }
 }
-

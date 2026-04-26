@@ -29,4 +29,3 @@ public static class MapDbGameOfficialToLinesmen
         return linesmenList;
     }
 }
-

@@ -11,4 +11,3 @@ public interface IPlayerRepository
     Task<Player?> GetPlayer(int playerId);
     Task Commit();
 }
-

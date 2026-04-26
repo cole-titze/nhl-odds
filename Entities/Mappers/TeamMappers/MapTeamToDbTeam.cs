@@ -26,4 +26,3 @@ public static class MapTeamToDbTeam
         return teamList;
     }
 }
-

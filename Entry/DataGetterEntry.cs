@@ -150,4 +150,3 @@ public class DataGetterEntry
         _logger.LogTrace("Completed Data Collection in " + minutes + " minutes");
     }
 }
-

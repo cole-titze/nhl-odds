@@ -121,4 +121,3 @@ public class NhlApiPlayerGetter : INhlPlayerGetter
         return playerSummaryResponse.PlayerResponseToPlayer(currentGameTeamId);
     }
 }
-

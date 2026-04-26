@@ -67,4 +67,3 @@ public static class MapDbGamePlayerStatsToGamePlayerStats
         return gameGoalieStatsList;
     }
 }
-

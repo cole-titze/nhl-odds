@@ -99,4 +99,3 @@ public class NhlApiScheduleGetter : INhlScheduleGetter
         return standingsServiceResponse.AllTeamsResponseToTeams();
     }
 }
-

@@ -43,4 +43,3 @@ public static class MapGameToDbGameEvent
         return dbGameEvents;
     }
 }
-

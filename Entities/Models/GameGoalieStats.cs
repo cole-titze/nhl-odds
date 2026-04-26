@@ -16,4 +16,3 @@ public class GameGoalieStats : IGamePlayerStats
     public bool IsStarter { get; set; }
     public POSITION Position { get; set; } = POSITION.Goalie;
 }
-

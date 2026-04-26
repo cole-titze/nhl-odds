@@ -6,4 +6,3 @@ public interface INhlGameGetter
 {
     Task<Game?> GetGame(int gameId);
 }
-

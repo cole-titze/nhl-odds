@@ -43,4 +43,3 @@ public static class MapTeamToDbSeasonTeam
         return teamList;
     }
 }
-
