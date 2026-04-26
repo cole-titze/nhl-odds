@@ -8,4 +8,5 @@ public interface IGameOddsRepository
     Task<IEnumerable<GameOdds>> GetGameOddsInDateRange(DateRange dateRange, int seasonStartYear);
     Task<IEnumerable<GameOdds>> GetTeamGameOdds(int teamId, int seasonStartYear);
     Task<List<GameOdds>> GetAllGameOddsForSeason(int seasonStartYear);
+    Task<DateTime?> GetAnchorDate(int seasonStartYear);
 }

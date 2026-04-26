@@ -1,4 +1,4 @@
-import { format, parseISO } from 'date-fns';
+import { addDays, format, parseISO } from 'date-fns';
 
 export function formatDate(date: Date): string {
   return format(date, 'yyyy-MM-dd');
@@ -14,4 +14,19 @@ export function formatShortDate(dateStr: string): string {
 
 export function toDateInputValue(date: Date): string {
   return format(date, 'yyyy-MM-dd');
+}
+
+export function addDaysIso(iso: string, n: number): string {
+  return formatDate(addDays(parseISO(iso), n));
+}
+
+// Inclusive list of yyyy-MM-dd strings from startIso to endIso (start <= end).
+export function enumerateDateRange(startIso: string, endIso: string): string[] {
+  const out: string[] = [];
+  let cursor = startIso;
+  while (cursor <= endIso) {
+    out.push(cursor);
+    cursor = addDaysIso(cursor, 1);
+  }
+  return out;
 }

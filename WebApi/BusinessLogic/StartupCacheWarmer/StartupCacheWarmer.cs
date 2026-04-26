@@ -75,6 +75,9 @@ public class StartupCacheWarmer : BackgroundService
             var seasonRange = new DateRange { StartDate = seasonStart, EndDate = seasonEnd };
             var seasonOdds = await gameOddsGetter.GetGameOddsInDateRange(seasonRange, seasonStartYear);
             _cache.Set($"GameOdds_{seasonStart:yyyy-MM-dd}_{seasonEnd:yyyy-MM-dd}_{seasonStartYear}", seasonOdds);
+
+            var anchor = await gameOddsGetter.GetAnchorDate(seasonStartYear);
+            _cache.Set($"AnchorDate_{seasonStartYear}", anchor, TimeSpan.FromMinutes(15));
         }
         catch (Exception ex)
         {

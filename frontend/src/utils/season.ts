@@ -1,4 +1,4 @@
-const FIRST_SEASON = 2009;
+export const FIRST_SEASON = 2009;
 
 export function getCurrentSeason(date: Date = new Date()): number {
   const year = date.getFullYear();

@@ -1,50 +1,116 @@
-import { useState } from 'react';
-import { DateNav } from '../components/DateNav';
-import { GameCard } from '../components/GameCard';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { GamesFeed } from '../components/GamesFeed';
+import { SeasonSelector } from '../components/SeasonSelector';
 import { CardSkeleton } from '../components/Skeleton';
-import { useFetch } from '../hooks/useFetch';
-import { getGameOddsInDateRange } from '../api/gameOdds';
-import { formatDate } from '../utils/dates';
+import { useBidirectionalGames } from '../hooks/useBidirectionalGames';
+import { toDateInputValue } from '../utils/dates';
 import { getCurrentSeason } from '../utils/season';
 
 export type OddsType = 'moneyline' | 'spread' | 'overUnder';
 
 export function GamesPage() {
-  const [date, setDate] = useState(new Date());
   const [oddsType, setOddsType] = useState<OddsType>('moneyline');
-  const dateStr = formatDate(date);
-  const season = getCurrentSeason(date);
-
+  const [season, setSeason] = useState(getCurrentSeason());
   const {
-    data: games,
-    loading,
+    anchorDate,
+    earliestLoaded,
+    latestLoaded,
+    gamesByDate,
+    initialStatus,
+    olderStatus,
+    newerStatus,
+    hasMoreOlder,
+    hasMoreNewer,
     error,
-  } = useFetch(() => getGameOddsInDateRange(dateStr, dateStr, season), [dateStr, season]);
+    prependPending,
+    loadOlder,
+    loadNewer,
+    jumpToDate,
+    acknowledgePrepend,
+    seasonStartYear,
+  } = useBidirectionalGames(season);
+
+  const topSentinelRef = useRef<HTMLDivElement | null>(null);
+  const bottomSentinelRef = useRef<HTMLDivElement | null>(null);
+
+  // Auto-load via IntersectionObserver. rootMargin pre-fires the load 600px
+  // before the user reaches the edge so the next chunk arrives without a stall.
+  useEffect(() => {
+    const top = topSentinelRef.current;
+    const bot = bottomSentinelRef.current;
+    if (!top || !bot) return;
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          if (e.target === top) loadNewer();
+          else if (e.target === bot) loadOlder();
+        }
+      },
+      { rootMargin: '600px 0px 600px 0px', threshold: 0 },
+    );
+    io.observe(top);
+    io.observe(bot);
+    return () => io.disconnect();
+  }, [loadNewer, loadOlder, earliestLoaded, latestLoaded]);
+
+  // Restore scroll position after a prepend so the user's view stays anchored
+  // to the same content. Snapshot was captured at dispatch time inside the hook.
+  useLayoutEffect(() => {
+    if (!prependPending) return;
+    const { prevScrollHeight, prevScrollY } = prependPending;
+    const newHeight = document.documentElement.scrollHeight;
+    window.scrollTo({ top: prevScrollY + (newHeight - prevScrollHeight) });
+    acknowledgePrepend();
+  }, [prependPending, acknowledgePrepend]);
+
+  const initialLoading = initialStatus === 'loading';
+  const initialError = initialStatus === 'error';
+  const ready = initialStatus === 'idle' && earliestLoaded && latestLoaded;
+
+  // Date used by the date-picker input — defaults to anchor while resolving.
+  const dateInputValue = anchorDate ?? toDateInputValue(new Date());
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-6">
-        <DateNav date={date} onChange={setDate} />
-        <div className="flex gap-1">
-          {(['moneyline', 'spread', 'overUnder'] as const).map((type) => (
-            <button
-              key={type}
-              onClick={() => setOddsType(type)}
-              className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                oddsType === type
-                  ? 'bg-accent-500 text-white'
-                  : 'glass text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200'
-              }`}
-            >
-              {type === 'moneyline' ? 'Moneyline' : type === 'spread' ? 'Spread' : 'Over/Under'}
-            </button>
-          ))}
+      <div className="sticky top-16 z-10 -mx-5 px-5 py-3 mb-6 backdrop-blur bg-white/70 dark:bg-surface-950/70 border-b border-surface-200/60 dark:border-white/[0.06]">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={dateInputValue}
+              onChange={(e) => {
+                if (!e.target.value) return;
+                jumpToDate(new Date(e.target.value + 'T12:00:00'));
+              }}
+              className="px-2.5 py-1.5 rounded-lg glass text-sm font-mono cursor-pointer"
+            />
+            <SeasonSelector value={season} onChange={setSeason} />
+          </div>
+          <div className="flex gap-1">
+            {(['moneyline', 'spread', 'overUnder'] as const).map((type) => (
+              <button
+                key={type}
+                onClick={() => setOddsType(type)}
+                className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                  oddsType === type
+                    ? 'bg-accent-500 text-white'
+                    : 'glass text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200'
+                }`}
+              >
+                {type === 'moneyline' ? 'Moneyline' : type === 'spread' ? 'Spread' : 'Over/Under'}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {error && <div className="glass rounded-xl text-center text-red-500 py-8 px-4">{error}</div>}
+      {initialError && (
+        <div className="glass rounded-xl text-center text-red-500 py-8 px-4">{error}</div>
+      )}
 
-      {loading && (
+      {initialLoading && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <CardSkeleton key={i} />
@@ -52,35 +118,22 @@ export function GamesPage() {
         </div>
       )}
 
-      {!loading && !error && games && games.length === 0 && (
-        <div className="text-center py-20">
-          <div className="text-surface-300 dark:text-surface-700 text-5xl mb-4">
-            <svg
-              className="w-12 h-12 mx-auto"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-          </div>
-          <p className="text-surface-400 dark:text-surface-500 font-medium">
-            No games scheduled for this date.
-          </p>
-        </div>
-      )}
-
-      {!loading && games && games.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {games.map((game) => (
-            <GameCard key={game.id} game={game} oddsType={oddsType} />
-          ))}
-        </div>
+      {ready && (
+        <GamesFeed
+          gamesByDate={gamesByDate}
+          earliestLoaded={earliestLoaded!}
+          latestLoaded={latestLoaded!}
+          oddsType={oddsType}
+          topSentinelRef={topSentinelRef}
+          bottomSentinelRef={bottomSentinelRef}
+          olderStatus={olderStatus}
+          newerStatus={newerStatus}
+          hasMoreOlder={hasMoreOlder}
+          hasMoreNewer={hasMoreNewer}
+          seasonStartYear={seasonStartYear}
+          onLoadPrevSeason={() => setSeason((s) => Math.max(2009, s - 1))}
+          onLoadNextSeason={() => setSeason((s) => Math.min(getCurrentSeason(), s + 1))}
+        />
       )}
     </div>
   );

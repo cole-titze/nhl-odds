@@ -35,4 +35,16 @@ public class GameOddsController
         _cache.Set(cacheKey, result);
         return Results.Ok(result);
     }
+
+    [HttpGet]
+    public async Task<IResult> GetAnchorDate(int seasonStartYear)
+    {
+        var cacheKey = $"AnchorDate_{seasonStartYear}";
+        if (_cache.TryGetValue(cacheKey, out object? cached))
+            return Results.Ok(cached);
+
+        var result = await _gameOddsGetter.GetAnchorDate(seasonStartYear);
+        _cache.Set(cacheKey, result, TimeSpan.FromMinutes(15));
+        return Results.Ok(result);
+    }
 }

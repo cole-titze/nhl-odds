@@ -144,4 +144,29 @@ public class GameOddsRepository : IGameOddsRepository
             .Select(g => g.OrderByDescending(x => x.RunDateUTC).First())
             .ToList();
     }
+
+    public async Task<DateTime?> GetAnchorDate(int seasonStartYear)
+    {
+        var nowCentralDate = DateTime.UtcNow.AddHours(-6).Date;
+
+        var upcoming = await _dbContext.GameRaw
+            .AsNoTracking()
+            .Where(g => g.SeasonStartYear == seasonStartYear
+                && g.GameDateUTC.AddHours(-6).Date >= nowCentralDate)
+            .OrderBy(g => g.GameDateUTC)
+            .Select(g => (DateTime?)g.GameDateUTC)
+            .FirstOrDefaultAsync();
+
+        if (upcoming.HasValue) return upcoming.Value.AddHours(-6).Date;
+
+        var past = await _dbContext.GameRaw
+            .AsNoTracking()
+            .Where(g => g.SeasonStartYear == seasonStartYear
+                && g.GameDateUTC.AddHours(-6).Date < nowCentralDate)
+            .OrderByDescending(g => g.GameDateUTC)
+            .Select(g => (DateTime?)g.GameDateUTC)
+            .FirstOrDefaultAsync();
+
+        return past?.AddHours(-6).Date;
+    }
 }

@@ -41,4 +41,10 @@ public class GameOddsGetter : IGameOddsGetter
         team.GameOdds = await _gameOddsRepository.GetTeamGameOdds(team.Team.Id, seasonStartYear);
         return team;
     }
+
+    public async Task<AnchorDateVM> GetAnchorDate(int seasonStartYear)
+    {
+        var anchor = await _gameOddsRepository.GetAnchorDate(seasonStartYear);
+        return new AnchorDateVM { AnchorDate = anchor };
+    }
 }

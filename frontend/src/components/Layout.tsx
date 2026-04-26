@@ -8,7 +8,7 @@ export function Layout() {
 
   return (
     <OddsFormatContext.Provider value={oddsFormat}>
-      <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-surface-50 dark:bg-surface-950">
+      <div className="relative flex min-h-screen flex-col overflow-x-clip bg-surface-50 dark:bg-surface-950">
         <Navbar />
         <main className="relative z-10 mx-auto w-full max-w-6xl flex-1 px-5 py-8">
           <Outlet />
