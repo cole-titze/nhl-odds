@@ -24,7 +24,7 @@ services:
   webapi:
     build:
       context: .
-      dockerfile: WebApi/Dockerfile
+      dockerfile: src/WebApi/Dockerfile
     restart: always
     environment:
       - NHL_DATABASE=Host=database;Database=nhl;Username=postgres;Password=${POSTGRES_PASSWORD}
@@ -35,7 +35,7 @@ services:
   entry:
     build:
       context: .
-      dockerfile: Entry/Dockerfile
+      dockerfile: src/Entry/Dockerfile
     profiles: ["jobs"]
     environment:
       - NHL_DATABASE=Host=database;Database=nhl;Username=postgres;Password=${POSTGRES_PASSWORD}

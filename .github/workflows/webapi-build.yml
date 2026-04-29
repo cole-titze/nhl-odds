@@ -4,19 +4,17 @@ on:
   push:
     branches: [main]
     paths:
-      - 'WebApi/**'
-      - 'DatabaseAccess/**'
-      - 'Entities/**'
-      - 'WebBusinessLogic/**'
+      - 'src/WebApi/**'
+      - 'src/DatabaseAccess/**'
+      - 'src/Entities/**'
       - 'nhl-odds.sln'
       - '.github/workflows/webapi-build.yml'
   pull_request:
     branches: [main]
     paths:
-      - 'WebApi/**'
-      - 'DatabaseAccess/**'
-      - 'Entities/**'
-      - 'WebBusinessLogic/**'
+      - 'src/WebApi/**'
+      - 'src/DatabaseAccess/**'
+      - 'src/Entities/**'
       - 'nhl-odds.sln'
       - '.github/workflows/webapi-build.yml'
   schedule:
@@ -66,7 +64,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: WebApi/Dockerfile
+          file: src/WebApi/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}

@@ -4,25 +4,25 @@ on:
   push:
     branches: [main]
     paths:
-      - 'Entry/**'
-      - 'DataGetter/**'
-      - 'DataCleaner/**'
-      - 'DatabaseAccess/**'
-      - 'Entities/**'
-      - 'Services/**'
-      - 'BookmakerOddsGetter/**'
+      - 'src/Entry/**'
+      - 'src/DataGetter/**'
+      - 'src/DataCleaner/**'
+      - 'src/DatabaseAccess/**'
+      - 'src/Entities/**'
+      - 'src/Services/**'
+      - 'src/BookmakerOddsGetter/**'
       - 'nhl-odds.sln'
       - '.github/workflows/entry-build.yml'
   pull_request:
     branches: [main]
     paths:
-      - 'Entry/**'
-      - 'DataGetter/**'
-      - 'DataCleaner/**'
-      - 'DatabaseAccess/**'
-      - 'Entities/**'
-      - 'Services/**'
-      - 'BookmakerOddsGetter/**'
+      - 'src/Entry/**'
+      - 'src/DataGetter/**'
+      - 'src/DataCleaner/**'
+      - 'src/DatabaseAccess/**'
+      - 'src/Entities/**'
+      - 'src/Services/**'
+      - 'src/BookmakerOddsGetter/**'
       - 'nhl-odds.sln'
       - '.github/workflows/entry-build.yml'
   schedule:
@@ -72,7 +72,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: Entry/Dockerfile
+          file: src/Entry/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}

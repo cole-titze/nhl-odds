@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DataGetter\DataGetter.csproj" />
+    <ProjectReference Include="..\..\src\DataGetter\DataGetter.csproj" />
   </ItemGroup>
 
 </Project>

@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BookmakerOddsGetter\BookmakerOddsGetter.csproj" />
+    <ProjectReference Include="..\..\src\BookmakerOddsGetter\BookmakerOddsGetter.csproj" />
   </ItemGroup>
 
 </Project>

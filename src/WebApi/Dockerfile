@@ -1,15 +1,15 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-COPY WebApi/WebApi.csproj WebApi/
-COPY DatabaseAccess/DatabaseAccess.csproj DatabaseAccess/
-COPY Entities/Entities.csproj Entities/
-RUN dotnet restore WebApi/WebApi.csproj
+COPY src/WebApi/WebApi.csproj src/WebApi/
+COPY src/DatabaseAccess/DatabaseAccess.csproj src/DatabaseAccess/
+COPY src/Entities/Entities.csproj src/Entities/
+RUN dotnet restore src/WebApi/WebApi.csproj
 
-COPY WebApi/ WebApi/
-COPY DatabaseAccess/ DatabaseAccess/
-COPY Entities/ Entities/
-RUN dotnet publish WebApi/WebApi.csproj -c Release -o /app/publish
+COPY src/WebApi/ src/WebApi/
+COPY src/DatabaseAccess/ src/DatabaseAccess/
+COPY src/Entities/ src/Entities/
+RUN dotnet publish src/WebApi/WebApi.csproj -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine
 RUN apk upgrade --no-cache && apk add --no-cache icu-libs tzdata

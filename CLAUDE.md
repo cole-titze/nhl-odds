@@ -13,16 +13,16 @@ A .NET 9 C# solution that collects NHL game data from the NHL public API, stores
 dotnet build
 
 # Run the data collector (from repo root)
-dotnet run --project Entry
+dotnet run --project src/Entry
 
 # Run the web API
-dotnet run --project WebApi
+dotnet run --project src/WebApi
 
 # Run all tests
 dotnet test
 
 # Build a specific project
-dotnet build DataGetter/DataGetter.csproj
+dotnet build src/DataGetter/DataGetter.csproj
 
 # Frontend (from frontend/ directory)
 cd frontend && npm install    # install dependencies
@@ -47,10 +47,10 @@ The app reads config in priority order:
    - `ODDS_API_KEY` — The Odds API key (for `NextDayOdds` mode)
    - `API_BACKFILL_KEY` — The Odds API key for backfill (can be different quota)
 
-2. **`Entry/appsettings.Local.json`** (local dev, gitignored):
-   - Copy the structure from `Entry/appsettings.json` and fill in the connection string.
+2. **`src/Entry/appsettings.Local.json`** (local dev, gitignored):
+   - Copy the structure from `src/Entry/appsettings.json` and fill in the connection string.
 
-3. **`WebApi/appsettings.Development.json`** (local dev for Web API, gitignored):
+3. **`src/WebApi/appsettings.Development.json`** (local dev for Web API, gitignored):
    - Needs a `ConnectionStrings:NHL_DATABASE` entry. Falls back to `NHL_DATABASE` env var.
 
 ## Database Setup
@@ -72,28 +72,30 @@ psql -h localhost -U postgres -d nhl -f database/Scripts/CreateTables.sql
 
 ### Project Structure
 
+.NET projects live under `src/` (production) and `tests/` (test projects). Polyglot apps stay at the repo root.
+
 | Project | Role |
 |---|---|
-| `Entry` | Entrypoint — wires DI, reads config, kicks off `DataGetterEntry.Main()` |
-| `DataGetter` | Business logic — orchestrates fetching and saving per-season/game |
-| `Services` | NHL API HTTP clients — deserializes raw JSON into `ServiceModels` |
-| `DatabaseAccess` | EF Core repositories — maps domain models to/from DB (includes `Web*Repository` for the web API) |
-| `Entities` | Shared library — all models (domain, DB, service response, web ViewModels) and mappers |
-| `DataCleaner` | Stub — future data-cleaning pipeline |
+| `src/Entry` | Entrypoint — wires DI, reads config, kicks off `DataGetterEntry.Main()` |
+| `src/DataGetter` | Business logic — orchestrates fetching and saving per-season/game |
+| `src/Services` | NHL API HTTP clients — deserializes raw JSON into `ServiceModels` |
+| `src/DatabaseAccess` | EF Core repositories — maps domain models to/from DB (includes `Web*Repository` for the web API) |
+| `src/Entities` | Shared library — all models (domain, DB, service response, web ViewModels) and mappers |
+| `src/DataCleaner` | Stub — future data-cleaning pipeline |
 | `database` | SQL scripts for schema (not a C# project) |
-| `WebApi` | ASP.NET Core Web API — controllers, view model mappers, Swagger |
-| `WebBusinessLogic` | Web API business logic — team stats, game odds, log loss orchestration |
-| `BookmakerOddsGetter` | Fetches and backfills odds from The Odds API and Kalshi (no API key needed for Kalshi) |
+| `src/WebApi` | ASP.NET Core Web API — controllers, view model mappers, Swagger |
+| `src/BookmakerOddsGetter` | Fetches and backfills odds from The Odds API and Kalshi (no API key needed for Kalshi) |
+| `tests/` | xUnit/MSTest projects mirroring the `src/` projects under test |
 | `frontend` | React 19 + TypeScript + Vite + Tailwind CSS v4 frontend — game odds, team stats, team detail pages |
 
 ### Data Flow
 
 ```
 NHL API
-  → Services/NhlData (HTTP + JSON → ServiceModels)
-  → Entities/ServiceModels/Mappers (ServiceModels → domain Models)
-  → DataGetter/BusinessLogic (orchestration, caching, deduplication)
-  → Entities/Mappers (domain Models → DbModels)
+  → src/Services/NhlData (HTTP + JSON → ServiceModels)
+  → src/Entities/ServiceModels/Mappers (ServiceModels → domain Models)
+  → src/DataGetter/BusinessLogic (orchestration, caching, deduplication)
+  → src/Entities/Mappers (domain Models → DbModels)
   → DatabaseAccess repositories (EF Core upserts → PostgreSQL)
 ```
 
@@ -101,10 +103,9 @@ NHL API
 
 ```
 HTTP Request
-  → WebApi/Controllers (ASP.NET Core controllers)
-  → WebBusinessLogic (orchestration, stats aggregation)
-  → DatabaseAccess/Web*Repository (EF Core queries → PostgreSQL)
-  → WebApi/Mappers (domain models → ViewModels)
+  → src/WebApi/Controllers (ASP.NET Core controllers)
+  → src/DatabaseAccess/Web*Repository (EF Core queries → PostgreSQL)
+  → src/WebApi/Mappers (domain models → ViewModels)
   → JSON Response
 ```
 
@@ -128,10 +129,10 @@ HTTP Request
 - `WebDbContext.cs` (`GameDbContext`) — EF Core DbContext for web-facing tables
 
 **Mapper classes** (never AutoMapper) live in:
-- `Entities/ServiceModels/Mappers/` — NHL API response → domain model
-- `Entities/Mappers/` — domain model ↔ DB model
-- `DatabaseAccess/Web*Repository/Mappers/` — web DB model → web domain model
-- `WebApi/Mappers/` — web domain model → view model
+- `src/Entities/ServiceModels/Mappers/` — NHL API response → domain model
+- `src/Entities/Mappers/` — domain model ↔ DB model
+- `src/DatabaseAccess/Web*Repository/Mappers/` — web DB model → web domain model
+- `src/WebApi/Mappers/` — web domain model → view model
 
 **Run modes** (`ModeType` enum):
 - `NhlAdd` — skips seasons/games that already exist in the DB (fast incremental)
@@ -152,4 +153,4 @@ The first 4 digits of a game ID are always the season start year.
 
 **Commits are explicit** — repositories accumulate EF change tracking; callers must invoke `repo.Commit()` (which calls `SaveChangesAsync()`). `NhlDataManager` commits after each logical save step.
 
-**Data collection starts at 2009** (first season with modern play-by-play stats), defined as `START_YEAR` in `Entry/DataGetterEntry.cs`.
+**Data collection starts at 2009** (first season with modern play-by-play stats), defined as `START_YEAR` in `src/Entry/DataGetterEntry.cs`.

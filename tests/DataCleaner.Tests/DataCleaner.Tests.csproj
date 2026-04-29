@@ -14,8 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DataCleaner\DataCleaner.csproj" />
-    <ProjectReference Include="..\Entities\Entities.csproj" />
+    <ProjectReference Include="..\..\src\DataCleaner\DataCleaner.csproj" />
+    <ProjectReference Include="..\..\src\Entities\Entities.csproj" />
   </ItemGroup>
 
 </Project>
