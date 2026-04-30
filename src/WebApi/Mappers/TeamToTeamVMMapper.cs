@@ -47,10 +47,10 @@ public static class TeamToTeamVmMapper
 
     private static double GetAverageLogLoss(IEnumerable<GameOdds> gameOdds)
     {
-        var playedWithLogLoss = gameOdds.Where(g => g.Game.HasBeenPlayed && g.LogLoss > 0).ToList();
+        var playedWithLogLoss = gameOdds.Where(g => g.Game.HasBeenPlayed && g.LogLoss is double ll && ll > 0).ToList();
         if (playedWithLogLoss.Count == 0)
             return 0;
-        return playedWithLogLoss.Average(g => g.LogLoss);
+        return playedWithLogLoss.Average(g => g.LogLoss!.Value);
     }
 
     private static int GetCorrectModelPredictionCount(IEnumerable<GameOdds> gameOdds)
@@ -58,7 +58,9 @@ public static class TeamToTeamVmMapper
         int correctCount = 0;
         foreach (var gameOdd in gameOdds)
         {
-            correctCount += IsCorrectlyPredicted(gameOdd.Game, gameOdd.ModelHomeOdds, gameOdd.ModelAwayOdds);
+            if (gameOdd.ModelHomeOdds == null || gameOdd.ModelAwayOdds == null)
+                continue;
+            correctCount += IsCorrectlyPredicted(gameOdd.Game, gameOdd.ModelHomeOdds.Value, gameOdd.ModelAwayOdds.Value);
         }
         return correctCount;
     }

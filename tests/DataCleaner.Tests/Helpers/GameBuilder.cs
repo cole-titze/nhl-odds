@@ -32,6 +32,7 @@ public class GameBuilder
     private int _homeGiveaways = 7;
     private int _awayGiveaways = 6;
     private readonly bool _hasBeenPlayed = true;
+    private GameType _gameType = GameType.Regular;
 
     public GameBuilder WithId(int id) { _id = id; return this; }
     public GameBuilder WithTeams(int home, int away) { _homeTeamId = home; _awayTeamId = away; return this; }
@@ -54,6 +55,7 @@ public class GameBuilder
     public GameBuilder WithTakeaways(int home, int away) { _homeTakeaways = home; _awayTakeaways = away; return this; }
     public GameBuilder WithGiveaways(int home, int away) { _homeGiveaways = home; _awayGiveaways = away; return this; }
     public GameBuilder WithSeasonStartYear(int year) { _seasonStartYear = year; return this; }
+    public GameBuilder WithGameType(GameType gameType) { _gameType = gameType; return this; }
 
     public Game Build() => new()
     {
@@ -83,5 +85,6 @@ public class GameBuilder
         HomeGiveaways = _homeGiveaways,
         AwayGiveaways = _awayGiveaways,
         HasBeenPlayed = _hasBeenPlayed,
+        GameType = _gameType,
     };
 }

@@ -39,6 +39,7 @@ public static class GameOddsToViewModelsMapper
                 HomeTeam = homeTeam,
                 Winner = gameOdds.Game.Winner,
                 HasBeenPlayed = gameOdds.Game.HasBeenPlayed,
+                GameType = (int)gameOdds.Game.GameType,
                 LogLoss = gameOdds.LogLoss,
                 ModelId = gameOdds.ModelId,
                 BookmakerOdds = gameOdds.BookmakerOdds.Select(b => new BookmakerOddsVM

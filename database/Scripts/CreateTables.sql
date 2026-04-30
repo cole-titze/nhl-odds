@@ -66,6 +66,7 @@ CREATE TABLE "GameRaw"
     "Winner" INTEGER NOT NULL,
     "EndPeriod" INTEGER NOT NULL,
     "HasBeenPlayed" BOOLEAN NOT NULL,
+    "GameType" INTEGER NOT NULL DEFAULT 2,
     "GameSummary" TEXT NULL,
     "EventSummary" TEXT NULL,
     "PlayByPlaySummary" TEXT NULL,

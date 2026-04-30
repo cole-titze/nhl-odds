@@ -23,17 +23,15 @@ public class GameOddsRepository : IGameOddsRepository
     {
         var seasonTeams = await GetSeasonTeams(seasonStartYear);
 
-        var dbGameOdds = await _dbContext.GameOdds
+        var games = await _dbContext.GameRaw
             .AsNoTracking()
-            .Include(x => x.Game)
-            .Where(x => x.Game != null
-                && x.Game.GameDateUTC.AddHours(-6).Date >= dateRange.StartDate.Date
-                && x.Game.GameDateUTC.AddHours(-6).Date <= dateRange.EndDate.Date)
-            .OrderBy(x => x.Game!.GameDateUTC)
+            .Where(g => g.GameDateUTC.AddHours(-6).Date >= dateRange.StartDate.Date
+                     && g.GameDateUTC.AddHours(-6).Date <= dateRange.EndDate.Date)
+            .OrderBy(g => g.GameDateUTC)
             .ToListAsync();
 
-        var latestPerGame = GetLatestOddsPerGame(dbGameOdds);
-        var gameOdds = DbGameOddsToGameOddsMapper.Map(latestPerGame, seasonTeams);
+        var latestByGame = await GetLatestOddsForGames(games);
+        var gameOdds = DbGameOddsToGameOddsMapper.Map(games, latestByGame, seasonTeams);
 
         await AttachBookmakerOdds(gameOdds);
         await AttachSpreadTotalPredictions(gameOdds);
@@ -44,21 +42,35 @@ public class GameOddsRepository : IGameOddsRepository
     {
         var seasonTeams = await GetSeasonTeams(seasonStartYear);
 
-        var dbGameOdds = await _dbContext.GameOdds
+        var games = await _dbContext.GameRaw
             .AsNoTracking()
-            .Include(x => x.Game)
-            .Where(x => x.Game != null
-                && (x.Game.AwayTeamId == teamId || x.Game.HomeTeamId == teamId)
-                && x.Game.SeasonStartYear == seasonStartYear)
-            .OrderByDescending(x => x.Game!.GameDateUTC)
+            .Where(g => (g.AwayTeamId == teamId || g.HomeTeamId == teamId)
+                     && g.SeasonStartYear == seasonStartYear)
+            .OrderByDescending(g => g.GameDateUTC)
             .ToListAsync();
 
-        var latestPerGame = GetLatestOddsPerGame(dbGameOdds);
-        var gameOdds = DbGameOddsToGameOddsMapper.Map(latestPerGame, seasonTeams);
+        var latestByGame = await GetLatestOddsForGames(games);
+        var gameOdds = DbGameOddsToGameOddsMapper.Map(games, latestByGame, seasonTeams);
 
         await AttachBookmakerOdds(gameOdds);
         await AttachSpreadTotalPredictions(gameOdds);
         return gameOdds;
+    }
+
+    private async Task<Dictionary<int, DbGameOdds>> GetLatestOddsForGames(IEnumerable<DbGameRaw> games)
+    {
+        var gameIds = games.Select(g => g.Id).ToList();
+        if (gameIds.Count == 0)
+            return new Dictionary<int, DbGameOdds>();
+
+        var allOdds = await _dbContext.GameOdds
+            .AsNoTracking()
+            .Where(o => gameIds.Contains(o.GameId))
+            .ToListAsync();
+
+        return allOdds
+            .GroupBy(o => o.GameId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(o => o.RunDateUTC).First());
     }
 
     private async Task AttachBookmakerOdds(List<GameOdds> gameOddsList)
@@ -122,27 +134,17 @@ public class GameOddsRepository : IGameOddsRepository
     {
         var seasonTeams = await GetSeasonTeams(seasonStartYear);
 
-        var dbGameOdds = await _dbContext.GameOdds
+        var games = await _dbContext.GameRaw
             .AsNoTracking()
-            .Include(x => x.Game)
-            .Where(x => x.Game != null
-                && x.Game.SeasonStartYear == seasonStartYear)
+            .Where(g => g.SeasonStartYear == seasonStartYear)
             .ToListAsync();
 
-        var latestPerGame = GetLatestOddsPerGame(dbGameOdds);
-        var gameOdds = DbGameOddsToGameOddsMapper.Map(latestPerGame, seasonTeams);
+        var latestByGame = await GetLatestOddsForGames(games);
+        var gameOdds = DbGameOddsToGameOddsMapper.Map(games, latestByGame, seasonTeams);
 
         await AttachBookmakerOdds(gameOdds);
         await AttachSpreadTotalPredictions(gameOdds);
         return gameOdds;
-    }
-
-    private static List<DbGameOdds> GetLatestOddsPerGame(List<DbGameOdds> dbGameOdds)
-    {
-        return dbGameOdds
-            .GroupBy(x => x.GameId)
-            .Select(g => g.OrderByDescending(x => x.RunDateUTC).First())
-            .ToList();
     }
 
     public async Task<DateTime?> GetAnchorDate(int seasonStartYear)

@@ -4,10 +4,10 @@ namespace Entities.Models.Web;
 
 public class GameOdds
 {
-    public double ModelHomeOdds { get; set; }
-    public double ModelAwayOdds { get; set; }
-    public double LogLoss { get; set; }
-    public int ModelId { get; set; }
+    public double? ModelHomeOdds { get; set; }
+    public double? ModelAwayOdds { get; set; }
+    public double? LogLoss { get; set; }
+    public int? ModelId { get; set; }
     public Game Game { get; set; } = new Game();
     public List<BookmakerGameOdds> BookmakerOdds { get; set; } = new();
     public double? PredictedSpread { get; set; }

@@ -35,6 +35,7 @@ public static class MapGameToDbGame
             HomeGiveaways = game.HomeGiveaways,
             AwayGiveaways = game.AwayGiveaways,
             HasBeenPlayed = game.HasBeenPlayed,
+            GameType = game.GameType,
             GameSummary = game.ExtendedInfo?.GameSummary,
             EventSummary = game.ExtendedInfo?.EventSummary,
             PlayByPlaySummary = game.ExtendedInfo?.PlayByPlaySummary,

@@ -4,6 +4,7 @@ import type { GameOddsVM } from '../types';
 export function wasCorrectlyPredicted(game: GameOddsVM): boolean {
   if (!game.hasBeenPlayed || !game.homeTeam || !game.awayTeam) return false;
   const homeOdds = game.homeTeam.modelOdds;
+  if (homeOdds == null) return false;
   const predictedHome = homeOdds >= 0.5;
   const actualHome = game.winner === Winner.HOME;
   return predictedHome === actualHome;

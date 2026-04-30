@@ -52,6 +52,7 @@ public static class MapDbGameToGame
             HomeGiveaways = game.HomeGiveaways,
             AwayGiveaways = game.AwayGiveaways,
             HasBeenPlayed = game.HasBeenPlayed,
+            GameType = game.GameType,
             ExtendedInfo = extendedInfo,
         };
     }

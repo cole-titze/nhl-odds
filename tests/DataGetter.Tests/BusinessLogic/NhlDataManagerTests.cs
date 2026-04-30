@@ -40,6 +40,13 @@ public class NhlDataManagerTests
         _nhlDataGetter = A.Fake<NhlApiDataGetter>();
         _loggerFactory = A.Fake<ILoggerFactory>();
         A.CallTo(() => _loggerFactory.CreateLogger(A<string>.Ignored)).Returns(A.Fake<ILogger>());
+
+        // Force the playoff segment in FetchAndSaveSeasonData to terminate. Without these,
+        // FakeItEasy creates dummy Game instances for unconfigured Task<Game?> calls (Game has
+        // a parameterless ctor), so consecutiveUnavailable never increments and the
+        // knownCount=null playoff loop runs forever.
+        A.CallTo(() => _gameRepo.GetGame(A<int>.Ignored)).Returns((Game?)null);
+        A.CallTo(() => _nhlDataGetter.GameDataGetter.GetGame(A<int>.Ignored)).Returns((Game?)null);
     }
 
     private NhlDataManager CreateSut()
@@ -115,4 +122,5 @@ public class NhlDataManagerTests
         // 2020 should NOT be skipped since it's missing games
         A.CallTo(() => _teamRepo.HasSeasonTeams(2020)).MustHaveHappened();
     }
+
 }

@@ -10,7 +10,7 @@ export interface MatchupTeamVM {
   locationName: string;
   teamName: string;
   logoUri: string;
-  modelOdds: number;
+  modelOdds: number | null;
   goals: number;
   team: Winner;
 }
@@ -35,8 +35,9 @@ export interface GameOddsVM {
   awayTeam: MatchupTeamVM | null;
   winner: Winner;
   hasBeenPlayed: boolean;
-  logLoss: number;
-  modelId: number;
+  gameType: number;
+  logLoss: number | null;
+  modelId: number | null;
   bookmakerOdds: BookmakerOddsVM[];
   predictedSpread: number | null;
   spreadCoverProb: number | null;

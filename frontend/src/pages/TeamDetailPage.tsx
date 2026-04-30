@@ -257,7 +257,9 @@ export function TeamDetailPage() {
                         )}
                       </td>
                       <td className="py-3 px-4 text-center stat-number text-xs">
-                        {game.hasBeenPlayed ? game.logLoss.toFixed(4) : '-'}
+                        {game.hasBeenPlayed && game.logLoss != null
+                          ? game.logLoss.toFixed(4)
+                          : '-'}
                       </td>
                       <td className="py-3 px-4 text-center stat-number text-xs">
                         {game.hasBeenPlayed && dk

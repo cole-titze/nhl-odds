@@ -8,7 +8,7 @@ public class MatchupTeamVM
     public string LocationName { get; set; } = string.Empty;
     public string TeamName { get; set; } = string.Empty;
     public string LogoUri { get; set; } = string.Empty;
-    public double ModelOdds { get; set; }
+    public double? ModelOdds { get; set; }
     public int Goals { get; set; }
     public Winner Team { get; set; }
 }

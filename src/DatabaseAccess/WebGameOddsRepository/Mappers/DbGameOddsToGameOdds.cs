@@ -7,23 +7,28 @@ namespace DatabaseAccess.WebGameOddsRepository.Mappers;
 
 public static class DbGameOddsToGameOddsMapper
 {
-    public static List<GameOdds> Map(IEnumerable<DbGameOdds> dbGameOdds, Dictionary<int, DbSeasonTeam> seasonTeams)
+    public static List<GameOdds> Map(
+        IEnumerable<DbGameRaw> games,
+        IDictionary<int, DbGameOdds> latestOddsByGameId,
+        Dictionary<int, DbSeasonTeam> seasonTeams)
     {
         var gameOddsList = new List<GameOdds>();
-        foreach (var dbOdds in dbGameOdds)
+        foreach (var game in games)
         {
-            if (dbOdds.Game == null)
-                continue;
-
-            var game = dbOdds.Game;
             seasonTeams.TryGetValue(game.HomeTeamId, out var homeSeasonTeam);
             seasonTeams.TryGetValue(game.AwayTeamId, out var awaySeasonTeam);
 
-            var logLoss = dbOdds.LogLoss != 0
-                ? dbOdds.LogLoss
-                : game.HasBeenPlayed
-                    ? GameOdds.CalculateLogLoss(dbOdds.HomeOdds, dbOdds.AwayOdds, game.Winner)
-                    : 0;
+            latestOddsByGameId.TryGetValue(game.Id, out var dbOdds);
+
+            double? logLoss = null;
+            if (dbOdds != null)
+            {
+                logLoss = dbOdds.LogLoss != 0
+                    ? dbOdds.LogLoss
+                    : game.HasBeenPlayed
+                        ? GameOdds.CalculateLogLoss(dbOdds.HomeOdds, dbOdds.AwayOdds, game.Winner)
+                        : 0;
+            }
 
             gameOddsList.Add(new GameOdds
             {
@@ -37,12 +42,13 @@ public static class DbGameOddsToGameOddsMapper
                     Winner = game.Winner,
                     EndPeriod = game.EndPeriod,
                     HasBeenPlayed = game.HasBeenPlayed,
+                    GameType = game.GameType,
                     HomeTeam = homeSeasonTeam != null ? DbSeasonTeamToTeamMapper.Map(homeSeasonTeam) : new Team(),
                     AwayTeam = awaySeasonTeam != null ? DbSeasonTeamToTeamMapper.Map(awaySeasonTeam) : new Team(),
                 },
-                ModelHomeOdds = dbOdds.HomeOdds,
-                ModelAwayOdds = dbOdds.AwayOdds,
-                ModelId = dbOdds.ModelId,
+                ModelHomeOdds = dbOdds?.HomeOdds,
+                ModelAwayOdds = dbOdds?.AwayOdds,
+                ModelId = dbOdds?.ModelId,
                 LogLoss = logLoss,
             });
         }

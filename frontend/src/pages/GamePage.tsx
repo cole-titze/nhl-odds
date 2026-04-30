@@ -138,7 +138,7 @@ export function GamePage() {
             {game.homeTeam ? formatOdds(game.homeTeam.modelOdds, format) : '-'}
           </span>
         </div>
-        {game.hasBeenPlayed && (
+        {game.hasBeenPlayed && game.logLoss != null && (
           <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-surface-200/50 dark:border-white/[0.04]">
             <span
               className={`inline-block px-2.5 py-0.5 rounded text-xs font-bold ${

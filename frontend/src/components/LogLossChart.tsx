@@ -47,7 +47,7 @@ interface Props {
 
 export function LogLossChart({ games, deduplicateById }: Props) {
   const playedGames = useMemo(() => {
-    const filtered = games.filter((g) => g.hasBeenPlayed && g.logLoss > 0);
+    const filtered = games.filter((g) => g.hasBeenPlayed && g.logLoss != null && g.logLoss > 0);
     if (!deduplicateById) return filtered;
     const seen = new Set<number>();
     return filtered.filter((g) => {
@@ -90,7 +90,7 @@ export function LogLossChart({ games, deduplicateById }: Props) {
     const cumByBookmaker: Record<string, { sum: number; count: number }> = {};
 
     return sorted.map((g) => {
-      cumLogLoss += g.logLoss;
+      cumLogLoss += g.logLoss ?? 0;
       count++;
 
       const point: Record<string, string | number | undefined> = {

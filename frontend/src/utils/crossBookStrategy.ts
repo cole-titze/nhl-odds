@@ -30,8 +30,8 @@ function getRefOdds(game: GameOddsVM, refBookmaker: string): Partial<BookmakerOd
     if (!game.homeTeam || !game.awayTeam) return undefined;
     return {
       bookmakerName: MODEL_REFERENCE,
-      homeOdds: game.homeTeam.modelOdds,
-      awayOdds: game.awayTeam.modelOdds,
+      homeOdds: game.homeTeam.modelOdds ?? 0,
+      awayOdds: game.awayTeam.modelOdds ?? 0,
       homePoint: game.predictedSpread ?? 0,
       awayPoint: game.predictedSpread != null ? -game.predictedSpread : 0,
       homePrice: 0,

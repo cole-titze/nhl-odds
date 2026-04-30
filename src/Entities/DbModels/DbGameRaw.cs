@@ -32,6 +32,7 @@ public class DbGameRaw
     public int HomeGiveaways { get; set; }
     public int AwayGiveaways { get; set; }
     public bool HasBeenPlayed { get; set; }
+    public GameType GameType { get; set; } = GameType.Regular;
     public string? GameSummary { get; set; }
     public string? EventSummary { get; set; }
     public string? PlayByPlaySummary { get; set; }
@@ -79,6 +80,7 @@ public class DbGameRaw
         HomeGiveaways = game.HomeGiveaways;
         AwayGiveaways = game.AwayGiveaways;
         HasBeenPlayed = game.HasBeenPlayed;
+        GameType = game.GameType;
         GameSummary = game.GameSummary;
         EventSummary = game.EventSummary;
         PlayByPlaySummary = game.PlayByPlaySummary;
@@ -125,6 +127,7 @@ public class DbGameRaw
             && HomeGiveaways == other.HomeGiveaways
             && AwayGiveaways == other.AwayGiveaways
             && HasBeenPlayed == other.HasBeenPlayed
+            && GameType == other.GameType
             && GameSummary == other.GameSummary
             && EventSummary == other.EventSummary
             && PlayByPlaySummary == other.PlayByPlaySummary

@@ -1,6 +1,8 @@
 import type { OddsFormat } from '../hooks/useOddsFormat';
 
-export function formatOdds(probability: number, format: OddsFormat): string {
+export function formatOdds(probability: number | null | undefined, format: OddsFormat): string {
+  if (probability == null) return '—';
+
   if (format === 'pct') {
     return `${(probability * 100).toFixed(1)}%`;
   }

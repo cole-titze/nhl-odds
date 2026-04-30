@@ -10,8 +10,9 @@ public class GameOddsVM
     public MatchupTeamVM? AwayTeam { get; set; }
     public Winner Winner { get; set; }
     public bool HasBeenPlayed { get; set; }
-    public double LogLoss { get; set; }
-    public int ModelId { get; set; }
+    public int GameType { get; set; }
+    public double? LogLoss { get; set; }
+    public int? ModelId { get; set; }
     public List<BookmakerOddsVM> BookmakerOdds { get; set; } = new();
     public double? PredictedSpread { get; set; }
     public double? SpreadCoverProb { get; set; }

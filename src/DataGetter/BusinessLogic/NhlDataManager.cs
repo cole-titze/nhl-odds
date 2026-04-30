@@ -75,26 +75,41 @@ public class NhlDataManager
         var seasonGameCount = await _gameManager.GetSeasonGameCount(seasonStartYear, mode);
         await SaveSeasonSchedule(seasonStartYear, seasonGameCount);
 
+        await FetchSegment(seasonStartYear, mode,
+            n => NhlApiDataGetter.GetGameId(seasonStartYear, n), seasonGameCount);
+
+        // Playoff games have no clean schedule total — iterate until 404s in a row stop us.
+        await FetchSegment(seasonStartYear, mode,
+            n => NhlApiDataGetter.GetPlayoffGameId(seasonStartYear, n), knownCount: null);
+    }
+
+    /// <summary>
+    /// Fetches a contiguous segment of games (regular season or playoffs).
+    /// Iterates game numbers starting at 1; stops at <paramref name="knownCount"/> if provided,
+    /// otherwise stops once <c>maxConsecutiveUnavailable</c> sequential games come back null.
+    /// </summary>
+    private async Task FetchSegment(int seasonStartYear, ModeType mode, Func<int, int> idForCount, int? knownCount)
+    {
         const int maxConsecutiveUnavailable = 20;
         int consecutiveUnavailable = 0;
 
-        // game ids start at 1
-        for (int count = 1; count <= seasonGameCount; count++)
+        int count = 1;
+        while (knownCount == null || count <= knownCount.Value)
         {
-            int gameId = NhlApiDataGetter.GetGameId(seasonStartYear, count);
+            int gameId = idForCount(count);
             try
             {
-                // Skip games that already exist and have been played in Add mode
                 if (mode != ModeType.NhlUpdate && await _gameRepo.IsGamePlayed(gameId))
                 {
                     consecutiveUnavailable = 0;
+                    count++;
                     continue;
                 }
 
-                // Skip unplayed games whose date hasn't arrived yet — no need to re-fetch
                 if (mode != ModeType.NhlUpdate && await _gameRepo.IsUnplayedFutureGame(gameId))
                 {
                     _logger.LogInformation("Game {GameId} is a future game already saved. Skipping.", gameId);
+                    count++;
                     continue;
                 }
 
@@ -104,9 +119,10 @@ public class NhlDataManager
                     consecutiveUnavailable++;
                     if (consecutiveUnavailable >= maxConsecutiveUnavailable)
                     {
-                        _logger.LogInformation("Reached {Count} consecutive unavailable games after game {GameId}. Stopping season {Season} early.", maxConsecutiveUnavailable, gameId, seasonStartYear);
+                        _logger.LogInformation("Reached {Count} consecutive unavailable games after game {GameId}. Stopping segment for season {Season}.", maxConsecutiveUnavailable, gameId, seasonStartYear);
                         break;
                     }
+                    count++;
                     continue;
                 }
 
@@ -132,10 +148,12 @@ public class NhlDataManager
                     ExceptionType = ex.GetType().FullName ?? ex.GetType().Name,
                     Message = ex.Message,
                     StackTrace = topFrames,
-                    Source = "FetchAndSaveSeasonData"
+                    Source = "FetchSegment"
                 };
                 await _errorRepo.AddError(errorLog);
             }
+
+            count++;
         }
     }
 

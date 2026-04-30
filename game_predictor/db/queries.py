@@ -137,6 +137,7 @@ SELECT {_feature_cols_sql},
 FROM "GameCleaned" gc
 JOIN "GameRaw" gr ON gc."GameId" = gr."Id"
 WHERE gr."HasBeenPlayed" = true
+  AND gr."GameType" = 2
 """
 
 UNPLAYED_GAMES_QUERY = f"""
@@ -145,6 +146,7 @@ SELECT {_feature_cols_sql},
 FROM "GameCleaned" gc
 JOIN "GameRaw" gr ON gc."GameId" = gr."Id"
 WHERE gr."HasBeenPlayed" = false
+  AND gr."GameType" = 2
 """
 
 CURRENT_SEASON_GAMES_QUERY = f"""
@@ -154,6 +156,7 @@ SELECT {_feature_cols_sql},
 FROM "GameCleaned" gc
 JOIN "GameRaw" gr ON gc."GameId" = gr."Id"
 WHERE gr."SeasonStartYear" = (SELECT MAX("SeasonStartYear") FROM "GameRaw")
+  AND gr."GameType" = 2
 """
 
 TEAM_NAMES_QUERY = """

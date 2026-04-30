@@ -1,4 +1,6 @@
-﻿namespace Services.NhlData;
+﻿using Entities.Types.Enums;
+
+namespace Services.NhlData;
 
 public class NhlApiDataGetter
 {
@@ -21,6 +23,23 @@ public class NhlApiDataGetter
     public static int GetGameId(int seasonstartYear, int gameNumber)
     {
         return (seasonstartYear * 1000000) + 20000 + gameNumber;
+    }
+    /// <summary>
+    /// Builds a playoff game id (gameType=03)
+    /// </summary>
+    /// <param name="seasonStartYear">Year to use in id</param>
+    /// <param name="gameNumber">Playoff game number to use in id</param>
+    /// <returns>The internal playoff game id</returns>
+    public static int GetPlayoffGameId(int seasonStartYear, int gameNumber)
+    {
+        return (seasonStartYear * 1000000) + 30000 + gameNumber;
+    }
+    /// <summary>
+    /// Derives the game type from the game id by reading the 5th-6th digits.
+    /// </summary>
+    public static GameType GetGameTypeFromId(int gameId)
+    {
+        return ((gameId % 1000000) / 10000) == 3 ? GameType.Playoff : GameType.Regular;
     }
     /// <summary>
     /// Gets the full season id used by the Nhl Api

@@ -4,6 +4,7 @@ const MODEL_NAMES: Record<number, string> = {
   1: 'In-House Model',
 };
 
-export function getModelName(modelId: number): string {
+export function getModelName(modelId: number | null | undefined): string {
+  if (modelId == null) return 'No model';
   return MODEL_NAMES[modelId] ?? `Model ${modelId}`;
 }

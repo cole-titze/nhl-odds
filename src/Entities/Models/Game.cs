@@ -37,6 +37,7 @@ public class Game
     public int HomeGiveaways { get; set; }
     public int AwayGiveaways { get; set; }
     public bool HasBeenPlayed { get; set; }
+    public GameType GameType { get; set; } = GameType.Regular;
     public GameRosterStats? RosterStats { get; set; }
     public GameExtendedInfo? ExtendedInfo { get; set; }
     public GameEvents? GameEvents { get; set; }

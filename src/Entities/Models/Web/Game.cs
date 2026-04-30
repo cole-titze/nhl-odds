@@ -13,6 +13,7 @@ public class Game
     public Winner Winner { get; set; }
     public PeriodType EndPeriod { get; set; }
     public bool HasBeenPlayed { get; set; }
+    public GameType GameType { get; set; } = GameType.Regular;
     public Team HomeTeam { get; set; } = new Team();
     public Team AwayTeam { get; set; } = new Team();
 

@@ -187,6 +187,13 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
       state={{ game }}
       className={`glass rounded-xl px-5 py-4 block hover:ring-1 hover:ring-accent-500/30 transition-all ${cardClass}`}
     >
+      {game.gameType === 3 && (
+        <div className="flex justify-center mb-2">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-widest">
+            Playoffs
+          </span>
+        </div>
+      )}
       {valueBet && (
         <div className="flex justify-center mb-3">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold uppercase tracking-wide">

@@ -36,10 +36,13 @@ function prepareGames(games: GameOddsVM[], bookmaker: string): GameWithOdds[] {
     .map((g) => {
       const bk = g.bookmakerOdds.find((b) => b.bookmakerName === bookmaker);
       if (!bk || bk.homeOdds <= 0 || bk.awayOdds <= 0) return null;
+      const homeModelProb = g.homeTeam!.modelOdds;
+      const awayModelProb = g.awayTeam!.modelOdds;
+      if (homeModelProb == null || awayModelProb == null) return null;
       return {
         game: g,
-        homeModelProb: g.homeTeam!.modelOdds,
-        awayModelProb: g.awayTeam!.modelOdds,
+        homeModelProb,
+        awayModelProb,
         homeBookProb: bk.homeOdds,
         awayBookProb: bk.awayOdds,
       };
@@ -166,6 +169,7 @@ export function checkStrategy(
       if (bm.homeOdds <= 0 || bm.awayOdds <= 0) return null;
       const homeModel = game.homeTeam.modelOdds;
       const awayModel = game.awayTeam.modelOdds;
+      if (homeModel == null || awayModel == null) return null;
       const homeEdge = homeModel - bm.homeOdds;
       const awayEdge = awayModel - bm.awayOdds;
       if (homeEdge >= strategy.threshold && homeEdge >= awayEdge)
@@ -177,6 +181,7 @@ export function checkStrategy(
       if (bm.homeOdds <= 0 || bm.awayOdds <= 0) return null;
       const homeModel = game.homeTeam.modelOdds;
       const awayModel = game.awayTeam.modelOdds;
+      if (homeModel == null || awayModel == null) return null;
       const side: 'home' | 'away' = homeModel >= 0.5 ? 'home' : 'away';
       const edge = side === 'home' ? homeModel - bm.homeOdds : awayModel - bm.awayOdds;
       return { side, edge };
@@ -185,6 +190,7 @@ export function checkStrategy(
       if (bm.homeOdds <= 0 || bm.awayOdds <= 0) return null;
       const homeModel = game.homeTeam.modelOdds;
       const awayModel = game.awayTeam.modelOdds;
+      if (homeModel == null || awayModel == null) return null;
       const side: 'home' | 'away' = homeModel >= 0.5 ? 'home' : 'away';
       const bookProb = side === 'home' ? bm.homeOdds : bm.awayOdds;
       if (bookProb >= 0.5) return null;
@@ -195,6 +201,7 @@ export function checkStrategy(
       if (bm.homeOdds <= 0 || bm.awayOdds <= 0) return null;
       const homeModel = game.homeTeam.modelOdds;
       const awayModel = game.awayTeam.modelOdds;
+      if (homeModel == null || awayModel == null) return null;
       if (homeModel >= strategy.threshold) return { side: 'home', edge: homeModel - bm.homeOdds };
       if (awayModel >= strategy.threshold) return { side: 'away', edge: awayModel - bm.awayOdds };
       return null;

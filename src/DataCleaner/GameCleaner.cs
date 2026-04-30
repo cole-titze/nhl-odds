@@ -7,6 +7,7 @@ using DataCleaner.Mappers;
 using Entities.DbModels;
 using Entities.Models;
 using Entities.Types;
+using Entities.Types.Enums;
 using Microsoft.Extensions.Logging;
 
 namespace DataCleaner;
@@ -36,8 +37,10 @@ public class GameCleaner
     {
         for (int seasonStartYear = seasonYearRange.StartYear; seasonStartYear <= seasonYearRange.EndYear; seasonStartYear++)
         {
-            var seasonGames = await _gameRepo.GetSeasonGames(seasonStartYear);
-            var gamesToClean = seasonGames;
+            var seasonGames = (await _gameRepo.GetSeasonGames(seasonStartYear))
+                .Where(g => g.GameType == GameType.Regular)
+                .ToList();
+            var gamesToClean = (IEnumerable<Game>)seasonGames;
             var existingCleanedGames = await _cleanedGameRepo.GetSeasonOfCleanedGames(seasonStartYear);
 
             if (seasonStartYear != seasonYearRange.EndYear)
@@ -49,7 +52,9 @@ public class GameCleaner
                 continue;
             }
 
-            var lastSeasonGames = await _gameRepo.GetSeasonGames(seasonStartYear - 1);
+            var lastSeasonGames = (await _gameRepo.GetSeasonGames(seasonStartYear - 1))
+                .Where(g => g.GameType == GameType.Regular)
+                .ToList();
             var gameMap = new SeasonGames(seasonGames.Concat(lastSeasonGames));
 
             // Load player stats for current + previous season to build roster scorer
