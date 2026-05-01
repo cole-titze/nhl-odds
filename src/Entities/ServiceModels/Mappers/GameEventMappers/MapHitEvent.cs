@@ -21,7 +21,7 @@ public static class MapHitEvent
             PeriodNumber = responseGameEvent["periodDescriptor"]!["number"]!.GetValue<int>(),
             PeriodType = PeriodTypeParser.ParseFromString(responseGameEvent["periodDescriptor"]!["periodType"]!.GetValue<string>()),
             EventTypeName = responseGameEvent["typeDescKey"]!.GetValue<string>(),
-            HomeTeamDefendingSide = HomeTeamDefendingSideParser.ParseFromString(responseGameEvent["homeTeamDefendingSide"]!.GetValue<string>()),
+            HomeTeamDefendingSide = HomeTeamDefendingSideParser.ParseFromString(responseGameEvent["homeTeamDefendingSide"]?.GetValue<string>()),
             SecondsIntoPeriod = timeInPeriod.ParseIceTimeToSeconds(),
             SecondsLeftInPeriod = timeLeftInPeriod.ParseIceTimeToSeconds(),
             HittingPlayerTeamId = responseGameEvent["details"]!["eventOwnerTeamId"]!.GetValue<int>(),

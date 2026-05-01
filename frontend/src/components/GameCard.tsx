@@ -271,8 +271,8 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
           isWinner={game.hasBeenPlayed && game.winner === Winner.HOME}
           played={game.hasBeenPlayed}
         />
-        <div className="col-span-3 mt-2 pt-2 border-t border-surface-200/50 dark:border-white/[0.04]">
-          <div className="grid grid-cols-3 items-center text-[11px] font-mono">
+        <div className={`col-span-3 mt-2 ${game.gameType !== 3 ? 'pt-2 border-t border-surface-200/50 dark:border-white/[0.04]' : ''}`}>
+          {game.gameType !== 3 && <div className="grid grid-cols-3 items-center text-[11px] font-mono">
             {oddsType === 'moneyline' ? (
               <>
                 <span className={`text-center stat-number ${oddsColor}`}>
@@ -311,7 +311,7 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
                 <span className={`text-center stat-number ${oddsColor}`}>{'-'}</span>
               </>
             )}
-          </div>
+          </div>}
           {game.bookmakerOdds?.length > 0 &&
             (() => {
               const pinned = ['DraftKings', 'Kalshi'];

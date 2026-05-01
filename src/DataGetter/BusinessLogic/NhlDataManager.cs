@@ -293,6 +293,7 @@ public class NhlDataManager
     {
         var gameCount = await _gameRepo.GetSavedGameCountForSeason(seasonStartYear);
         var seasonGameCount = await _gameRepo.GetGameCountForSeason(seasonStartYear);
-        return seasonGameCount > 0 && gameCount == seasonGameCount;
+        if (!(seasonGameCount > 0 && gameCount >= seasonGameCount)) return false;
+        return await _gameRepo.HasPlayoffGamesForSeason(seasonStartYear);
     }
 }

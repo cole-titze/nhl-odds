@@ -30,6 +30,13 @@ public class GameRepository : IGameRepository
         return await _dbContext.GameRaw.Where(s => s.SeasonStartYear == seasonStartYear).CountAsync();
     }
 
+    public async Task<bool> HasPlayoffGamesForSeason(int seasonStartYear)
+    {
+        return await _dbContext.GameRaw
+            .Where(g => g.SeasonStartYear == seasonStartYear && g.GameType == Entities.Types.Enums.GameType.Playoff)
+            .AnyAsync();
+    }
+
     /// <summary>
     /// Gets total games for given season
     /// </summary>

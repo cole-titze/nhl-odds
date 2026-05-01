@@ -12,10 +12,15 @@ public static class MapGameEventsResponseToGameEvents
         var gameEvents = new List<IGameEvent>();
         foreach (var responseGameEvent in response!["plays"]!.AsArray())
         {
-            var gameEvent = GetGameEvent(responseGameEvent!);
-            if (gameEvent != null)
+            try
             {
-                gameEvents.Add(gameEvent);
+                var gameEvent = GetGameEvent(responseGameEvent!);
+                if (gameEvent != null)
+                    gameEvents.Add(gameEvent);
+            }
+            catch
+            {
+                // Older API data may omit fields added in later seasons; skip the individual event.
             }
         }
 
