@@ -33,9 +33,19 @@ export function GamesPage() {
   const topSentinelRef = useRef<HTMLDivElement | null>(null);
   const bottomSentinelRef = useRef<HTMLDivElement | null>(null);
 
+  const initialLoading = initialStatus === 'loading';
+  const initialError = initialStatus === 'error';
+  const ready = initialStatus === 'idle' && !!earliestLoaded && !!latestLoaded;
+
   // Auto-load via IntersectionObserver. rootMargin pre-fires the load 600px
   // before the user reaches the edge so the next chunk arrives without a stall.
+  // Deps use `ready` (boolean) instead of earliestLoaded/latestLoaded so the
+  // observer is only re-created when GamesFeed mounts/unmounts — not on every
+  // chunk load. Re-creating on every chunk load caused the IO to re-fire
+  // immediately for visible sentinels, cascading into repeated loads and
+  // content shifts in both directions.
   useEffect(() => {
+    if (!ready) return;
     const top = topSentinelRef.current;
     const bot = bottomSentinelRef.current;
     if (!top || !bot) return;
@@ -53,7 +63,7 @@ export function GamesPage() {
     io.observe(top);
     io.observe(bot);
     return () => io.disconnect();
-  }, [loadNewer, loadOlder, earliestLoaded, latestLoaded]);
+  }, [ready, loadNewer, loadOlder]);
 
   // Restore scroll position after a prepend so the user's view stays anchored
   // to the same content. Snapshot was captured at dispatch time inside the hook.
@@ -64,10 +74,6 @@ export function GamesPage() {
     window.scrollTo({ top: prevScrollY + (newHeight - prevScrollHeight) });
     acknowledgePrepend();
   }, [prependPending, acknowledgePrepend]);
-
-  const initialLoading = initialStatus === 'loading';
-  const initialError = initialStatus === 'error';
-  const ready = initialStatus === 'idle' && earliestLoaded && latestLoaded;
 
   // Date used by the date-picker input — defaults to anchor while resolving.
   const dateInputValue = anchorDate ?? toDateInputValue(new Date());
@@ -111,8 +117,8 @@ export function GamesPage() {
       )}
 
       {initialLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
+        <div className="min-h-screen grid grid-cols-1 md:grid-cols-2 gap-4 content-start">
+          {Array.from({ length: 6 }).map((_, i) => (
             <CardSkeleton key={i} />
           ))}
         </div>
