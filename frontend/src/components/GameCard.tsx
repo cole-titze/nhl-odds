@@ -185,18 +185,32 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
     <Link
       to={`/game/${game.id}`}
       state={{ game }}
-      className={`glass rounded-xl px-5 py-4 block hover:ring-1 hover:ring-accent-500/30 transition-all ${cardClass}`}
+      className={`glass rounded-xl px-5 py-4 block transition-all duration-200 hover:scale-[1.02] hover:!bg-accent-500/10 hover:border-accent-500/40 hover:shadow-lg hover:shadow-accent-500/10 active:scale-[0.98] ${cardClass}`}
     >
       {game.gameType === 3 && (
         <div className="flex justify-center mb-2">
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-widest">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-widest">
+            <svg viewBox="0 0 24 24" className="w-3 h-3" fill="currentColor" aria-hidden="true">
+              {/* Bowl — smaller, narrower */}
+              <path d="M8 2h8v3c0 1.5-1.5 2.5-4 2.5S8 6.5 8 5V2z" />
+              {/* Neck */}
+              <rect x="10.5" y="7.5" width="3" height="1.5" />
+              {/* Bands */}
+              <rect x="7" y="9" width="10" height="1.6" rx="0.4" />
+              <rect x="7" y="11" width="10" height="1.6" rx="0.4" />
+              <rect x="7" y="13" width="10" height="1.6" rx="0.4" />
+              <rect x="7" y="15" width="10" height="1.6" rx="0.4" />
+              {/* Base */}
+              <rect x="5.5" y="17" width="13" height="1.5" rx="0.5" />
+              <rect x="4" y="19" width="16" height="1.5" rx="0.5" />
+            </svg>
             Playoffs
           </span>
         </div>
       )}
       {valueBet && (
         <div className="flex justify-center mb-3">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold uppercase tracking-wide">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-bold uppercase tracking-wide">
             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
               <path
                 fillRule="evenodd"

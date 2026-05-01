@@ -65,6 +65,15 @@ export function GamesPage() {
     return () => io.disconnect();
   }, [ready, loadNewer, loadOlder]);
 
+  // Scroll to anchor date once the initial chunk is ready.
+  useLayoutEffect(() => {
+    if (initialStatus !== 'idle' || !anchorDate) return;
+    const el = document.getElementById(`date-${anchorDate}`);
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.scrollY - 128;
+    window.scrollTo({ top: Math.max(0, top), behavior: 'instant' });
+  }, [initialStatus, anchorDate]);
+
   // Restore scroll position after a prepend so the user's view stays anchored
   // to the same content. Snapshot was captured at dispatch time inside the hook.
   useLayoutEffect(() => {

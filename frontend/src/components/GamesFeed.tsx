@@ -63,7 +63,7 @@ export function GamesFeed({
           const games = gamesByDate.get(date);
           if (!games || games.length === 0) return null;
           return (
-            <section key={date}>
+            <section key={date} id={`date-${date}`}>
               <h3 className="text-sm font-semibold uppercase tracking-wide text-surface-500 dark:text-surface-400 mb-3">
                 {formatDisplayDate(parseISO(date))}
               </h3>
