@@ -69,7 +69,7 @@ public static class MapCurrentRosterResponseToGamePlayerStats
             PowerPlayGoalsAllowed = 0,
             TimeOnIceSeconds = 0,
             IsStarter = false,
-            Position = MapPositionStrToPosition.Map(goalieResponse["position"]!.GetValue<string>()),
+            Position = MapPositionStrToPosition.Map(goalieResponse["positionCode"]!.GetValue<string>()),
         };
     }
 

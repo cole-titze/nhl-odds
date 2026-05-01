@@ -25,14 +25,35 @@ public class NhlApiDataGetter
         return (seasonstartYear * 1000000) + 20000 + gameNumber;
     }
     /// <summary>
-    /// Builds a playoff game id (gameType=03)
+    /// Builds a playoff game id (gameType=03) from an RSMG-encoded game number.
+    /// NHL playoff IDs encode Round/Series/Game: e.g. gameNumber=111 → Round 1, Series 1, Game 1.
     /// </summary>
     /// <param name="seasonStartYear">Year to use in id</param>
-    /// <param name="gameNumber">Playoff game number to use in id</param>
+    /// <param name="gameNumber">RSMG-encoded game number (e.g. 111, 127, 417)</param>
     /// <returns>The internal playoff game id</returns>
     public static int GetPlayoffGameId(int seasonStartYear, int gameNumber)
     {
         return (seasonStartYear * 1000000) + 30000 + gameNumber;
+    }
+
+    /// <summary>
+    /// Returns all possible playoff game IDs for a season using the NHL RSMG format.
+    /// Round 1 has 8 series, Round 2 has 4, Round 3 has 2, Round 4 (Finals) has 1.
+    /// Games not yet played will return null from the API and are skipped by the caller.
+    /// </summary>
+    public static IEnumerable<int> GetAllPlayoffGameIds(int seasonStartYear)
+    {
+        int[] seriesPerRound = [8, 4, 2, 1];
+        for (int round = 1; round <= 4; round++)
+        {
+            for (int series = 1; series <= seriesPerRound[round - 1]; series++)
+            {
+                for (int game = 1; game <= 7; game++)
+                {
+                    yield return GetPlayoffGameId(seasonStartYear, (round * 100) + (series * 10) + game);
+                }
+            }
+        }
     }
     /// <summary>
     /// Derives the game type from the game id by reading the 5th-6th digits.

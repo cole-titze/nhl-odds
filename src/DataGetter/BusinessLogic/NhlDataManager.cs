@@ -78,9 +78,10 @@ public class NhlDataManager
         await FetchSegment(seasonStartYear, mode,
             n => NhlApiDataGetter.GetGameId(seasonStartYear, n), seasonGameCount);
 
-        // Playoff games have no clean schedule total — iterate until 404s in a row stop us.
-        await FetchSegment(seasonStartYear, mode,
-            n => NhlApiDataGetter.GetPlayoffGameId(seasonStartYear, n), knownCount: null);
+        // Playoff game IDs use NHL's RSMG format (Round/Series/Game), not sequential numbers.
+        // Enumerate all valid combinations; the API returns null for games not yet played.
+        await FetchPlayoffSegment(seasonStartYear, mode,
+            NhlApiDataGetter.GetAllPlayoffGameIds(seasonStartYear));
     }
 
     /// <summary>
@@ -154,6 +155,55 @@ public class NhlDataManager
             }
 
             count++;
+        }
+    }
+
+    /// <summary>
+    /// Fetches a predetermined set of playoff game IDs. Unlike FetchSegment, there is no
+    /// consecutive-miss cutoff — gaps between rounds and series are expected.
+    /// </summary>
+    private async Task FetchPlayoffSegment(int seasonStartYear, ModeType mode, IEnumerable<int> gameIds)
+    {
+        foreach (int gameId in gameIds)
+        {
+            try
+            {
+                if (mode != ModeType.NhlUpdate && await _gameRepo.IsGamePlayed(gameId))
+                    continue;
+
+                if (mode != ModeType.NhlUpdate && await _gameRepo.IsUnplayedFutureGame(gameId))
+                {
+                    _logger.LogInformation("Game {GameId} is a future game already saved. Skipping.", gameId);
+                    continue;
+                }
+
+                var game = await _gameManager.GetGame(gameId, mode);
+                if (game == null)
+                    continue;
+
+                var players = await _playerManager.GetPlayers(game, mode);
+                await SavePlayers(players);
+                await SaveGame(game);
+                await _gameRepo.Commit();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing game {GameId} in season {Season}. Skipping.", gameId, seasonStartYear);
+                var stackTrace = ex.StackTrace ?? string.Empty;
+                var stackFrames = stackTrace.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                var topFrames = string.Join(" | ", stackFrames.Take(10).Select(f => f.Trim()));
+                var errorLog = new DbErrorLog
+                {
+                    TimestampUTC = DateTime.UtcNow,
+                    GameId = gameId,
+                    SeasonStartYear = seasonStartYear,
+                    ExceptionType = ex.GetType().FullName ?? ex.GetType().Name,
+                    Message = ex.Message,
+                    StackTrace = topFrames,
+                    Source = "FetchPlayoffSegment"
+                };
+                await _errorRepo.AddError(errorLog);
+            }
         }
     }
 
