@@ -1,5 +1,14 @@
 import { useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [pathname]);
+  return null;
+}
 import { Layout } from './components/Layout';
 import { GamesPage } from './pages/GamesPage';
 import { TeamsPage } from './pages/TeamsPage';
@@ -17,6 +26,7 @@ export default function App() {
   return (
     <StrategyContext.Provider value={{ strategy, setStrategy }}>
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<GamesPage />} />

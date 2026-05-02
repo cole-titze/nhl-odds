@@ -66,6 +66,7 @@ public class NhlDataManagerTests
         // 2020: has all games, is not current year -> skip
         A.CallTo(() => _gameRepo.GetSavedGameCountForSeason(2020)).Returns(1312);
         A.CallTo(() => _gameRepo.GetGameCountForSeason(2020)).Returns(1312);
+        A.CallTo(() => _gameRepo.HasPlayoffGamesForSeason(2020)).Returns(true);
 
         // 2021: current year — needs team data
         A.CallTo(() => _gameRepo.GetSavedGameCountForSeason(2021)).Returns(1312);

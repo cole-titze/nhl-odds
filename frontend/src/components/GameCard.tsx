@@ -52,7 +52,7 @@ function TeamSide({
         <img
           src={team.logoUri}
           alt={team.teamName}
-          className="h-14 w-14 object-contain drop-shadow-lg"
+          className="h-20 w-20 object-contain drop-shadow-lg"
           onError={(e) => {
             (e.target as HTMLImageElement).style.display = 'none';
           }}
@@ -271,54 +271,57 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
           isWinner={game.hasBeenPlayed && game.winner === Winner.HOME}
           played={game.hasBeenPlayed}
         />
-        <div className={`col-span-3 mt-2 ${game.gameType !== 3 ? 'pt-2 border-t border-surface-200/50 dark:border-white/[0.04]' : ''}`}>
-          {game.gameType !== 3 && <div className="grid grid-cols-3 items-center text-[11px] font-mono">
-            {oddsType === 'moneyline' ? (
-              <>
-                <span className={`text-center stat-number ${oddsColor}`}>
-                  {game.awayTeam ? formatOdds(game.awayTeam.modelOdds, format) : '-'}
-                </span>
-                <span className="text-center text-surface-400 dark:text-surface-500">
-                  {getModelName(game.modelId)}
-                </span>
-                <span className={`text-center stat-number ${oddsColor}`}>
-                  {game.homeTeam ? formatOdds(game.homeTeam.modelOdds, format) : '-'}
-                </span>
-              </>
-            ) : oddsType === 'spread' ? (
-              <>
-                <span className={`text-center stat-number ${oddsColor}`}>
-                  {game.predictedSpread != null
-                    ? formatPoint(+game.predictedSpread.toFixed(2))
-                    : '-'}
-                </span>
-                <span className="text-center text-surface-400 dark:text-surface-500">
-                  {getModelName(game.modelId)}
-                </span>
-                <span className={`text-center stat-number ${oddsColor}`}>
-                  {game.predictedSpread != null
-                    ? formatPoint(+(-game.predictedSpread).toFixed(2))
-                    : '-'}
-                </span>
-              </>
-            ) : (
-              <>
-                <span className={`text-center stat-number ${oddsColor}`}>{'-'}</span>
-                <span className="text-center text-surface-400 dark:text-surface-500">
-                  {getModelName(game.modelId)}
-                  {game.predictedTotal != null ? ` (${game.predictedTotal.toFixed(1)})` : ''}
-                </span>
-                <span className={`text-center stat-number ${oddsColor}`}>{'-'}</span>
-              </>
-            )}
-          </div>}
+        <div
+          className={`col-span-3 mt-2 ${game.gameType !== 3 ? 'pt-2 border-t border-surface-200/50 dark:border-white/[0.04]' : ''}`}
+        >
+          {game.gameType !== 3 && (
+            <div className="grid grid-cols-3 items-center text-[11px] font-mono">
+              {oddsType === 'moneyline' ? (
+                <>
+                  <span className={`text-center stat-number ${oddsColor}`}>
+                    {game.awayTeam ? formatOdds(game.awayTeam.modelOdds, format) : '-'}
+                  </span>
+                  <span className="text-center text-surface-400 dark:text-surface-500">
+                    {getModelName(game.modelId)}
+                  </span>
+                  <span className={`text-center stat-number ${oddsColor}`}>
+                    {game.homeTeam ? formatOdds(game.homeTeam.modelOdds, format) : '-'}
+                  </span>
+                </>
+              ) : oddsType === 'spread' ? (
+                <>
+                  <span className={`text-center stat-number ${oddsColor}`}>
+                    {game.predictedSpread != null
+                      ? formatPoint(+game.predictedSpread.toFixed(2))
+                      : '-'}
+                  </span>
+                  <span className="text-center text-surface-400 dark:text-surface-500">
+                    {getModelName(game.modelId)}
+                  </span>
+                  <span className={`text-center stat-number ${oddsColor}`}>
+                    {game.predictedSpread != null
+                      ? formatPoint(+(-game.predictedSpread).toFixed(2))
+                      : '-'}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className={`text-center stat-number ${oddsColor}`}>{'-'}</span>
+                  <span className="text-center text-surface-400 dark:text-surface-500">
+                    {getModelName(game.modelId)}
+                    {game.predictedTotal != null ? ` (${game.predictedTotal.toFixed(1)})` : ''}
+                  </span>
+                  <span className={`text-center stat-number ${oddsColor}`}>{'-'}</span>
+                </>
+              )}
+            </div>
+          )}
           {game.bookmakerOdds?.length > 0 &&
             (() => {
               const pinned = ['DraftKings', 'Kalshi'];
               const shown = pinned
                 .map((name) => game.bookmakerOdds.find((bm) => bm.bookmakerName === name))
                 .filter(Boolean) as BookmakerOddsVM[];
-              const rest = game.bookmakerOdds.filter((bm) => !pinned.includes(bm.bookmakerName));
               return (
                 <>
                   {shown.map((bm) => (
@@ -329,21 +332,6 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
                       format={format}
                     />
                   ))}
-                  {rest.length > 0 && (
-                    <details className="mt-1">
-                      <summary className="text-[10px] text-center text-surface-400 dark:text-surface-500 cursor-pointer hover:text-surface-600 dark:hover:text-surface-300 select-none">
-                        {rest.length} more bookmaker{rest.length > 1 ? 's' : ''}
-                      </summary>
-                      {rest.map((bm) => (
-                        <BookmakerOddsRow
-                          key={bm.bookmakerName}
-                          bm={bm}
-                          oddsType={oddsType}
-                          format={format}
-                        />
-                      ))}
-                    </details>
-                  )}
                 </>
               );
             })()}

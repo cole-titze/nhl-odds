@@ -40,7 +40,6 @@ export function GamePage() {
     const startDate = `${seasonStartYear}-09-01`;
     const endDate = `${seasonStartYear + 1}-07-31`;
 
-    setLoading(true);
     getGameOddsInDateRange(startDate, endDate, seasonStartYear)
       .then((games) => {
         const found = games.find((g) => g.id === Number(gameId));

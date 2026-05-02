@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { SeasonSelector } from '../components/SeasonSelector';
 import { StrategyCard } from '../components/StrategySummary';
 import { StrategyChart } from '../components/StrategyChart';
@@ -19,8 +19,8 @@ import { formatShortDate } from '../utils/dates';
 
 export function CrossBookStrategyPage() {
   const [season, setSeason] = useState(getCurrentSeason());
-  const [refBookmaker, setRefBookmaker] = useState(MODEL_REFERENCE);
-  const [betBookmaker, setBetBookmaker] = useState('Kalshi');
+  const [refBookmakerSel, setRefBookmaker] = useState(MODEL_REFERENCE);
+  const [betBookmakerSel, setBetBookmaker] = useState('Kalshi');
   const [showLog, setShowLog] = useState(false);
 
   const { strategy, setStrategy } = useStrategy();
@@ -52,33 +52,32 @@ export function CrossBookStrategyPage() {
 
   const refOptions = useMemo(() => [MODEL_REFERENCE, ...bookmakerNames], [bookmakerNames]);
 
-  // Fall back if selected bookmaker isn't in the data
-  useEffect(() => {
-    if (bookmakerNames.length === 0) return;
-    if (refBookmaker !== MODEL_REFERENCE && !bookmakerNames.includes(refBookmaker)) {
-      setRefBookmaker(MODEL_REFERENCE);
-    }
-    if (!bookmakerNames.includes(betBookmaker)) {
-      setBetBookmaker(bookmakerNames[0]);
-    }
-  }, [bookmakerNames, refBookmaker, betBookmaker]);
+  // Fall back to valid selections when bookmakerNames changes without a re-render cycle
+  const refBookmaker =
+    bookmakerNames.length > 0 &&
+    refBookmakerSel !== MODEL_REFERENCE &&
+    !bookmakerNames.includes(refBookmakerSel)
+      ? MODEL_REFERENCE
+      : refBookmakerSel;
+  const betBookmaker =
+    bookmakerNames.length > 0 && !bookmakerNames.includes(betBookmakerSel)
+      ? bookmakerNames[0]
+      : betBookmakerSel;
 
   const sameBookmaker = refBookmaker === betBookmaker && refBookmaker !== MODEL_REFERENCE;
 
   const refLabel = refBookmaker === MODEL_REFERENCE ? 'In-House' : refBookmaker;
-  const renameLabel = (label: string) =>
-    refBookmaker !== MODEL_REFERENCE ? label.replace('In-House', refLabel) : label;
-  const renameResult = (r: ReturnType<typeof runStrategy>) => {
-    r.name = renameLabel(r.name);
-    return r;
-  };
+  const renameLabel = useCallback(
+    (label: string) => (refBookmaker !== MODEL_REFERENCE ? label.replace('In-House', refLabel) : label),
+    [refBookmaker, refLabel],
+  );
 
   const strategyResult = useMemo(() => {
     if (!games || sameBookmaker) return null;
-    return renameResult(
-      runStrategy(games, strategy.type, refBookmaker, betBookmaker, strategy.threshold),
-    );
-  }, [games, strategy.type, strategy.threshold, refBookmaker, betBookmaker, sameBookmaker]);
+    const result = runStrategy(games, strategy.type, refBookmaker, betBookmaker, strategy.threshold);
+    result.name = renameLabel(result.name);
+    return result;
+  }, [games, strategy.type, strategy.threshold, refBookmaker, betBookmaker, sameBookmaker, renameLabel]);
 
   const coverage = useMemo(() => {
     if (!games || sameBookmaker) return null;
@@ -105,14 +104,13 @@ export function CrossBookStrategyPage() {
           : opt.thresholds
             ? opt.thresholds[Math.floor((opt.thresholds.length - 1) / 2)]
             : 0;
-      const result = renameResult(
-        runStrategy(games, opt.type, refBookmaker, betBookmaker, threshold),
-      );
+      const result = runStrategy(games, opt.type, refBookmaker, betBookmaker, threshold);
+      result.name = renameLabel(result.name);
       return { opt, threshold, result };
     })
       .filter((r) => r.result.totalBets > 0)
       .sort((a, b) => b.result.roi - a.result.roi);
-  }, [games, refBookmaker, betBookmaker, sameBookmaker, strategy.type, strategy.threshold]);
+  }, [games, refBookmaker, betBookmaker, sameBookmaker, strategy.type, strategy.threshold, renameLabel]);
 
   const swap = () => {
     setRefBookmaker(betBookmaker);
