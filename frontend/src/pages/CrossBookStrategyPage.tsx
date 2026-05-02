@@ -18,7 +18,11 @@ import { formatShortDate } from '../utils/dates';
 
 const MARKET_OPTIONS = ['Kalshi', 'DraftKings'];
 
-interface MarketPair { ref: string; bet: string; label: string }
+interface MarketPair {
+  ref: string;
+  bet: string;
+  label: string;
+}
 
 export function CrossBookStrategyPage() {
   const [season, setSeason] = useState(getCurrentSeason());
@@ -66,13 +70,22 @@ export function CrossBookStrategyPage() {
       }
     }
     if (MARKET_OPTIONS.every((m) => bookmakerNames.includes(m))) {
-      pairs.push({ ref: MARKET_OPTIONS[0], bet: MARKET_OPTIONS[1], label: `${MARKET_OPTIONS[0]} vs ${MARKET_OPTIONS[1]}` });
-      pairs.push({ ref: MARKET_OPTIONS[1], bet: MARKET_OPTIONS[0], label: `${MARKET_OPTIONS[1]} vs ${MARKET_OPTIONS[0]}` });
+      pairs.push({
+        ref: MARKET_OPTIONS[0],
+        bet: MARKET_OPTIONS[1],
+        label: `${MARKET_OPTIONS[0]} vs ${MARKET_OPTIONS[1]}`,
+      });
+      pairs.push({
+        ref: MARKET_OPTIONS[1],
+        bet: MARKET_OPTIONS[0],
+        label: `${MARKET_OPTIONS[1]} vs ${MARKET_OPTIONS[0]}`,
+      });
     }
     return pairs;
   }, [bookmakerNames]);
 
-  const activePair = marketPairs.find((p) => p.label === selectedPair.label) ?? marketPairs[0] ?? selectedPair;
+  const activePair =
+    marketPairs.find((p) => p.label === selectedPair.label) ?? marketPairs[0] ?? selectedPair;
   const refBookmaker = activePair.ref;
   const betBookmaker = activePair.bet;
 
@@ -183,82 +196,87 @@ export function CrossBookStrategyPage() {
       {/* Rankings + Upcoming side by side */}
       {!loading && !error && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8 items-start">
-
           {/* Rankings table — click a row to select strategy */}
           {rankings.length > 0 && (
-          <div className="glass rounded-xl p-5 overflow-x-auto">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500 mb-3">
-            Strategy Rankings
-          </h2>
-          <table className="w-full text-xs font-mono">
-            <thead>
-              <tr className="text-left text-surface-400 dark:text-surface-500 border-b border-surface-200 dark:border-white/[0.06]">
-                <th className="pb-2 pr-4">Strategy</th>
-                <th className="pb-2 pr-4">Type</th>
-                <th className="pb-2 pr-4 text-right">Bets</th>
-                <th className="pb-2 pr-4 text-right">Win%</th>
-                <th className="pb-2 pr-4 text-right">P/L</th>
-                <th className="pb-2 text-right">ROI</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rankings.map(({ opt, threshold, result }) => {
-                const isSelected = strategy.type === opt.type;
-                const thresholdLabel = opt.thresholds
-                  ? opt.thresholdFormat === 'goals'
-                    ? ` ${threshold}`
-                    : ` ${(threshold * 100).toFixed(0)}%`
-                  : '';
-                const typeLabel =
-                  opt.betType === 'moneyline' ? 'ML' : opt.betType === 'spread' ? 'Spread' : 'O/U';
-                return (
-                  <tr
-                    key={opt.type}
-                    onClick={() => setStrategy({ type: opt.type, threshold })}
-                    className={`border-b border-surface-200/50 dark:border-white/[0.03] cursor-pointer transition-colors ${
-                      isSelected
-                        ? 'bg-accent-500/10'
-                        : 'hover:bg-surface-100 dark:hover:bg-white/[0.03]'
-                    }`}
-                  >
-                    <td
-                      className={`py-2 pr-4 font-semibold ${isSelected ? 'text-accent-500' : 'text-surface-800 dark:text-surface-200'}`}
-                    >
-                      {result.name}
-                      {thresholdLabel}
-                    </td>
-                    <td className="py-2 pr-4 text-surface-500 dark:text-surface-400">
-                      {typeLabel}
-                    </td>
-                    <td className="py-2 pr-4 text-right text-surface-500 dark:text-surface-400">
-                      {result.totalBets}
-                    </td>
-                    <td className="py-2 pr-4 text-right text-surface-500 dark:text-surface-400">
-                      {(result.winRate * 100).toFixed(1)}%
-                    </td>
-                    <td
-                      className={`py-2 pr-4 text-right font-semibold ${result.totalPL >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
-                    >
-                      {result.totalPL >= 0 ? '+' : ''}
-                      {result.totalPL.toFixed(2)}u
-                    </td>
-                    <td
-                      className={`py-2 text-right font-semibold ${result.roi >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
-                    >
-                      {result.roi >= 0 ? '+' : ''}
-                      {result.roi.toFixed(1)}%
-                    </td>
+            <div className="glass rounded-xl p-5 overflow-x-auto">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500 mb-3">
+                Strategy Rankings
+              </h2>
+              <table className="w-full text-xs font-mono">
+                <thead>
+                  <tr className="text-left text-surface-400 dark:text-surface-500 border-b border-surface-200 dark:border-white/[0.06]">
+                    <th className="pb-2 pr-4">Strategy</th>
+                    <th className="pb-2 pr-4">Type</th>
+                    <th className="pb-2 pr-4 text-right">Bets</th>
+                    <th className="pb-2 pr-4 text-right">Win%</th>
+                    <th className="pb-2 pr-4 text-right">P/L</th>
+                    <th className="pb-2 text-right">ROI</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          </div>
+                </thead>
+                <tbody>
+                  {rankings.map(({ opt, threshold, result }) => {
+                    const isSelected = strategy.type === opt.type;
+                    const thresholdLabel = opt.thresholds
+                      ? opt.thresholdFormat === 'goals'
+                        ? ` ${threshold}`
+                        : ` ${(threshold * 100).toFixed(0)}%`
+                      : '';
+                    const typeLabel =
+                      opt.betType === 'moneyline'
+                        ? 'ML'
+                        : opt.betType === 'spread'
+                          ? 'Spread'
+                          : 'O/U';
+                    return (
+                      <tr
+                        key={opt.type}
+                        onClick={() => setStrategy({ type: opt.type, threshold })}
+                        className={`border-b border-surface-200/50 dark:border-white/[0.03] cursor-pointer transition-colors ${
+                          isSelected
+                            ? 'bg-accent-500/10'
+                            : 'hover:bg-surface-100 dark:hover:bg-white/[0.03]'
+                        }`}
+                      >
+                        <td
+                          className={`py-2 pr-4 font-semibold ${isSelected ? 'text-accent-500' : 'text-surface-800 dark:text-surface-200'}`}
+                        >
+                          {result.name}
+                          {thresholdLabel}
+                        </td>
+                        <td className="py-2 pr-4 text-surface-500 dark:text-surface-400">
+                          {typeLabel}
+                        </td>
+                        <td className="py-2 pr-4 text-right text-surface-500 dark:text-surface-400">
+                          {result.totalBets}
+                        </td>
+                        <td className="py-2 pr-4 text-right text-surface-500 dark:text-surface-400">
+                          {(result.winRate * 100).toFixed(1)}%
+                        </td>
+                        <td
+                          className={`py-2 pr-4 text-right font-semibold ${result.totalPL >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
+                        >
+                          {result.totalPL >= 0 ? '+' : ''}
+                          {result.totalPL.toFixed(2)}u
+                        </td>
+                        <td
+                          className={`py-2 text-right font-semibold ${result.roi >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
+                        >
+                          {result.roi >= 0 ? '+' : ''}
+                          {result.roi.toFixed(1)}%
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
 
           {/* Upcoming bets */}
           <div className="glass rounded-xl p-5">
-            <h2 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${upcomingEntries.length > 0 ? 'text-emerald-500' : 'text-surface-400 dark:text-surface-500'}`}>
+            <h2
+              className={`text-xs font-semibold uppercase tracking-wider mb-4 ${upcomingEntries.length > 0 ? 'text-emerald-500' : 'text-surface-400 dark:text-surface-500'}`}
+            >
               Upcoming Bets{upcomingEntries.length > 0 ? ` (${upcomingEntries.length})` : ''}
             </h2>
             {upcomingEntries.length === 0 ? (
@@ -299,7 +317,6 @@ export function CrossBookStrategyPage() {
               </div>
             )}
           </div>
-
         </div>
       )}
 
@@ -468,8 +485,8 @@ export function CrossBookStrategyPage() {
                     Spread Bet
                   </h3>
                   <p>
-                    Bets every game against the spread. If the model's predicted margin differs
-                    from the betting market's line, bet the side the model favors.
+                    Bets every game against the spread. If the model's predicted margin differs from
+                    the betting market's line, bet the side the model favors.
                   </p>
                 </div>
                 <div>

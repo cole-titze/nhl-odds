@@ -104,7 +104,15 @@ export function GamesPage() {
             />
             <SeasonSelector value={season} onChange={setSeason} />
           </div>
-          <StrategyPicker betType={oddsType === 'moneyline' ? 'moneyline' : oddsType === 'spread' ? 'spread' : 'overUnder'} />
+          <StrategyPicker
+            betType={
+              oddsType === 'moneyline'
+                ? 'moneyline'
+                : oddsType === 'spread'
+                  ? 'spread'
+                  : 'overUnder'
+            }
+          />
           <div className="flex gap-1">
             {(['moneyline', 'spread', 'overUnder'] as const).map((type) => (
               <button

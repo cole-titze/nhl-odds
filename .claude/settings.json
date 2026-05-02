@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(docker info*)"
+      "Bash(docker info*)",
+      "Bash(kubectl get *)",
+      "Bash(dotnet format style *)",
+      "Bash(cd /Users/coletitze/source/repos/nhl-odds/frontend && npm run format*)",
+      "Bash(cd /Users/coletitze/source/repos/nhl-odds && source .venv/bin/activate*)"
     ]
   }
 }
