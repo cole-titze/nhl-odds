@@ -1,9 +1,8 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { SeasonSelector } from '../components/SeasonSelector';
 import { StrategyCard } from '../components/StrategySummary';
 import { StrategyChart } from '../components/StrategyChart';
-import { StrategyPicker } from '../components/StrategyPicker';
-import { Skeleton, StatCardSkeleton } from '../components/Skeleton';
+import { Skeleton } from '../components/Skeleton';
 import { useFetch } from '../hooks/useFetch';
 import { useStrategy } from '../contexts/StrategyContext';
 import { getGameOddsInDateRange } from '../api/gameOdds';
@@ -17,11 +16,20 @@ import {
 } from '../utils/crossBookStrategy';
 import { formatShortDate } from '../utils/dates';
 
+const MARKET_OPTIONS = ['Kalshi', 'DraftKings'];
+
+interface MarketPair { ref: string; bet: string; label: string }
+
 export function CrossBookStrategyPage() {
   const [season, setSeason] = useState(getCurrentSeason());
-  const [refBookmakerSel, setRefBookmaker] = useState(MODEL_REFERENCE);
-  const [betBookmakerSel, setBetBookmaker] = useState('Kalshi');
+  const [selectedPair, setSelectedPair] = useState<MarketPair>({
+    ref: MODEL_REFERENCE,
+    bet: 'Kalshi',
+    label: 'In-House vs Kalshi',
+  });
   const [showLog, setShowLog] = useState(false);
+  const [showChart, setShowChart] = useState(false);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
 
   const { strategy, setStrategy } = useStrategy();
   const strategyOption = STRATEGY_OPTIONS.find((o) => o.type === strategy.type);
@@ -50,44 +58,38 @@ export function CrossBookStrategyPage() {
     return Array.from(names).sort();
   }, [games]);
 
-  const refOptions = useMemo(() => [MODEL_REFERENCE, ...bookmakerNames], [bookmakerNames]);
+  const marketPairs = useMemo((): MarketPair[] => {
+    const pairs: MarketPair[] = [];
+    for (const m of MARKET_OPTIONS) {
+      if (bookmakerNames.includes(m)) {
+        pairs.push({ ref: MODEL_REFERENCE, bet: m, label: `In-House vs ${m}` });
+      }
+    }
+    if (MARKET_OPTIONS.every((m) => bookmakerNames.includes(m))) {
+      pairs.push({ ref: MARKET_OPTIONS[0], bet: MARKET_OPTIONS[1], label: `${MARKET_OPTIONS[0]} vs ${MARKET_OPTIONS[1]}` });
+      pairs.push({ ref: MARKET_OPTIONS[1], bet: MARKET_OPTIONS[0], label: `${MARKET_OPTIONS[1]} vs ${MARKET_OPTIONS[0]}` });
+    }
+    return pairs;
+  }, [bookmakerNames]);
 
-  // Fall back to valid selections when bookmakerNames changes without a re-render cycle
-  const refBookmaker =
-    bookmakerNames.length > 0 &&
-    refBookmakerSel !== MODEL_REFERENCE &&
-    !bookmakerNames.includes(refBookmakerSel)
-      ? MODEL_REFERENCE
-      : refBookmakerSel;
-  const betBookmaker =
-    bookmakerNames.length > 0 && !bookmakerNames.includes(betBookmakerSel)
-      ? bookmakerNames[0]
-      : betBookmakerSel;
-
-  const sameBookmaker = refBookmaker === betBookmaker && refBookmaker !== MODEL_REFERENCE;
-
-  const refLabel = refBookmaker === MODEL_REFERENCE ? 'In-House' : refBookmaker;
-  const renameLabel = useCallback(
-    (label: string) => (refBookmaker !== MODEL_REFERENCE ? label.replace('In-House', refLabel) : label),
-    [refBookmaker, refLabel],
-  );
+  const activePair = marketPairs.find((p) => p.label === selectedPair.label) ?? marketPairs[0] ?? selectedPair;
+  const refBookmaker = activePair.ref;
+  const betBookmaker = activePair.bet;
 
   const strategyResult = useMemo(() => {
-    if (!games || sameBookmaker) return null;
-    const result = runStrategy(games, strategy.type, refBookmaker, betBookmaker, strategy.threshold);
-    result.name = renameLabel(result.name);
-    return result;
-  }, [games, strategy.type, strategy.threshold, refBookmaker, betBookmaker, sameBookmaker, renameLabel]);
+    if (!games) return null;
+    return runStrategy(games, strategy.type, refBookmaker, betBookmaker, strategy.threshold);
+  }, [games, strategy.type, strategy.threshold, refBookmaker, betBookmaker]);
 
   const coverage = useMemo(() => {
-    if (!games || sameBookmaker) return null;
+    if (!games) return null;
     return getCoverage(games, refBookmaker, betBookmaker);
-  }, [games, refBookmaker, betBookmaker, sameBookmaker]);
+  }, [games, refBookmaker, betBookmaker]);
 
   const logEntries = useMemo(() => {
-    if (!games || sameBookmaker) return [];
+    if (!games) return [];
     return crossBookLog(games, strategy.type, refBookmaker, betBookmaker, strategy.threshold);
-  }, [games, strategy.type, strategy.threshold, refBookmaker, betBookmaker, sameBookmaker]);
+  }, [games, strategy.type, strategy.threshold, refBookmaker, betBookmaker]);
 
   const upcomingEntries = useMemo(() => logEntries.filter((e) => e.upcoming), [logEntries]);
   const playedEntries = useMemo(
@@ -96,7 +98,7 @@ export function CrossBookStrategyPage() {
   );
 
   const rankings = useMemo(() => {
-    if (!games || sameBookmaker) return [];
+    if (!games) return [];
     return STRATEGY_OPTIONS.map((opt) => {
       const threshold =
         opt.type === strategy.type
@@ -105,95 +107,86 @@ export function CrossBookStrategyPage() {
             ? opt.thresholds[Math.floor((opt.thresholds.length - 1) / 2)]
             : 0;
       const result = runStrategy(games, opt.type, refBookmaker, betBookmaker, threshold);
-      result.name = renameLabel(result.name);
       return { opt, threshold, result };
     })
       .filter((r) => r.result.totalBets > 0)
       .sort((a, b) => b.result.roi - a.result.roi);
-  }, [games, refBookmaker, betBookmaker, sameBookmaker, strategy.type, strategy.threshold, renameLabel]);
-
-  const swap = () => {
-    setRefBookmaker(betBookmaker);
-    setBetBookmaker(refBookmaker);
-  };
-
-  const selectClass =
-    'px-3 py-2 rounded-lg glass text-sm font-mono font-medium cursor-pointer appearance-none bg-[length:16px] bg-[right_8px_center] bg-no-repeat';
-  const selectStyle = {
-    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23737373' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`,
-    paddingRight: '2rem',
-  };
+  }, [games, refBookmaker, betBookmaker, strategy.type, strategy.threshold]);
 
   const isMoneyline = betType === 'moneyline';
 
+  const chevron = (open: boolean) => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className={`h-4 w-4 text-surface-400 transition-transform ${open ? 'rotate-180' : ''}`}
+      viewBox="0 0 20 20"
+      fill="currentColor"
+    >
+      <path
+        fillRule="evenodd"
+        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+
   return (
     <div>
+      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
         <h1 className="font-display text-2xl font-bold tracking-tight">Strategies</h1>
-        <div className="flex items-center gap-3">
-          <StrategyPicker renameLabel={renameLabel} />
-          <SeasonSelector value={season} onChange={setSeason} />
-        </div>
+        <SeasonSelector value={season} onChange={setSeason} />
       </div>
 
-      {/* Bookmaker selectors */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500">
-            Reference
-          </span>
-          <select
-            value={refBookmaker}
-            onChange={(e) => setRefBookmaker(e.target.value)}
-            className={selectClass}
-            style={selectStyle}
-          >
-            {refOptions.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
+      {/* Betting market toggle */}
+      {!loading && marketPairs.length > 0 && (
+        <div className="flex items-center gap-3 mb-6 flex-wrap">
+          <div className="flex rounded-lg glass p-1 gap-1 flex-wrap">
+            {marketPairs.map((pair) => (
+              <button
+                key={pair.label}
+                onClick={() => setSelectedPair(pair)}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                  activePair.label === pair.label
+                    ? 'bg-accent-500 text-white'
+                    : 'text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200'
+                }`}
+              >
+                {pair.label}
+              </button>
             ))}
-          </select>
+          </div>
         </div>
+      )}
 
-        <button
-          onClick={swap}
-          className="px-2.5 py-1.5 rounded-lg glass text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200 transition-colors"
-          aria-label="Swap bookmakers"
-          title="Swap"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z" />
-          </svg>
-        </button>
+      {error && (
+        <div className="glass rounded-xl text-center text-red-500 py-8 px-4 mb-8">{error}</div>
+      )}
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500">
-            Bet on
-          </span>
-          <select
-            value={betBookmaker}
-            onChange={(e) => setBetBookmaker(e.target.value)}
-            className={selectClass}
-            style={selectStyle}
-          >
-            {bookmakerNames.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
+      {loading && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+          <div className="glass rounded-xl p-5 space-y-3">
+            <Skeleton className="h-4 w-32" />
+            {Array.from({ length: 7 }).map((_, i) => (
+              <Skeleton key={i} className="h-7 w-full rounded-lg" />
             ))}
-          </select>
+          </div>
+          <div className="glass rounded-xl p-5 space-y-3">
+            <Skeleton className="h-4 w-32" />
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-7 w-full rounded-lg" />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Rankings table */}
-      {!loading && !error && !sameBookmaker && rankings.length > 0 && (
-        <div className="glass rounded-xl p-5 mb-8 overflow-x-auto">
+      {/* Rankings + Upcoming side by side */}
+      {!loading && !error && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8 items-start">
+
+          {/* Rankings table — click a row to select strategy */}
+          {rankings.length > 0 && (
+          <div className="glass rounded-xl p-5 overflow-x-auto">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500 mb-3">
             Strategy Rankings
           </h2>
@@ -260,105 +253,87 @@ export function CrossBookStrategyPage() {
               })}
             </tbody>
           </table>
-        </div>
-      )}
-
-      {error && <div className="glass rounded-xl text-center text-red-500 py-8 px-4">{error}</div>}
-
-      {loading && (
-        <>
-          <div className="glass rounded-xl p-5 mb-8 space-y-3">
-            <Skeleton className="h-4 w-32" />
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-8 w-full rounded-lg" />
-            ))}
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4 mb-8">
-            <div className="glass rounded-xl p-5 space-y-3">
-              <Skeleton className="h-4 w-24" />
-              <div className="grid grid-cols-2 gap-3">
-                <StatCardSkeleton />
-                <StatCardSkeleton />
-                <StatCardSkeleton />
-                <StatCardSkeleton />
+          )}
+
+          {/* Upcoming bets */}
+          <div className="glass rounded-xl p-5">
+            <h2 className={`text-xs font-semibold uppercase tracking-wider mb-4 ${upcomingEntries.length > 0 ? 'text-emerald-500' : 'text-surface-400 dark:text-surface-500'}`}>
+              Upcoming Bets{upcomingEntries.length > 0 ? ` (${upcomingEntries.length})` : ''}
+            </h2>
+            {upcomingEntries.length === 0 ? (
+              <div className="flex items-center justify-center h-20 text-xs text-surface-400 dark:text-surface-500">
+                No upcoming bets for this strategy
               </div>
-            </div>
-            <Skeleton className="h-[300px] w-full rounded-xl" />
-          </div>
-        </>
-      )}
-
-      {sameBookmaker && !loading && (
-        <div className="glass rounded-xl text-center text-amber-500 py-8 px-4 mb-8">
-          Select two different bookmakers to compare.
-        </div>
-      )}
-
-      {!loading && !error && !sameBookmaker && strategyResult && (
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4 mb-8">
-          <div>
-            <StrategyCard result={strategyResult} />
-            {coverage && (
-              <p className="text-xs text-surface-400 dark:text-surface-500 mt-2">
-                {coverage.matched} of {coverage.total} played games had odds from both sources
-              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs font-mono">
+                  <thead>
+                    <tr className="text-left text-surface-400 dark:text-surface-500 border-b border-surface-200 dark:border-white/[0.06]">
+                      <th className="pb-2 pr-3">Date</th>
+                      <th className="pb-2 pr-3">Matchup</th>
+                      <th className="pb-2 pr-3">Bet</th>
+                      <th className="pb-2 text-right">Edge</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {upcomingEntries.map((e) => (
+                      <tr
+                        key={e.gameId}
+                        className="border-b border-surface-200/50 dark:border-white/[0.03]"
+                      >
+                        <td className="py-1.5 pr-3 text-surface-500 dark:text-surface-400">
+                          {formatShortDate(e.gameDate)}
+                        </td>
+                        <td className="py-1.5 pr-3 text-surface-800 dark:text-surface-200">
+                          {e.awayTeam} @ {e.homeTeam}
+                        </td>
+                        <td className="py-1.5 pr-3 font-semibold text-emerald-500">{e.betSide}</td>
+                        <td className="py-1.5 text-right font-semibold text-emerald-500">
+                          {isMoneyline ? (e.edge * 100).toFixed(1) + '%' : e.edge.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
-          <StrategyChart results={[strategyResult]} />
+
         </div>
       )}
 
-      {/* Upcoming value bets */}
-      {!loading && !error && !sameBookmaker && upcomingEntries.length > 0 && (
-        <div className="glass rounded-xl p-5 mt-8">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-500 mb-4">
-            Upcoming Bets ({upcomingEntries.length})
-          </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs font-mono">
-              <thead>
-                <tr className="text-left text-surface-400 dark:text-surface-500 border-b border-surface-200 dark:border-white/[0.06]">
-                  <th className="pb-2 pr-3">Date</th>
-                  <th className="pb-2 pr-3">Matchup</th>
-                  <th className="pb-2 pr-3">Bet</th>
-                  <th className="pb-2 pr-3 text-right">Ref</th>
-                  <th className="pb-2 pr-3 text-right">Market</th>
-                  <th className="pb-2 text-right">Edge</th>
-                </tr>
-              </thead>
-              <tbody>
-                {upcomingEntries.map((e) => (
-                  <tr
-                    key={e.gameId}
-                    className="border-b border-surface-200/50 dark:border-white/[0.03]"
-                  >
-                    <td className="py-1.5 pr-3 text-surface-500 dark:text-surface-400">
-                      {formatShortDate(e.gameDate)}
-                    </td>
-                    <td className="py-1.5 pr-3 text-surface-800 dark:text-surface-200">
-                      {e.awayTeam} @ {e.homeTeam}
-                    </td>
-                    <td className="py-1.5 pr-3 font-semibold text-emerald-500">{e.betSide}</td>
-                    <td className="py-1.5 pr-3 text-right text-surface-500 dark:text-surface-400">
-                      {isMoneyline ? (e.refValue * 100).toFixed(1) + '%' : e.refValue.toFixed(1)}
-                    </td>
-                    <td className="py-1.5 pr-3 text-right text-surface-500 dark:text-surface-400">
-                      {isMoneyline ? (e.betValue * 100).toFixed(1) + '%' : e.betValue.toFixed(1)}
-                    </td>
-                    <td className="py-1.5 text-right font-semibold text-emerald-500">
-                      {isMoneyline ? (e.edge * 100).toFixed(1) + '%' : e.edge.toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      {/* Strategy stats + chart (collapsible) */}
+      {!loading && !error && strategyResult && (
+        <div className="glass rounded-xl p-5 mb-8">
+          <button
+            onClick={() => setShowChart(!showChart)}
+            className="w-full flex items-center justify-between cursor-pointer"
+          >
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500">
+              {strategyResult.name} — Performance
+            </h2>
+            {chevron(showChart)}
+          </button>
+          {showChart && (
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4 mt-4">
+              <div>
+                <StrategyCard result={strategyResult} />
+                {coverage && (
+                  <p className="text-xs text-surface-400 dark:text-surface-500 mt-2">
+                    {coverage.matched} of {coverage.total} played games had odds from both sources
+                  </p>
+                )}
+              </div>
+              <StrategyChart results={[strategyResult]} />
+            </div>
+          )}
         </div>
       )}
 
-      {/* Bet log */}
-      {!loading && !error && !sameBookmaker && playedEntries.length > 0 && (
-        <div className="glass rounded-xl p-5 mt-8">
+      {/* Bet log (collapsible) */}
+      {!loading && !error && playedEntries.length > 0 && (
+        <div className="glass rounded-xl p-5 mb-8">
           <button
             onClick={() => setShowLog(!showLog)}
             className="w-full flex items-center justify-between cursor-pointer"
@@ -366,18 +341,7 @@ export function CrossBookStrategyPage() {
             <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500">
               Bet Log ({playedEntries.length})
             </h2>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className={`h-4 w-4 text-surface-400 transition-transform ${showLog ? 'rotate-180' : ''}`}
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                clipRule="evenodd"
-              />
-            </svg>
+            {chevron(showLog)}
           </button>
           {showLog && (
             <div className="overflow-x-auto mt-4">
@@ -438,112 +402,118 @@ export function CrossBookStrategyPage() {
         </div>
       )}
 
-      <div className="glass rounded-xl p-6 mt-8">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500 mb-4">
-          How It Works
-        </h2>
-        <div className="space-y-4 text-sm text-surface-600 dark:text-surface-400 leading-relaxed">
-          <p>
-            This page simulates flat{' '}
-            <strong className="text-surface-800 dark:text-surface-200">1-unit bets</strong> using
-            the selected reference's predictions against a betting market's odds. The{' '}
-            <strong className="text-surface-800 dark:text-surface-200">reference</strong> can be the
-            In-House model or any bookmaker (with vig removed). You bet on the{' '}
-            <strong className="text-surface-800 dark:text-surface-200">betting market</strong> when
-            the strategy criteria are met.
-          </p>
-          {betType === 'moneyline' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h3 className="font-semibold text-surface-800 dark:text-surface-200 mb-1">
-                  Value Bets
-                </h3>
-                <p>
-                  Bets when the reference's probability exceeds the betting market's implied
-                  probability by at least the edge threshold.
-                </p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-surface-800 dark:text-surface-200 mb-1">
-                  In-House Winner
-                </h3>
-                <p>
-                  Bets every game on whichever team the reference gives {'>'}50% chance to win.
-                  Baseline strategy — no edge filter.
-                </p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-surface-800 dark:text-surface-200 mb-1">
-                  In-House Underdog
-                </h3>
-                <p>
-                  Only bets when the reference's pick is the betting market's underdog (implied
-                  probability {'<'}50%). Contrarian bets with longer odds.
-                </p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-surface-800 dark:text-surface-200 mb-1">
-                  Confidence
-                </h3>
-                <p>
-                  Only bets when the reference's confidence in its pick exceeds the threshold. Skips
-                  coin-flip games.
-                </p>
-              </div>
-            </div>
-          )}
-          {betType === 'spread' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h3 className="font-semibold text-surface-800 dark:text-surface-200 mb-1">
-                  Spread Bet
-                </h3>
-                <p>
-                  Bets every game against the spread. If the reference's predicted margin differs
-                  from the betting market's line, bet the side the reference favors.
-                </p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-surface-800 dark:text-surface-200 mb-1">
-                  Spread Value
-                </h3>
-                <p>
-                  Only bets when the reference's predicted spread differs from the betting market's
-                  line by at least the edge threshold (in goals).
-                </p>
-              </div>
-            </div>
-          )}
-          {betType === 'overUnder' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h3 className="font-semibold text-surface-800 dark:text-surface-200 mb-1">
-                  O/U Bet
-                </h3>
-                <p>
-                  Bets every game on over or under. If the reference predicts a higher total than
-                  the betting market's line, bet over; if lower, bet under.
-                </p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-surface-800 dark:text-surface-200 mb-1">
-                  O/U Value
-                </h3>
-                <p>
-                  Only bets when the reference's predicted total differs from the betting market's
-                  line by at least the edge threshold (in goals).
-                </p>
-              </div>
-            </div>
-          )}
-          <div className="border-t border-surface-200 dark:border-white/[0.06] pt-4 text-xs text-surface-400 dark:text-surface-500">
+      {/* How It Works (collapsible) */}
+      <div className="glass rounded-xl p-6 mb-8">
+        <button
+          onClick={() => setShowHowItWorks(!showHowItWorks)}
+          className="w-full flex items-center justify-between cursor-pointer"
+        >
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500">
+            How It Works
+          </h2>
+          {chevron(showHowItWorks)}
+        </button>
+        {showHowItWorks && (
+          <div className="space-y-4 text-sm text-surface-600 dark:text-surface-400 leading-relaxed mt-4">
             <p>
-              <strong>Win Rate</strong> = wins / total bets. <strong>P/L</strong> = total units won
-              minus total units lost. <strong>ROI</strong> = P/L / total bets as a percentage. The
-              chart shows cumulative P/L over the season; above the dashed line is profit.
+              This page simulates flat{' '}
+              <strong className="text-surface-800 dark:text-surface-200">1-unit bets</strong> using
+              the In-House model's predictions against the selected betting market's odds. You bet
+              when the strategy criteria are met.
             </p>
+            {betType === 'moneyline' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="font-semibold text-surface-800 dark:text-surface-200 mb-1">
+                    Value Bets
+                  </h3>
+                  <p>
+                    Bets when the model's probability exceeds the betting market's implied
+                    probability by at least the edge threshold.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-surface-800 dark:text-surface-200 mb-1">
+                    In-House Winner
+                  </h3>
+                  <p>
+                    Bets every game on whichever team the model gives {'>'}50% chance to win.
+                    Baseline strategy — no edge filter.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-surface-800 dark:text-surface-200 mb-1">
+                    In-House Underdog
+                  </h3>
+                  <p>
+                    Only bets when the model's pick is the betting market's underdog (implied
+                    probability {'<'}50%). Contrarian bets with longer odds.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-surface-800 dark:text-surface-200 mb-1">
+                    Confidence
+                  </h3>
+                  <p>
+                    Only bets when the model's confidence in its pick exceeds the threshold. Skips
+                    coin-flip games.
+                  </p>
+                </div>
+              </div>
+            )}
+            {betType === 'spread' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="font-semibold text-surface-800 dark:text-surface-200 mb-1">
+                    Spread Bet
+                  </h3>
+                  <p>
+                    Bets every game against the spread. If the model's predicted margin differs
+                    from the betting market's line, bet the side the model favors.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-surface-800 dark:text-surface-200 mb-1">
+                    Spread Value
+                  </h3>
+                  <p>
+                    Only bets when the model's predicted spread differs from the betting market's
+                    line by at least the edge threshold (in goals).
+                  </p>
+                </div>
+              </div>
+            )}
+            {betType === 'overUnder' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="font-semibold text-surface-800 dark:text-surface-200 mb-1">
+                    O/U Bet
+                  </h3>
+                  <p>
+                    Bets every game on over or under. If the model predicts a higher total than the
+                    betting market's line, bet over; if lower, bet under.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-surface-800 dark:text-surface-200 mb-1">
+                    O/U Value
+                  </h3>
+                  <p>
+                    Only bets when the model's predicted total differs from the betting market's
+                    line by at least the edge threshold (in goals).
+                  </p>
+                </div>
+              </div>
+            )}
+            <div className="border-t border-surface-200 dark:border-white/[0.06] pt-4 text-xs text-surface-400 dark:text-surface-500">
+              <p>
+                <strong>Win Rate</strong> = wins / total bets. <strong>P/L</strong> = total units
+                won minus total units lost. <strong>ROI</strong> = P/L / total bets as a percentage.
+                The chart shows cumulative P/L over the season; above the dashed line is profit.
+              </p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

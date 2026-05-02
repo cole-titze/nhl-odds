@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { GamesFeed } from '../components/GamesFeed';
 import { SeasonSelector } from '../components/SeasonSelector';
 import { CardSkeleton } from '../components/Skeleton';
+import { StrategyPicker } from '../components/StrategyPicker';
 import { useBidirectionalGames } from '../hooks/useBidirectionalGames';
 import { toDateInputValue } from '../utils/dates';
 import { getCurrentSeason } from '../utils/season';
@@ -89,7 +90,7 @@ export function GamesPage() {
 
   return (
     <div>
-      <div className="sticky top-16 z-10 -mx-5 px-5 py-3 mb-6 backdrop-blur bg-white/70 dark:bg-surface-950/70 border-b border-surface-200/60 dark:border-white/[0.06]">
+      <div className="sticky top-16 z-40 -mx-5 px-5 py-3 mb-6 backdrop-blur bg-white/70 dark:bg-surface-950/70 border-b border-surface-200/60 dark:border-white/[0.06]">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <input
@@ -103,6 +104,7 @@ export function GamesPage() {
             />
             <SeasonSelector value={season} onChange={setSeason} />
           </div>
+          <StrategyPicker betType={oddsType === 'moneyline' ? 'moneyline' : oddsType === 'spread' ? 'spread' : 'overUnder'} />
           <div className="flex gap-1">
             {(['moneyline', 'spread', 'overUnder'] as const).map((type) => (
               <button
