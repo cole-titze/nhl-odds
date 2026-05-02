@@ -185,7 +185,7 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
     <Link
       to={`/game/${game.id}`}
       state={{ game }}
-      className={`card-hover glass rounded-xl px-5 py-4 block transition-all duration-200 hover:scale-[1.015] hover:shadow-xl hover:shadow-black/[0.10] dark:hover:shadow-black/50 active:scale-[0.98] ${cardClass}`}
+      className={`card-hover glass rounded-xl px-5 py-4 block transition-all duration-200 active:scale-[0.98] ${cardClass}`}
       onMouseEnter={(e) => {
         const rect = e.currentTarget.getBoundingClientRect();
         e.currentTarget.style.setProperty('--ripple-x', `${((e.clientX - rect.left) / rect.width) * 100}%`);
