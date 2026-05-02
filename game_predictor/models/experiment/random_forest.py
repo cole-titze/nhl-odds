@@ -67,3 +67,25 @@ def tune_random_forest(X_train, X_test, y_train, y_test, n_trials, progress_call
     study = optuna.create_study(direction="minimize", study_name="rf-tuning")
     study.optimize(objective, n_trials=n_trials, n_jobs=-1, callbacks=[progress_callback])
     return study
+
+
+def tune_random_forest_regressor(X_train, X_test, y_train, y_test, n_trials, progress_callback, sample_weight=None):
+    import optuna
+    from sklearn.metrics import mean_absolute_error
+
+    def objective(trial):
+        params = {
+            "n_estimators": trial.suggest_int("n_estimators", 50, 500),
+            "max_depth": trial.suggest_int("max_depth", 3, 30),
+            "min_samples_split": trial.suggest_int("min_samples_split", 2, 20),
+            "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 20),
+            "max_features": trial.suggest_categorical("max_features", ["sqrt", "log2", None]),
+            "random_state": 42,
+        }
+        model = RandomForestRegressor(**params)
+        model.fit(X_train, y_train, sample_weight=sample_weight)
+        return mean_absolute_error(y_test, model.predict(X_test))
+
+    study = optuna.create_study(direction="minimize", study_name="rf-regressor-tuning")
+    study.optimize(objective, n_trials=n_trials, n_jobs=-1, callbacks=[progress_callback])
+    return study

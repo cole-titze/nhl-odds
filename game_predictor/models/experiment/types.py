@@ -58,6 +58,7 @@ class RegressionExperiment:
     pipeline: Pipeline
     target: str
     ensemble: list[str] | None = None
+    stack: bool = False
     decay: float = 0.0
     tune: bool = False
     tune_trials: int = 100

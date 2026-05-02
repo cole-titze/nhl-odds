@@ -188,8 +188,14 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
       className={`card-hover glass rounded-xl px-5 py-4 block transition-all duration-200 active:scale-[0.98] ${cardClass}`}
       onMouseEnter={(e) => {
         const rect = e.currentTarget.getBoundingClientRect();
-        e.currentTarget.style.setProperty('--ripple-x', `${((e.clientX - rect.left) / rect.width) * 100}%`);
-        e.currentTarget.style.setProperty('--ripple-y', `${((e.clientY - rect.top) / rect.height) * 100}%`);
+        e.currentTarget.style.setProperty(
+          '--ripple-x',
+          `${((e.clientX - rect.left) / rect.width) * 100}%`,
+        );
+        e.currentTarget.style.setProperty(
+          '--ripple-y',
+          `${((e.clientY - rect.top) / rect.height) * 100}%`,
+        );
       }}
     >
       {game.gameType === 3 && (

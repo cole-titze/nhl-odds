@@ -6,6 +6,88 @@ from ..prediction.experiments import REGRESSION_EXPERIMENTS, SAVE_SPREAD_EXPERIM
 from .ensemble import RegressionEnsemble
 from .trainer import _fit, build_models
 
+_REGRESSOR_TO_FACTORY = {
+    "LGBMRegressor": "lgbm_regressor",
+    "XGBRegressor": "xgboost_regressor",
+    "MLPRegressor": "mlp_regressor",
+    "RandomForestRegressor": "random_forest_regressor",
+}
+
+_INTERNAL_PARAMS = {"random_state", "verbosity", "early_stopping"}
+
+
+def _fmt(v) -> str:
+    if isinstance(v, float):
+        return f"{v:.6g}"
+    if isinstance(v, str):
+        return f'"{v}"'
+    return repr(v)
+
+
+def _print_tuned_regression_config(exp_name, exp, pipeline_params, tuned_decay, tuned_model_params):
+    indent = "    "
+    lines = [f'\n  # --- tuned config for "{exp_name}" ---']
+    lines.append(f'  "{exp_name}": RegressionExperiment(')
+    lines.append(f"{indent}models={{")
+    for model_name, (cls_name, best_params) in tuned_model_params.items():
+        factory = _REGRESSOR_TO_FACTORY.get(cls_name, cls_name)
+        args = ", ".join(f"{k}={_fmt(v)}" for k, v in best_params.items() if k not in _INTERNAL_PARAMS)
+        lines.append(f'{indent}    "{model_name}": {factory}({args}),')
+    lines.append(f"{indent}}},")
+
+    k_best = pipeline_params.get("k_best", 50)
+    pca = pipeline_params.get("pca_components", 15)
+    lines.append(f"{indent}pipeline=standard_pipeline(k_best={k_best}, pca_components={pca}, regression=True),")
+
+    if exp.ensemble:
+        lines.append(f"{indent}ensemble={exp.ensemble!r},")
+
+    lines.append(f'{indent}target="{exp.target}",')
+    lines.append(f"{indent}decay={tuned_decay:.4g},")
+    lines.append(f"{indent}tune=False,")
+    lines.append("  ),")
+
+    print("\n".join(lines))
+
+
+def _run_regression_tuning(exp_name, exp, X_train_t, X_test_t, y_train, y_test, sample_weight=None):
+    """Run Optuna tuning for each regression model.
+
+    Returns (tuned_models, tuned_params) where tuned_params is
+    {model_name: (cls_name, params_dict)} for copy-paste config generation.
+    """
+    from .tuner import REGRESSION_PARAM_CONVERTERS, REGRESSION_TUNERS, print_best_params, progress_callback
+
+    tuned_models = {}
+    tuned_params = {}
+    for model_name, model_cfg in exp.models.items():
+        cls_name = model_cfg.cls.__name__
+        tune_fn = REGRESSION_TUNERS.get(cls_name)
+        if tune_fn is None:
+            continue
+
+        print(f"    Tuning {model_name} ({exp.tune_trials} trials)...")
+        study = tune_fn(
+            X_train_t,
+            X_test_t,
+            y_train,
+            y_test,
+            exp.tune_trials,
+            progress_callback(exp.tune_trials, metric_name="MAE"),
+            sample_weight=sample_weight,
+        )
+        print_best_params(study, model_name, metric_name="MAE")
+
+        converter = REGRESSION_PARAM_CONVERTERS.get(cls_name)
+        if converter:
+            params = converter(study)
+        else:
+            params = {**model_cfg.params, **study.best_params}
+        tuned_models[model_name] = model_cfg.cls(**params)
+        tuned_params[model_name] = (cls_name, study.best_params)
+
+    return tuned_models, tuned_params
+
 
 def _compute_weights(seasons: np.ndarray, decay: float) -> np.ndarray | None:
     if decay == 0.0:
@@ -141,7 +223,7 @@ def train_regression_for_season(train_df, target: str):
     n_samples, n_features = X_raw.shape
     k_best = min(exp.pipeline.named_steps["select"].k, n_features)
     pca_components = min(exp.pipeline.named_steps["pca"].n_components, k_best, n_samples)
-    pipeline = standard_pipeline(k_best=k_best, pca_components=pca_components)
+    pipeline = standard_pipeline(k_best=k_best, pca_components=pca_components, regression=True)
     X_t = pipeline.fit_transform(X_raw, y)
 
     built = build_models(exp.models)
@@ -216,7 +298,7 @@ def train_regression_for_day(train_df, target: str):
     n_samples, n_features = X_train_raw.shape
     k_best = min(exp.pipeline.named_steps["select"].k, n_features)
     pca_components = min(exp.pipeline.named_steps["pca"].n_components, k_best, n_samples)
-    pipeline = standard_pipeline(k_best=k_best, pca_components=pca_components)
+    pipeline = standard_pipeline(k_best=k_best, pca_components=pca_components, regression=True)
     X_train_t = pipeline.fit_transform(X_train_raw, y_train)
 
     built = build_models(exp.models)
@@ -254,10 +336,13 @@ def train_regression_all(train_df):
     TEST_SEASONS = 2
     current_season = train_df["SeasonStartYear"].max()
     test_start = current_season - TEST_SEASONS + 1
-    train_mask = train_df["SeasonStartYear"] < test_start
+    cal_season = test_start - 1
+    train_mask = train_df["SeasonStartYear"] < cal_season
+    cal_mask = train_df["SeasonStartYear"] == cal_season
     test_mask = train_df["SeasonStartYear"] >= test_start
 
     X_train_raw = train_df.loc[train_mask, FEATURE_COLUMNS].values
+    X_cal_raw = train_df.loc[cal_mask, FEATURE_COLUMNS].values
     X_test_raw = train_df.loc[test_mask, FEATURE_COLUMNS].values
     train_seasons = train_df.loc[train_mask, "SeasonStartYear"].values
 
@@ -266,20 +351,62 @@ def train_regression_all(train_df):
     all_results = {}
 
     for exp_name, exp in REGRESSION_EXPERIMENTS.items():
-        for target in [exp.target]:
-            y_train = _compute_target(train_df.loc[train_mask], target)
-            y_test = _compute_target(train_df.loc[test_mask], target)
-            w_train = _compute_weights(train_seasons, exp.decay)
+        print(f"\n  {exp_name}...")
+        y_train = _compute_target(train_df.loc[train_mask], exp.target)
+        y_cal = _compute_target(train_df.loc[cal_mask], exp.target)
+        y_test = _compute_target(train_df.loc[test_mask], exp.target)
+        w_train = _compute_weights(train_seasons, exp.decay)
 
-            pipeline = exp.pipeline
-            X_train_t = pipeline.fit_transform(X_train_raw, y_train)
-            X_test_t = pipeline.transform(X_test_raw)
+        pipeline = exp.pipeline
+        pipeline_best_params: dict = {}
+        tuned_decay = exp.decay
 
-            built = build_models(exp.models)
-            results = _train_and_evaluate_regression(
-                built, X_train_t, X_test_t, y_train, y_test, exp.ensemble, sample_weight=w_train
+        if exp.tune:
+            from .experiment.pipeline import tune_regression_pipeline
+            from .tuner import print_best_params, progress_callback
+
+            first_cfg = next(iter(exp.models.values()))
+            print(f"    Tuning pipeline ({exp.tune_trials} trials)...")
+            pipe_study = tune_regression_pipeline(
+                X_train_raw,
+                X_cal_raw,
+                y_train,
+                y_cal,
+                first_cfg.cls,
+                first_cfg.params,
+                exp.tune_trials,
+                progress_callback(exp.tune_trials, metric_name="MAE"),
+                train_seasons=train_seasons,
             )
-            all_results[exp_name] = results
+            print_best_params(pipe_study, "pipeline", metric_name="MAE")
+            pipeline_best_params = pipe_study.best_params.copy()
+            tuned_decay = pipeline_best_params.pop("decay", exp.decay)
+            from .experiment.pipeline import standard_pipeline
+
+            pipeline = standard_pipeline(**pipeline_best_params, regression=True)
+            w_train = _compute_weights(train_seasons, tuned_decay)
+
+        X_train_t = pipeline.fit_transform(X_train_raw, y_train)
+        X_cal_t = pipeline.transform(X_cal_raw)
+        X_test_t = pipeline.transform(X_test_raw)
+
+        tuned_model_params = {}
+        if exp.tune:
+            tuned_models, tuned_model_params = _run_regression_tuning(
+                exp_name, exp, X_train_t, X_cal_t, y_train, y_cal, sample_weight=w_train
+            )
+        else:
+            tuned_models = {}
+
+        built = build_models(exp.models)
+        built.update(tuned_models)
+        results = _train_and_evaluate_regression(
+            built, X_train_t, X_test_t, y_train, y_test, exp.ensemble, sample_weight=w_train
+        )
+        all_results[exp_name] = results
+
+        if exp.tune:
+            _print_tuned_regression_config(exp_name, exp, pipeline_best_params, tuned_decay, tuned_model_params)
 
     print(f"\n{'=' * 60}")
     print("  Regression Summary")

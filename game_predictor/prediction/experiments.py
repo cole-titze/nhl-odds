@@ -89,7 +89,7 @@ EXPERIMENTS: dict[str, Experiment] = {
         decay=0.1055,
         tune=False,
     ),
-    "Deep MLP": Experiment(
+    "Compressed MLP": Experiment(
         models={
             "MLP": mlp(hidden_layer_sizes=(212,), learning_rate_init=0.00112711, alpha=0.0367419, activation="relu"),
         },
@@ -143,7 +143,7 @@ EXPERIMENTS: dict[str, Experiment] = {
         },
         pipeline=standard_pipeline(k_best=124, pca_components=98),
         calibration="none",
-        decay=0.0008893,
+        decay=0.0,
         tune=False,
     ),
 }
@@ -160,7 +160,7 @@ REGRESSION_EXPERIMENTS: dict[str, RegressionExperiment] = {
             "MLP": mlp_regressor(hidden_layer_sizes=(128, 64)),
             "RF": random_forest_regressor(n_estimators=200, max_depth=20),
         },
-        pipeline=standard_pipeline(k_best=80, pca_components=60),
+        pipeline=standard_pipeline(k_best=80, pca_components=60, regression=True),
         ensemble=["LightGBM", "XGB", "MLP", "RF"],
         target="spread",
         decay=0.08,
@@ -172,7 +172,7 @@ REGRESSION_EXPERIMENTS: dict[str, RegressionExperiment] = {
             "MLP": mlp_regressor(hidden_layer_sizes=(128, 64)),
             "RF": random_forest_regressor(n_estimators=200, max_depth=20),
         },
-        pipeline=standard_pipeline(k_best=80, pca_components=60),
+        pipeline=standard_pipeline(k_best=80, pca_components=60, regression=True),
         ensemble=["LightGBM", "XGB", "MLP", "RF"],
         target="total",
         decay=0.08,

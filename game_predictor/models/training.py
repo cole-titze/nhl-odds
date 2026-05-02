@@ -385,9 +385,22 @@ def train_for_day(train_df):
         _fit(model, X_train_t, y_train, w_train)
 
     if exp.ensemble and len(exp.ensemble) > 1:
-        ensemble_models = [built[n] for n in exp.ensemble]
-        save_model = Ensemble(models=ensemble_models)
-        save_model.fit(X_train_t, y_train)
+        if exp.stack:
+            from sklearn.base import clone
+
+            estimators = [(n, clone(built[n])) for n in exp.ensemble]
+            save_model = StackingClassifier(
+                estimators=estimators,
+                final_estimator=LogisticRegression(),
+                cv=5,
+                stack_method="predict_proba",
+                n_jobs=-1,
+            )
+            save_model.fit(X_train_t, y_train)
+        else:
+            ensemble_models = [built[n] for n in exp.ensemble]
+            save_model = Ensemble(models=ensemble_models)
+            save_model.fit(X_train_t, y_train)
         save_name = "Ensemble"
     else:
         save_name = next(iter(built))

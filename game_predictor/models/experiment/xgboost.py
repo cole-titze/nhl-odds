@@ -90,3 +90,30 @@ def tune_xgboost(X_train, X_test, y_train, y_test, n_trials, progress_callback, 
     study = optuna.create_study(direction="minimize", study_name="xgboost-tuning")
     study.optimize(objective, n_trials=n_trials, n_jobs=-1, callbacks=[progress_callback])
     return study
+
+
+def tune_xgboost_regressor(X_train, X_test, y_train, y_test, n_trials, progress_callback, sample_weight=None):
+    import optuna
+    from sklearn.metrics import mean_absolute_error
+
+    def objective(trial):
+        params = {
+            "n_estimators": trial.suggest_int("n_estimators", 100, 1000),
+            "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.3, log=True),
+            "max_depth": trial.suggest_int("max_depth", 3, 12),
+            "min_child_weight": trial.suggest_int("min_child_weight", 1, 20),
+            "subsample": trial.suggest_float("subsample", 0.5, 1.0),
+            "colsample_bytree": trial.suggest_float("colsample_bytree", 0.5, 1.0),
+            "reg_alpha": trial.suggest_float("reg_alpha", 1e-8, 10.0, log=True),
+            "reg_lambda": trial.suggest_float("reg_lambda", 1e-8, 10.0, log=True),
+            "gamma": trial.suggest_float("gamma", 1e-8, 5.0, log=True),
+            "verbosity": 0,
+            "random_state": 42,
+        }
+        model = XGBRegressor(**params)
+        model.fit(X_train, y_train, sample_weight=sample_weight)
+        return mean_absolute_error(y_test, model.predict(X_test))
+
+    study = optuna.create_study(direction="minimize", study_name="xgboost-regressor-tuning")
+    study.optimize(objective, n_trials=n_trials, n_jobs=-1, callbacks=[progress_callback])
+    return study

@@ -399,16 +399,56 @@ export function AdminPage() {
             Column descriptions
           </summary>
           <div className="px-4 pb-4 pt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-sm text-surface-600 dark:text-surface-400">
-            <div><span className="font-medium text-surface-800 dark:text-surface-200">Season</span> — NHL season start year (e.g. 2024 = 2024–25 season).</div>
-            <div><span className="font-medium text-surface-800 dark:text-surface-200">Total</span> — Total regular-season games scheduled that season.</div>
-            <div><span className="font-medium text-surface-800 dark:text-surface-200">Played</span> — Games confirmed completed in the database.</div>
-            <div><span className="font-medium text-surface-800 dark:text-surface-200">No In-House Odds</span> — Played games missing a model-generated win probability.</div>
-            <div><span className="font-medium text-surface-800 dark:text-surface-200">No Bookmaker Odds</span> — Played games with no historical bookmaker lines stored.</div>
-            <div><span className="font-medium text-surface-800 dark:text-surface-200">No Cleaned Data</span> — Games missing the cleaned/featurized row used for ML training.</div>
-            <div><span className="font-medium text-surface-800 dark:text-surface-200">No Odds Fetch</span> — Game days where no pre-game odds fetch was recorded.</div>
-            <div><span className="font-medium text-surface-800 dark:text-surface-200">Live Odds</span> — Games where the stored bookmaker odds were last updated after the game started. These are in-game or post-game lines, not pre-game, so they're unreliable as prediction inputs. Should be 0.</div>
-            <div><span className="font-medium text-surface-800 dark:text-surface-200">No Kalshi</span> — Played games with no Kalshi market odds stored.</div>
-            <div><span className="font-medium text-surface-800 dark:text-surface-200">Errors</span> — Pipeline errors logged for that season. Click the row arrow to expand.</div>
+            <div>
+              <span className="font-medium text-surface-800 dark:text-surface-200">Season</span> —
+              NHL season start year (e.g. 2024 = 2024–25 season).
+            </div>
+            <div>
+              <span className="font-medium text-surface-800 dark:text-surface-200">Total</span> —
+              Total regular-season games scheduled that season.
+            </div>
+            <div>
+              <span className="font-medium text-surface-800 dark:text-surface-200">Played</span> —
+              Games confirmed completed in the database.
+            </div>
+            <div>
+              <span className="font-medium text-surface-800 dark:text-surface-200">
+                No In-House Odds
+              </span>{' '}
+              — Played games missing a model-generated win probability.
+            </div>
+            <div>
+              <span className="font-medium text-surface-800 dark:text-surface-200">
+                No Bookmaker Odds
+              </span>{' '}
+              — Played games with no historical bookmaker lines stored.
+            </div>
+            <div>
+              <span className="font-medium text-surface-800 dark:text-surface-200">
+                No Cleaned Data
+              </span>{' '}
+              — Games missing the cleaned/featurized row used for ML training.
+            </div>
+            <div>
+              <span className="font-medium text-surface-800 dark:text-surface-200">
+                No Odds Fetch
+              </span>{' '}
+              — Game days where no pre-game odds fetch was recorded.
+            </div>
+            <div>
+              <span className="font-medium text-surface-800 dark:text-surface-200">Live Odds</span>{' '}
+              — Games where the stored bookmaker odds were last updated after the game started.
+              These are in-game or post-game lines, not pre-game, so they're unreliable as
+              prediction inputs. Should be 0.
+            </div>
+            <div>
+              <span className="font-medium text-surface-800 dark:text-surface-200">No Kalshi</span>{' '}
+              — Played games with no Kalshi market odds stored.
+            </div>
+            <div>
+              <span className="font-medium text-surface-800 dark:text-surface-200">Errors</span> —
+              Pipeline errors logged for that season. Click the row arrow to expand.
+            </div>
           </div>
         </details>
 
