@@ -1,5 +1,6 @@
 using DatabaseAccess.WebAdminRepository.Mappers;
 using Entities.Models.Web;
+using Entities.Types.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace DatabaseAccess.WebAdminRepository;
@@ -31,6 +32,7 @@ public class WebAdminRepository : IWebAdminRepository
     public async Task<List<SeasonHealthCheck>> GetHealthChecks()
     {
         var games = await _db.GameRaw
+            .Where(g => g.GameType == GameType.Regular)
             .Select(g => new { g.Id, g.SeasonStartYear, g.HasBeenPlayed, g.GameDateUTC })
             .ToListAsync();
 
