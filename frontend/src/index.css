@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
+@custom-variant hover (&:hover);
 
 @theme {
   --font-display: 'Outfit', system-ui, sans-serif;
@@ -102,4 +103,35 @@ body {
 }
 .table-row-hover:hover {
   @apply bg-surface-100 dark:bg-white/[0.03];
+}
+
+/* Game card hover — ripple expands from cursor entry point and stays lit */
+@keyframes card-ripple {
+  from { clip-path: circle(0% at var(--ripple-x, 50%) var(--ripple-y, 50%)); opacity: 1; }
+  to   { clip-path: circle(160% at var(--ripple-x, 50%) var(--ripple-y, 50%)); opacity: 1; }
+}
+
+.card-hover {
+  position: relative;
+  isolation: isolate;
+}
+
+.card-hover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.15);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.dark .card-hover::after {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.card-hover:hover::after {
+  animation: card-ripple 0.6s ease-out forwards;
 }

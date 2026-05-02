@@ -9,4 +9,5 @@ public class ModeSettings
     public int ThrottleTimeMs { get; set; }
     public string OddsApiKey { get; set; } = string.Empty;
     public string OddsApiBackfillKey { get; set; } = string.Empty;
+    public IEnumerable<int> BackfillGameIds { get; set; } = [];
 }

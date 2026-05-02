@@ -42,6 +42,36 @@ public class NhlDataManager
     }
 
     /// <summary>
+    /// Force-fetches and overwrites a specific list of games by ID, regardless of whether they
+    /// already exist. Useful for backfilling games that were saved with missing events or stats.
+    /// </summary>
+    public async Task BackfillGames(IEnumerable<int> gameIds)
+    {
+        foreach (var gameId in gameIds)
+        {
+            try
+            {
+                _logger.LogInformation("Backfilling game {GameId}", gameId);
+                var game = await _gameManager.GetGame(gameId, ModeType.NhlUpdate);
+                if (game == null)
+                {
+                    _logger.LogWarning("Game {GameId} not found in NHL API, skipping.", gameId);
+                    continue;
+                }
+                // Skip SavePlayers — player rows already exist from the original save.
+                // Re-saving them triggers FK violations via cascade-tracked entities from other games.
+                await SaveGame(game);
+                await _gameRepo.Commit();
+                _logger.LogInformation("Backfilled game {GameId} successfully.", gameId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error backfilling game {GameId}.", gameId);
+            }
+        }
+    }
+
+    /// <summary>
     /// Gets all nhl games within the season range.
     /// </summary>
     /// <param name="seasonYearRange">The years to get data for</param>

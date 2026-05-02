@@ -38,6 +38,10 @@ if (string.IsNullOrEmpty(settings.ConnectionString))
         settings.OddsApiKey = config["OddsApi:API_FUTURE_KEY"] ?? string.Empty;
     if (string.IsNullOrEmpty(settings.OddsApiBackfillKey))
         settings.OddsApiBackfillKey = config["OddsApi:API_BACKFILL_KEY"] ?? string.Empty;
+    var gameIdsConfig = config["ModeSettings:BACKFILL_GAME_IDS"];
+    if (!string.IsNullOrEmpty(gameIdsConfig))
+        settings.BackfillGameIds = gameIdsConfig.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(int.Parse);
 }
 
 if (string.IsNullOrEmpty(settings.ConnectionString))
@@ -50,6 +54,7 @@ var jobName = settings.Mode switch
     ModeType.BackfillOdds => "odds-backfill",
     ModeType.KalshiFetch => "kalshi-fetch",
     ModeType.BackfillKalshi => "kalshi-backfill",
+    ModeType.BackfillGame => "game-backfill",
     _ => null,
 };
 

@@ -123,6 +123,15 @@ public class DataGetterEntry
                 _logger.LogTrace("Completed Bookmaker Odds Getter");
             }
         }
+        else if (modeSettings.Mode == ModeType.BackfillGame)
+        {
+            if (!modeSettings.BackfillGameIds.Any())
+                throw new Exception("BACKFILL_GAME_IDS must be set for BackfillGame mode (comma-separated list of game IDs)");
+
+            _logger.LogTrace("Starting Game Backfill for {Count} game(s)", modeSettings.BackfillGameIds.Count());
+            await dataManager.BackfillGames(modeSettings.BackfillGameIds);
+            _logger.LogTrace("Completed Game Backfill");
+        }
         else
         {
             _logger.LogTrace("Starting Data Getter");
