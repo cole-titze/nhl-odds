@@ -209,7 +209,25 @@ public class NhlDataManager
 
                 var game = await _gameManager.GetGame(gameId, mode);
                 if (game == null)
+                {
+                    var existing = await _gameRepo.GetGameSummary(gameId);
+                    if (existing != null && !existing.HasBeenPlayed && existing.GameDateUTC < DateTime.UtcNow)
+                    {
+                        _logger.LogWarning("Game {GameId} was saved as a future game but NHL API returned null. Date: {Date:yyyy-MM-dd}.", gameId, existing.GameDateUTC);
+                        var errorLog = new DbErrorLog
+                        {
+                            TimestampUTC = DateTime.UtcNow,
+                            GameId = gameId,
+                            SeasonStartYear = seasonStartYear,
+                            ExceptionType = "GameDataUnavailable",
+                            Message = $"Game was saved as a future game but NHL API returned null. GameDateUTC: {existing.GameDateUTC:yyyy-MM-dd}",
+                            StackTrace = string.Empty,
+                            Source = "FetchPlayoffSegment"
+                        };
+                        await _errorRepo.AddError(errorLog);
+                    }
                     continue;
+                }
 
                 var players = await _playerManager.GetPlayers(game, mode);
                 await SavePlayers(players);

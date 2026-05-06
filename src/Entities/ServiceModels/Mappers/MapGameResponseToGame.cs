@@ -18,7 +18,7 @@ public static class MapGameResponseToGame
         game.Id = messageGameSummary["id"]!.GetValue<int>();
         game.GameType = ((game.Id % 1_000_000) / 10_000) == 3 ? GameType.Playoff : GameType.Regular;
         game.SeasonStartYear = messageGameSummary["season"]!.GetCoercedInt() / 10000;
-        game.GameDateUTC = DateTime.Parse(messageGameSummary["startTimeUTC"]!.GetValue<string>());
+        game.GameDateUTC = DateTimeOffset.Parse(messageGameSummary["startTimeUTC"]!.GetValue<string>()).UtcDateTime;
         game.HasBeenPlayed = messageGameSummary["gameState"]!.GetValue<string>() == "OFF";
 
         if (game.HasBeenPlayed)
