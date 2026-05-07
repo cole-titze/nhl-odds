@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
-import { addHours, parseISO } from 'date-fns';
 import { getAnchorDate, getGameOddsInDateRange } from '../api/gameOdds';
 import type { GameOddsVM } from '../types';
 import { addDaysIso, formatDate } from '../utils/dates';
@@ -157,10 +156,14 @@ function mergeGames(
   return next;
 }
 
-// Bucket a game's UTC datetime to a yyyy-MM-dd string in Central time
-// (matches the backend's GameDateUTC.AddHours(-6).Date logic).
+// Bucket a game's UTC datetime to a yyyy-MM-dd string in Central time (DST-aware).
 export function gameDateBucket(isoGameDate: string): string {
-  return formatDate(addHours(parseISO(isoGameDate), -6));
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Chicago',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(isoGameDate));
 }
 
 export function useBidirectionalGames(seasonStartYear: number) {

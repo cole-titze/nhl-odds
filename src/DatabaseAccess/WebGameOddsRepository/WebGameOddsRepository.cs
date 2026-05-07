@@ -13,20 +13,26 @@ public class GameOddsRepository : IGameOddsRepository
     private readonly GameDbContext _dbContext;
     private readonly IWebBookmakerOddsRepository _bookmakerOddsRepo;
     private const int MAX_GAMES = 16;
+    private static readonly TimeZoneInfo CentralZone = TimeZoneInfo.FindSystemTimeZoneById("America/Chicago");
+
     public GameOddsRepository(GameDbContext dbContext, IWebBookmakerOddsRepository bookmakerOddsRepo)
     {
         _dbContext = dbContext;
         _bookmakerOddsRepo = bookmakerOddsRepo;
     }
 
+    private static double CentralOffsetHours(DateTime utcNow) =>
+        CentralZone.GetUtcOffset(utcNow).TotalHours;
+
     public async Task<IEnumerable<GameOdds>> GetGameOddsInDateRange(DateRange dateRange, int seasonStartYear)
     {
         var seasonTeams = await GetSeasonTeams(seasonStartYear);
+        var offset = CentralOffsetHours(DateTime.UtcNow);
 
         var games = await _dbContext.GameRaw
             .AsNoTracking()
-            .Where(g => g.GameDateUTC.AddHours(-6).Date >= dateRange.StartDate.Date
-                     && g.GameDateUTC.AddHours(-6).Date <= dateRange.EndDate.Date)
+            .Where(g => g.GameDateUTC.AddHours(offset).Date >= dateRange.StartDate.Date
+                     && g.GameDateUTC.AddHours(offset).Date <= dateRange.EndDate.Date)
             .OrderBy(g => g.GameDateUTC)
             .ToListAsync();
 
@@ -149,26 +155,31 @@ public class GameOddsRepository : IGameOddsRepository
 
     public async Task<DateTime?> GetAnchorDate(int seasonStartYear)
     {
-        var nowCentralDate = DateTime.UtcNow.AddHours(-6).Date;
+        var utcNow = DateTime.UtcNow;
+        var nowCentralDate = TimeZoneInfo.ConvertTimeFromUtc(utcNow, CentralZone).Date;
+        var offset = CentralOffsetHours(utcNow);
 
         var upcoming = await _dbContext.GameRaw
             .AsNoTracking()
             .Where(g => g.SeasonStartYear == seasonStartYear
-                && g.GameDateUTC.AddHours(-6).Date >= nowCentralDate)
+                && g.GameDateUTC.AddHours(offset).Date >= nowCentralDate)
             .OrderBy(g => g.GameDateUTC)
             .Select(g => (DateTime?)g.GameDateUTC)
             .FirstOrDefaultAsync();
 
-        if (upcoming.HasValue) return upcoming.Value.AddHours(-6).Date;
+        if (upcoming.HasValue)
+            return TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(upcoming.Value, DateTimeKind.Utc), CentralZone).Date;
 
         var past = await _dbContext.GameRaw
             .AsNoTracking()
             .Where(g => g.SeasonStartYear == seasonStartYear
-                && g.GameDateUTC.AddHours(-6).Date < nowCentralDate)
+                && g.GameDateUTC.AddHours(offset).Date < nowCentralDate)
             .OrderByDescending(g => g.GameDateUTC)
             .Select(g => (DateTime?)g.GameDateUTC)
             .FirstOrDefaultAsync();
 
-        return past?.AddHours(-6).Date;
+        return past.HasValue
+            ? TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(past.Value, DateTimeKind.Utc), CentralZone).Date
+            : null;
     }
 }
