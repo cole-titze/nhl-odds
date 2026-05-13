@@ -9,7 +9,8 @@ export function formatDisplayDate(date: Date): string {
 }
 
 export function formatShortDate(dateStr: string): string {
-  return format(parseISO(dateStr), 'MMM d');
+  const iso = dateStr.length === 10 ? dateStr + 'T12:00:00' : dateStr;
+  return format(parseISO(iso), 'MMM d');
 }
 
 export function toDateInputValue(date: Date): string {

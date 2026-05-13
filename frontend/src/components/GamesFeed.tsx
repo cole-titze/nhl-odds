@@ -65,7 +65,7 @@ export function GamesFeed({
           return (
             <section key={date} id={`date-${date}`}>
               <h3 className="text-sm font-semibold uppercase tracking-wide text-surface-500 dark:text-surface-400 mb-3">
-                {formatDisplayDate(parseISO(date))}
+                {formatDisplayDate(parseISO(date + 'T12:00:00'))}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {games.map((game) => (
