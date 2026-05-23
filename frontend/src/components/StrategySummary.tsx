@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { StrategyResult } from '../utils/bettingStrategies';
+import { getTextClass } from '../utils/colorClass';
 
 const STRATEGY_COLORS: Record<string, string> = {
   'In-House Winner': '#3b82f6',
@@ -23,7 +24,7 @@ export function StrategyCard({ result: r, children }: Props) {
   return (
     <div className="glass rounded-xl p-5">
       <div className="flex items-center justify-between mb-3">
-        <div className="text-xs font-semibold uppercase tracking-wider" style={{ color }}>
+        <div className={`text-xs font-semibold uppercase tracking-wider ${getTextClass(color)}`}>
           {r.name}
         </div>
         {children && <div className="flex flex-wrap gap-1">{children}</div>}

@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import { formatShortDate } from '../utils/dates';
 import type { StrategyResult } from '../utils/bettingStrategies';
+import { getButtonClasses, getTextClass } from '../utils/colorClass';
 
 const STRATEGY_COLORS: Record<string, string> = {
   'In-House Winner': '#3b82f6',
@@ -84,12 +85,7 @@ export function StrategyChart({ results }: Props) {
             <button
               key={name}
               onClick={() => toggle(name)}
-              className="px-2.5 py-1 rounded-full text-xs font-mono font-medium transition-all"
-              style={{
-                backgroundColor: active ? color + '22' : 'transparent',
-                color: active ? color : '#737373',
-                border: `1px solid ${active ? color + '66' : '#525252'}`,
-              }}
+              className={`px-2.5 py-1 rounded-full text-xs font-mono font-medium transition-all ${getButtonClasses(color, active)}`}
             >
               {name}
             </button>
@@ -119,23 +115,12 @@ export function StrategyChart({ results }: Props) {
               if (!active || !payload?.length) return null;
               const d = payload[0].payload as Record<string, unknown>;
               return (
-                <div
-                  style={{
-                    backgroundColor: 'rgba(10, 10, 10, 0.9)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: '8px',
-                    fontFamily: 'JetBrains Mono',
-                    fontSize: '12px',
-                    color: '#fff',
-                    backdropFilter: 'blur(12px)',
-                    padding: '8px 12px',
-                  }}
-                >
+                <div className="bg-[rgba(10,10,10,0.9)] border border-white/8 rounded-lg font-mono text-xs text-white backdrop-blur-md py-2 px-3">
                   <div>{label}</div>
                   {strategyNames
                     .filter((name) => enabled.has(name) && d[name] != null)
                     .map((name) => (
-                      <div key={name} style={{ color: STRATEGY_COLORS[name] ?? '#737373' }}>
+                      <div key={name} className={getTextClass(STRATEGY_COLORS[name] ?? '#737373')}>
                         {name}: {(d[name] as number).toFixed(2)}u
                       </div>
                     ))}

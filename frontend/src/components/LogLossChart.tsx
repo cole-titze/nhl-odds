@@ -3,6 +3,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 import { formatShortDate } from '../utils/dates';
 import { calculateLogLoss } from '../utils/predictions';
 import type { GameOddsVM } from '../types';
+import { getButtonClasses, getTextClass } from '../utils/colorClass';
 
 const HOMEGROWN = 'In-House Model';
 
@@ -133,12 +134,7 @@ export function LogLossChart({ games, deduplicateById }: Props) {
             <button
               key={name}
               onClick={() => toggle(name)}
-              className="px-2.5 py-1 rounded-full text-xs font-mono font-medium transition-all"
-              style={{
-                backgroundColor: active ? color + '22' : 'transparent',
-                color: active ? color : '#737373',
-                border: `1px solid ${active ? color + '66' : '#525252'}`,
-              }}
+              className={`px-2.5 py-1 rounded-full text-xs font-mono font-medium transition-all ${getButtonClasses(color, active)}`}
             >
               {name}
             </button>
@@ -167,23 +163,12 @@ export function LogLossChart({ games, deduplicateById }: Props) {
               if (!active || !payload?.length) return null;
               const d = payload[0].payload as Record<string, unknown>;
               return (
-                <div
-                  style={{
-                    backgroundColor: 'rgba(10, 10, 10, 0.9)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: '8px',
-                    fontFamily: 'JetBrains Mono',
-                    fontSize: '12px',
-                    color: '#fff',
-                    backdropFilter: 'blur(12px)',
-                    padding: '8px 12px',
-                  }}
-                >
+                <div className="bg-[rgba(10,10,10,0.9)] border border-white/8 rounded-lg font-mono text-xs text-white backdrop-blur-md py-2 px-3">
                   <div>{label}</div>
                   {allChips
                     .filter((name) => enabled.has(name) && d[name] != null)
                     .map((name) => (
-                      <div key={name} style={{ color: getColor(name, allChips.indexOf(name)) }}>
+                      <div key={name} className={getTextClass(getColor(name, allChips.indexOf(name)))}>
                         {name}: {d[name] as number}
                       </div>
                     ))}
