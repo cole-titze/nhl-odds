@@ -168,7 +168,10 @@ export function LogLossChart({ games, deduplicateById }: Props) {
                   {allChips
                     .filter((name) => enabled.has(name) && d[name] != null)
                     .map((name) => (
-                      <div key={name} className={getTextClass(getColor(name, allChips.indexOf(name)))}>
+                      <div
+                        key={name}
+                        className={getTextClass(getColor(name, allChips.indexOf(name)))}
+                      >
                         {name}: {d[name] as number}
                       </div>
                     ))}
