@@ -18,6 +18,8 @@ export function useTheme() {
     } else {
       root.classList.remove('dark');
     }
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', theme === 'dark' ? '#141418' : '#fafafa');
     localStorage.setItem('theme', theme);
   }, [theme]);
 
