@@ -1,4 +1,4 @@
-FROM docker:28-cli
+FROM docker:29-cli
 
 RUN apk upgrade --no-cache && apk add --no-cache bash postgresql16-client docker-cli-compose tzdata
 
