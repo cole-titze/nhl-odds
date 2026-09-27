@@ -2,8 +2,8 @@ export const FIRST_SEASON = 2009;
 
 export function getCurrentSeason(date: Date = new Date()): number {
   const year = date.getFullYear();
-  const month = date.getMonth(); // 0-indexed
-  return month >= 9 ? year : year - 1; // October (9) or later = current year
+  const seasonStart = new Date(year, 8, 20); // September 20
+  return date >= seasonStart ? year : year - 1;
 }
 
 export function getSeasonOptions(): number[] {

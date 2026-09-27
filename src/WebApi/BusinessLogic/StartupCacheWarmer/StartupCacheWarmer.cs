@@ -97,10 +97,11 @@ public class StartupCacheWarmer : BackgroundService
         return next7am - now;
     }
 
-    // NHL season starts in October — if it's before October, the season began last year.
+    // NHL season starts September 20 — before then, the season began last year.
     private static int GetCurrentSeasonStartYear()
     {
         var now = DateTime.UtcNow;
-        return now.Month >= 10 ? now.Year : now.Year - 1;
+        var seasonStart = new DateTime(now.Year, 9, 20);
+        return now >= seasonStart ? now.Year : now.Year - 1;
     }
 }
