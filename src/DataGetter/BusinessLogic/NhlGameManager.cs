@@ -93,6 +93,12 @@ public class NhlGameManager
             return null;
         }
 
+        if (!game.HasBeenPlayed && game.GameDateUTC > DateTime.UtcNow)
+        {
+            _logger.LogInformation("Game {GameId} has not been played yet. Saving schedule info only.", gameId);
+            return game;
+        }
+
         await BuildGameRosterStats(game);
 
         return game;

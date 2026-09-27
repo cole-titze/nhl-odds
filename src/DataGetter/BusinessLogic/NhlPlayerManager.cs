@@ -56,8 +56,13 @@ public class NhlPlayerManager
                 continue;
             }
             var player = await _nhlDataGetter.PlayerDataGetter.GetPlayer(playerStats.PlayerId, teamId);
-            if (player != null)
-                players.Add(player);
+            if (player == null)
+            {
+                // Don't silently drop this player - their stats row still gets saved elsewhere
+                // and will violate the Player foreign key if they're never upserted.
+                throw new Exception("Failed to get player data for player: " + playerStats.PlayerId);
+            }
+            players.Add(player);
         }
 
         return players;

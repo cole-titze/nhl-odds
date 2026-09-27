@@ -103,8 +103,12 @@ public static class MapGamePlayerStatsResponseToGamePlayerStats
 
     private static void BuildOfficials(GameRosterStats gameRosterStats, JsonNode gamePlayerStatResponse)
     {
+        // Games that were scheduled but never played (e.g. a playoff series that ended
+        // before reaching this game) have no gameInfo.referees/linesmen in the API response.
+        var gameInfo = gamePlayerStatResponse["gameInfo"];
+
         var referees = new List<IOfficial>();
-        foreach (var referee in gamePlayerStatResponse["gameInfo"]!["referees"]!.AsArray())
+        foreach (var referee in gameInfo?["referees"]?.AsArray() ?? [])
         {
             referees.Add(new Referee()
             {
@@ -114,7 +118,7 @@ public static class MapGamePlayerStatsResponseToGamePlayerStats
         gameRosterStats.Referees = referees;
 
         var linesmen = new List<IOfficial>();
-        foreach (var linesman in gamePlayerStatResponse["gameInfo"]!["linesmen"]!.AsArray())
+        foreach (var linesman in gameInfo?["linesmen"]?.AsArray() ?? [])
         {
             linesmen.Add(new Linesman()
             {

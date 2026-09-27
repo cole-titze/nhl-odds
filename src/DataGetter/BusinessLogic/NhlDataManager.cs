@@ -42,6 +42,31 @@ public class NhlDataManager
     }
 
     /// <summary>
+    /// Builds an error message that includes the innermost exception's detail (e.g. the actual
+    /// Postgres constraint error inside a DbUpdateException, which ex.Message alone doesn't show).
+    /// Bounded so a pathological exception chain can't write an unbounded blob into ErrorLog.
+    /// </summary>
+    private static string BuildErrorMessage(Exception ex, int maxInnerLength = 1000)
+    {
+        var inner = ex.InnerException;
+        var depth = 0;
+        while (inner?.InnerException != null && depth < 5)
+        {
+            inner = inner.InnerException;
+            depth++;
+        }
+
+        if (inner == null)
+            return ex.Message;
+
+        var innerDetail = $"{inner.GetType().Name}: {inner.Message}";
+        if (innerDetail.Length > maxInnerLength)
+            innerDetail = innerDetail[..maxInnerLength];
+
+        return $"{ex.Message} | Inner: {innerDetail}";
+    }
+
+    /// <summary>
     /// Force-fetches and overwrites a specific list of games by ID, regardless of whether they
     /// already exist. Useful for backfilling games that were saved with missing events or stats.
     /// </summary>
@@ -177,7 +202,7 @@ public class NhlDataManager
                     GameId = gameId,
                     SeasonStartYear = seasonStartYear,
                     ExceptionType = ex.GetType().FullName ?? ex.GetType().Name,
-                    Message = ex.Message,
+                    Message = BuildErrorMessage(ex),
                     StackTrace = topFrames,
                     Source = "FetchSegment"
                 };
@@ -213,18 +238,12 @@ public class NhlDataManager
                     var existing = await _gameRepo.GetGameSummary(gameId);
                     if (existing != null && !existing.HasBeenPlayed && existing.GameDateUTC < DateTime.UtcNow)
                     {
-                        _logger.LogWarning("Game {GameId} was saved as a future game but NHL API returned null. Date: {Date:yyyy-MM-dd}.", gameId, existing.GameDateUTC);
-                        var errorLog = new DbErrorLog
-                        {
-                            TimestampUTC = DateTime.UtcNow,
-                            GameId = gameId,
-                            SeasonStartYear = seasonStartYear,
-                            ExceptionType = "GameDataUnavailable",
-                            Message = $"Game was saved as a future game but NHL API returned null. GameDateUTC: {existing.GameDateUTC:yyyy-MM-dd}",
-                            StackTrace = string.Empty,
-                            Source = "FetchPlayoffSegment"
-                        };
-                        await _errorRepo.AddError(errorLog);
+                        // This game slot was scheduled speculatively (e.g. Game 6 of a series that ended
+                        // in 5) and its date has passed with the NHL API still returning nothing for it -
+                        // it will never happen. Remove the placeholder instead of re-checking it forever.
+                        _logger.LogInformation("Game {GameId} (scheduled {Date:yyyy-MM-dd}) never happened - series ended early. Removing placeholder.", gameId, existing.GameDateUTC);
+                        await _gameRepo.DeleteGame(gameId);
+                        await _gameRepo.Commit();
                     }
                     continue;
                 }
@@ -246,7 +265,7 @@ public class NhlDataManager
                     GameId = gameId,
                     SeasonStartYear = seasonStartYear,
                     ExceptionType = ex.GetType().FullName ?? ex.GetType().Name,
-                    Message = ex.Message,
+                    Message = BuildErrorMessage(ex),
                     StackTrace = topFrames,
                     Source = "FetchPlayoffSegment"
                 };

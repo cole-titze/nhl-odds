@@ -33,6 +33,31 @@ public class GameCleaner
         _logger = loggerFactory.CreateLogger<GameCleaner>();
     }
 
+    /// <summary>
+    /// Builds an error message that includes the innermost exception's detail (e.g. the actual
+    /// Postgres constraint error inside a DbUpdateException, which ex.Message alone doesn't show).
+    /// Bounded so a pathological exception chain can't write an unbounded blob into ErrorLog.
+    /// </summary>
+    private static string BuildErrorMessage(Exception ex, int maxInnerLength = 1000)
+    {
+        var inner = ex.InnerException;
+        var depth = 0;
+        while (inner?.InnerException != null && depth < 5)
+        {
+            inner = inner.InnerException;
+            depth++;
+        }
+
+        if (inner == null)
+            return ex.Message;
+
+        var innerDetail = $"{inner.GetType().Name}: {inner.Message}";
+        if (innerDetail.Length > maxInnerLength)
+            innerDetail = innerDetail[..maxInnerLength];
+
+        return $"{ex.Message} | Inner: {innerDetail}";
+    }
+
     public async Task CleanGamesInSeasons(YearRange seasonYearRange)
     {
         for (int seasonStartYear = seasonYearRange.StartYear; seasonStartYear <= seasonYearRange.EndYear; seasonStartYear++)
@@ -122,7 +147,7 @@ public class GameCleaner
                         GameId = game.Id,
                         SeasonStartYear = seasonStartYear,
                         ExceptionType = ex.GetType().FullName ?? ex.GetType().Name,
-                        Message = ex.Message,
+                        Message = BuildErrorMessage(ex),
                         StackTrace = topFrames,
                         Source = "GameCleaner.CleanGamesInSeasons"
                     });

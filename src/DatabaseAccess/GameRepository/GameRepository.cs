@@ -208,6 +208,17 @@ public class GameRepository : IGameRepository
         return MapDbGameToGame.Map(dbGame);
     }
 
+    /// <summary>
+    /// Removes a game placeholder row (e.g. a playoff game slot that was scheduled speculatively
+    /// but never happened because the series ended early). Caller is responsible for Commit().
+    /// </summary>
+    public async Task DeleteGame(int gameId)
+    {
+        var dbGame = await GetDbGame(gameId);
+        if (dbGame != null)
+            _dbContext.GameRaw.Remove(dbGame);
+    }
+
     public async Task<Game?> GetGame(int gameId)
     {
         var dbGame = await GetDbGame(gameId);

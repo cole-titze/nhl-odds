@@ -16,4 +16,5 @@ public interface IGameRepository
     Task<int> GetSavedGameCountForSeason(int seasonStartYear);
     Task<int?> GetGameCountForSeason(int seasonStartYear);
     Task<bool> HasPlayoffGamesForSeason(int seasonStartYear);
+    Task DeleteGame(int gameId);
 }
