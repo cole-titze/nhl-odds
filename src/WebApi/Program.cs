@@ -79,14 +79,15 @@ builder.Services.AddRateLimiter(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
-builder.Services.AddMcpServer(options =>
-{
-    options.ServerInfo = new() { Name = "nhl-odds", Version = "1.0" };
-    options.ServerInstructions = """
+// Mirrors getCurrentSeason in frontend/src/utils/season.ts: a new season starts on September 20
+static int GetCurrentSeason(DateTime date) =>
+    date >= new DateTime(date.Year, 9, 20) ? date.Year : date.Year - 1;
+
+static string BuildMcpInstructions(int currentSeason) => $"""
         This server provides NHL game data, ML model predictions, and bookmaker odds.
 
         Season years use the start year of the season (e.g. 2024 for the 2024-25 season).
-        The current season is 2024.
+        The current season is {currentSeason}.
 
         Tool guidance:
         - Use GetTodaysGames first when the user asks about today's games or upcoming matchups.
@@ -98,8 +99,20 @@ builder.Services.AddMcpServer(options =>
         Odds are win probabilities (0–1). Log loss measures prediction accuracy — lower is better;
         random guessing scores ~0.693.
         """;
+
+builder.Services.AddMcpServer(options =>
+{
+    options.ServerInfo = new() { Name = "nhl-odds", Version = "1.0" };
 })
-    .WithHttpTransport()
+    .WithHttpTransport(transport =>
+    {
+        // Built per session so the current season stays correct without a restart
+        transport.ConfigureSessionOptions = (_, options, _) =>
+        {
+            options.ServerInstructions = BuildMcpInstructions(GetCurrentSeason(DateTime.UtcNow));
+            return Task.CompletedTask;
+        };
+    })
     .WithToolsFromAssembly();
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
