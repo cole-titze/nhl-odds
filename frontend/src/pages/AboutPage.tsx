@@ -106,7 +106,7 @@ export function AboutPage() {
             {`{
   "mcpServers": {
     "nhl-odds": {
-      "url": "https://odds.nhlwager.com/mcp"
+      "url": "https://nhl.half-built.com/mcp"
     }
   }
 }`}
