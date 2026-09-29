@@ -338,11 +338,10 @@ public class NhlDataManager
             await _gameEventRepo.AddUpdateGameEvents(game);
         }
 
-        await _playerRepo.AddUpdateGameRosterStats(game);
-
-        // Coaches and officials are only available for played games
+        // Roster stats, coaches, and officials are only available for played games
         if (game.HasBeenPlayed)
         {
+            await _playerRepo.AddUpdateGameRosterStats(game);
             await _gameRepo.AddUpdateGameCoaches(game);
             await _gameRepo.AddUpdateGameOfficials(game);
         }
