@@ -63,8 +63,11 @@ public class NhlApiScheduleGetter : INhlScheduleGetter
         // Due to Covid, the 2020 season started on January 13th 2021
         // 2012 lockout season started on January 19th 2013.
         // Jan 20th catches all years
-        int standingYear = seasonStartYear + 1;
-        string url = "https://api-web.nhle.com/v1/standings/" + standingYear + "-01-20";
+        // Standings for a future date come back empty, so a season that hasn't reached
+        // Jan 20th yet uses the current standings instead.
+        var standingDate = new DateTime(seasonStartYear + 1, 1, 20);
+        string standingPath = standingDate > DateTime.UtcNow ? "now" : standingDate.ToString("yyyy-MM-dd");
+        string url = "https://api-web.nhle.com/v1/standings/" + standingPath;
 
         var standingsServiceResponse = new ServiceStandingsResponse(await _requestMaker.MakeRequest(url, ""));
 
@@ -74,7 +77,17 @@ public class NhlApiScheduleGetter : INhlScheduleGetter
             return null;
         }
 
-        return standingsServiceResponse.StandingsResponseToSeasonTeams();
+        // Before a season starts, "now" can still return the previous season's standings
+        var seasonTeams = standingsServiceResponse.StandingsResponseToSeasonTeams()?
+            .Where(t => t.SeasonStartYear == seasonStartYear)
+            .ToList();
+        if (seasonTeams == null || seasonTeams.Count == 0)
+        {
+            _logger.LogWarning("No team standings available yet for season: " + seasonStartYear.ToString());
+            return null;
+        }
+
+        return seasonTeams;
     }
 
     /// <summary>
