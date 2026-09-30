@@ -17,6 +17,9 @@ export interface PrependSnapshot {
 interface BidiState {
   seasonStartYear: number;
   anchorDate: string | null;
+  // Anchor resolved from the API for this season (today, or the nearest game
+  // day). Kept across jumpToDate so the page can offer a "Jump to today".
+  homeAnchor: string | null;
   earliestLoaded: string | null;
   latestLoaded: string | null;
   gamesByDate: Map<string, GameOddsVM[]>;
@@ -32,8 +35,13 @@ interface BidiState {
 }
 
 type Action =
-  | { type: 'INIT'; seasonStartYear: number; explicitAnchor?: string | null }
-  | { type: 'ANCHOR_RESOLVED'; anchorDate: string | null }
+  | {
+      type: 'INIT';
+      seasonStartYear: number;
+      explicitAnchor?: string | null;
+      homeAnchor?: string | null;
+    }
+  | { type: 'ANCHOR_RESOLVED'; anchorDate: string | null; isHome?: boolean }
   | {
       type: 'INIT_CHUNK_SUCCESS';
       gamesByDate: Map<string, GameOddsVM[]>;
@@ -42,23 +50,28 @@ type Action =
     }
   | { type: 'INIT_CHUNK_ERROR'; error: string }
   | { type: 'LOAD_OLDER_START' }
-  | { type: 'LOAD_OLDER_SUCCESS'; games: GameOddsVM[]; newEarliest: string; isEmpty: boolean }
-  | { type: 'LOAD_OLDER_ERROR'; error: string }
-  | { type: 'LOAD_NEWER_START' }
   | {
-      type: 'LOAD_NEWER_SUCCESS';
+      type: 'LOAD_OLDER_SUCCESS';
       games: GameOddsVM[];
-      newLatest: string;
+      newEarliest: string;
       isEmpty: boolean;
       snapshot: PrependSnapshot;
     }
+  | { type: 'LOAD_OLDER_ERROR'; error: string }
+  | { type: 'LOAD_NEWER_START' }
+  | { type: 'LOAD_NEWER_SUCCESS'; games: GameOddsVM[]; newLatest: string; isEmpty: boolean }
   | { type: 'LOAD_NEWER_ERROR'; error: string }
   | { type: 'ACK_PREPEND' };
 
-function emptyState(seasonStartYear: number, explicitAnchor: string | null = null): BidiState {
+function emptyState(
+  seasonStartYear: number,
+  explicitAnchor: string | null = null,
+  homeAnchor: string | null = null,
+): BidiState {
   return {
     seasonStartYear,
     anchorDate: explicitAnchor,
+    homeAnchor,
     earliestLoaded: null,
     latestLoaded: null,
     gamesByDate: new Map(),
@@ -77,10 +90,18 @@ function emptyState(seasonStartYear: number, explicitAnchor: string | null = nul
 function reducer(state: BidiState, action: Action): BidiState {
   switch (action.type) {
     case 'INIT':
-      return emptyState(action.seasonStartYear, action.explicitAnchor ?? null);
+      return emptyState(
+        action.seasonStartYear,
+        action.explicitAnchor ?? null,
+        action.homeAnchor ?? null,
+      );
 
     case 'ANCHOR_RESOLVED':
-      return { ...state, anchorDate: action.anchorDate };
+      return {
+        ...state,
+        anchorDate: action.anchorDate,
+        homeAnchor: action.isHome ? action.anchorDate : state.homeAnchor,
+      };
 
     case 'INIT_CHUNK_SUCCESS':
       return {
@@ -108,6 +129,7 @@ function reducer(state: BidiState, action: Action): BidiState {
         olderStatus: 'idle',
         consecutiveEmptyOlder: empty,
         hasMoreOlder: empty < MAX_CONSECUTIVE_EMPTY,
+        prependPending: action.snapshot,
       };
     }
 
@@ -127,7 +149,6 @@ function reducer(state: BidiState, action: Action): BidiState {
         newerStatus: 'idle',
         consecutiveEmptyNewer: empty,
         hasMoreNewer: empty < MAX_CONSECUTIVE_EMPTY,
-        prependPending: action.snapshot,
       };
     }
 
@@ -196,25 +217,28 @@ export function useBidirectionalGames(seasonStartYear: number) {
     }
   }, []);
 
-  // Resolve anchor + initial chunk whenever season changes.
-  useEffect(() => {
+  // Resolve the API anchor and load the initial chunk around it.
+  const loadFromHomeAnchor = useCallback(async () => {
     epochRef.current += 1;
     const myEpoch = epochRef.current;
     dispatch({ type: 'INIT', seasonStartYear });
 
-    (async () => {
-      try {
-        const { anchorDate } = await getAnchorDate(seasonStartYear);
-        if (epochRef.current !== myEpoch) return;
-        const anchor = anchorDate ?? formatDate(new Date());
-        dispatch({ type: 'ANCHOR_RESOLVED', anchorDate: anchor });
-        await loadInitialChunk(anchor, seasonStartYear, myEpoch);
-      } catch (err) {
-        if (epochRef.current !== myEpoch) return;
-        dispatch({ type: 'INIT_CHUNK_ERROR', error: (err as Error).message });
-      }
-    })();
+    try {
+      const { anchorDate } = await getAnchorDate(seasonStartYear);
+      if (epochRef.current !== myEpoch) return;
+      const anchor = anchorDate ?? formatDate(new Date());
+      dispatch({ type: 'ANCHOR_RESOLVED', anchorDate: anchor, isHome: true });
+      await loadInitialChunk(anchor, seasonStartYear, myEpoch);
+    } catch (err) {
+      if (epochRef.current !== myEpoch) return;
+      dispatch({ type: 'INIT_CHUNK_ERROR', error: (err as Error).message });
+    }
   }, [seasonStartYear, loadInitialChunk]);
+
+  // Re-anchor whenever season changes.
+  useEffect(() => {
+    void loadFromHomeAnchor();
+  }, [loadFromHomeAnchor]);
 
   const loadOlder = useCallback(() => {
     const s = stateRef.current;
@@ -234,11 +258,19 @@ export function useBidirectionalGames(seasonStartYear: number) {
     getGameOddsInDateRange(newEarliest, fetchUpper, s.seasonStartYear)
       .then((games) => {
         if (epochRef.current !== myEpoch) return;
+        // Older games render above the current view. Snapshot scroll position
+        // before the prepend dispatches — useLayoutEffect in the page reads
+        // this and restores scrollTop after the DOM updates.
+        const snapshot: PrependSnapshot = {
+          prevScrollHeight: document.documentElement.scrollHeight,
+          prevScrollY: window.scrollY,
+        };
         dispatch({
           type: 'LOAD_OLDER_SUCCESS',
           games,
           newEarliest,
           isEmpty: games.length === 0,
+          snapshot,
         });
       })
       .catch((err: Error) => {
@@ -265,18 +297,11 @@ export function useBidirectionalGames(seasonStartYear: number) {
     getGameOddsInDateRange(fetchLower, newLatest, s.seasonStartYear)
       .then((games) => {
         if (epochRef.current !== myEpoch) return;
-        // Snapshot scroll position before the prepend dispatches — useLayoutEffect
-        // in the page reads this and restores scrollTop after the DOM updates.
-        const snapshot: PrependSnapshot = {
-          prevScrollHeight: document.documentElement.scrollHeight,
-          prevScrollY: window.scrollY,
-        };
         dispatch({
           type: 'LOAD_NEWER_SUCCESS',
           games,
           newLatest,
           isEmpty: games.length === 0,
-          snapshot,
         });
       })
       .catch((err: Error) => {
@@ -290,7 +315,12 @@ export function useBidirectionalGames(seasonStartYear: number) {
       epochRef.current += 1;
       const myEpoch = epochRef.current;
       const anchor = formatDate(date);
-      dispatch({ type: 'INIT', seasonStartYear, explicitAnchor: anchor });
+      dispatch({
+        type: 'INIT',
+        seasonStartYear,
+        explicitAnchor: anchor,
+        homeAnchor: stateRef.current.homeAnchor,
+      });
       dispatch({ type: 'ANCHOR_RESOLVED', anchorDate: anchor });
       void loadInitialChunk(anchor, seasonStartYear, myEpoch);
     },
@@ -304,6 +334,7 @@ export function useBidirectionalGames(seasonStartYear: number) {
   return {
     seasonStartYear: state.seasonStartYear,
     anchorDate: state.anchorDate,
+    homeAnchor: state.homeAnchor,
     earliestLoaded: state.earliestLoaded,
     latestLoaded: state.latestLoaded,
     gamesByDate: state.gamesByDate,
@@ -317,6 +348,7 @@ export function useBidirectionalGames(seasonStartYear: number) {
     loadOlder,
     loadNewer,
     jumpToDate,
+    jumpToHome: loadFromHomeAnchor,
     acknowledgePrepend,
   };
 }
