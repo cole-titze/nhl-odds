@@ -283,19 +283,20 @@ public class NhlApiPlayerParsingTests
         }
         """;
 
-    // Real right-rail gameInfo section from game 2023020001.
+    // Real right-rail gameInfo section from game 2023020001, with officials in the
+    // current { fullName, sweaterNumber } shape.
     private const string RightRailGameInfoJson = """
         {
           "gameInfo": {
             "homeTeam": { "headCoach": { "default": "Jon Cooper" } },
             "awayTeam": { "headCoach": { "default": "Andrew Brunette" } },
             "referees": [
-              { "default": "Chris Rooney" },
-              { "default": "Jake Brenk" }
+              { "fullName": { "default": "Chris Rooney" }, "sweaterNumber": 5 },
+              { "fullName": { "default": "Jake Brenk" }, "sweaterNumber": 26 }
             ],
             "linesmen": [
-              { "default": "Shandor Alphonso" },
-              { "default": "David Brisebois" }
+              { "fullName": { "default": "Shandor Alphonso" }, "sweaterNumber": 52 },
+              { "fullName": { "default": "David Brisebois" }, "sweaterNumber": 88 }
             ]
           }
         }
@@ -367,6 +368,21 @@ public class NhlApiPlayerParsingTests
         var linesmen = roster.Linesmen.Select(l => l.Name).ToList();
         linesmen.Should().Contain("Shandor Alphonso");
         linesmen.Should().Contain("David Brisebois");
+    }
+
+    [TestMethod]
+    public void MapGamePlayerStats_ParsesLegacyOfficialsShape()
+    {
+        var legacyGameInfo = RightRailGameInfoJson
+            .Replace("""{ "fullName": { "default": "Chris Rooney" }, "sweaterNumber": 5 }""", """{ "default": "Chris Rooney" }""")
+            .Replace("""{ "fullName": { "default": "Shandor Alphonso" }, "sweaterNumber": 52 }""", """{ "default": "Shandor Alphonso" }""");
+
+        var roster = MapGamePlayerStatsResponseToGamePlayerStats.Map(
+            JsonNode.Parse(BoxscoreWithPlayerStatsJson),
+            JsonNode.Parse(legacyGameInfo));
+
+        roster.Referees.Select(r => r.Name).Should().BeEquivalentTo(["Chris Rooney", "Jake Brenk"]);
+        roster.Linesmen.Select(l => l.Name).Should().BeEquivalentTo(["Shandor Alphonso", "David Brisebois"]);
     }
 
     [TestMethod]

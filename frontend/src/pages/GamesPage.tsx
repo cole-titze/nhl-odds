@@ -9,13 +9,19 @@ import { getCurrentSeason } from '../utils/season';
 
 export type OddsType = 'moneyline' | 'spread' | 'overUnder';
 
-// Height of the sticky navbar + filter bar, so date headers land below them.
-const STICKY_OFFSET = 128;
+const FILTER_BAR_ID = 'games-filter-bar';
+
+// Height of the sticky navbar (top-16 = 64px) plus the filter bar, so date headers
+// land below them. Measured because the filter bar stacks into multiple rows on mobile.
+function getStickyOffset(): number {
+  const filterBar = document.getElementById(FILTER_BAR_ID);
+  return 64 + (filterBar?.offsetHeight ?? 64) + 12;
+}
 
 function scrollToDate(date: string, behavior: ScrollBehavior): boolean {
   const el = document.getElementById(`date-${date}`);
   if (!el) return false;
-  const top = el.getBoundingClientRect().top + window.scrollY - STICKY_OFFSET;
+  const top = el.getBoundingClientRect().top + window.scrollY - getStickyOffset();
   window.scrollTo({ top: Math.max(0, top), behavior });
   return true;
 }
@@ -101,18 +107,32 @@ export function GamesPage() {
   // the "Jump to today" button only shows once the user has scrolled away.
   const isCurrentSeason = season === getCurrentSeason();
   const [homePosition, setHomePosition] = useState<HomePosition>('visible');
+  // Lift the button above the site footer once it scrolls into view, so neither
+  // covers the other. Set directly on the element to avoid re-rendering on scroll.
+  const footerOverlapRef = useRef(0);
+  const jumpButtonRef = useRef<HTMLButtonElement | null>(null);
+  const setJumpButton = (el: HTMLButtonElement | null) => {
+    jumpButtonRef.current = el;
+    if (el) el.style.bottom = `${24 + footerOverlapRef.current}px`;
+  };
   useEffect(() => {
     if (!ready) return;
     let frame = 0;
     const update = () => {
       frame = 0;
+      const footer = document.querySelector('footer');
+      const footerTop = footer ? footer.getBoundingClientRect().top : window.innerHeight;
+      footerOverlapRef.current = Math.max(0, window.innerHeight - footerTop);
+      if (jumpButtonRef.current) {
+        jumpButtonRef.current.style.bottom = `${24 + footerOverlapRef.current}px`;
+      }
       const el = homeAnchor ? document.getElementById(`date-${homeAnchor}`) : null;
       if (!isCurrentSeason || !el) {
         setHomePosition('unloaded');
         return;
       }
       const rect = el.getBoundingClientRect();
-      if (rect.bottom < STICKY_OFFSET) setHomePosition('above');
+      if (rect.bottom < getStickyOffset()) setHomePosition('above');
       else if (rect.top > window.innerHeight) setHomePosition('below');
       else setHomePosition('visible');
     };
@@ -143,7 +163,10 @@ export function GamesPage() {
 
   return (
     <div>
-      <div className="sticky top-16 z-40 -mx-5 px-5 py-3 mb-6 backdrop-blur bg-white/70 dark:bg-surface-950/70 border-b border-surface-200/60 dark:border-white/[0.06]">
+      <div
+        id={FILTER_BAR_ID}
+        className="sticky top-16 z-40 -mx-5 px-5 py-3 mb-6 backdrop-blur bg-white/70 dark:bg-surface-950/70 border-b border-surface-200/60 dark:border-white/[0.06]"
+      >
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <input
@@ -217,6 +240,7 @@ export function GamesPage() {
       {ready && homePosition !== 'visible' && (
         <button
           onClick={jumpToToday}
+          ref={setJumpButton}
           className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 px-4 py-2 text-sm font-medium rounded-full bg-accent-500 text-white shadow-lg hover:bg-accent-600 transition-colors"
         >
           {homePosition === 'above' ? '↑ ' : homePosition === 'below' ? '↓ ' : ''}Jump to today

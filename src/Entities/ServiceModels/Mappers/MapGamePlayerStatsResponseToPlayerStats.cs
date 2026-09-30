@@ -112,7 +112,7 @@ public static class MapGamePlayerStatsResponseToGamePlayerStats
         {
             referees.Add(new Referee()
             {
-                Name = referee!["default"]!.GetValue<string>()
+                Name = GetOfficialName(referee!)
             });
         }
         gameRosterStats.Referees = referees;
@@ -122,9 +122,17 @@ public static class MapGamePlayerStatsResponseToGamePlayerStats
         {
             linesmen.Add(new Linesman()
             {
-                Name = linesman!["default"]!.GetValue<string>()
+                Name = GetOfficialName(linesman!)
             });
         }
         gameRosterStats.Linesmen = linesmen;
+    }
+
+    // The API used to return officials as { "default": name } and now returns
+    // { "fullName": { "default": name }, "sweaterNumber": n }, for past seasons too.
+    private static string GetOfficialName(JsonNode official)
+    {
+        var name = official["fullName"]?["default"] ?? official["default"];
+        return name?.GetValue<string>().Trim() ?? "Unknown";
     }
 }
