@@ -38,8 +38,8 @@ export function GamesFeed({
   onLoadPrevSeason,
   onLoadNextSeason,
 }: GamesFeedProps) {
-  // Newest at top → render dates in reverse chronological order.
-  const dates = enumerateDateRange(earliestLoaded, latestLoaded).reverse();
+  // Oldest at top → future games sit below the current day.
+  const dates = enumerateDateRange(earliestLoaded, latestLoaded);
   const seasonLabel = formatSeasonLabel(seasonStartYear);
   const canLoadNext = seasonStartYear < getCurrentSeason();
   const canLoadPrev = seasonStartYear > FIRST_SEASON;
@@ -48,15 +48,15 @@ export function GamesFeed({
     <div>
       <div ref={topSentinelRef} aria-hidden="true" />
 
-      {newerStatus === 'loading' && <FeedLoaderBand />}
-
-      {!hasMoreNewer && (
+      {!hasMoreOlder && (
         <FeedBoundary
-          label={`End of ${seasonLabel}`}
-          buttonLabel={canLoadNext ? `Load ${formatSeasonLabel(seasonStartYear + 1)} →` : null}
-          onClick={onLoadNextSeason}
+          label={`Start of ${seasonLabel}`}
+          buttonLabel={canLoadPrev ? `← Load ${formatSeasonLabel(seasonStartYear - 1)}` : null}
+          onClick={onLoadPrevSeason}
         />
       )}
+
+      {olderStatus === 'loading' && <FeedLoaderBand />}
 
       <div className="space-y-8">
         {dates.map((date) => {
@@ -77,13 +77,13 @@ export function GamesFeed({
         })}
       </div>
 
-      {olderStatus === 'loading' && <FeedLoaderBand />}
+      {newerStatus === 'loading' && <FeedLoaderBand />}
 
-      {!hasMoreOlder && (
+      {!hasMoreNewer && (
         <FeedBoundary
-          label={`Start of ${seasonLabel}`}
-          buttonLabel={canLoadPrev ? `← Load ${formatSeasonLabel(seasonStartYear - 1)}` : null}
-          onClick={onLoadPrevSeason}
+          label={`End of ${seasonLabel}`}
+          buttonLabel={canLoadNext ? `Load ${formatSeasonLabel(seasonStartYear + 1)} →` : null}
+          onClick={onLoadNextSeason}
         />
       )}
 

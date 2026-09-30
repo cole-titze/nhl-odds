@@ -9,11 +9,25 @@ import { getCurrentSeason } from '../utils/season';
 
 export type OddsType = 'moneyline' | 'spread' | 'overUnder';
 
+// Height of the sticky navbar + filter bar, so date headers land below them.
+const STICKY_OFFSET = 128;
+
+function scrollToDate(date: string, behavior: ScrollBehavior): boolean {
+  const el = document.getElementById(`date-${date}`);
+  if (!el) return false;
+  const top = el.getBoundingClientRect().top + window.scrollY - STICKY_OFFSET;
+  window.scrollTo({ top: Math.max(0, top), behavior });
+  return true;
+}
+
+type HomePosition = 'visible' | 'above' | 'below' | 'unloaded';
+
 export function GamesPage() {
   const [oddsType, setOddsType] = useState<OddsType>('moneyline');
   const [season, setSeason] = useState(getCurrentSeason());
   const {
     anchorDate,
+    homeAnchor,
     earliestLoaded,
     latestLoaded,
     gamesByDate,
@@ -27,6 +41,7 @@ export function GamesPage() {
     loadOlder,
     loadNewer,
     jumpToDate,
+    jumpToHome,
     acknowledgePrepend,
     seasonStartYear,
   } = useBidirectionalGames(season);
@@ -55,8 +70,8 @@ export function GamesPage() {
       (entries) => {
         for (const e of entries) {
           if (!e.isIntersecting) continue;
-          if (e.target === top) loadNewer();
-          else if (e.target === bot) loadOlder();
+          if (e.target === top) loadOlder();
+          else if (e.target === bot) loadNewer();
         }
       },
       { rootMargin: '600px 0px 600px 0px', threshold: 0 },
@@ -69,10 +84,7 @@ export function GamesPage() {
   // Scroll to anchor date once the initial chunk is ready.
   useLayoutEffect(() => {
     if (initialStatus !== 'idle' || !anchorDate) return;
-    const el = document.getElementById(`date-${anchorDate}`);
-    if (!el) return;
-    const top = el.getBoundingClientRect().top + window.scrollY - 128;
-    window.scrollTo({ top: Math.max(0, top), behavior: 'instant' });
+    scrollToDate(anchorDate, 'instant');
   }, [initialStatus, anchorDate]);
 
   // Restore scroll position after a prepend so the user's view stays anchored
@@ -84,6 +96,47 @@ export function GamesPage() {
     window.scrollTo({ top: prevScrollY + (newHeight - prevScrollHeight) });
     acknowledgePrepend();
   }, [prependPending, acknowledgePrepend]);
+
+  // Track where today's (home anchor) section sits relative to the viewport so
+  // the "Jump to today" button only shows once the user has scrolled away.
+  const isCurrentSeason = season === getCurrentSeason();
+  const [homePosition, setHomePosition] = useState<HomePosition>('visible');
+  useEffect(() => {
+    if (!ready) return;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const el = homeAnchor ? document.getElementById(`date-${homeAnchor}`) : null;
+      if (!isCurrentSeason || !el) {
+        setHomePosition('unloaded');
+        return;
+      }
+      const rect = el.getBoundingClientRect();
+      if (rect.bottom < STICKY_OFFSET) setHomePosition('above');
+      else if (rect.top > window.innerHeight) setHomePosition('below');
+      else setHomePosition('visible');
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, [ready, homeAnchor, isCurrentSeason, gamesByDate]);
+
+  const jumpToToday = () => {
+    if (!isCurrentSeason) {
+      setSeason(getCurrentSeason());
+      return;
+    }
+    if (homeAnchor && scrollToDate(homeAnchor, 'smooth')) return;
+    void jumpToHome();
+  };
 
   // Date used by the date-picker input — defaults to anchor while resolving.
   const dateInputValue = anchorDate ?? toDateInputValue(new Date());
@@ -159,6 +212,15 @@ export function GamesPage() {
           onLoadPrevSeason={() => setSeason((s) => Math.max(2009, s - 1))}
           onLoadNextSeason={() => setSeason((s) => Math.min(getCurrentSeason(), s + 1))}
         />
+      )}
+
+      {ready && homePosition !== 'visible' && (
+        <button
+          onClick={jumpToToday}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 px-4 py-2 text-sm font-medium rounded-full bg-accent-500 text-white shadow-lg hover:bg-accent-600 transition-colors"
+        >
+          {homePosition === 'above' ? '↑ ' : homePosition === 'below' ? '↓ ' : ''}Jump to today
+        </button>
       )}
     </div>
   );
