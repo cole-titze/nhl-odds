@@ -80,6 +80,8 @@ def tune_lgbm(X_train, X_test, y_train, y_test, n_trials, progress_callback, sam
             "reg_lambda": trial.suggest_float("reg_lambda", 1e-8, 10.0, log=True),
             "verbosity": -1,
             "random_state": 42,
+            # One thread per trial — Optuna already runs trials in parallel
+            "n_jobs": 1,
         }
         model = LGBMClassifier(**params)
         model.fit(X_train, y_train, sample_weight=sample_weight)
@@ -107,6 +109,8 @@ def tune_lgbm_regressor(X_train, X_test, y_train, y_test, n_trials, progress_cal
             "reg_lambda": trial.suggest_float("reg_lambda", 1e-8, 10.0, log=True),
             "verbosity": -1,
             "random_state": 42,
+            # One thread per trial — Optuna already runs trials in parallel
+            "n_jobs": 1,
         }
         model = LGBMRegressor(**params)
         model.fit(X_train, y_train, sample_weight=sample_weight)

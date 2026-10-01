@@ -82,6 +82,8 @@ def tune_xgboost(X_train, X_test, y_train, y_test, n_trials, progress_callback, 
             "verbosity": 0,
             "use_label_encoder": False,
             "random_state": 42,
+            # One thread per trial — Optuna already runs trials in parallel
+            "n_jobs": 1,
         }
         model = XGBClassifier(**params)
         model.fit(X_train, y_train, sample_weight=sample_weight)
@@ -109,6 +111,8 @@ def tune_xgboost_regressor(X_train, X_test, y_train, y_test, n_trials, progress_
             "gamma": trial.suggest_float("gamma", 1e-8, 5.0, log=True),
             "verbosity": 0,
             "random_state": 42,
+            # One thread per trial — Optuna already runs trials in parallel
+            "n_jobs": 1,
         }
         model = XGBRegressor(**params)
         model.fit(X_train, y_train, sample_weight=sample_weight)

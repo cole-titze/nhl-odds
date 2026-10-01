@@ -29,7 +29,7 @@ _CLS_TO_FACTORY = {
 }
 
 # Params set internally by factories — omit from copy-paste output
-_INTERNAL_PARAMS = {"random_state", "verbosity", "use_label_encoder", "early_stopping", "solver", "max_iter"}
+_INTERNAL_PARAMS = {"random_state", "verbosity", "use_label_encoder", "early_stopping", "solver"}
 
 
 def _fmt(v) -> str:
@@ -113,7 +113,7 @@ def _run_tuning(exp_name, exp, X_train_t, X_test_t, y_train, y_test, sample_weig
         else:
             params = {**model_cfg.params, **study.best_params}
         tuned_models[model_name] = model_cfg.cls(**params)
-        tuned_params[model_name] = (cls_name, study.best_params)
+        tuned_params[model_name] = (cls_name, params if converter else study.best_params)
 
     return tuned_models, tuned_params
 

@@ -146,6 +146,45 @@ EXPERIMENTS: dict[str, Experiment] = {
         decay=0.0,
         tune=False,
     ),
+    "Tuned Boosters": Experiment(
+        models={
+            "LightGBM": lgbm(
+                n_estimators=970,
+                learning_rate=0.0201986,
+                max_depth=5,
+                num_leaves=156,
+                min_child_samples=83,
+                subsample=0.804052,
+                colsample_bytree=0.843525,
+                reg_alpha=1.71649e-06,
+                reg_lambda=2.14657e-06,
+            ),
+            "XGB": xgboost(
+                n_estimators=252,
+                learning_rate=0.0188796,
+                max_depth=7,
+                min_child_weight=7,
+                subsample=0.724605,
+                colsample_bytree=0.873154,
+                reg_alpha=0.00101763,
+                reg_lambda=0.0569719,
+                gamma=0.0032077,
+            ),
+            "MLP": mlp(
+                hidden_layer_sizes=(47, 60, 174),
+                max_iter=905,
+                learning_rate_init=0.00246339,
+                alpha=4.73291e-06,
+                activation="tanh",
+            ),
+        },
+        pipeline=standard_pipeline(k_best=83, pca_components=56),
+        ensemble=["LightGBM", "XGB", "MLP"],
+        stack=True,
+        calibration="none",
+        decay=0.01789,
+        tune=False,
+    ),
 }
 
 SAVE_EXPERIMENT = "Default"

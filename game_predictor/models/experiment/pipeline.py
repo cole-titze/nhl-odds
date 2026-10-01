@@ -47,6 +47,9 @@ def tune_pipeline(
         X_test_t = pipe.transform(X_test)
 
         model = model_cls(**model_params)
+        # One thread per trial — Optuna already runs trials in parallel
+        if "n_jobs" in model.get_params():
+            model.set_params(n_jobs=1)
         if sample_weight is not None and "sample_weight" in inspect.signature(model.fit).parameters:
             model.fit(X_train_t, y_train, sample_weight=sample_weight)
         else:
@@ -85,6 +88,9 @@ def tune_regression_pipeline(
         X_test_t = pipe.transform(X_test)
 
         model = model_cls(**model_params)
+        # One thread per trial — Optuna already runs trials in parallel
+        if "n_jobs" in model.get_params():
+            model.set_params(n_jobs=1)
         if sample_weight is not None and "sample_weight" in inspect.signature(model.fit).parameters:
             model.fit(X_train_t, y_train, sample_weight=sample_weight)
         else:

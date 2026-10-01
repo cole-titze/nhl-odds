@@ -84,7 +84,7 @@ def _run_regression_tuning(exp_name, exp, X_train_t, X_test_t, y_train, y_test, 
         else:
             params = {**model_cfg.params, **study.best_params}
         tuned_models[model_name] = model_cfg.cls(**params)
-        tuned_params[model_name] = (cls_name, study.best_params)
+        tuned_params[model_name] = (cls_name, params if converter else study.best_params)
 
     return tuned_models, tuned_params
 
