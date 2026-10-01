@@ -42,8 +42,9 @@ The app reads config in priority order:
 
 1. **Environment variables** (production):
    - `NHL_DATABASE` — full PostgreSQL connection string (e.g. `Host=localhost;Database=nhl;Username=postgres;Password=...`)
-   - `RUN_MODE` — `"NhlAdd"`, `"NhlUpdate"`, `"NextDayOdds"`, `"BackfillOdds"`, `"KalshiFetch"`, or `"BackfillKalshi"`
+   - `RUN_MODE` — `"NhlAdd"`, `"NhlUpdate"`, `"NextDayOdds"`, `"BackfillOdds"`, `"KalshiFetch"`, `"BackfillKalshi"`, or `"BackfillGame"`
    - `THROTTLE_TIME_MS` — delay between NHL API requests (ms)
+   - `BACKFILL_GAME_IDS` — comma-separated game IDs to re-fetch (for `BackfillGame` mode)
    - `ODDS_API_KEY` — The Odds API key (for `NextDayOdds` mode)
    - `API_BACKFILL_KEY` — The Odds API key for backfill (can be different quota)
 

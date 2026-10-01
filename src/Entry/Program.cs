@@ -26,6 +26,10 @@ var settings = new ModeSettings()
     OddsApiKey = Environment.GetEnvironmentVariable("ODDS_API_KEY") ?? string.Empty,
     OddsApiBackfillKey = Environment.GetEnvironmentVariable("API_BACKFILL_KEY") ?? string.Empty,
     ThrottleTimeMs = int.Parse(Environment.GetEnvironmentVariable("THROTTLE_TIME_MS") ?? "0"),
+    BackfillGameIds = (Environment.GetEnvironmentVariable("BACKFILL_GAME_IDS") ?? string.Empty)
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Select(int.Parse)
+        .ToList(),
 };
 
 if (string.IsNullOrEmpty(settings.ConnectionString))
