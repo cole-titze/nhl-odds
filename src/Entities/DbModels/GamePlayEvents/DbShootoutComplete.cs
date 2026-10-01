@@ -20,7 +20,7 @@ public class DbShootoutComplete : IDbGameEvent
     public DbGameRaw? Game { get; set; }
     public void Clone(IDbGameEvent gameEvent)
     {
-        if (gameEvent is DbPeriodStart shootoutCompleteEvent)
+        if (gameEvent is DbShootoutComplete shootoutCompleteEvent)
         {
             Id = shootoutCompleteEvent.Id;
             GameId = shootoutCompleteEvent.GameId;

@@ -20,7 +20,7 @@ public class DbPeriodEnd : IDbGameEvent
     public DbGameRaw? Game { get; set; }
     public void Clone(IDbGameEvent gameEvent)
     {
-        if (gameEvent is DbPeriodStart periodEndEvent)
+        if (gameEvent is DbPeriodEnd periodEndEvent)
         {
             Id = periodEndEvent.Id;
             GameId = periodEndEvent.GameId;

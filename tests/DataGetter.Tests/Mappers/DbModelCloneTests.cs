@@ -1,4 +1,5 @@
 using Entities.DbModels;
+using Entities.DbModels.GamePlayEvents;
 using Entities.Types;
 using FluentAssertions;
 
@@ -78,5 +79,25 @@ public class DbModelCloneTests
 
         tracked.Team.Should().BeSameAs(Team);
         tracked.FirstName.Should().Be("Updated");
+    }
+
+    [TestMethod]
+    public void PeriodEndClone_AcceptsPeriodEnd()
+    {
+        var tracked = new DbPeriodEnd { Id = 5, GameId = 1, PeriodNumber = 1 };
+
+        tracked.Clone(new DbPeriodEnd { Id = 5, GameId = 1, PeriodNumber = 2 });
+
+        tracked.PeriodNumber.Should().Be(2);
+    }
+
+    [TestMethod]
+    public void ShootoutCompleteClone_AcceptsShootoutComplete()
+    {
+        var tracked = new DbShootoutComplete { Id = 5, GameId = 1, SortOrder = 1 };
+
+        tracked.Clone(new DbShootoutComplete { Id = 5, GameId = 1, SortOrder = 2 });
+
+        tracked.SortOrder.Should().Be(2);
     }
 }
