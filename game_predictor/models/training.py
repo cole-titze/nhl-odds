@@ -80,7 +80,10 @@ def _final_result(results: dict) -> tuple[str, dict]:
 
 
 def train_default(train_df):
-    """Train only the default experiment. Holds out most recent season for calibration.
+    """Train only the default experiment.
+
+    With calibration, holds out the most recent season to calibrate on; with calibration
+    "none", trains on every season (holding one out would just discard it).
 
     Used by predict mode (Docker).
     Returns (pipeline, model, model_name) or None.
@@ -89,8 +92,14 @@ def train_default(train_df):
         print("No training data found.")
         return None
 
+    exp = EXPERIMENTS[SAVE_EXPERIMENT]
+    calibrate = bool(exp.calibration) and exp.calibration != "none"
+
     current_season = train_df["SeasonStartYear"].max()
-    train_mask = train_df["SeasonStartYear"] < current_season
+    if calibrate:
+        train_mask = train_df["SeasonStartYear"] < current_season
+    else:
+        train_mask = pd.Series(True, index=train_df.index)
     cal_mask = train_df["SeasonStartYear"] == current_season
 
     X_train_raw = train_df.loc[train_mask, FEATURE_COLUMNS].values
@@ -98,18 +107,19 @@ def train_default(train_df):
     X_cal_raw = train_df.loc[cal_mask, FEATURE_COLUMNS].values
     y_cal = train_df.loc[cal_mask, "Winner"].values
 
-    print(
-        f"Training '{SAVE_EXPERIMENT}' on {len(X_train_raw)} games,"
-        f" calibrating on {len(X_cal_raw)} games (season {current_season})"
-    )
+    if calibrate:
+        print(
+            f"Training '{SAVE_EXPERIMENT}' on {len(X_train_raw)} games,"
+            f" calibrating on {len(X_cal_raw)} games (season {current_season})"
+        )
+    else:
+        print(f"Training '{SAVE_EXPERIMENT}' on {len(X_train_raw)} games (all seasons, no calibration)")
 
-    exp = EXPERIMENTS[SAVE_EXPERIMENT]
     w_train = _compute_weights(train_df.loc[train_mask, "SeasonStartYear"].values, exp.decay)
     w_cal = _compute_weights(train_df.loc[cal_mask, "SeasonStartYear"].values, exp.decay)
 
     pipeline = exp.pipeline
     X_train_t = pipeline.fit_transform(X_train_raw, y_train)
-    X_cal_t = pipeline.transform(X_cal_raw)
 
     built = build_models(exp.models)
     for model in built.values():
@@ -131,7 +141,8 @@ def train_default(train_df):
         save_name = next(iter(built))
         save_model = built[save_name]
 
-    if exp.calibration:
+    if calibrate:
+        X_cal_t = pipeline.transform(X_cal_raw)
         save_model = calibrate_model(
             save_model, X_cal_t, y_cal, X_cal_t, y_cal, method=exp.calibration, sample_weight=w_cal
         )
