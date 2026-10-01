@@ -1,5 +1,6 @@
 from xgboost import XGBClassifier, XGBRegressor
 
+from .folds import log_loss_score, mae_score, mean_fold_score
 from .types import ModelConfig
 
 
@@ -64,9 +65,8 @@ def xgboost(
     )
 
 
-def tune_xgboost(X_train, X_test, y_train, y_test, n_trials, progress_callback, sample_weight=None):
+def tune_xgboost(folds, n_trials, progress_callback):
     import optuna
-    from sklearn.metrics import log_loss
 
     def objective(trial):
         params = {
@@ -85,18 +85,15 @@ def tune_xgboost(X_train, X_test, y_train, y_test, n_trials, progress_callback, 
             # One thread per trial — Optuna already runs trials in parallel
             "n_jobs": 1,
         }
-        model = XGBClassifier(**params)
-        model.fit(X_train, y_train, sample_weight=sample_weight)
-        return log_loss(y_test, model.predict_proba(X_test))
+        return mean_fold_score(lambda: XGBClassifier(**params), folds, log_loss_score)
 
     study = optuna.create_study(direction="minimize", study_name="xgboost-tuning")
     study.optimize(objective, n_trials=n_trials, n_jobs=-1, callbacks=[progress_callback])
     return study
 
 
-def tune_xgboost_regressor(X_train, X_test, y_train, y_test, n_trials, progress_callback, sample_weight=None):
+def tune_xgboost_regressor(folds, n_trials, progress_callback):
     import optuna
-    from sklearn.metrics import mean_absolute_error
 
     def objective(trial):
         params = {
@@ -114,9 +111,7 @@ def tune_xgboost_regressor(X_train, X_test, y_train, y_test, n_trials, progress_
             # One thread per trial — Optuna already runs trials in parallel
             "n_jobs": 1,
         }
-        model = XGBRegressor(**params)
-        model.fit(X_train, y_train, sample_weight=sample_weight)
-        return mean_absolute_error(y_test, model.predict(X_test))
+        return mean_fold_score(lambda: XGBRegressor(**params), folds, mae_score)
 
     study = optuna.create_study(direction="minimize", study_name="xgboost-regressor-tuning")
     study.optimize(objective, n_trials=n_trials, n_jobs=-1, callbacks=[progress_callback])

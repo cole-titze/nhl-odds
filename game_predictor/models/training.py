@@ -1,5 +1,11 @@
+from dataclasses import dataclass
+
 import numpy as np
+import pandas as pd
+from sklearn.base import clone
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.ensemble import StackingClassifier
+from sklearn.frozen import FrozenEstimator
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss as sklearn_log_loss
 from sklearn.pipeline import Pipeline
@@ -40,11 +46,7 @@ def _fmt(v) -> str:
     return repr(v)
 
 
-def _print_tuned_config(exp_name, exp, pipeline_params, tuned_decay, tuned_model_params, cal_method):
-    from sklearn.calibration import CalibratedClassifierCV
-
-    used_cal = cal_method.method if isinstance(cal_method, CalibratedClassifierCV) else "none"
-
+def _print_tuned_config(exp_name, exp, pipeline_params, tuned_decay, tuned_model_params, calibration):
     indent = "    "
     lines = [f'\n  # --- tuned config for "{exp_name}" ---']
     lines.append(f'  "{exp_name}": Experiment(')
@@ -64,7 +66,7 @@ def _print_tuned_config(exp_name, exp, pipeline_params, tuned_decay, tuned_model
     if exp.stack:
         lines.append(f"{indent}stack=True,")
 
-    lines.append(f'{indent}calibration="{used_cal}",')
+    lines.append(f'{indent}calibration="{calibration}",')
     lines.append(f"{indent}decay={tuned_decay:.4g},")
     lines.append(f"{indent}tune=False,")
     lines.append("  ),")
@@ -77,117 +79,6 @@ def _final_result(results: dict) -> tuple[str, dict]:
         return "Ensemble", results["Ensemble"]
     name = next(iter(results))
     return name, results[name]
-
-
-def _run_tuning(exp_name, exp, X_train_t, X_test_t, y_train, y_test, sample_weight=None) -> tuple[dict, dict]:
-    """Run Optuna tuning for each model in the experiment.
-
-    Returns (tuned_models, tuned_params) where tuned_params is
-    {model_name: (cls_name, params_dict)} for copy-paste config generation.
-    """
-    from .tuner import PARAM_CONVERTERS, TUNERS, print_best_params, progress_callback
-
-    tuned_models = {}
-    tuned_params = {}
-    for model_name, model_cfg in exp.models.items():
-        cls_name = model_cfg.cls.__name__
-        tune_fn = TUNERS.get(cls_name)
-        if tune_fn is None:
-            continue
-
-        print(f"    Tuning {model_name} ({exp.tune_trials} trials)...")
-        study = tune_fn(
-            X_train_t,
-            X_test_t,
-            y_train,
-            y_test,
-            exp.tune_trials,
-            progress_callback(exp.tune_trials),
-            sample_weight=sample_weight,
-        )
-        print_best_params(study, model_name)
-
-        converter = PARAM_CONVERTERS.get(cls_name)
-        if converter:
-            params = converter(study)
-        else:
-            params = {**model_cfg.params, **study.best_params}
-        tuned_models[model_name] = model_cfg.cls(**params)
-        tuned_params[model_name] = (cls_name, params if converter else study.best_params)
-
-    return tuned_models, tuned_params
-
-
-def _run_experiment(exp_name, exp, X_train_raw, X_cal_raw, X_test_raw, y_train, y_cal, y_test, train_seasons=None):
-    """Run a single experiment: pipeline tuning, model tuning, training, calibration."""
-    from .experiment.pipeline import standard_pipeline, tune_pipeline
-    from .tuner import print_best_params, progress_callback
-
-    pipeline = exp.pipeline
-    sample_weight = _compute_weights(train_seasons, exp.decay) if train_seasons is not None else None
-    tuned_decay = exp.decay
-    pipeline_best_params: dict = {}
-
-    # Tune pipeline params using the first model as evaluator
-    if exp.tune:
-        first_cfg = next(iter(exp.models.values()))
-        print(f"    Tuning pipeline ({exp.tune_trials} trials)...")
-        pipe_study = tune_pipeline(
-            X_train_raw,
-            X_cal_raw,
-            y_train,
-            y_cal,
-            first_cfg.cls,
-            first_cfg.params,
-            exp.tune_trials,
-            progress_callback(exp.tune_trials),
-            train_seasons=train_seasons,
-        )
-        print_best_params(pipe_study, "pipeline")
-        pipeline_best_params = pipe_study.best_params.copy()
-        tuned_decay = pipeline_best_params.pop("decay", exp.decay)
-        pipeline = standard_pipeline(**pipeline_best_params)
-        sample_weight = _compute_weights(train_seasons, tuned_decay) if train_seasons is not None else None
-
-    X_train_t = pipeline.fit_transform(X_train_raw, y_train)
-    X_cal_t = pipeline.transform(X_cal_raw)
-    X_test_t = pipeline.transform(X_test_raw)
-
-    tuned_model_params = {}
-    if exp.tune:
-        tuned_models, tuned_model_params = _run_tuning(
-            exp_name, exp, X_train_t, X_cal_t, y_train, y_cal, sample_weight=sample_weight
-        )
-    else:
-        tuned_models = {}
-
-    models = build_models(exp.models)
-    models.update(tuned_models)
-    results = train_and_evaluate(
-        models, X_train_t, X_test_t, y_train, y_test, exp.ensemble, stack=exp.stack, sample_weight=sample_weight
-    )
-
-    name, metrics = _final_result(results)
-
-    final_model = metrics["model"]
-    cal_method = ["sigmoid", "isotonic"] if exp.tune else exp.calibration
-    if cal_method and cal_method != "none":
-        calibrated_model = calibrate_model(metrics["model"], X_cal_t, y_cal, X_test_t, y_test, method=cal_method)
-        final_model = calibrated_model
-
-        cal_proba = calibrated_model.predict_proba(X_test_t)
-        cal_pred = np.argmax(cal_proba, axis=1)
-
-        results[f"{name} (calibrated)"] = {
-            "model": calibrated_model,
-            "accuracy": float(np.mean(cal_pred == y_test)),
-            "log_loss": sklearn_log_loss(y_test, cal_proba),
-        }
-
-    if exp.tune:
-        _print_tuned_config(exp_name, exp, pipeline_best_params, tuned_decay, tuned_model_params, final_model)
-
-    return exp_name, results, pipeline
 
 
 def train_default(train_df):
@@ -415,80 +306,257 @@ def train_for_day(train_df):
     return pipeline, save_model, save_name
 
 
-def train_all(train_df):
-    """Train all experiments with train/calibration/test split.
+# Test mode evaluates walk-forward: each scored season is predicted by a model trained only on
+# earlier seasons, the same way production predicts an upcoming season.
+EVAL_SEASONS = 4  # most recent seasons scored by test mode
+TUNE_SEASONS = 4  # seasons just before the eval window that Optuna tuning scores trials on
 
-    Used by test mode (IDE experimenting).
-    Returns (pipeline, model, model_name, test_df) or None.
+_CALIBRATION_METHODS = ["none", "sigmoid", "isotonic"]
+
+
+@dataclass
+class _Split:
+    """One walk-forward step: fit on `train`, calibrate on `cal` (if any), score `test`."""
+
+    label: str
+    train: pd.DataFrame
+    cal: pd.DataFrame | None
+    test: pd.DataFrame
+
+
+def _walk_forward_splits(df: pd.DataFrame, seasons, calibrate: bool) -> list[_Split]:
+    """One split per season S, scoring S with a model trained on every season before it.
+
+    With calibration the base model trains on seasons before S-1 and is calibrated on S-1,
+    mirroring train_default (train on prior seasons, calibrate on the latest one).
+    """
+    splits = []
+    for season in seasons:
+        test = df[df["SeasonStartYear"] == season]
+        if calibrate:
+            train = df[df["SeasonStartYear"] < season - 1]
+            cal = df[df["SeasonStartYear"] == season - 1]
+        else:
+            train = df[df["SeasonStartYear"] < season]
+            cal = None
+        splits.append(_Split(str(season), train, cal, test))
+    return splits
+
+
+def _xy(df: pd.DataFrame):
+    return df[FEATURE_COLUMNS].values, df["Winner"].values
+
+
+def _fit_split(exp, split: _Split, pipeline_template: Pipeline, decay: float, models: dict):
+    """Fit a fresh pipeline + models on split.train and score split.test.
+
+    Returns (results, pipeline) where results is train_and_evaluate's per-model dict.
+    """
+    X_train, y_train = _xy(split.train)
+    X_test, y_test = _xy(split.test)
+    weights = _compute_weights(split.train["SeasonStartYear"].values, decay)
+
+    pipeline = clone(pipeline_template)
+    X_train_t = pipeline.fit_transform(X_train, y_train)
+    X_test_t = pipeline.transform(X_test)
+
+    fresh = {name: clone(model) for name, model in models.items()}
+    results = train_and_evaluate(
+        fresh, X_train_t, X_test_t, y_train, y_test, exp.ensemble, stack=exp.stack, sample_weight=weights
+    )
+    return results, pipeline
+
+
+def _choose_calibration(exp, df, tune_seasons, pipeline_template, decay, models) -> str:
+    """Pick none/sigmoid/isotonic by pooled log loss over the tuning seasons — never the eval seasons."""
+    totals = dict.fromkeys(_CALIBRATION_METHODS, 0.0)
+    for split in _walk_forward_splits(df, tune_seasons, calibrate=True):
+        results, pipeline = _fit_split(exp, split, pipeline_template, decay, models)
+        _, metrics = _final_result(results)
+        X_cal, y_cal = _xy(split.cal)
+        X_test, y_test = _xy(split.test)
+        X_cal_t, X_test_t = pipeline.transform(X_cal), pipeline.transform(X_test)
+
+        for method in _CALIBRATION_METHODS:
+            model = metrics["model"]
+            if method != "none":
+                model = CalibratedClassifierCV(FrozenEstimator(model), method=method).fit(X_cal_t, y_cal)
+            totals[method] += sklearn_log_loss(y_test, model.predict_proba(X_test_t), labels=[0, 1]) * len(y_test)
+
+    return min(totals, key=totals.get)
+
+
+def _tune_experiment(exp, df, tune_seasons):
+    """Optuna-tune pipeline, decay, each model and calibration, scoring every trial across tune_seasons.
+
+    Returns (pipeline_params, decay, models, tuned_model_params, calibration).
+    """
+    from .experiment.pipeline import standard_pipeline, tune_pipeline
+    from .tuner import PARAM_CONVERTERS, TUNERS, print_best_params, progress_callback
+
+    raw_folds = []
+    for split in _walk_forward_splits(df, tune_seasons, calibrate=False):
+        X_train, y_train = _xy(split.train)
+        X_val, y_val = _xy(split.test)
+        raw_folds.append((X_train, X_val, y_train, y_val, split.train["SeasonStartYear"].values))
+
+    first_cfg = next(iter(exp.models.values()))
+    print(f"    Tuning pipeline ({exp.tune_trials} trials)...")
+    pipe_study = tune_pipeline(
+        raw_folds, first_cfg.cls, first_cfg.params, exp.tune_trials, progress_callback(exp.tune_trials)
+    )
+    print_best_params(pipe_study, "pipeline")
+    pipeline_params = pipe_study.best_params.copy()
+    decay = pipeline_params.pop("decay")
+
+    folds = []
+    for X_train, X_val, y_train, y_val, train_seasons in raw_folds:
+        pipeline = standard_pipeline(**pipeline_params)
+        folds.append(
+            (
+                pipeline.fit_transform(X_train, y_train),
+                pipeline.transform(X_val),
+                y_train,
+                y_val,
+                _compute_weights(train_seasons, decay),
+            )
+        )
+
+    models = build_models(exp.models)
+    tuned_model_params = {}
+    for model_name, model_cfg in exp.models.items():
+        cls_name = model_cfg.cls.__name__
+        tune_fn = TUNERS.get(cls_name)
+        if tune_fn is None:
+            continue
+
+        print(f"    Tuning {model_name} ({exp.tune_trials} trials)...")
+        study = tune_fn(folds, exp.tune_trials, progress_callback(exp.tune_trials))
+        print_best_params(study, model_name)
+
+        converter = PARAM_CONVERTERS.get(cls_name)
+        params = converter(study) if converter else {**model_cfg.params, **study.best_params}
+        models[model_name] = model_cfg.cls(**params)
+        tuned_model_params[model_name] = (cls_name, params if converter else study.best_params)
+
+    print("    Choosing calibration...")
+    calibration = _choose_calibration(exp, df, tune_seasons, standard_pipeline(**pipeline_params), decay, models)
+    print(f"    Calibration: {calibration}")
+    return pipeline_params, decay, models, tuned_model_params, calibration
+
+
+def _run_experiment(exp_name, exp, df, eval_seasons, tune_seasons, splits=None):
+    """Tune (if enabled) then score the experiment on each walk-forward split.
+
+    Returns a list of (split, {model_name: test probabilities}).
+    """
+    from .experiment.pipeline import standard_pipeline
+
+    if exp.tune:
+        pipeline_params, decay, models, tuned_model_params, calibration = _tune_experiment(exp, df, tune_seasons)
+        pipeline_template = standard_pipeline(**pipeline_params)
+    else:
+        pipeline_template, decay, models = exp.pipeline, exp.decay, build_models(exp.models)
+        calibration = exp.calibration or "none"
+
+    if splits is None:
+        splits = _walk_forward_splits(df, eval_seasons, calibrate=calibration != "none")
+
+    outcomes = []
+    for split in splits:
+        results, pipeline = _fit_split(exp, split, pipeline_template, decay, models)
+        probas = {name: metrics["proba"] for name, metrics in results.items()}
+
+        if split.cal is not None and calibration != "none":
+            name, metrics = _final_result(results)
+            X_cal, y_cal = _xy(split.cal)
+            X_cal_t = pipeline.transform(X_cal)
+            # Same as train_default: calibrate on the held-out season, keep it only if it helps there
+            cal_model = calibrate_model(metrics["model"], X_cal_t, y_cal, X_cal_t, y_cal, method=calibration)
+            probas[f"{name} (calibrated)"] = cal_model.predict_proba(pipeline.transform(_xy(split.test)[0]))
+        outcomes.append((split, probas))
+
+    if exp.tune:
+        _print_tuned_config(exp_name, exp, pipeline_params, decay, tuned_model_params, calibration)
+
+    return outcomes
+
+
+def _game_log_loss(y: np.ndarray, proba: np.ndarray) -> np.ndarray:
+    eps = np.finfo(proba.dtype).eps
+    return -np.log(np.clip(proba[np.arange(len(y)), y.astype(int)], eps, 1.0))
+
+
+def _final_model_name(model_names) -> str:
+    """The row production would use: calibrated if present, else the ensemble, else the single model."""
+    for name in model_names:
+        if name.endswith("(calibrated)"):
+            return name
+    return "Ensemble" if "Ensemble" in model_names else next(iter(model_names))
+
+
+def _print_summary(all_outcomes: dict, eval_labels: list[str]):
+    """Per-season and pooled scores for every model, then each experiment's final model vs the baseline."""
+    season_cols = "".join(f"{label:>8}" for label in eval_labels)
+    print(f"\n{'=' * 100}")
+    print("  Summary — log loss by season (walk-forward), pooled log loss and accuracy")
+    print(f"{'=' * 100}")
+    print(f"  {'Experiment':<20} {'Model':>22}{season_cols}  {'LogLoss':>8}  {'Accuracy':>8}")
+    print(f"  {'-' * 96}")
+
+    final = {}  # exp_name -> (per-game losses, per-season log loss)
+    for exp_name, outcomes in all_outcomes.items():
+        model_names = list(outcomes[0][1])
+        y_all = np.concatenate([_xy(split.test)[1] for split, _ in outcomes])
+        for model_name in model_names:
+            seasons = [sklearn_log_loss(_xy(s.test)[1], p[model_name], labels=[0, 1]) for s, p in outcomes]
+            proba = np.concatenate([p[model_name] for _, p in outcomes])
+            pooled = sklearn_log_loss(y_all, proba, labels=[0, 1])
+            accuracy = float(np.mean(np.argmax(proba, axis=1) == y_all))
+            cols = "".join(f"{ll:>8.4f}" for ll in seasons)
+            print(f"  {exp_name:<20} {model_name:>22}{cols}  {pooled:>8.4f}  {accuracy:>8.4f}")
+            if model_name == _final_model_name(model_names):
+                final[exp_name] = (_game_log_loss(y_all, proba), seasons)
+
+    if SAVE_EXPERIMENT not in final:
+        return
+    base_losses, base_seasons = final[SAVE_EXPERIMENT]
+    print(f"\n  Final model vs '{SAVE_EXPERIMENT}' (paired per game; negative = better than baseline)")
+    print(f"  {'Experiment':<20} {'ΔLogLoss':>9}  {'±SE':>7}  {'Seasons better':>15}")
+    print(f"  {'-' * 56}")
+    for exp_name, (losses, seasons) in final.items():
+        if exp_name == SAVE_EXPERIMENT:
+            continue
+        diff = losses - base_losses
+        se = diff.std(ddof=1) / np.sqrt(len(diff))
+        better = sum(s < b for s, b in zip(seasons, base_seasons))
+        flag = "  *" if abs(diff.mean()) > 2 * se else ""
+        print(f"  {exp_name:<20} {diff.mean():>+9.4f}  {se:>7.4f}  {better:>9}/{len(seasons)}{flag}")
+    print("  * = difference larger than 2 SE (unlikely to be noise; SE is approximate since games share teams/dates)")
+
+
+def train_all(train_df):
+    """Walk-forward evaluation of every experiment. Used by test mode (IDE experimenting).
+
+    Scores each of the last EVAL_SEASONS seasons with models trained only on earlier seasons.
+    Tuned experiments are tuned on the TUNE_SEASONS seasons before that window, so the eval
+    seasons never influence tuning.
     """
     if train_df.empty:
         print("No training data found.")
-        return None
+        return
 
-    TEST_SEASONS = 2
-    current_season = train_df["SeasonStartYear"].max()
-    test_start_season = current_season - TEST_SEASONS + 1
+    last = int(train_df["SeasonStartYear"].max())
+    eval_seasons = list(range(last - EVAL_SEASONS + 1, last + 1))
+    tune_seasons = list(range(eval_seasons[0] - TUNE_SEASONS, eval_seasons[0]))
+    n_eval = int(train_df["SeasonStartYear"].isin(eval_seasons).sum())
 
-    cal_season = test_start_season - 1
-    train_mask = train_df["SeasonStartYear"] < cal_season
-    cal_mask = train_df["SeasonStartYear"] == cal_season
-    test_mask = train_df["SeasonStartYear"] >= test_start_season
+    print(f"Walk-forward evaluation on seasons {eval_seasons[0]}-{last} ({n_eval} games)")
+    print(f"Tuning (tune=True experiments) on seasons {tune_seasons[0]}-{tune_seasons[-1]}")
 
-    X_train_raw = train_df.loc[train_mask, FEATURE_COLUMNS].values
-    y_train = train_df.loc[train_mask, "Winner"].values
-    X_cal_raw = train_df.loc[cal_mask, FEATURE_COLUMNS].values
-    y_cal = train_df.loc[cal_mask, "Winner"].values
-    X_test_raw = train_df.loc[test_mask, FEATURE_COLUMNS].values
-    y_test = train_df.loc[test_mask, "Winner"].values
-
-    print(f"Training on seasons before {cal_season} ({len(X_train_raw)} games)")
-    print(f"Calibrating on season {cal_season} ({len(X_cal_raw)} games)")
-    print(f"Testing on seasons {test_start_season}-{current_season} ({len(X_test_raw)} games)")
-
-    train_seasons = train_df.loc[train_mask, "SeasonStartYear"].values
-
-    all_experiment_results = {}
-
+    all_outcomes = {}
     for exp_name, exp in EXPERIMENTS.items():
         print(f"\n  {exp_name}...")
-        exp_name, results, pipeline = _run_experiment(
-            exp_name,
-            exp,
-            X_train_raw,
-            X_cal_raw,
-            X_test_raw,
-            y_train,
-            y_cal,
-            y_test,
-            train_seasons=train_seasons,
-        )
-        all_experiment_results[exp_name] = {
-            "results": results,
-            "pipeline": pipeline,
-        }
+        all_outcomes[exp_name] = _run_experiment(exp_name, exp, train_df, eval_seasons, tune_seasons)
 
-    # Summary (in experiment definition order)
-    print(f"\n{'=' * 70}")
-    print("  Summary")
-    print(f"{'=' * 70}")
-    print(f"  {'Experiment':<20} {'Model':>22}  {'Accuracy':>8}  {'LogLoss':>8}")
-    print(f"  {'-' * 65}")
-    for exp_name in EXPERIMENTS:
-        exp_data = all_experiment_results[exp_name]
-        for model_name, metrics in exp_data["results"].items():
-            print(f"  {exp_name:<20} {model_name:>22}  {metrics['accuracy']:>8.4f}  {metrics['log_loss']:>8.4f}")
-
-    # Use the calibrated version for saving (if it exists), otherwise uncalibrated
-    save_exp = all_experiment_results[SAVE_EXPERIMENT]
-    save_pipeline: Pipeline = save_exp["pipeline"]
-    save_name_raw, save_metrics = _final_result(save_exp["results"])
-    cal_key = f"{save_name_raw} (calibrated)"
-    if cal_key in save_exp["results"]:
-        save_model = save_exp["results"][cal_key]["model"]
-        save_name = cal_key
-    else:
-        save_model = save_metrics["model"]
-        save_name = save_name_raw
-
-    test_df = train_df.loc[test_mask]
-    return save_pipeline, save_model, save_name, test_df
+    _print_summary(all_outcomes, [str(s) for s in eval_seasons])

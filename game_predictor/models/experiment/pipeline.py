@@ -20,83 +20,50 @@ def standard_pipeline(k_best: int = 50, pca_components: int = 15, regression: bo
     )
 
 
-def tune_pipeline(
-    X_train, X_test, y_train, y_test, model_cls, model_params, n_trials, progress_callback, train_seasons=None
-):
-    """Tune k_best, pca_components, and (if train_seasons provided) decay."""
-    import inspect
+def _tune_pipeline(raw_folds, model_cls, model_params, n_trials, progress_callback, regression, study_name):
+    """Tune k_best, pca_components and decay, scoring each trial across all folds.
 
+    raw_folds: list of (X_train_raw, X_val_raw, y_train, y_val, train_seasons). The pipeline is
+    refit on each fold's training seasons so selection/PCA never see validation data.
+    """
     import numpy as np
     import optuna
-    from sklearn.metrics import log_loss
 
-    def objective(trial):
-        k_best = trial.suggest_int("k_best", 10, N_FEATURES)
-        pca_components = trial.suggest_int("pca_components", 5, k_best)
+    from .folds import log_loss_score, mae_score, mean_fold_score
 
-        sample_weight = None
-        if train_seasons is not None:
-            decay = trial.suggest_float("decay", 0.0, 1.0)
-            if decay > 0.0:
-                seasons_ago = train_seasons.max() - train_seasons
-                w = np.exp(-decay * seasons_ago)
-                sample_weight = w / w.mean()
-
-        pipe = standard_pipeline(k_best=k_best, pca_components=pca_components)
-        X_train_t = pipe.fit_transform(X_train, y_train)
-        X_test_t = pipe.transform(X_test)
-
+    def make_model():
         model = model_cls(**model_params)
         # One thread per trial — Optuna already runs trials in parallel
         if "n_jobs" in model.get_params():
             model.set_params(n_jobs=1)
-        if sample_weight is not None and "sample_weight" in inspect.signature(model.fit).parameters:
-            model.fit(X_train_t, y_train, sample_weight=sample_weight)
-        else:
-            model.fit(X_train_t, y_train)
-        return log_loss(y_test, model.predict_proba(X_test_t))
-
-    study = optuna.create_study(direction="minimize", study_name="pipeline-tuning")
-    study.optimize(objective, n_trials=n_trials, n_jobs=-1, callbacks=[progress_callback])
-    return study
-
-
-def tune_regression_pipeline(
-    X_train, X_test, y_train, y_test, model_cls, model_params, n_trials, progress_callback, train_seasons=None
-):
-    """Tune k_best, pca_components, and (if train_seasons provided) decay for regression."""
-    import inspect
-
-    import numpy as np
-    import optuna
-    from sklearn.metrics import mean_absolute_error
+        return model
 
     def objective(trial):
         k_best = trial.suggest_int("k_best", 10, N_FEATURES)
         pca_components = trial.suggest_int("pca_components", 5, k_best)
+        decay = trial.suggest_float("decay", 0.0, 1.0)
 
-        sample_weight = None
-        if train_seasons is not None:
-            decay = trial.suggest_float("decay", 0.0, 1.0)
+        folds = []
+        for X_train, X_val, y_train, y_val, train_seasons in raw_folds:
+            sample_weight = None
             if decay > 0.0:
-                seasons_ago = train_seasons.max() - train_seasons
-                w = np.exp(-decay * seasons_ago)
+                w = np.exp(-decay * (train_seasons.max() - train_seasons))
                 sample_weight = w / w.mean()
+            pipe = standard_pipeline(k_best=k_best, pca_components=pca_components, regression=regression)
+            folds.append((pipe.fit_transform(X_train, y_train), pipe.transform(X_val), y_train, y_val, sample_weight))
 
-        pipe = standard_pipeline(k_best=k_best, pca_components=pca_components, regression=True)
-        X_train_t = pipe.fit_transform(X_train, y_train)
-        X_test_t = pipe.transform(X_test)
+        return mean_fold_score(make_model, folds, mae_score if regression else log_loss_score)
 
-        model = model_cls(**model_params)
-        # One thread per trial — Optuna already runs trials in parallel
-        if "n_jobs" in model.get_params():
-            model.set_params(n_jobs=1)
-        if sample_weight is not None and "sample_weight" in inspect.signature(model.fit).parameters:
-            model.fit(X_train_t, y_train, sample_weight=sample_weight)
-        else:
-            model.fit(X_train_t, y_train)
-        return mean_absolute_error(y_test, model.predict(X_test_t))
-
-    study = optuna.create_study(direction="minimize", study_name="regression-pipeline-tuning")
+    study = optuna.create_study(direction="minimize", study_name=study_name)
     study.optimize(objective, n_trials=n_trials, n_jobs=-1, callbacks=[progress_callback])
     return study
+
+
+def tune_pipeline(raw_folds, model_cls, model_params, n_trials, progress_callback):
+    return _tune_pipeline(raw_folds, model_cls, model_params, n_trials, progress_callback, False, "pipeline-tuning")
+
+
+def tune_regression_pipeline(raw_folds, model_cls, model_params, n_trials, progress_callback):
+    return _tune_pipeline(
+        raw_folds, model_cls, model_params, n_trials, progress_callback, True, "regression-pipeline-tuning"
+    )

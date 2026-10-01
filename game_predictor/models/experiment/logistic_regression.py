@@ -1,5 +1,6 @@
 from sklearn.linear_model import LogisticRegression as LR
 
+from .folds import log_loss_score, mean_fold_score
 from .types import ModelConfig
 
 
@@ -12,9 +13,8 @@ def logistic_regression(
     return ModelConfig(cls=LR, params=params)
 
 
-def tune_logistic_regression(X_train, X_test, y_train, y_test, n_trials, progress_callback, sample_weight=None):
+def tune_logistic_regression(folds, n_trials, progress_callback):
     import optuna
-    from sklearn.metrics import log_loss
 
     def objective(trial):
         params = {
@@ -24,9 +24,7 @@ def tune_logistic_regression(X_train, X_test, y_train, y_test, n_trials, progres
             "max_iter": 2000,
             "random_state": 42,
         }
-        model = LR(**params)
-        model.fit(X_train, y_train, sample_weight=sample_weight)
-        return log_loss(y_test, model.predict_proba(X_test))
+        return mean_fold_score(lambda: LR(**params), folds, log_loss_score)
 
     study = optuna.create_study(direction="minimize", study_name="lr-tuning")
     study.optimize(objective, n_trials=n_trials, n_jobs=-1, callbacks=[progress_callback])

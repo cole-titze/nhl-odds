@@ -1,5 +1,6 @@
 from sklearn.neighbors import KNeighborsClassifier
 
+from .folds import log_loss_score, mean_fold_score
 from .types import ModelConfig
 
 
@@ -21,9 +22,8 @@ def knn(
     )
 
 
-def tune_knn(X_train, X_test, y_train, y_test, n_trials, progress_callback, sample_weight=None):
+def tune_knn(folds, n_trials, progress_callback):
     import optuna
-    from sklearn.metrics import log_loss
 
     def objective(trial):
         params = {
@@ -32,9 +32,7 @@ def tune_knn(X_train, X_test, y_train, y_test, n_trials, progress_callback, samp
             "metric": trial.suggest_categorical("metric", ["minkowski", "cosine"]),
             "p": trial.suggest_int("p", 1, 3),
         }
-        model = KNeighborsClassifier(**params)
-        model.fit(X_train, y_train)
-        return log_loss(y_test, model.predict_proba(X_test))
+        return mean_fold_score(lambda: KNeighborsClassifier(**params), folds, log_loss_score, use_weights=False)
 
     study = optuna.create_study(direction="minimize", study_name="knn-tuning")
     study.optimize(objective, n_trials=n_trials, n_jobs=-1, callbacks=[progress_callback])

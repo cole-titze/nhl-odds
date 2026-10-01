@@ -1,10 +1,12 @@
 import numpy as np
+from sklearn.base import clone
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 from ..db.queries import FEATURE_COLUMNS
 from ..prediction.experiments import REGRESSION_EXPERIMENTS, SAVE_SPREAD_EXPERIMENT, SAVE_TOTAL_EXPERIMENT
 from .ensemble import RegressionEnsemble
 from .trainer import _fit, build_models
+from .training import EVAL_SEASONS, TUNE_SEASONS, _walk_forward_splits
 
 _REGRESSOR_TO_FACTORY = {
     "LGBMRegressor": "lgbm_regressor",
@@ -50,45 +52,6 @@ def _print_tuned_regression_config(exp_name, exp, pipeline_params, tuned_decay, 
     print("\n".join(lines))
 
 
-def _run_regression_tuning(exp_name, exp, X_train_t, X_test_t, y_train, y_test, sample_weight=None):
-    """Run Optuna tuning for each regression model.
-
-    Returns (tuned_models, tuned_params) where tuned_params is
-    {model_name: (cls_name, params_dict)} for copy-paste config generation.
-    """
-    from .tuner import REGRESSION_PARAM_CONVERTERS, REGRESSION_TUNERS, print_best_params, progress_callback
-
-    tuned_models = {}
-    tuned_params = {}
-    for model_name, model_cfg in exp.models.items():
-        cls_name = model_cfg.cls.__name__
-        tune_fn = REGRESSION_TUNERS.get(cls_name)
-        if tune_fn is None:
-            continue
-
-        print(f"    Tuning {model_name} ({exp.tune_trials} trials)...")
-        study = tune_fn(
-            X_train_t,
-            X_test_t,
-            y_train,
-            y_test,
-            exp.tune_trials,
-            progress_callback(exp.tune_trials, metric_name="MAE"),
-            sample_weight=sample_weight,
-        )
-        print_best_params(study, model_name, metric_name="MAE")
-
-        converter = REGRESSION_PARAM_CONVERTERS.get(cls_name)
-        if converter:
-            params = converter(study)
-        else:
-            params = {**model_cfg.params, **study.best_params}
-        tuned_models[model_name] = model_cfg.cls(**params)
-        tuned_params[model_name] = (cls_name, params if converter else study.best_params)
-
-    return tuned_models, tuned_params
-
-
 def _compute_weights(seasons: np.ndarray, decay: float) -> np.ndarray | None:
     if decay == 0.0:
         return None
@@ -120,6 +83,7 @@ def _train_and_evaluate_regression(models, X_train, X_test, y_train, y_test, ens
         y_pred = model.predict(X_test)
         results[name] = {
             "model": model,
+            "pred": y_pred,
             "mae": mean_absolute_error(y_test, y_pred),
             "rmse": float(np.sqrt(mean_squared_error(y_test, y_pred))),
         }
@@ -131,6 +95,7 @@ def _train_and_evaluate_regression(models, X_train, X_test, y_train, y_test, ens
         y_pred = ensemble_model.predict(X_test)
         results["Ensemble"] = {
             "model": ensemble_model,
+            "pred": y_pred,
             "mae": mean_absolute_error(y_test, y_pred),
             "rmse": float(np.sqrt(mean_squared_error(y_test, y_pred))),
         }
@@ -327,92 +292,184 @@ def train_regression_for_day(train_df, target: str):
     return pipeline, save_model, save_name, residual_std
 
 
+def _target_folds(df, seasons, target: str):
+    """(X_train_raw, X_val_raw, y_train, y_val, train_seasons) per walk-forward season."""
+    folds = []
+    for split in _walk_forward_splits(df, seasons, calibrate=False):
+        folds.append(
+            (
+                split.train[FEATURE_COLUMNS].values,
+                split.test[FEATURE_COLUMNS].values,
+                _compute_target(split.train, target),
+                _compute_target(split.test, target),
+                split.train["SeasonStartYear"].values,
+            )
+        )
+    return folds
+
+
+def _tune_regression_experiment(exp, df, tune_seasons):
+    """Optuna-tune pipeline, decay and each model, scoring every trial across tune_seasons.
+
+    Returns (pipeline_params, decay, models, tuned_model_params).
+    """
+    from .experiment.pipeline import standard_pipeline, tune_regression_pipeline
+    from .tuner import REGRESSION_PARAM_CONVERTERS, REGRESSION_TUNERS, print_best_params, progress_callback
+
+    raw_folds = _target_folds(df, tune_seasons, exp.target)
+
+    first_cfg = next(iter(exp.models.values()))
+    print(f"    Tuning pipeline ({exp.tune_trials} trials)...")
+    pipe_study = tune_regression_pipeline(
+        raw_folds,
+        first_cfg.cls,
+        first_cfg.params,
+        exp.tune_trials,
+        progress_callback(exp.tune_trials, metric_name="MAE"),
+    )
+    print_best_params(pipe_study, "pipeline", metric_name="MAE")
+    pipeline_params = pipe_study.best_params.copy()
+    decay = pipeline_params.pop("decay")
+
+    folds = []
+    for X_train, X_val, y_train, y_val, train_seasons in raw_folds:
+        pipeline = standard_pipeline(**pipeline_params, regression=True)
+        folds.append(
+            (
+                pipeline.fit_transform(X_train, y_train),
+                pipeline.transform(X_val),
+                y_train,
+                y_val,
+                _compute_weights(train_seasons, decay),
+            )
+        )
+
+    models = build_models(exp.models)
+    tuned_model_params = {}
+    for model_name, model_cfg in exp.models.items():
+        cls_name = model_cfg.cls.__name__
+        tune_fn = REGRESSION_TUNERS.get(cls_name)
+        if tune_fn is None:
+            continue
+
+        print(f"    Tuning {model_name} ({exp.tune_trials} trials)...")
+        study = tune_fn(folds, exp.tune_trials, progress_callback(exp.tune_trials, metric_name="MAE"))
+        print_best_params(study, model_name, metric_name="MAE")
+
+        converter = REGRESSION_PARAM_CONVERTERS.get(cls_name)
+        params = converter(study) if converter else {**model_cfg.params, **study.best_params}
+        models[model_name] = model_cfg.cls(**params)
+        tuned_model_params[model_name] = (cls_name, params if converter else study.best_params)
+
+    return pipeline_params, decay, models, tuned_model_params
+
+
+def _run_regression_experiment(exp_name, exp, df, eval_seasons, tune_seasons, splits=None):
+    """Tune (if enabled) then score the experiment on each walk-forward split.
+
+    Returns a list of (split, {model_name: test predictions}).
+    """
+    from .experiment.pipeline import standard_pipeline
+
+    if exp.tune:
+        pipeline_params, decay, models, tuned_model_params = _tune_regression_experiment(exp, df, tune_seasons)
+        pipeline_template = standard_pipeline(**pipeline_params, regression=True)
+    else:
+        pipeline_template, decay, models = exp.pipeline, exp.decay, build_models(exp.models)
+
+    if splits is None:
+        splits = _walk_forward_splits(df, eval_seasons, calibrate=False)
+
+    outcomes = []
+    for split in splits:
+        X_train, y_train = split.train[FEATURE_COLUMNS].values, _compute_target(split.train, exp.target)
+        X_test, y_test = split.test[FEATURE_COLUMNS].values, _compute_target(split.test, exp.target)
+        weights = _compute_weights(split.train["SeasonStartYear"].values, decay)
+
+        pipeline = clone(pipeline_template)
+        X_train_t = pipeline.fit_transform(X_train, y_train)
+        X_test_t = pipeline.transform(X_test)
+
+        fresh = {name: clone(model) for name, model in models.items()}
+        results = _train_and_evaluate_regression(
+            fresh, X_train_t, X_test_t, y_train, y_test, exp.ensemble, sample_weight=weights
+        )
+        outcomes.append((split, {name: metrics["pred"] for name, metrics in results.items()}))
+
+    if exp.tune:
+        _print_tuned_regression_config(exp_name, exp, pipeline_params, decay, tuned_model_params)
+
+    return outcomes
+
+
+def _print_regression_summary(all_outcomes: dict, eval_labels: list[str]):
+    """Per-season and pooled MAE for every model, then each experiment's final model vs its target's baseline."""
+    season_cols = "".join(f"{label:>8}" for label in eval_labels)
+    print(f"\n{'=' * 100}")
+    print("  Regression Summary — MAE by season (walk-forward), pooled MAE and RMSE")
+    print(f"{'=' * 100}")
+    print(f"  {'Experiment':<20} {'Model':>22}{season_cols}  {'MAE':>8}  {'RMSE':>8}")
+    print(f"  {'-' * 96}")
+
+    final = {}  # exp_name -> (per-game absolute errors, per-season MAE)
+    for exp_name, outcomes in all_outcomes.items():
+        target = REGRESSION_EXPERIMENTS[exp_name].target
+        model_names = list(outcomes[0][1])
+        y_all = np.concatenate([_compute_target(split.test, target) for split, _ in outcomes])
+        final_name = "Ensemble" if "Ensemble" in model_names else model_names[0]
+        for model_name in model_names:
+            seasons = [mean_absolute_error(_compute_target(s.test, target), p[model_name]) for s, p in outcomes]
+            pred = np.concatenate([p[model_name] for _, p in outcomes])
+            mae = mean_absolute_error(y_all, pred)
+            rmse = float(np.sqrt(mean_squared_error(y_all, pred)))
+            cols = "".join(f"{v:>8.4f}" for v in seasons)
+            print(f"  {exp_name:<20} {model_name:>22}{cols}  {mae:>8.4f}  {rmse:>8.4f}")
+            if model_name == final_name:
+                final[exp_name] = (np.abs(y_all - pred), seasons)
+
+    baselines = {"spread": SAVE_SPREAD_EXPERIMENT, "total": SAVE_TOTAL_EXPERIMENT}
+    rows = []
+    for exp_name, (errors, seasons) in final.items():
+        base_name = baselines.get(REGRESSION_EXPERIMENTS[exp_name].target)
+        if exp_name == base_name or base_name not in final:
+            continue
+        base_errors, base_seasons = final[base_name]
+        diff = errors - base_errors
+        se = diff.std(ddof=1) / np.sqrt(len(diff))
+        better = sum(s < b for s, b in zip(seasons, base_seasons))
+        flag = "  *" if abs(diff.mean()) > 2 * se else ""
+        rows.append(
+            f"  {exp_name:<20} {base_name:<12} {diff.mean():>+8.4f}  {se:>7.4f}  {better:>9}/{len(seasons)}{flag}"
+        )
+
+    if rows:
+        print("\n  Final model vs target baseline (paired per game; negative = better than baseline)")
+        print(f"  {'Experiment':<20} {'Baseline':<12} {'ΔMAE':>8}  {'±SE':>7}  {'Seasons better':>15}")
+        print(f"  {'-' * 68}")
+        print("\n".join(rows))
+        print(
+            "  * = difference larger than 2 SE (unlikely to be noise; SE is approximate since games share teams/dates)"
+        )
+
+
 def train_regression_all(train_df):
-    """Train all regression experiments with train/test split. Used by test mode."""
+    """Walk-forward evaluation of all regression experiments. Used by test mode.
+
+    Same layout as classification train_all: score the last EVAL_SEASONS seasons with models
+    trained only on earlier seasons; tune on the TUNE_SEASONS seasons before that window.
+    """
     if train_df.empty:
         print("No training data for regression.")
         return
 
-    TEST_SEASONS = 2
-    current_season = train_df["SeasonStartYear"].max()
-    test_start = current_season - TEST_SEASONS + 1
-    cal_season = test_start - 1
-    train_mask = train_df["SeasonStartYear"] < cal_season
-    cal_mask = train_df["SeasonStartYear"] == cal_season
-    test_mask = train_df["SeasonStartYear"] >= test_start
+    last = int(train_df["SeasonStartYear"].max())
+    eval_seasons = list(range(last - EVAL_SEASONS + 1, last + 1))
+    tune_seasons = list(range(eval_seasons[0] - TUNE_SEASONS, eval_seasons[0]))
+    print(f"\nRegression: walk-forward evaluation on seasons {eval_seasons[0]}-{last}")
 
-    X_train_raw = train_df.loc[train_mask, FEATURE_COLUMNS].values
-    X_cal_raw = train_df.loc[cal_mask, FEATURE_COLUMNS].values
-    X_test_raw = train_df.loc[test_mask, FEATURE_COLUMNS].values
-    train_seasons = train_df.loc[train_mask, "SeasonStartYear"].values
-
-    print(f"\nRegression: training on {len(X_train_raw)} games, testing on {len(X_test_raw)} games")
-
-    all_results = {}
-
+    all_outcomes = {}
     for exp_name, exp in REGRESSION_EXPERIMENTS.items():
         print(f"\n  {exp_name}...")
-        y_train = _compute_target(train_df.loc[train_mask], exp.target)
-        y_cal = _compute_target(train_df.loc[cal_mask], exp.target)
-        y_test = _compute_target(train_df.loc[test_mask], exp.target)
-        w_train = _compute_weights(train_seasons, exp.decay)
+        all_outcomes[exp_name] = _run_regression_experiment(exp_name, exp, train_df, eval_seasons, tune_seasons)
 
-        pipeline = exp.pipeline
-        pipeline_best_params: dict = {}
-        tuned_decay = exp.decay
-
-        if exp.tune:
-            from .experiment.pipeline import tune_regression_pipeline
-            from .tuner import print_best_params, progress_callback
-
-            first_cfg = next(iter(exp.models.values()))
-            print(f"    Tuning pipeline ({exp.tune_trials} trials)...")
-            pipe_study = tune_regression_pipeline(
-                X_train_raw,
-                X_cal_raw,
-                y_train,
-                y_cal,
-                first_cfg.cls,
-                first_cfg.params,
-                exp.tune_trials,
-                progress_callback(exp.tune_trials, metric_name="MAE"),
-                train_seasons=train_seasons,
-            )
-            print_best_params(pipe_study, "pipeline", metric_name="MAE")
-            pipeline_best_params = pipe_study.best_params.copy()
-            tuned_decay = pipeline_best_params.pop("decay", exp.decay)
-            from .experiment.pipeline import standard_pipeline
-
-            pipeline = standard_pipeline(**pipeline_best_params, regression=True)
-            w_train = _compute_weights(train_seasons, tuned_decay)
-
-        X_train_t = pipeline.fit_transform(X_train_raw, y_train)
-        X_cal_t = pipeline.transform(X_cal_raw)
-        X_test_t = pipeline.transform(X_test_raw)
-
-        tuned_model_params = {}
-        if exp.tune:
-            tuned_models, tuned_model_params = _run_regression_tuning(
-                exp_name, exp, X_train_t, X_cal_t, y_train, y_cal, sample_weight=w_train
-            )
-        else:
-            tuned_models = {}
-
-        built = build_models(exp.models)
-        built.update(tuned_models)
-        results = _train_and_evaluate_regression(
-            built, X_train_t, X_test_t, y_train, y_test, exp.ensemble, sample_weight=w_train
-        )
-        all_results[exp_name] = results
-
-        if exp.tune:
-            _print_tuned_regression_config(exp_name, exp, pipeline_best_params, tuned_decay, tuned_model_params)
-
-    print(f"\n{'=' * 60}")
-    print("  Regression Summary")
-    print(f"{'=' * 60}")
-    print(f"  {'Experiment':<20} {'Model':>22}  {'MAE':>8}  {'RMSE':>8}")
-    print(f"  {'-' * 55}")
-    for exp_name, results in all_results.items():
-        for model_name, metrics in results.items():
-            print(f"  {exp_name:<20} {model_name:>22}  {metrics['mae']:>8.4f}  {metrics['rmse']:>8.4f}")
+    _print_regression_summary(all_outcomes, [str(s) for s in eval_seasons])

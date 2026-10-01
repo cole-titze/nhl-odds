@@ -1,5 +1,6 @@
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 
+from .folds import log_loss_score, mae_score, mean_fold_score
 from .types import ModelConfig
 
 
@@ -47,9 +48,8 @@ def mlp(
     )
 
 
-def tune_mlp(X_train, X_test, y_train, y_test, n_trials, progress_callback, sample_weight=None):
+def tune_mlp(folds, n_trials, progress_callback):
     import optuna
-    from sklearn.metrics import log_loss
 
     def objective(trial):
         n_layers = trial.suggest_int("n_layers", 1, 3)
@@ -63,9 +63,7 @@ def tune_mlp(X_train, X_test, y_train, y_test, n_trials, progress_callback, samp
             "early_stopping": True,
             "random_state": 42,
         }
-        model = MLPClassifier(**params)
-        model.fit(X_train, y_train)
-        return log_loss(y_test, model.predict_proba(X_test))
+        return mean_fold_score(lambda: MLPClassifier(**params), folds, log_loss_score, use_weights=False)
 
     study = optuna.create_study(direction="minimize", study_name="mlp-tuning")
     # n_jobs=1: MLPClassifier already uses all cores internally
@@ -73,9 +71,8 @@ def tune_mlp(X_train, X_test, y_train, y_test, n_trials, progress_callback, samp
     return study
 
 
-def tune_mlp_regressor(X_train, X_test, y_train, y_test, n_trials, progress_callback, sample_weight=None):
+def tune_mlp_regressor(folds, n_trials, progress_callback):
     import optuna
-    from sklearn.metrics import mean_absolute_error
 
     def objective(trial):
         n_layers = trial.suggest_int("n_layers", 1, 3)
@@ -89,9 +86,7 @@ def tune_mlp_regressor(X_train, X_test, y_train, y_test, n_trials, progress_call
             "early_stopping": True,
             "random_state": 42,
         }
-        model = MLPRegressor(**params)
-        model.fit(X_train, y_train)
-        return mean_absolute_error(y_test, model.predict(X_test))
+        return mean_fold_score(lambda: MLPRegressor(**params), folds, mae_score, use_weights=False)
 
     study = optuna.create_study(direction="minimize", study_name="mlp-regressor-tuning")
     study.optimize(objective, n_trials=n_trials, n_jobs=1, callbacks=[progress_callback])

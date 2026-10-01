@@ -39,6 +39,7 @@ def train_and_evaluate(
 
         results[name] = {
             "model": model,
+            "proba": y_proba,
             "accuracy": accuracy_score(y_test, y_pred),
             "log_loss": log_loss(y_test, y_proba),
         }
@@ -69,6 +70,7 @@ def train_and_evaluate(
 
         results["Ensemble"] = {
             "model": ensemble_model,
+            "proba": y_proba,
             "accuracy": accuracy_score(y_test, y_pred),
             "log_loss": log_loss(y_test, y_proba),
         }
