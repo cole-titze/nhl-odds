@@ -25,6 +25,7 @@ var settings = new ModeSettings()
     Mode = ModeTypeParser.ParseFromString(runModeEnv),
     OddsApiKey = Environment.GetEnvironmentVariable("ODDS_API_KEY") ?? string.Empty,
     OddsApiBackfillKey = Environment.GetEnvironmentVariable("API_BACKFILL_KEY") ?? string.Empty,
+    ThrottleTimeMs = int.Parse(Environment.GetEnvironmentVariable("THROTTLE_TIME_MS") ?? "0"),
 };
 
 if (string.IsNullOrEmpty(settings.ConnectionString))

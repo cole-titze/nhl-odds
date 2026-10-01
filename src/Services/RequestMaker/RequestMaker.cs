@@ -62,7 +62,7 @@ public class RequestMaker : IRequestMaker
         response = await _client.SendAsync(msg);
         _lastRequestCompleted = DateTime.UtcNow;
 
-        var serviceResponse = await ParseResponse(response);
+        var serviceResponse = await ParseResponse(response, url + query);
         AddToCache(key, serviceResponse);
 
         return serviceResponse;
@@ -112,10 +112,15 @@ public class RequestMaker : IRequestMaker
     /// </summary>
     /// <param name="response">The raw http response message</param>
     /// <returns>Dynamic object</returns>
-    private static async Task<JsonNode?> ParseResponse(HttpResponseMessage response)
+    private async Task<JsonNode?> ParseResponse(HttpResponseMessage response, string requestUrl)
     {
         if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync();
+            _logger.LogWarning("Request failed with {StatusCode} for {Url}: {Body}",
+                (int)response.StatusCode, requestUrl, body.Length > 300 ? body[..300] : body);
             return null;
+        }
 
         // Get data as Json string 
         string data = await response.Content.ReadAsStringAsync();
