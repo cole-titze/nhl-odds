@@ -22,6 +22,5 @@ public class DbGameOdds
         AwayOdds = gameOdds.AwayOdds;
         LogLoss = gameOdds.LogLoss;
         Notes = gameOdds.Notes;
-        Game = gameOdds.Game;
     }
 }

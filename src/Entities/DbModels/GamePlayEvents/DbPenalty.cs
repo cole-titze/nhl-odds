@@ -66,7 +66,6 @@ public class DbPenalty : IDbGameEvent
             Duration = penaltyEvent.Duration;
             PenaltyType = penaltyEvent.PenaltyType;
             PenaltySeverity = penaltyEvent.PenaltySeverity;
-            Game = penaltyEvent.Game;
             DrawnByPlayer = penaltyEvent.DrawnByPlayer;
             CommittedByPlayer = penaltyEvent.CommittedByPlayer;
             CommittedByPlayerTeam = penaltyEvent.CommittedByPlayerTeam;

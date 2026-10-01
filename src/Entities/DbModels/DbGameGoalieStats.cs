@@ -38,9 +38,6 @@ public class DbGameGoalieStats : IDbGamePlayerStats
             TimeOnIceSeconds = goalieStats.TimeOnIceSeconds;
             IsStarter = goalieStats.IsStarter;
             Position = goalieStats.Position;
-            Player = goalieStats.Player;
-            Game = goalieStats.Game;
-            Team = goalieStats.Team;
         }
         else
         {

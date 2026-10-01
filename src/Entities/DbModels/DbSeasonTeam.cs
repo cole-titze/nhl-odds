@@ -30,7 +30,6 @@ public class DbSeasonTeam
         ConferenceAbbreviation = team.ConferenceAbbreviation;
         PlaceName = team.PlaceName;
         SeasonStartYear = team.SeasonStartYear;
-        Team = team.Team;
     }
     public bool IsEquivalentTo(DbSeasonTeam? other)
     {

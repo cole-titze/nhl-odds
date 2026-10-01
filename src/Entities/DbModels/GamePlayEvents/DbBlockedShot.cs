@@ -56,7 +56,6 @@ public class DbBlockedShot : IDbGameEvent
             BlockType = blockedShotEvent.BlockType;
             ShooterPlayer = blockedShotEvent.ShooterPlayer;
             BlockingPlayer = blockedShotEvent.BlockingPlayer;
-            Game = blockedShotEvent.Game;
             BlockingTeam = blockedShotEvent.BlockingTeam;
         }
         else

@@ -39,7 +39,6 @@ public class DbDelayedPenalty : IDbGameEvent
             SecondsLeftInPeriod = delayedPenaltyEvent.SecondsLeftInPeriod;
             PenaltyTeamId = delayedPenaltyEvent.PenaltyTeamId;
             PenaltyTeam = delayedPenaltyEvent.PenaltyTeam;
-            Game = delayedPenaltyEvent.Game;
         }
         else
         {

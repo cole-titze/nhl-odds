@@ -37,7 +37,6 @@ public class DbStoppage : IDbGameEvent
             SecondsLeftInPeriod = stoppageEvent.SecondsLeftInPeriod;
             StoppageType = stoppageEvent.StoppageType;
             StoppageDetails = stoppageEvent.StoppageDetails;
-            Game = stoppageEvent.Game;
         }
         else
         {

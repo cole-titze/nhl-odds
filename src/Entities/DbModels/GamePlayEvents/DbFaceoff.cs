@@ -54,7 +54,6 @@ public class DbFaceoff : IDbGameEvent
             Zone = faceoffEvent.Zone;
             WinningPlayer = faceoffEvent.WinningPlayer;
             LosingPlayer = faceoffEvent.LosingPlayer;
-            Game = faceoffEvent.Game;
             WinningTeam = faceoffEvent.WinningTeam;
         }
         else

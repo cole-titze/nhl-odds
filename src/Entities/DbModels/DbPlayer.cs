@@ -44,7 +44,6 @@ public class DbPlayer
         TwitterLink = player.TwitterLink;
         WatchLink = player.WatchLink;
         PlayerSlug = player.PlayerSlug;
-        Team = player.Team;
     }
     public bool IsEquivalentTo(DbPlayer? other)
     {

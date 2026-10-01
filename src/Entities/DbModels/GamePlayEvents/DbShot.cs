@@ -55,7 +55,6 @@ public class DbShot : IDbGameEvent
             ShotType = shotEvent.ShotType;
             ShootingPlayer = shotEvent.ShootingPlayer;
             GoaliePlayer = shotEvent.GoaliePlayer;
-            Game = shotEvent.Game;
             ShootingTeam = shotEvent.ShootingTeam;
         }
         else

@@ -34,6 +34,7 @@ public class DbGameSkaterStats : IDbGamePlayerStats
         {
             GameId = gameSkaterStats.GameId;
             PlayerId = gameSkaterStats.PlayerId;
+            TeamId = gameSkaterStats.TeamId;
             Goals = gameSkaterStats.Goals;
             Assists = gameSkaterStats.Assists;
             PlusMinus = gameSkaterStats.PlusMinus;
@@ -46,9 +47,7 @@ public class DbGameSkaterStats : IDbGamePlayerStats
             Giveaways = gameSkaterStats.Giveaways;
             Takeaways = gameSkaterStats.Takeaways;
             TimeOnIceSeconds = gameSkaterStats.TimeOnIceSeconds;
-            Player = gameSkaterStats.Player;
-            Game = gameSkaterStats.Game;
-            Team = gameSkaterStats.Team;
+            Position = gameSkaterStats.Position;
         }
         else
         {

@@ -48,7 +48,6 @@ public class DbGiveaway : IDbGameEvent
             YCoordinate = giveawayEvent.YCoordinate;
             Zone = giveawayEvent.Zone;
             GiveawayPlayer = giveawayEvent.GiveawayPlayer;
-            Game = giveawayEvent.Game;
             GiveawayPlayerTeam = giveawayEvent.GiveawayPlayerTeam;
         }
         else

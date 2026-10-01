@@ -74,7 +74,6 @@ public class DbGoal : IDbGameEvent
             HighlightClipId = goalEvent.HighlightClipId;
             DiscreetClipId = goalEvent.DiscreetClipId;
             PptReplayUrl = goalEvent.PptReplayUrl;
-            Game = goalEvent.Game;
             ScoringPlayer = goalEvent.ScoringPlayer;
             AssistOnePlayer = goalEvent.AssistOnePlayer;
             AssistTwoPlayer = goalEvent.AssistTwoPlayer;

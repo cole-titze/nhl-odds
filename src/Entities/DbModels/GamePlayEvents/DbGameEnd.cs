@@ -34,7 +34,6 @@ public class DbGameEnd : IDbGameEvent
             HomeTeamDefendingSide = gameEndEvent.HomeTeamDefendingSide;
             SecondsIntoPeriod = gameEndEvent.SecondsIntoPeriod;
             SecondsLeftInPeriod = gameEndEvent.SecondsLeftInPeriod;
-            Game = gameEndEvent.Game;
         }
         else
         {

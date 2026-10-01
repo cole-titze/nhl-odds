@@ -17,8 +17,6 @@ public class DbGameCoach
         GameId = coach.GameId;
         Name = coach.Name;
         TeamId = coach.TeamId;
-        Game = coach.Game;
-        Team = coach.Team;
     }
 
     public bool IsEquivalentTo(DbGameCoach? other)

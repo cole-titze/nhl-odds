@@ -283,7 +283,6 @@ public class DbGameCleaned
         AwayStrengthOfSchedule = gameCleaned.AwayStrengthOfSchedule;
         HomeRecentStrengthOfSchedule = gameCleaned.HomeRecentStrengthOfSchedule;
         AwayRecentStrengthOfSchedule = gameCleaned.AwayRecentStrengthOfSchedule;
-        Game = gameCleaned.Game;
     }
 
     public bool IsEquivalentTo(DbGameCleaned? other)

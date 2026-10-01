@@ -33,7 +33,6 @@ public class DbShootoutComplete : IDbGameEvent
             HomeTeamDefendingSide = shootoutCompleteEvent.HomeTeamDefendingSide;
             SecondsIntoPeriod = shootoutCompleteEvent.SecondsIntoPeriod;
             SecondsLeftInPeriod = shootoutCompleteEvent.SecondsLeftInPeriod;
-            Game = shootoutCompleteEvent.Game;
         }
         else
         {

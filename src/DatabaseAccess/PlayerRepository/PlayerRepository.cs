@@ -48,7 +48,7 @@ public class PlayerRepository : IPlayerRepository
     /// <returns>None</returns>
     public async Task AddUpdateGameRosterStats(Game game)
     {
-        var dbGamePlayerStats = MapGameToDbGamePlayerStats.Map(game);
+        var dbGamePlayerStats = MapGameToDbGamePlayerStats.Map(game).ToList();
 
         var addList = new List<IDbGamePlayerStats>();
         var updateList = new List<IDbGamePlayerStats>();
@@ -70,6 +70,16 @@ public class PlayerRepository : IPlayerRepository
         _dbContext.GameSkaterStats.UpdateRange(updateList.OfType<DbGameSkaterStats>());
         await _dbContext.GameGoalieStats.AddRangeAsync(addList.OfType<DbGameGoalieStats>());
         _dbContext.GameGoalieStats.UpdateRange(updateList.OfType<DbGameGoalieStats>());
+
+        // Only called for played games, so the box score is authoritative: drop rows for players
+        // who didn't play (e.g. left over from a pre-game current-roster snapshot)
+        if (dbGamePlayerStats.Count == 0)
+            return;
+        var playedIds = dbGamePlayerStats.Select(p => p.PlayerId).ToHashSet();
+        _dbContext.GameSkaterStats.RemoveRange(await _dbContext.GameSkaterStats
+            .Where(x => x.GameId == game.Id && !playedIds.Contains(x.PlayerId)).ToListAsync());
+        _dbContext.GameGoalieStats.RemoveRange(await _dbContext.GameGoalieStats
+            .Where(x => x.GameId == game.Id && !playedIds.Contains(x.PlayerId)).ToListAsync());
     }
     /// <summary>
     /// Gets a player based on the id
