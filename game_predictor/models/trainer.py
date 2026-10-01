@@ -1,10 +1,8 @@
 import inspect
 
-from sklearn.ensemble import StackingClassifier
-from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, log_loss
 
-from .ensemble import Ensemble
+from .ensemble import Ensemble, WeightedStackingClassifier
 from .experiment import ModelConfig
 
 
@@ -46,18 +44,12 @@ def train_and_evaluate(
 
     if ensemble_names and len(ensemble_names) > 1:
         if stack:
-            # StackingClassifier needs unfitted estimators — clone from already-fitted models
+            # The stacker refits its own copies — clone unfitted versions of the already-fitted models
             from sklearn.base import clone
 
             estimators = [(n, clone(results[n]["model"])) for n in ensemble_names]
-            stacker = StackingClassifier(
-                estimators=estimators,
-                final_estimator=LogisticRegression(),
-                cv=5,
-                stack_method="predict_proba",
-                n_jobs=-1,
-            )
-            stacker.fit(X_train, y_train)
+            stacker = WeightedStackingClassifier(estimators=estimators)
+            stacker.fit(X_train, y_train, sample_weight=sample_weight)
             y_proba = stacker.predict_proba(X_test)
             y_pred = stacker.predict(X_test)
             ensemble_model = stacker

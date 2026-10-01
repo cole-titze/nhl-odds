@@ -4,16 +4,14 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.ensemble import StackingClassifier
 from sklearn.frozen import FrozenEstimator
-from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss as sklearn_log_loss
 from sklearn.pipeline import Pipeline
 
 from ..db.queries import FEATURE_COLUMNS
 from ..prediction.experiments import EXPERIMENTS, SAVE_EXPERIMENT
 from .calibration import calibrate_model
-from .ensemble import Ensemble
+from .ensemble import Ensemble, WeightedStackingClassifier
 from .trainer import _fit, build_models, train_and_evaluate
 
 
@@ -122,14 +120,8 @@ def train_default(train_df):
             from sklearn.base import clone
 
             estimators = [(n, clone(built[n])) for n in exp.ensemble]
-            save_model = StackingClassifier(
-                estimators=estimators,
-                final_estimator=LogisticRegression(),
-                cv=5,
-                stack_method="predict_proba",
-                n_jobs=-1,
-            )
-            save_model.fit(X_train_t, y_train)
+            save_model = WeightedStackingClassifier(estimators=estimators)
+            save_model.fit(X_train_t, y_train, sample_weight=w_train)
         else:
             ensemble_models = [built[n] for n in exp.ensemble]
             save_model = Ensemble(models=ensemble_models)
@@ -182,14 +174,8 @@ def train_for_season(train_df):
             from sklearn.base import clone
 
             estimators = [(n, clone(built[n])) for n in exp.ensemble]
-            save_model = StackingClassifier(
-                estimators=estimators,
-                final_estimator=LogisticRegression(),
-                cv=5,
-                stack_method="predict_proba",
-                n_jobs=-1,
-            )
-            save_model.fit(X_t, y)
+            save_model = WeightedStackingClassifier(estimators=estimators)
+            save_model.fit(X_t, y, sample_weight=w)
         else:
             ensemble_models = [built[n] for n in exp.ensemble]
             save_model = Ensemble(models=ensemble_models)
@@ -280,14 +266,8 @@ def train_for_day(train_df):
             from sklearn.base import clone
 
             estimators = [(n, clone(built[n])) for n in exp.ensemble]
-            save_model = StackingClassifier(
-                estimators=estimators,
-                final_estimator=LogisticRegression(),
-                cv=5,
-                stack_method="predict_proba",
-                n_jobs=-1,
-            )
-            save_model.fit(X_train_t, y_train)
+            save_model = WeightedStackingClassifier(estimators=estimators)
+            save_model.fit(X_train_t, y_train, sample_weight=w_train)
         else:
             ensemble_models = [built[n] for n in exp.ensemble]
             save_model = Ensemble(models=ensemble_models)
