@@ -13,6 +13,7 @@ import {
   type StrategyConfig,
 } from '../utils/bettingStrategies';
 import { useStrategy } from '../contexts/StrategyContext';
+import { TeamLogo } from './TeamLogo';
 
 // Only these books are shown on the card, so only they can back the bet badge.
 const PINNED_BOOKMAKERS = ['DraftKings', 'Kalshi'];
@@ -62,13 +63,10 @@ function TeamSide({
       className={`flex-1 flex flex-col items-center gap-2 ${isWinner && played ? 'font-bold' : ''}`}
     >
       <div className="relative">
-        <img
+        <TeamLogo
           src={team.logoUri}
           alt={team.teamName}
           className="h-20 w-20 object-contain drop-shadow-lg"
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.display = 'none';
-          }}
         />
         {isWinner && played && (
           <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-accent-500 flex items-center justify-center">

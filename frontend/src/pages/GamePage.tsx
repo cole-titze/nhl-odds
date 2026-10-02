@@ -15,6 +15,7 @@ import { checkStrategy } from '../utils/bettingStrategies';
 import { useStrategy } from '../contexts/StrategyContext';
 import { StrategyPicker } from '../components/StrategyPicker';
 import { Skeleton } from '../components/Skeleton';
+import { TeamLogo } from '../components/TeamLogo';
 
 function formatPoint(point: number): string {
   return point > 0 ? `+${point}` : `${point}`;
@@ -266,13 +267,10 @@ function TeamHeader({
   return (
     <div className={`flex flex-col items-center gap-2 ${isWinner && played ? 'font-bold' : ''}`}>
       <div className="relative">
-        <img
+        <TeamLogo
           src={team.logoUri}
           alt={team.teamName}
           className="h-20 w-20 object-contain drop-shadow-lg"
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.display = 'none';
-          }}
         />
         {isWinner && played && (
           <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-accent-500 flex items-center justify-center">

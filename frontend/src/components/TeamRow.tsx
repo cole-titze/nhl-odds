@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import type { TeamVM } from '../types';
+import { TeamLogo } from './TeamLogo';
 
 interface KalshiTeamStats {
   games: number;
@@ -34,14 +35,7 @@ export function TeamRow({ team, season, showDk, showKalshi, kalshiStats }: TeamR
     >
       <td className="py-3.5 px-4">
         <div className="flex items-center gap-3">
-          <img
-            src={team.logoUri}
-            alt={team.teamName}
-            className="h-8 w-8 object-contain"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
+          <TeamLogo src={team.logoUri} alt={team.teamName} className="h-8 w-8 object-contain" />
           <span className="font-medium group-hover:text-accent-500 transition-colors">
             {team.locationName} {team.teamName}
           </span>
