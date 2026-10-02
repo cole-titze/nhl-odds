@@ -17,12 +17,14 @@ PostgreSQL is managed by [CloudNativePG (CNPG)](https://cloudnative-pg.io/), a C
 
 > **Note:** The `ghcr.io/cole-titze/nhl-odds/database` container image is used only by Docker Compose (dev and prod). It is not deployed to Kubernetes.
 
-The following variables must be set in `group_vars` or ansible-vault before running:
+The following variables must be set in `~/source/ansible-files/vars/nhl_vars.yml` (loaded by the playbook) before running:
 
 | Variable | Description |
 |---|---|
-| `nhl_odds_postgres_password` | Database password for the postgres user |
-| `nhl_odds_odds_api_key` | The Odds API key for daily odds fetching |
+| `nhl_odds_postgres_password` | Database password (CNPG) |
+| `nhl_odds_api_key` | The Odds API key for daily odds fetching |
 | `nhl_odds_api_backfill_key` | The Odds API key for historical odds backfill |
+| `nhl_odds_cloudflare_tunnel_token` | Cloudflare tunnel token for external access |
+| `nhl_odds_admin_api_key` | Key required in the `X-Admin-Key` header to start jobs via `POST /api/Admin/Start*` (e.g. `openssl rand -hex 32`) |
 
-> **Note:** The on-demand job dispatch (Admin page buttons) is not supported in the Kubernetes deployment — jobs run on their cron schedules only.
+> **Note:** Jobs run on CronJob schedules. On-demand runs go through the scheduler: `POST /api/Admin/Start<Job>` with the `X-Admin-Key` header marks the job `requested` in `JobStatus`, and `scheduler/k8s/poll-requests.sh` creates a Kubernetes Job for it within ~60 seconds (Admin page buttons are only shown in development).

@@ -26,6 +26,7 @@ services:
     environment:
       - TZ=America/Chicago
       - NHL_DATABASE=Host=database;Database=nhl;Username=postgres;Password=${POSTGRES_PASSWORD}
+      - ADMIN_API_KEY=${ADMIN_API_KEY:-}
     depends_on:
       database:
         condition: service_healthy
@@ -38,6 +39,7 @@ services:
       - NHL_DATABASE=Host=database;Database=nhl;Username=postgres;Password=${POSTGRES_PASSWORD}
       - ODDS_API_KEY=${ODDS_API_KEY:-}
       - API_BACKFILL_KEY=${API_BACKFILL_KEY:-}
+      - THROTTLE_TIME_MS=${THROTTLE_TIME_MS:-250}
     depends_on:
       database:
         condition: service_healthy

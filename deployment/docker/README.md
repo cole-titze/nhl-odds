@@ -22,6 +22,7 @@ POSTGRES_PASSWORD=YourSecurePassword123!
 ODDS_API_KEY=your-odds-api-key
 API_BACKFILL_KEY=your-backfill-api-key
 CLOUDFLARE_TUNNEL_TOKEN=your-tunnel-token
+ADMIN_API_KEY=your-random-admin-key
 EOF
 ```
 
@@ -31,6 +32,8 @@ EOF
 | `ODDS_API_KEY` | No | The Odds API key for daily odds fetching |
 | `API_BACKFILL_KEY` | No | The Odds API key for historical odds backfill |
 | `CLOUDFLARE_TUNNEL_TOKEN` | No | Cloudflare Tunnel token for public access (see [Cloudflare Tunnel](#cloudflare-tunnel)) |
+| `ADMIN_API_KEY` | Yes, to start jobs on demand | Required in the `X-Admin-Key` header by `POST /api/Admin/Start*` (generate with `openssl rand -hex 32`). If unset, those endpoints return 403 outside Development |
+| `THROTTLE_TIME_MS` | No | Delay between NHL API requests (default 250; the API returns 429s without one) |
 
 ## 4. Log in to GitHub Container Registry
 
@@ -84,7 +87,7 @@ The scheduler container runs two daily jobs via cron:
 - **3:00 AM CT** — Data collection (`entry` container with `RUN_MODE=NhlAdd`)
 - **6:00 AM CT** — Odds fetch pipeline: fetches bookmaker odds, Kalshi odds, then runs the ML predictor (sequential `entry` + `predictor` containers)
 
-Jobs can also be triggered manually from the Admin page. The API writes a `requested` status to the database, and the scheduler picks it up within ~60 seconds.
+Jobs can also be triggered manually (Admin page buttons in development, or `curl -X POST -H "X-Admin-Key: $ADMIN_API_KEY" <api>/api/Admin/Start<Job>`). The API writes a `requested` status to the database, and the scheduler picks it up within ~60 seconds.
 
 ## Database Backup / Restore
 
