@@ -1,37 +1,53 @@
+import type { ReactNode } from 'react';
+import { useActiveThemeId } from '../hooks/useRootTheme';
 import { Starfield } from './Starfield';
 
-// Fixed backdrops for the scenic themes. All are mounted; index.css shows only
-// the one matching the active `theme-<id>` class on <html>.
+// Fixed backdrops for the scenic themes. Only the active theme's scene is
+// mounted, and it remounts on every switch: some browsers don't restart CSS
+// animations on an element that goes display:none and back.
+const SCENES: Record<string, ReactNode> = {
+  ice: (
+    <>
+      <IceScratches />
+      <div className="rink-line rink-blue rink-top" />
+      <div className="rink-line rink-red" />
+      <div className="rink-line rink-blue rink-bottom" />
+      <div className="rink-circle" />
+      <div className="rink-dot" />
+    </>
+  ),
+  stars: (
+    <>
+      <div className="stars-nebula" />
+      <Starfield />
+    </>
+  ),
+  aurora: (
+    <>
+      <Starfield />
+      <div className="aurora-band aurora-top" />
+      <div className="aurora-band aurora-1" />
+      <div className="aurora-band aurora-2" />
+      <div className="aurora-band aurora-fringe" />
+      <div className="aurora-band aurora-3" />
+    </>
+  ),
+  team: (
+    <>
+      <div className="team-glow" />
+      <div className="team-logo" />
+    </>
+  ),
+};
+
 export function ThemeBackdrop() {
+  const themeId = useActiveThemeId();
+  const scene = themeId && SCENES[themeId];
+  if (!scene) return null;
+
   return (
-    <div aria-hidden="true">
-      <div className="scene scene-ice">
-        <IceScratches />
-        <div className="rink-line rink-blue rink-top" />
-        <div className="rink-line rink-red" />
-        <div className="rink-line rink-blue rink-bottom" />
-        <div className="rink-circle" />
-        <div className="rink-dot" />
-      </div>
-
-      <div className="scene scene-stars">
-        <div className="stars-nebula" />
-        <Starfield />
-      </div>
-
-      <div className="scene scene-aurora">
-        <Starfield />
-        <div className="aurora-band aurora-top" />
-        <div className="aurora-band aurora-1" />
-        <div className="aurora-band aurora-2" />
-        <div className="aurora-band aurora-fringe" />
-        <div className="aurora-band aurora-3" />
-      </div>
-
-      <div className="scene scene-team">
-        <div className="team-glow" />
-        <div className="team-logo" />
-      </div>
+    <div key={themeId} className={`scene scene-${themeId}`} aria-hidden="true">
+      {scene}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useIsDarkTheme } from '../hooks/useIsDarkTheme';
+import { useIsDarkTheme } from '../hooks/useRootTheme';
 
 interface Props {
   src: string;
