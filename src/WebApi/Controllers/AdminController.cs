@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using WebApi.BusinessLogic.AdminService;
 using WebApi.BusinessLogic.JobService;
+using WebApi.Filters;
 using WebApi.Mappers;
 
 namespace WebApi.Controllers;
@@ -27,6 +28,7 @@ public class AdminController
     }
 
     [HttpPost]
+    [RequireAdminKey]
     public IResult StartDataCollection()
     {
         if (CompletedToday(DataCollectionJob))
@@ -39,8 +41,12 @@ public class AdminController
     }
 
     [HttpPost]
+    [RequireAdminKey]
     public IResult StartPrediction()
     {
+        if (CompletedToday(PredictionJob))
+            return Results.Conflict(new { message = "Prediction already completed today." });
+
         if (!_jobService.RequestJob(PredictionJob))
             return Results.Conflict(new { message = "Prediction is already running or requested." });
 
@@ -48,6 +54,7 @@ public class AdminController
     }
 
     [HttpPost]
+    [RequireAdminKey]
     public IResult StartOddsBackfill()
     {
         if (CompletedToday(OddsBackfillJob))
@@ -60,6 +67,7 @@ public class AdminController
     }
 
     [HttpPost]
+    [RequireAdminKey]
     public IResult StartPredictionBackfill()
     {
         if (CompletedToday(PredictionBackfillJob))
@@ -72,6 +80,7 @@ public class AdminController
     }
 
     [HttpPost]
+    [RequireAdminKey]
     public IResult StartKalshiBackfill()
     {
         if (CompletedToday(KalshiBackfillJob))
