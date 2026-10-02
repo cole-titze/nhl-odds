@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useTheme, type Theme } from '../hooks/useTheme';
 import { TEAMS, THEMES, teamLogo } from '../themes';
 
@@ -73,84 +73,52 @@ const ICONS: Record<Theme, ReactNode> = {
   ),
 };
 
+const TEAMS_BY_NAME = [...TEAMS].sort((a, b) => a.name.localeCompare(b.name));
+
+// Shared look for the icon buttons. Each one is an icon with an invisible
+// native <select> stretched over it, so tapping opens the platform picker
+// (the iOS wheel on iPhone) while the navbar keeps its icon-only look.
+const iconButton =
+  'relative flex items-center justify-center p-2.5 rounded-lg text-surface-500 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-white/[0.06] transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent-500';
+const overlaySelect = 'absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none';
+
 export function ThemePicker() {
   const { theme, setTheme, team, setTeam } = useTheme();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onClick = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
-    document.addEventListener('mousedown', onClick);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onClick);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
 
   return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        className="p-2.5 rounded-lg cursor-pointer hover:bg-surface-100 dark:hover:bg-white/[0.06] text-surface-500 dark:text-surface-400 transition-colors"
-        aria-label="Choose theme"
-        aria-haspopup="menu"
-        aria-expanded={open}
-      >
-        {ICONS[theme]}
-      </button>
-      {open && (
-        <div
-          role="menu"
-          className="theme-menu absolute right-0 mt-2 w-72 rounded-xl p-1 border border-surface-200 dark:border-white/[0.08] bg-white/95 dark:bg-surface-900/95 shadow-lg dark:shadow-black/40"
-        >
-          {THEMES.map((t) => (
-            <button
-              key={t.id}
-              role="menuitemradio"
-              aria-checked={t.id === theme}
-              onClick={() => {
-                setTheme(t.id);
-                // Keep the menu open on Team Colors so a team can be picked
-                if (t.id !== 'team') setOpen(false);
-              }}
-              className={`flex w-full cursor-pointer items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                t.id === theme
-                  ? 'bg-surface-100 dark:bg-white/[0.08] text-surface-900 dark:text-white'
-                  : 'text-surface-500 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white hover:bg-surface-100/50 dark:hover:bg-white/[0.04]'
-              }`}
-            >
-              {ICONS[t.id]}
-              {t.label}
-            </button>
-          ))}
-          {theme === 'team' && (
-            <div className="grid grid-cols-8 gap-1 border-t border-white/[0.08] mt-1 pt-2 px-1 pb-1">
-              {TEAMS.map((t) => (
-                <button
-                  key={t.abbrev}
-                  onClick={() => {
-                    setTeam(t.abbrev);
-                    setOpen(false);
-                  }}
-                  title={t.name}
-                  aria-label={t.name}
-                  aria-pressed={t.abbrev === team}
-                  className={`aspect-square cursor-pointer rounded-md p-0.5 transition-colors ${
-                    t.abbrev === team ? 'bg-white/[0.14]' : 'hover:bg-white/[0.06]'
-                  }`}
-                >
-                  <img src={teamLogo(t.abbrev)} alt="" className="w-full h-full object-contain" />
-                </button>
-              ))}
-            </div>
-          )}
+    <div className="flex items-center gap-1">
+      {theme === 'team' && (
+        <div className={iconButton} title="Choose team">
+          <img src={teamLogo(team)} alt="" className="h-5 w-5 object-contain" />
+          <select
+            value={team}
+            onChange={(e) => setTeam(e.target.value)}
+            aria-label="Choose team"
+            className={overlaySelect}
+          >
+            {TEAMS_BY_NAME.map((t) => (
+              <option key={t.abbrev} value={t.abbrev}>
+                {t.name}
+              </option>
+            ))}
+          </select>
         </div>
       )}
+      <div className={iconButton} title="Choose theme">
+        {ICONS[theme]}
+        <select
+          value={theme}
+          onChange={(e) => setTheme(e.target.value as Theme)}
+          aria-label="Choose theme"
+          className={overlaySelect}
+        >
+          {THEMES.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.label}
+            </option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 }

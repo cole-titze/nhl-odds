@@ -16,8 +16,10 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <nav className="app-nav sticky top-0 z-50 border-b border-surface-200/80 dark:border-white/[0.08] bg-white/80 dark:bg-surface-900/70 backdrop-blur-xl shadow-sm dark:shadow-black/20">
-      <div className="mx-auto max-w-6xl flex items-center justify-between px-5 h-16">
+    <nav className="app-nav sticky top-0 z-50 border-b border-surface-200/80 dark:border-white/[0.08] shadow-sm dark:shadow-black/20">
+      {/* Glass lives on this child, not the nav itself; see .app-nav-glass in index.css */}
+      <div className="app-nav-glass" aria-hidden="true" />
+      <div className="mx-auto max-w-6xl flex items-center justify-between px-5 h-14 md:h-16">
         <div className="flex items-center gap-8">
           <NavLink to="/" className="flex items-center gap-2.5 group">
             <div className="w-8 h-8 rounded-lg bg-accent-500 flex items-center justify-center text-white font-bold text-sm tracking-tight shadow-lg shadow-accent-500/25">

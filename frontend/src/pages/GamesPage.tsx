@@ -11,11 +11,13 @@ export type OddsType = 'moneyline' | 'spread' | 'overUnder';
 
 const FILTER_BAR_ID = 'games-filter-bar';
 
-// Height of the sticky navbar (top-16 = 64px) plus the filter bar, so date headers
-// land below them. Measured because the filter bar stacks into multiple rows on mobile.
+// Height of the sticky navbar plus the filter bar, so date headers land below
+// them. Measured because the navbar is shorter on mobile and the filter bar
+// stacks into multiple rows there.
 function getStickyOffset(): number {
+  const navbar = document.querySelector<HTMLElement>('.app-nav');
   const filterBar = document.getElementById(FILTER_BAR_ID);
-  return 64 + (filterBar?.offsetHeight ?? 64) + 12;
+  return (navbar?.offsetHeight ?? 64) + (filterBar?.offsetHeight ?? 64) + 12;
 }
 
 function scrollToDate(date: string, behavior: ScrollBehavior): boolean {
@@ -165,7 +167,7 @@ export function GamesPage() {
     <div>
       <div
         id={FILTER_BAR_ID}
-        className="app-subbar sticky top-16 z-40 -mx-5 px-5 py-3 mb-6 backdrop-blur bg-white/70 dark:bg-surface-950/70 border-b border-surface-200/60 dark:border-white/[0.06]"
+        className="app-subbar sticky top-14 md:top-16 z-40 -mx-5 px-5 py-3 mb-6 backdrop-blur bg-white/70 dark:bg-surface-950/70 border-b border-surface-200/60 dark:border-white/[0.06]"
       >
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">

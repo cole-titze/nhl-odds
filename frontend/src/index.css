@@ -32,6 +32,16 @@ body {
   margin: 0;
 }
 
+/* Solid color on <html> too: newer iOS Safari tints the status bar from the
+   page background rather than the theme-color meta. */
+html {
+  background-color: var(--color-surface-50);
+}
+
+html.dark {
+  background-color: var(--color-surface-950);
+}
+
 /* Noise overlay for dark mode depth */
 .dark body::before {
   content: '';
@@ -136,6 +146,53 @@ body {
   animation: card-ripple 0.6s ease-out forwards;
 }
 
+/* iOS Safari 26+ ignores theme-color and tints the status bar from the
+   background-color of whatever fixed/sticky element sits just below the top
+   edge, and a translucent or hidden one leaves it grey or see-through. This
+   solid black strip above the navbar is what Safari samples, so the status
+   bar is always black. Only rendered on iOS Safari (the only engine with
+   -webkit-touch-callout), where it reads as part of the black status bar. */
+.status-bar-tint {
+  display: none;
+}
+
+@supports (-webkit-touch-callout: none) {
+  .status-bar-tint {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    z-index: 60;
+    background-color: #000;
+  }
+}
+
+/* The navbar itself stays transparent, with its glass on an absolutely
+   positioned child. iOS Safari 26+ ignores theme-color and tints the status
+   bar from the background-color/backdrop-filter of a fixed or sticky element
+   at the top; a translucent or blurred one comes out grey or white. It skips
+   a transparent one (and absolute children), falling back to the solid page
+   background, which matches every theme. A ::before still counts as the nav. */
+.app-nav {
+  --nav-bg: rgba(255, 255, 255, 0.8);
+  --nav-filter: blur(24px);
+}
+
+.dark .app-nav {
+  --nav-bg: rgba(19, 19, 19, 0.7);
+}
+
+.app-nav-glass {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--nav-bg);
+  backdrop-filter: var(--nav-filter);
+  -webkit-backdrop-filter: var(--nav-filter);
+}
+
 /* ======================================================================
    Scenic themes (see src/themes.ts). The page shell goes transparent over a
    fixed backdrop, and glass/bars are driven by these variables, which each
@@ -149,10 +206,10 @@ body {
   --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 8px 32px rgba(0, 0, 0, 0.35);
   --bar-bg: rgba(6, 9, 16, 0.45);
   --bar-filter: blur(10px) saturate(160%);
-  --menu-bg: rgba(8, 12, 22, 0.92);
 }
 
-.scenic body {
+.scenic body,
+html.scenic {
   background: var(--scene-base);
 }
 
@@ -172,18 +229,16 @@ body {
   box-shadow: var(--glass-shadow);
 }
 
-.scenic .app-nav,
+.scenic .app-nav {
+  --nav-bg: var(--bar-bg);
+  --nav-filter: var(--bar-filter);
+  border-color: var(--glass-border);
+}
+
 .scenic .app-subbar {
   background: var(--bar-bg);
   backdrop-filter: var(--bar-filter);
   -webkit-backdrop-filter: var(--bar-filter);
-  border-color: var(--glass-border);
-}
-
-/* Menu sits inside the blurred navbar, so its own backdrop-filter can't see
-   the page; keep it mostly opaque instead. */
-.scenic .theme-menu {
-  background: var(--menu-bg);
   border-color: var(--glass-border);
 }
 
@@ -192,6 +247,9 @@ body {
   position: fixed;
   inset: 0;
   z-index: 0;
+  /* Solid fallback under each scene's gradients, so Safari has a color to
+     sample for the status bar from this fixed, top-touching layer */
+  background-color: var(--scene-base);
   overflow: hidden;
   pointer-events: none;
 }
@@ -252,11 +310,10 @@ body {
   --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 6px 24px rgba(30, 60, 90, 0.08);
   --bar-bg: rgba(255, 255, 255, 0.6);
   --bar-filter: blur(12px) saturate(140%);
-  --menu-bg: rgba(255, 255, 255, 0.96);
 }
 
 .scene-ice {
-  background: radial-gradient(ellipse at center, #f7fbfd 0%, #e6eff5 70%, #d9e6ee 100%);
+  background-image: radial-gradient(ellipse at center, #f7fbfd 0%, #e6eff5 70%, #d9e6ee 100%);
 }
 
 .ice-scratches {
@@ -320,7 +377,7 @@ body {
 }
 
 .scene-stars {
-  background: radial-gradient(ellipse at bottom, #0b1220 0%, #05070c 75%);
+  background-image: radial-gradient(ellipse at bottom, #0b1220 0%, #05070c 75%);
 }
 
 .stars-nebula {
@@ -339,7 +396,7 @@ body {
 }
 
 .scene-aurora {
-  background: linear-gradient(to bottom, #04100f 0%, #03070a 70%);
+  background-image: linear-gradient(to bottom, #04100f 0%, #03070a 70%);
 }
 
 .scene-aurora .starfield {
@@ -436,7 +493,6 @@ body {
   --glass-bg: #ffffff;
   --glass-border: #000000;
   --bar-bg: #ffffff;
-  --menu-bg: #ffffff;
   --focus-ring: #0040a0;
   /* Darken secondary text, which light mode draws in surface-400..600 */
   --color-surface-400: #3a3a3a;
@@ -452,7 +508,6 @@ body {
   --glass-bg: #000000;
   --glass-border: #ffffff;
   --bar-bg: #000000;
-  --menu-bg: #000000;
   --focus-ring: #ffd60a;
   /* Brighten secondary text, which dark mode draws in surface-400..600 */
   --color-surface-400: #e5e5e5;
