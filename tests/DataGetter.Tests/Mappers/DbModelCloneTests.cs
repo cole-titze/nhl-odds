@@ -100,4 +100,12 @@ public class DbModelCloneTests
 
         tracked.SortOrder.Should().Be(2);
     }
+
+    [TestMethod]
+    public void GameCleaned_GameNavigationDefaultsToNull()
+    {
+        // A placeholder DbGameRaw (Id 0) on loaded rows made EF try to repoint the GameId key
+        // when an updated cleaned game was saved ("GameId is part of a key and cannot be modified")
+        new DbGameCleaned().Game.Should().BeNull();
+    }
 }

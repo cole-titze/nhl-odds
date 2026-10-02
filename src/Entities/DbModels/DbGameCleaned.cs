@@ -142,7 +142,7 @@ public class DbGameCleaned
     public double AwayRecentStrengthOfSchedule { get; set; }
 
     [ForeignKey(nameof(GameId))]
-    public DbGameRaw? Game { get; set; } = new DbGameRaw();
+    public DbGameRaw? Game { get; set; }
 
     /// <summary>
     /// Clones a given game into this object
