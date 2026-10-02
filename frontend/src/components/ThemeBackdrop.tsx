@@ -22,6 +22,19 @@ const SCENES: Record<string, ReactNode> = {
       <Starfield />
     </>
   ),
+  nebula: (
+    <>
+      <div className="nebula-cloud nebula-1" />
+      <div className="nebula-cloud nebula-2" />
+      <div className="nebula-cloud nebula-3" />
+      <div className="nebula-cloud nebula-4" />
+      <div className="nebula-dust" />
+      <Starfield />
+      <div className="nebula-bright nebula-bright-1" />
+      <div className="nebula-bright nebula-bright-2" />
+      <div className="nebula-bright nebula-bright-3" />
+    </>
+  ),
   aurora: (
     <>
       <Starfield />
@@ -30,6 +43,12 @@ const SCENES: Record<string, ReactNode> = {
       <div className="aurora-band aurora-2" />
       <div className="aurora-band aurora-fringe" />
       <div className="aurora-band aurora-3" />
+    </>
+  ),
+  scoreboard: (
+    <>
+      <div className="scoreboard-dots" />
+      <div className="scoreboard-scanlines" />
     </>
   ),
   team: (

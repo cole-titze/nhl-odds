@@ -10,7 +10,9 @@ export const THEMES = [
   { id: 'dark', label: 'Dark', dark: true, scenic: false, metaColor: '#141418' },
   { id: 'ice', label: 'Fresh Ice', dark: false, scenic: true, metaColor: '#eaf2f7' },
   { id: 'stars', label: 'Stars', dark: true, scenic: true, metaColor: '#05070c' },
+  { id: 'nebula', label: 'Nebula', dark: true, scenic: true, metaColor: '#06040c' },
   { id: 'aurora', label: 'Northern Lights', dark: true, scenic: true, metaColor: '#03070a' },
+  { id: 'scoreboard', label: 'Scoreboard', dark: true, scenic: true, metaColor: '#050505' },
   {
     id: 'contrast-light',
     label: 'High Contrast Light',
