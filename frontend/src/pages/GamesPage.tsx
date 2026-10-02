@@ -165,7 +165,7 @@ export function GamesPage() {
     <div>
       <div
         id={FILTER_BAR_ID}
-        className="sticky top-16 z-40 -mx-5 px-5 py-3 mb-6 backdrop-blur bg-white/70 dark:bg-surface-950/70 border-b border-surface-200/60 dark:border-white/[0.06]"
+        className="app-subbar sticky top-16 z-40 -mx-5 px-5 py-3 mb-6 backdrop-blur bg-white/70 dark:bg-surface-950/70 border-b border-surface-200/60 dark:border-white/[0.06]"
       >
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">

@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import { Navbar } from './Navbar';
+import { ThemeBackdrop } from './ThemeBackdrop';
 import { useOddsFormat } from '../hooks/useOddsFormat';
 import { OddsFormatContext } from '../contexts/OddsFormatContext';
 
@@ -8,7 +9,8 @@ export function Layout() {
 
   return (
     <OddsFormatContext.Provider value={oddsFormat}>
-      <div className="relative flex min-h-screen flex-col overflow-x-clip bg-surface-50 dark:bg-surface-950">
+      <div className="app-shell relative flex min-h-screen flex-col overflow-x-clip bg-surface-50 dark:bg-surface-950">
+        <ThemeBackdrop />
         <Navbar />
         <main className="relative z-10 mx-auto w-full max-w-6xl flex-1 px-5 py-8">
           <Outlet />

@@ -135,3 +135,355 @@ body {
 .card-hover:hover::after {
   animation: card-ripple 0.6s ease-out forwards;
 }
+
+/* ======================================================================
+   Scenic themes (see src/themes.ts). The page shell goes transparent over a
+   fixed backdrop, and glass/bars are driven by these variables, which each
+   theme overrides. Kept unlayered so they beat Tailwind utilities.
+   ====================================================================== */
+.scenic {
+  --scene-base: #05070c;
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-filter: blur(6px) saturate(150%);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 8px 32px rgba(0, 0, 0, 0.35);
+  --bar-bg: rgba(6, 9, 16, 0.45);
+  --bar-filter: blur(10px) saturate(160%);
+  --menu-bg: rgba(8, 12, 22, 0.92);
+}
+
+.scenic body {
+  background: var(--scene-base);
+}
+
+.scenic body::before {
+  display: none;
+}
+
+.scenic .app-shell {
+  background: transparent;
+}
+
+.scenic .glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+  border-color: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.scenic .app-nav,
+.scenic .app-subbar {
+  background: var(--bar-bg);
+  backdrop-filter: var(--bar-filter);
+  -webkit-backdrop-filter: var(--bar-filter);
+  border-color: var(--glass-border);
+}
+
+/* Menu sits inside the blurred navbar, so its own backdrop-filter can't see
+   the page; keep it mostly opaque instead. */
+.scenic .theme-menu {
+  background: var(--menu-bg);
+  border-color: var(--glass-border);
+}
+
+.scene {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.theme-ice .scene-ice,
+.theme-stars .scene-stars,
+.theme-aurora .scene-aurora,
+.theme-team .scene-team {
+  display: block;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene,
+  .scene * {
+    animation: none !important;
+  }
+}
+
+/* ---- Shared star layers (stars, aurora) ---- */
+.starfield {
+  position: absolute;
+  inset: 0;
+}
+
+.starfield-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: transparent;
+  animation: star-drift linear infinite;
+}
+
+/* Second copy 2000px below so the drift loops seamlessly */
+.starfield-layer::after {
+  content: '';
+  position: absolute;
+  top: 2000px;
+  width: inherit;
+  height: inherit;
+  box-shadow: inherit;
+}
+
+.starfield-sm { width: 1px; height: 1px; animation-duration: 400s; }
+.starfield-md { width: 2px; height: 2px; border-radius: 50%; animation-duration: 270s; }
+.starfield-lg { width: 3px; height: 3px; border-radius: 50%; animation-duration: 170s; }
+
+@keyframes star-drift {
+  from { transform: translateY(0); }
+  to { transform: translateY(-2000px); }
+}
+
+/* ---- Fresh Ice (light): resurfaced rink with center-ice markings ---- */
+.theme-ice {
+  --scene-base: #eaf2f7;
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-filter: blur(10px) saturate(130%);
+  --glass-border: rgba(255, 255, 255, 0.85);
+  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 6px 24px rgba(30, 60, 90, 0.08);
+  --bar-bg: rgba(255, 255, 255, 0.6);
+  --bar-filter: blur(12px) saturate(140%);
+  --menu-bg: rgba(255, 255, 255, 0.96);
+}
+
+.scene-ice {
+  background: radial-gradient(ellipse at center, #f7fbfd 0%, #e6eff5 70%, #d9e6ee 100%);
+}
+
+.ice-scratches {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: #9fb4c4;
+}
+
+.rink-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
+.rink-red {
+  top: 50%;
+  height: 10px;
+  margin-top: -5px;
+  background: rgba(200, 16, 46, 0.22);
+}
+
+.rink-blue {
+  height: 14px;
+  background: rgba(0, 56, 168, 0.16);
+}
+
+.rink-top { top: 18%; }
+.rink-bottom { bottom: 18%; }
+
+.rink-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 300px;
+  height: 300px;
+  margin: -150px 0 0 -150px;
+  border: 3px solid rgba(0, 56, 168, 0.16);
+  border-radius: 50%;
+}
+
+.rink-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  background: rgba(0, 56, 168, 0.3);
+}
+
+/* ---- Stars: drifting starfield, glass tuned to let stars show through ---- */
+.theme-stars {
+  --scene-base: #05070c;
+  /* Light blur + brightness so stars stay visible as soft points through cards */
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-filter: blur(2px) saturate(180%) brightness(1.3);
+}
+
+.scene-stars {
+  background: radial-gradient(ellipse at bottom, #0b1220 0%, #05070c 75%);
+}
+
+.stars-nebula {
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(45% 30% at 25% 25%, rgba(56, 110, 190, 0.16), transparent 70%),
+    radial-gradient(40% 30% at 78% 70%, rgba(20, 150, 150, 0.11), transparent 70%),
+    radial-gradient(30% 20% at 60% 10%, rgba(80, 120, 200, 0.08), transparent 70%);
+}
+
+/* ---- Northern Lights: muted aurora bands over faint stars ---- */
+.theme-aurora {
+  --scene-base: #03070a;
+  --glass-filter: blur(4px) saturate(160%);
+}
+
+.scene-aurora {
+  background: linear-gradient(to bottom, #04100f 0%, #03070a 70%);
+}
+
+.scene-aurora .starfield {
+  opacity: 0.5;
+}
+
+.aurora-band {
+  position: absolute;
+  left: -20%;
+  width: 140%;
+  height: 38%;
+  border-radius: 50%;
+  filter: blur(40px);
+  animation: aurora-drift ease-in-out infinite alternate;
+}
+
+/* Mostly green, with violet high up and a pink-magenta fringe low down,
+   like a real aurora. */
+.aurora-top {
+  top: -6%;
+  height: 26%;
+  background: linear-gradient(90deg, transparent 5%, rgba(150, 90, 220, 0.26), rgba(200, 70, 130, 0.2), transparent 95%);
+  animation-duration: 67s;
+  animation-delay: -12s;
+}
+
+.aurora-1 {
+  top: 2%;
+  background: linear-gradient(90deg, transparent, rgba(60, 210, 140, 0.28), rgba(40, 190, 170, 0.2), transparent);
+  animation-duration: 38s;
+}
+
+.aurora-2 {
+  top: 16%;
+  background: linear-gradient(90deg, transparent, rgba(30, 170, 160, 0.18), rgba(90, 220, 150, 0.24), transparent);
+  animation-duration: 52s;
+  animation-delay: -20s;
+}
+
+.aurora-fringe {
+  top: 34%;
+  height: 18%;
+  background: linear-gradient(90deg, transparent 10%, rgba(225, 80, 165, 0.24), rgba(160, 90, 215, 0.17), transparent 90%);
+  animation-duration: 44s;
+  animation-delay: -28s;
+}
+
+.aurora-3 {
+  top: 48%;
+  height: 28%;
+  background: linear-gradient(90deg, transparent 10%, rgba(70, 150, 200, 0.12), rgba(60, 200, 150, 0.1), transparent 90%);
+  animation-duration: 61s;
+  animation-delay: -35s;
+}
+
+@keyframes aurora-drift {
+  from { transform: translateX(-8%) skewX(-12deg) scaleY(0.9); opacity: 0.7; }
+  to { transform: translateX(8%) skewX(10deg) scaleY(1.25); opacity: 1; }
+}
+
+/* ---- Team Colors: --team-* are set on <html> by useTheme ---- */
+.theme-team {
+  --scene-base: #07090d;
+  --glass-border: color-mix(in srgb, var(--team-accent) 22%, transparent);
+  --color-accent-400: color-mix(in srgb, var(--team-accent) 75%, white);
+  --color-accent-500: var(--team-accent);
+  --color-accent-600: color-mix(in srgb, var(--team-accent) 80%, black);
+}
+
+.team-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(55% 45% at 15% 10%, color-mix(in srgb, var(--team-1) 30%, transparent), transparent 75%),
+    radial-gradient(50% 45% at 85% 90%, color-mix(in srgb, var(--team-2) 20%, transparent), transparent 75%);
+}
+
+.team-logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(70vmin, 640px);
+  height: min(70vmin, 640px);
+  transform: translate(-50%, -50%);
+  background: var(--team-logo) center / contain no-repeat;
+  opacity: 0.07;
+}
+
+/* ---- High Contrast (light + dark): solid surfaces, full-strength borders,
+   no translucency or motion. Scenic only for the shared glass/bar variables;
+   neither has a backdrop. ---- */
+.theme-contrast-light {
+  --scene-base: #ffffff;
+  --glass-bg: #ffffff;
+  --glass-border: #000000;
+  --bar-bg: #ffffff;
+  --menu-bg: #ffffff;
+  --focus-ring: #0040a0;
+  /* Darken secondary text, which light mode draws in surface-400..600 */
+  --color-surface-400: #3a3a3a;
+  --color-surface-500: #2a2a2a;
+  --color-surface-600: #1f1f1f;
+  --color-accent-400: #0040a0;
+  --color-accent-500: #0047b3;
+  --color-accent-600: #003580;
+}
+
+.theme-contrast-dark {
+  --scene-base: #000000;
+  --glass-bg: #000000;
+  --glass-border: #ffffff;
+  --bar-bg: #000000;
+  --menu-bg: #000000;
+  --focus-ring: #ffd60a;
+  /* Brighten secondary text, which dark mode draws in surface-400..600 */
+  --color-surface-400: #e5e5e5;
+  --color-surface-500: #d4d4d4;
+  --color-surface-600: #c4c4c4;
+  --color-accent-400: #7cc4ff;
+  --color-accent-500: #0a6fe0;
+  --color-accent-600: #0050b0;
+}
+
+.theme-contrast-light,
+.theme-contrast-dark {
+  --glass-filter: none;
+  --glass-shadow: none;
+  --bar-filter: none;
+}
+
+:is(.theme-contrast-light, .theme-contrast-dark) .glass {
+  border-width: 2px;
+}
+
+:is(.theme-contrast-light, .theme-contrast-dark) :is(.app-nav, .app-subbar) {
+  border-bottom-width: 2px;
+}
+
+:is(.theme-contrast-light, .theme-contrast-dark) :focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+:is(.theme-contrast-light, .theme-contrast-dark) :is(*, *::before, *::after) {
+  animation: none !important;
+  transition: none !important;
+}
