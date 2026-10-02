@@ -19,19 +19,26 @@ const PINNED_BOOKMAKERS = ['DraftKings', 'Kalshi'];
 
 type BetOutcome = 'won' | 'lost' | 'push';
 
-function getBestBetFlag(
-  game: GameOddsVM,
-  strategy: StrategyConfig,
-): (BetFlag & { bookmaker: string }) | null {
-  let best: (BetFlag & { bookmaker: string }) | null = null;
-  for (const bm of game.bookmakerOdds ?? []) {
-    if (!PINNED_BOOKMAKERS.includes(bm.bookmakerName)) continue;
-    const flag = checkStrategy(game, bm, strategy);
-    if (flag && (!best || flag.edge > best.edge)) {
-      best = { ...flag, bookmaker: bm.bookmakerName };
-    }
+type BestBetFlag = BetFlag & {
+  // Book with the largest edge; the bet is graded against its line
+  bookmaker: string;
+  // Every pinned book that flags the same side, in PINNED_BOOKMAKERS order
+  bookmakers: string[];
+};
+
+function getBestBetFlag(game: GameOddsVM, strategy: StrategyConfig): BestBetFlag | null {
+  const flags: (BetFlag & { bookmaker: string })[] = [];
+  for (const name of PINNED_BOOKMAKERS) {
+    const bm = game.bookmakerOdds?.find((b) => b.bookmakerName === name);
+    const flag = bm && checkStrategy(game, bm, strategy);
+    if (flag) flags.push({ ...flag, bookmaker: name });
   }
-  return best;
+  if (flags.length === 0) return null;
+  const best = flags.reduce((a, b) => (b.edge > a.edge ? b : a));
+  return {
+    ...best,
+    bookmakers: flags.filter((f) => f.side === best.side).map((f) => f.bookmaker),
+  };
 }
 
 interface GameCardProps {
@@ -146,7 +153,7 @@ function BookmakerOddsRow({
 // Grades the bet against the line of the bookmaker that produced it.
 function strategyBetOutcome(
   game: GameOddsVM,
-  bet: BetFlag & { bookmaker: string },
+  bet: BestBetFlag,
   strategy: StrategyConfig,
 ): BetOutcome {
   const opt = STRATEGY_OPTIONS.find((o) => o.type === strategy.type);
@@ -247,7 +254,7 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
       {valueBet && badgeState && (
         <div className="flex justify-center mb-3">
           <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide ${BADGE_CLASSES[badgeState]}`}
+            className={`inline-flex flex-wrap justify-center items-center gap-x-1.5 gap-y-0.5 max-w-full px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide ${BADGE_CLASSES[badgeState]}`}
           >
             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
               <path fillRule="evenodd" d={BADGE_ICONS[badgeState]} clipRule="evenodd" />
@@ -267,7 +274,7 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
               return `Bet ${label} +${(valueBet.edge * 100).toFixed(0)}%`;
             })()}
             <span className="pl-1.5 border-l border-current/30 font-semibold opacity-70">
-              {valueBet.bookmaker}
+              {valueBet.bookmakers.join(' · ')}
             </span>
             {badgeState === 'push' && <span className="opacity-70">· Push</span>}
           </span>
@@ -367,7 +374,7 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
                       bm={bm}
                       oddsType={oddsType}
                       format={format}
-                      highlighted={valueBet?.bookmaker === bm.bookmakerName}
+                      highlighted={valueBet?.bookmakers.includes(bm.bookmakerName) ?? false}
                     />
                   ))}
                 </>
