@@ -35,7 +35,7 @@ export function Navbar() {
                 key={l.to}
                 to={l.to}
                 className={({ isActive }) =>
-                  `px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 ${
+                  `nav-link px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 ${
                     isActive
                       ? 'bg-surface-100 dark:bg-white/[0.08] text-surface-900 dark:text-white'
                       : 'text-surface-500 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white hover:bg-surface-100/50 dark:hover:bg-white/[0.04]'
@@ -101,7 +101,7 @@ export function Navbar() {
                 to={l.to}
                 onClick={() => setMenuOpen(false)}
                 className={({ isActive }) =>
-                  `px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
+                  `nav-link px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
                     isActive
                       ? 'bg-surface-100 dark:bg-white/[0.08] text-surface-900 dark:text-white'
                       : 'text-surface-500 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white hover:bg-surface-100/50 dark:hover:bg-white/[0.04]'

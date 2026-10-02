@@ -541,6 +541,13 @@ html.scenic {
   border-top-width: 2px;
 }
 
+/* The default active-link tint is near invisible on solid black/white, so
+   invert the current page's link instead */
+:is(.theme-contrast-light, .theme-contrast-dark) .nav-link[aria-current='page'] {
+  background: var(--glass-border);
+  color: var(--scene-base);
+}
+
 :is(.theme-contrast-light, .theme-contrast-dark) :focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
