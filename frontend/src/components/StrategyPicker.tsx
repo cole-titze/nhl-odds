@@ -79,15 +79,34 @@ export function StrategyPicker({ betType, renameLabel }: Props) {
           ))}
         </div>
       )}
-      {best && (
-        <span
-          className="text-[11px] text-surface-400 dark:text-surface-500"
-          title={`Best backtested strategy: ${best.wins}/${best.bets} bets won, ${formatSeasonLabel(best.firstSeason)} through ${formatSeasonLabel(best.lastSeason)}, DraftKings + Kalshi`}
-        >
-          ★ {STRATEGY_OPTIONS.find((o) => o.type === best.strategyType)?.label}: +
-          {best.roi.toFixed(1)}% ROI
-        </span>
-      )}
+      {best &&
+        (() => {
+          const title = `Best backtested strategy: ${best.wins}/${best.bets} bets won, ${formatSeasonLabel(best.firstSeason)} through ${formatSeasonLabel(best.lastSeason)}, DraftKings + Kalshi`;
+          const onSuggested =
+            strategy.type === best.strategyType && strategy.threshold === best.threshold;
+          if (onSuggested) {
+            return (
+              <span
+                className="px-2 py-1 rounded-full bg-accent-500/10 text-accent-600 dark:text-accent-400 text-[11px] font-semibold"
+                title={title}
+              >
+                ★ Suggested · +{best.roi.toFixed(1)}% ROI
+              </span>
+            );
+          }
+          const label =
+            STRATEGY_OPTIONS.find((o) => o.type === best.strategyType)?.label ?? best.strategyType;
+          return (
+            <button
+              type="button"
+              onClick={() => setStrategy({ type: best.strategyType, threshold: best.threshold })}
+              className="glass px-2 py-1 rounded-full text-[11px] font-medium text-surface-500 dark:text-surface-400 hover:text-accent-600 dark:hover:text-accent-400 transition-colors"
+              title={title}
+            >
+              ★ Use suggested: {renameLabel ? renameLabel(label) : label}
+            </button>
+          );
+        })()}
     </div>
   );
 }
