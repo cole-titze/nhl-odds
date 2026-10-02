@@ -8,20 +8,56 @@ export function Skeleton({ className = '' }: { className?: string }) {
   );
 }
 
+// Bars sit inline inside text-sized containers, so each line keeps the same
+// line-height as the GameCard text it stands in for.
+const textBar = 'inline-block align-middle h-[0.8em]';
+
+function TeamSideSkeleton() {
+  return (
+    <div className="flex-1 flex flex-col items-center gap-2">
+      <Skeleton className="h-20 w-20 !rounded-full" />
+      <div className="text-xs font-medium text-center leading-tight">
+        <Skeleton className={`${textBar} w-14`} />
+        <br />
+        <span className="text-sm">
+          <Skeleton className={`${textBar} w-20`} />
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function OddsRowSkeleton({ className = '' }: { className?: string }) {
+  return (
+    <div className={`grid grid-cols-3 items-center text-[11px] font-mono ${className}`}>
+      {['w-10', 'w-16', 'w-10'].map((w, i) => (
+        <span key={i} className="text-center">
+          <Skeleton className={`${textBar} ${w}`} />
+        </span>
+      ))}
+    </div>
+  );
+}
+
+// Mirrors GameCard's layout (regular-season game with model + two bookmaker rows)
 export function CardSkeleton() {
   return (
-    <div className="glass rounded-xl p-5 space-y-4">
-      <div className="flex items-center justify-center gap-6">
-        <div className="flex flex-col items-center gap-2 flex-1">
-          <Skeleton className="h-14 w-14 !rounded-full" />
-          <Skeleton className="h-3 w-16" />
-          <Skeleton className="h-4 w-12" />
+    <div className="glass rounded-xl px-5 py-4">
+      <div className="grid grid-cols-3 items-center">
+        <TeamSideSkeleton />
+        <div className="flex flex-col items-center gap-1 px-2">
+          <div className="text-[10px] font-mono">
+            <Skeleton className={`${textBar} w-5`} />
+          </div>
+          <div className="text-[11px] font-mono">
+            <Skeleton className={`${textBar} w-12`} />
+          </div>
         </div>
-        <Skeleton className="h-4 w-6" />
-        <div className="flex flex-col items-center gap-2 flex-1">
-          <Skeleton className="h-14 w-14 !rounded-full" />
-          <Skeleton className="h-3 w-16" />
-          <Skeleton className="h-4 w-12" />
+        <TeamSideSkeleton />
+        <div className="col-span-3 mt-2 pt-2 border-t border-surface-200/50 dark:border-white/[0.04]">
+          <OddsRowSkeleton />
+          <OddsRowSkeleton className="mt-1" />
+          <OddsRowSkeleton className="mt-1" />
         </div>
       </div>
     </div>
