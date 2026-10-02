@@ -117,7 +117,11 @@ public class KalshiOddsBackfiller
         // Build event-ticker -> gameId mapping using the existing matching logic
         var h2hEventToGame = MatchEventsToGames(allGameMarkets, gameInfoAll, MarketType.H2H);
         var spreadEventToGame = MatchEventsToGames(allSpreadMarkets.Where(m => m.FloorStrike is STANDARD_PUCK_LINE).ToList(), gameInfoAll, MarketType.Spread);
-        var totalEventToGame = MatchEventsToGames(allTotalMarkets, gameInfoAll, MarketType.Total);
+        // Totals titles no longer name the teams — link them through the shared game code in the event ticker
+        var gameIdByEventCode = h2hEventToGame
+            .GroupBy(kv => KalshiResponseMapper.EventCode(kv.Key))
+            .ToDictionary(g => g.Key, g => g.First().Value.GameId);
+        var totalEventToGame = MatchEventsToGames(allTotalMarkets, gameInfoAll, MarketType.Total, gameIdByEventCode);
 
         _logger.LogInformation("Matched events: {H2H} h2h, {Spread} spread, {Total} total",
             h2hEventToGame.Count, spreadEventToGame.Count, totalEventToGame.Count);
@@ -277,7 +281,8 @@ public class KalshiOddsBackfiller
     private record EventMatch(int GameId, List<KalshiMarket> Markets);
 
     private Dictionary<string, EventMatch> MatchEventsToGames(
-        List<KalshiMarket> markets, List<OddsApiResponseMapper.GameInfo> games, MarketType type)
+        List<KalshiMarket> markets, List<OddsApiResponseMapper.GameInfo> games, MarketType type,
+        IReadOnlyDictionary<string, int>? gameIdByEventCode = null)
     {
         var result = new Dictionary<string, EventMatch>();
         var byEvent = markets.GroupBy(m => m.EventTicker);
@@ -297,6 +302,9 @@ public class KalshiOddsBackfiller
                     KalshiResponseMapper.MatchGameIdFromNames(
                         marketList.Select(m => KalshiResponseMapper.ExtractSpreadTeamName(m.YesSubTitle)).ToList(),
                         games, centralDate),
+                MarketType.Total when gameIdByEventCode != null
+                    && gameIdByEventCode.TryGetValue(KalshiResponseMapper.EventCode(group.Key), out var matchedId) =>
+                    matchedId,
                 MarketType.Total =>
                     KalshiResponseMapper.MatchGameIdFromSingle(marketList[0], games, centralDate),
                 _ => null
