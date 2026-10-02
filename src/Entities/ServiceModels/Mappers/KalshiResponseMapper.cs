@@ -70,7 +70,14 @@ public static class KalshiResponseMapper
 
         MapMoneyline(gameMarkets, games, result, now, diagnostics);
         MapSpreads(spreadMarkets, games, result, now);
-        MapTotals(totalMarkets, games, result, now);
+
+        // Totals titles no longer name the teams ("Full Game: Over 5.5 goals scored"), but every
+        // series shares the game code in its event ticker (KXNHLGAME-26OCT04UTANYR /
+        // KXNHLTOTAL-26OCT04UTANYR), so reuse the moneyline match for the same game.
+        var gameIdByEventCode = result.H2H
+            .GroupBy(o => EventCode(o.OddsApiGameId))
+            .ToDictionary(g => g.Key, g => g.First().GameId);
+        MapTotals(totalMarkets, games, result, now, gameIdByEventCode);
 
         return (result, diagnostics);
     }
@@ -215,7 +222,8 @@ public static class KalshiResponseMapper
         List<KalshiMarket> markets,
         List<OddsApiResponseMapper.GameInfo> games,
         OddsApiResponseMapper.MappedOdds result,
-        DateTime now)
+        DateTime now,
+        IReadOnlyDictionary<string, int> gameIdByEventCode)
     {
         // Pick the line closest to 5.5 per event
         var byEvent = markets.GroupBy(m => m.EventTicker);
@@ -230,11 +238,14 @@ public static class KalshiResponseMapper
 
             if (bestLine == null) continue;
 
-            var expiration = bestLine.ExpectedExpirationTime;
-            if (expiration == null) continue;
-            var centralDate = ToCentralDate(expiration.Value.ToUniversalTime());
-
-            var gameId = MatchGameIdFromSingle(bestLine, games, centralDate);
+            int? gameId = gameIdByEventCode.TryGetValue(EventCode(group.Key), out var matchedId) ? matchedId : null;
+            if (gameId == null)
+            {
+                // Fall back to team names in the title (older markets: "Boston vs Montreal: Total Goals")
+                var expiration = bestLine.ExpectedExpirationTime;
+                if (expiration == null) continue;
+                gameId = MatchGameIdFromSingle(bestLine, games, ToCentralDate(expiration.Value.ToUniversalTime()));
+            }
             if (gameId == null) continue;
 
             // Single contract: "Over X.5 goals"
@@ -303,6 +314,15 @@ public static class KalshiResponseMapper
     /// Extract team names from a total market title like "Colorado vs Washington: Total Goals".
     /// Returns both team names, or falls back to the full title.
     /// </summary>
+    /// <summary>
+    /// The game part of a Kalshi event ticker, shared across series: "KXNHLTOTAL-26OCT04UTANYR" -> "26OCT04UTANYR".
+    /// </summary>
+    public static string EventCode(string eventTicker)
+    {
+        var dash = eventTicker.IndexOf('-');
+        return dash >= 0 ? eventTicker[(dash + 1)..] : eventTicker;
+    }
+
     public static List<string> ExtractTotalTeamNames(string title)
     {
         // Strip suffix like ": Total Goals" or ": Total Points"

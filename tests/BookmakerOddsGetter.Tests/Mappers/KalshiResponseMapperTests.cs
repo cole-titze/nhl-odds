@@ -128,6 +128,48 @@ public class KalshiResponseMapperTests
     }
 
     [TestMethod]
+    public void Map_Totals_WithCurrentTitleFormat_ShouldMatchGameViaMoneylineEvent()
+    {
+        // Kalshi totals titles no longer name the teams; the game code in the event ticker links them
+        var moneyline = new List<KalshiMarket>
+        {
+            CreateMarket("KXNHLGAME-24MAR14MTLBOS", "KXNHLGAME-24MAR14MTLBOS-BOS", "Boston Bruins", "0.60", "0.62"),
+            CreateMarket("KXNHLGAME-24MAR14MTLBOS", "KXNHLGAME-24MAR14MTLBOS-MTL", "Montreal Canadiens", "0.38", "0.40"),
+        };
+        var totals = new List<KalshiMarket>
+        {
+            CreateCurrentFormatTotalMarket("KXNHLTOTAL-24MAR14MTLBOS", 5.5, "0.50", "0.52"),
+            CreateCurrentFormatTotalMarket("KXNHLTOTAL-24MAR14MTLBOS", 6.5, "0.30", "0.32"),
+        };
+
+        var result = KalshiResponseMapper.Map(moneyline, new List<KalshiMarket>(), totals, CreateGames());
+
+        result.Totals.Should().HaveCount(1);
+        result.Totals[0].GameId.Should().Be(2024020001);
+        result.Totals[0].OverUnderPoint.Should().Be(5.5);
+    }
+
+    [TestMethod]
+    public void Map_Totals_WithCurrentTitleFormatAndNoMoneyline_ShouldSkip()
+    {
+        var totals = new List<KalshiMarket>
+        {
+            CreateCurrentFormatTotalMarket("KXNHLTOTAL-24MAR14MTLBOS", 5.5, "0.50", "0.52"),
+        };
+
+        var result = KalshiResponseMapper.Map(new List<KalshiMarket>(), new List<KalshiMarket>(), totals, CreateGames());
+
+        result.Totals.Should().BeEmpty();
+    }
+
+    [TestMethod]
+    public void EventCode_ShouldStripSeriesPrefix()
+    {
+        KalshiResponseMapper.EventCode("KXNHLTOTAL-26OCT04UTANYR").Should().Be("26OCT04UTANYR");
+        KalshiResponseMapper.EventCode("KXNHLGAME-26OCT04UTANYR").Should().Be("26OCT04UTANYR");
+    }
+
+    [TestMethod]
     public void Map_Totals_WithNoMarkets_ShouldReturnEmpty()
     {
         var result = KalshiResponseMapper.Map(
@@ -195,6 +237,24 @@ public class KalshiResponseMapperTests
             Ticker = ticker,
             Title = "Boston Bruins vs Montreal Canadiens: Total Goals",
             YesSubTitle = $"Over {floorStrike}",
+            YesBidDollars = yesBid,
+            YesAskDollars = yesAsk,
+            FloorStrike = floorStrike,
+            ExpectedExpirationTime = GameDate.AddHours(12),
+            UpdatedTime = DateTime.UtcNow,
+        };
+    }
+
+
+    private static KalshiMarket CreateCurrentFormatTotalMarket(string eventTicker, double floorStrike,
+        string yesBid, string yesAsk)
+    {
+        return new KalshiMarket
+        {
+            EventTicker = eventTicker,
+            Ticker = $"{eventTicker}-{(int)Math.Ceiling(floorStrike)}",
+            Title = $"Full Game: Over {floorStrike} goals scored",
+            YesSubTitle = $"Over {floorStrike} goals scored",
             YesBidDollars = yesBid,
             YesAskDollars = yesAsk,
             FloorStrike = floorStrike,
