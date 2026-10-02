@@ -235,6 +235,10 @@ html.scenic {
   border-color: var(--glass-border);
 }
 
+.scenic .app-nav-menu {
+  border-color: var(--glass-border);
+}
+
 .scenic .app-subbar {
   background: var(--bar-bg);
   backdrop-filter: var(--bar-filter);
@@ -531,6 +535,10 @@ html.scenic {
 
 :is(.theme-contrast-light, .theme-contrast-dark) :is(.app-nav, .app-subbar) {
   border-bottom-width: 2px;
+}
+
+:is(.theme-contrast-light, .theme-contrast-dark) .app-nav-menu {
+  border-top-width: 2px;
 }
 
 :is(.theme-contrast-light, .theme-contrast-dark) :focus-visible {

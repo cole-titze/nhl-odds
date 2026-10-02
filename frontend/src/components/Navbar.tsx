@@ -92,7 +92,8 @@ export function Navbar() {
         </div>
       </div>
       {menuOpen && (
-        <div className="md:hidden border-t border-surface-200/80 dark:border-white/[0.08] bg-white/95 dark:bg-surface-900/95 backdrop-blur-xl px-5 pb-4 pt-2">
+        // No background of its own: the nav's glass layer spans this too, so it picks up the theme's bar
+        <div className="app-nav-menu md:hidden border-t border-surface-200/80 dark:border-white/[0.08] px-5 pb-4 pt-2">
           <div className="flex flex-col gap-1">
             {links.map((l) => (
               <NavLink
