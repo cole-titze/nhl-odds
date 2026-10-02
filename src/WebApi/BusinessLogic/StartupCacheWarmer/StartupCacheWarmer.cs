@@ -1,6 +1,7 @@
 using Entities.Types;
 using Microsoft.Extensions.Caching.Memory;
 using WebApi.BusinessLogic.GameOddsGetter;
+using WebApi.BusinessLogic.StrategyBacktester;
 using WebApi.BusinessLogic.TeamGetter;
 
 namespace WebApi.BusinessLogic.StartupCacheWarmer;
@@ -82,6 +83,17 @@ public class StartupCacheWarmer : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to refresh GameOdds cache for {Date}.", today);
+        }
+
+        try
+        {
+            var backtester = scope.ServiceProvider.GetRequiredService<IStrategyBacktester>();
+            var best = await backtester.GetBestStrategies(seasonStartYear);
+            _cache.Set($"BestStrategies_{seasonStartYear}", best, TimeSpan.FromDays(1));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to refresh BestStrategies cache for season {Season}.", seasonStartYear);
         }
 
         _logger.LogInformation("Cache refreshed for season {Season}.", seasonStartYear);

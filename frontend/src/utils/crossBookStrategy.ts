@@ -1,6 +1,6 @@
 import type { GameOddsVM, BookmakerOddsVM } from '../types';
 import { Winner } from '../types';
-import { americanToDecimalPayout, computeStrategyResult } from './bettingStrategies';
+import { americanToDecimalPayout, computeStrategyResult, spreadCovered } from './bettingStrategies';
 import type { BetResult, StrategyResult, StrategyType } from './bettingStrategies';
 
 export const MODEL_REFERENCE = 'In-House Model';
@@ -32,8 +32,9 @@ function getRefOdds(game: GameOddsVM, refBookmaker: string): Partial<BookmakerOd
       bookmakerName: MODEL_REFERENCE,
       homeOdds: game.homeTeam.modelOdds ?? 0,
       awayOdds: game.awayTeam.modelOdds ?? 0,
-      homePoint: game.predictedSpread ?? 0,
-      awayPoint: game.predictedSpread != null ? -game.predictedSpread : 0,
+      // predictedSpread is a margin (home - away); express it as a handicap like a book's line
+      homePoint: game.predictedSpread != null ? -game.predictedSpread : 0,
+      awayPoint: game.predictedSpread ?? 0,
       homePrice: 0,
       awayPrice: 0,
       overUnderPoint: game.predictedTotal ?? 0,
@@ -247,10 +248,10 @@ export function crossBookSpread(
     const lineDiff = ref.homePoint - bet.homePoint;
     if (Math.abs(lineDiff) < edgeThreshold) continue;
 
-    const betHome = lineDiff > 0;
+    // A more negative reference handicap means the reference rates home higher than the book does
+    const betHome = lineDiff < 0;
     const price = betHome ? bet.homePrice : bet.awayPrice;
-    const actualMargin = g.homeTeam.goals - g.awayTeam.goals;
-    const covered = betHome ? actualMargin + bet.homePoint > 0 : actualMargin + bet.awayPoint > 0;
+    const covered = spreadCovered(g, betHome, bet);
     bets.push({
       gameId: g.id,
       gameDate: g.gameDate,
@@ -466,15 +467,12 @@ export function crossBookLog(
       const effectiveThreshold = strategyType === 'spreadAll' ? 0 : threshold;
       if (Math.abs(lineDiff) < effectiveThreshold) continue;
 
-      const betHome = lineDiff > 0;
+      const betHome = lineDiff < 0;
       const side: 'home' | 'away' = betHome ? 'home' : 'away';
 
       if (g.hasBeenPlayed) {
         const price = betHome ? bet.homePrice : bet.awayPrice;
-        const actualMargin = g.homeTeam.goals - g.awayTeam.goals;
-        const covered = betHome
-          ? actualMargin + bet.homePoint > 0
-          : actualMargin + bet.awayPoint > 0;
+        const covered = spreadCovered(g, betHome, bet);
         const payout = covered ? americanToDecimalPayout(price) : -1;
         entries.push({
           gameId: g.id,

@@ -5,6 +5,7 @@ import {
   type BetTypeCategory,
   type StrategyType,
 } from '../utils/bettingStrategies';
+import { formatSeasonLabel } from '../utils/season';
 
 interface Props {
   betType?: BetTypeCategory;
@@ -12,20 +13,29 @@ interface Props {
 }
 
 export function StrategyPicker({ betType, renameLabel }: Props) {
-  const { strategy, setStrategy } = useStrategy();
+  const { strategy, setStrategy, suggested } = useStrategy();
   const filtered = betType
     ? STRATEGY_OPTIONS.filter((o) => o.betType === betType)
     : STRATEGY_OPTIONS;
   const current = filtered.find((o) => o.type === strategy.type);
+  const best = suggested.find((b) => b.betType === (betType ?? current?.betType));
 
-  // When betType changes, switch to the first strategy of that type
+  // When betType changes, switch to the historically best strategy of that type,
+  // falling back to the first one
   useEffect(() => {
     if (betType && !filtered.some((o) => o.type === strategy.type)) {
+      if (best) {
+        setStrategy({ type: best.strategyType, threshold: best.threshold });
+        return;
+      }
       const first = filtered[0];
       const threshold = first?.thresholds?.[Math.floor((first.thresholds.length - 1) / 2)] ?? 0;
       setStrategy({ type: first.type, threshold });
     }
-  }, [betType, filtered, strategy.type, setStrategy]);
+  }, [betType, filtered, best, strategy.type, setStrategy]);
+
+  const formatThreshold = (t: number) =>
+    current?.thresholdFormat === 'goals' ? `${t}` : `${(t * 100).toFixed(0)}%`;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -42,6 +52,7 @@ export function StrategyPicker({ betType, renameLabel }: Props) {
         {filtered.map((opt) => (
           <option key={opt.type} value={opt.type}>
             {renameLabel ? renameLabel(opt.label) : opt.label}
+            {best?.strategyType === opt.type ? ' ★' : ''}
           </option>
         ))}
       </select>
@@ -51,16 +62,31 @@ export function StrategyPicker({ betType, renameLabel }: Props) {
             <button
               key={t}
               onClick={() => setStrategy({ ...strategy, threshold: t })}
+              title={
+                best?.strategyType === strategy.type && best.threshold === t
+                  ? 'Best historical threshold'
+                  : undefined
+              }
               className={`px-2 py-1 text-[11px] font-mono font-medium rounded-md transition-colors ${
                 strategy.threshold === t
                   ? 'bg-accent-500 text-white'
                   : 'glass text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200'
               }`}
             >
-              {current.thresholdFormat === 'goals' ? t : `${(t * 100).toFixed(0)}%`}
+              {formatThreshold(t)}
+              {best?.strategyType === strategy.type && best.threshold === t ? ' ★' : ''}
             </button>
           ))}
         </div>
+      )}
+      {best && (
+        <span
+          className="text-[11px] text-surface-400 dark:text-surface-500"
+          title={`Best backtested strategy: ${best.wins}/${best.bets} bets won, ${formatSeasonLabel(best.firstSeason)} through ${formatSeasonLabel(best.lastSeason)}, DraftKings + Kalshi`}
+        >
+          ★ {STRATEGY_OPTIONS.find((o) => o.type === best.strategyType)?.label}: +
+          {best.roi.toFixed(1)}% ROI
+        </span>
       )}
     </div>
   );

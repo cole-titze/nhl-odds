@@ -10,6 +10,7 @@ using WebApi.BusinessLogic.AdminService;
 using WebApi.BusinessLogic.GameOddsGetter;
 using WebApi.BusinessLogic.JobService;
 using WebApi.BusinessLogic.StartupCacheWarmer;
+using WebApi.BusinessLogic.StrategyBacktester;
 using WebApi.BusinessLogic.TeamGetter;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -33,6 +34,7 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddHostedService<LocalJobRunner>();
 builder.Services.AddScoped<ITeamGetter, TeamGetter>();
 builder.Services.AddScoped<IGameOddsGetter, GameOddsGetter>();
+builder.Services.AddScoped<IStrategyBacktester, StrategyBacktester>();
 builder.Services.AddScoped<ITeamRepository, TeamRepository>();
 builder.Services.AddScoped<IWebBookmakerOddsRepository, WebBookmakerOddsRepository>();
 builder.Services.AddScoped<IGameOddsRepository, GameOddsRepository>();

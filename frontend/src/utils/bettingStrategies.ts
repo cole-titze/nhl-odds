@@ -238,6 +238,12 @@ export function checkStrategy(
   }
 }
 
+// Whether a spread bet on the given side covered the bookmaker's line.
+export function spreadCovered(game: GameOddsVM, betHome: boolean, bk: BookmakerOddsVM): boolean {
+  const homeMargin = (game.homeTeam?.goals ?? 0) - (game.awayTeam?.goals ?? 0);
+  return betHome ? homeMargin + bk.homePoint > 0 : -homeMargin + bk.awayPoint > 0;
+}
+
 export function americanToDecimalPayout(price: number): number {
   if (price > 0) return price / 100;
   return 100 / Math.abs(price);
@@ -251,13 +257,12 @@ export function spreadAlwaysBet(games: GameOddsVM[], bookmaker: string): Strateg
     if (!g.hasBeenPlayed || !g.homeTeam || !g.awayTeam || g.predictedSpread == null) continue;
     const bk = g.bookmakerOdds.find((b) => b.bookmakerName === bookmaker);
     if (!bk || !bk.homePoint) continue;
-    const actualMargin = g.homeTeam.goals - g.awayTeam.goals;
     // predictedSpread is margin (home-away), homePoint is handicap (opposite sign)
     // home covers when predictedSpread + homePoint > 0
     const coverMargin = g.predictedSpread + bk.homePoint;
     const betHome = coverMargin > 0;
     const price = betHome ? bk.homePrice : bk.awayPrice;
-    const covered = betHome ? actualMargin + bk.homePoint > 0 : actualMargin + bk.awayPoint > 0;
+    const covered = spreadCovered(g, betHome, bk);
     const payout = covered ? americanToDecimalPayout(price) : -1;
     bets.push({
       gameId: g.id,
@@ -286,10 +291,9 @@ export function spreadValueOnly(
     const coverMargin = g.predictedSpread + bk.homePoint;
     const edge = Math.abs(coverMargin);
     if (edge < threshold) continue;
-    const actualMargin = g.homeTeam.goals - g.awayTeam.goals;
     const betHome = coverMargin > 0;
     const price = betHome ? bk.homePrice : bk.awayPrice;
-    const covered = betHome ? actualMargin + bk.homePoint > 0 : actualMargin + bk.awayPoint > 0;
+    const covered = spreadCovered(g, betHome, bk);
     const payout = covered ? americanToDecimalPayout(price) : -1;
     bets.push({
       gameId: g.id,

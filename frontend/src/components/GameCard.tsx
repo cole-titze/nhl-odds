@@ -14,12 +14,18 @@ import {
 } from '../utils/bettingStrategies';
 import { useStrategy } from '../contexts/StrategyContext';
 
+// Only these books are shown on the card, so only they can back the bet badge.
+const PINNED_BOOKMAKERS = ['DraftKings', 'Kalshi'];
+
+type BetOutcome = 'won' | 'lost' | 'push';
+
 function getBestBetFlag(
   game: GameOddsVM,
   strategy: StrategyConfig,
 ): (BetFlag & { bookmaker: string }) | null {
   let best: (BetFlag & { bookmaker: string }) | null = null;
   for (const bm of game.bookmakerOdds ?? []) {
+    if (!PINNED_BOOKMAKERS.includes(bm.bookmakerName)) continue;
     const flag = checkStrategy(game, bm, strategy);
     if (flag && (!best || flag.edge > best.edge)) {
       best = { ...flag, bookmaker: bm.bookmakerName };
@@ -88,12 +94,19 @@ function BookmakerOddsRow({
   bm,
   oddsType,
   format,
+  highlighted,
 }: {
   bm: BookmakerOddsVM;
   oddsType: OddsType;
   format: Parameters<typeof formatOdds>[1];
+  highlighted: boolean;
 }) {
   const cellClass = 'text-center stat-number text-surface-500 dark:text-surface-400';
+  const nameClass = `text-center truncate px-1 ${
+    highlighted
+      ? 'font-bold text-surface-700 dark:text-surface-200'
+      : 'text-surface-400 dark:text-surface-500'
+  }`;
 
   if (oddsType === 'spread') {
     return (
@@ -101,9 +114,7 @@ function BookmakerOddsRow({
         <span className={cellClass}>
           {formatPoint(bm.awayPoint)} ({formatAmericanOdds(bm.awayPrice, format)})
         </span>
-        <span className="text-center text-surface-400 dark:text-surface-500 truncate px-1">
-          {bm.bookmakerName}
-        </span>
+        <span className={nameClass}>{bm.bookmakerName}</span>
         <span className={cellClass}>
           {formatPoint(bm.homePoint)} ({formatAmericanOdds(bm.homePrice, format)})
         </span>
@@ -115,7 +126,7 @@ function BookmakerOddsRow({
     return (
       <div className="grid grid-cols-3 items-center text-[11px] font-mono mt-1">
         <span className={cellClass}>O {formatAmericanOdds(bm.overPrice, format)}</span>
-        <span className="text-center text-surface-400 dark:text-surface-500 truncate px-1">
+        <span className={nameClass}>
           {bm.bookmakerName} ({bm.overUnderPoint})
         </span>
         <span className={cellClass}>U {formatAmericanOdds(bm.underPrice, format)}</span>
@@ -126,54 +137,68 @@ function BookmakerOddsRow({
   return (
     <div className="grid grid-cols-3 items-center text-[11px] font-mono mt-1">
       <span className={cellClass}>{formatOdds(bm.awayOdds, format)}</span>
-      <span className="text-center text-surface-400 dark:text-surface-500 truncate px-1">
-        {bm.bookmakerName}
-      </span>
+      <span className={nameClass}>{bm.bookmakerName}</span>
       <span className={cellClass}>{formatOdds(bm.homeOdds, format)}</span>
     </div>
   );
 }
 
-function strategyBetWon(game: GameOddsVM, bet: BetFlag, strategy: StrategyConfig): boolean {
+// Grades the bet against the line of the bookmaker that produced it.
+function strategyBetOutcome(
+  game: GameOddsVM,
+  bet: BetFlag & { bookmaker: string },
+  strategy: StrategyConfig,
+): BetOutcome {
   const opt = STRATEGY_OPTIONS.find((o) => o.type === strategy.type);
-  if (!opt || !game.homeTeam || !game.awayTeam) return false;
+  if (!opt || !game.homeTeam || !game.awayTeam) return 'lost';
+  const bk = game.bookmakerOdds?.find((b) => b.bookmakerName === bet.bookmaker);
 
   if (opt.betType === 'spread') {
-    const bk = game.bookmakerOdds?.find((b) => b.homePoint);
-    if (!bk) return false;
-    const margin = game.homeTeam.goals - game.awayTeam.goals;
-    return bet.side === 'home' ? margin + bk.homePoint > 0 : margin + bk.awayPoint > 0;
+    if (!bk) return 'lost';
+    const homeMargin = game.homeTeam.goals - game.awayTeam.goals;
+    const covered = bet.side === 'home' ? homeMargin + bk.homePoint : -homeMargin + bk.awayPoint;
+    return covered > 0 ? 'won' : covered < 0 ? 'lost' : 'push';
   }
 
   if (opt.betType === 'overUnder') {
-    const bk = game.bookmakerOdds?.find((b) => b.overUnderPoint);
-    if (!bk) return false;
+    if (!bk) return 'lost';
     const total = game.homeTeam.goals + game.awayTeam.goals;
-    return bet.side === 'home' ? total > bk.overUnderPoint : total < bk.overUnderPoint;
+    if (total === bk.overUnderPoint) return 'push';
+    return (bet.side === 'home') === total > bk.overUnderPoint ? 'won' : 'lost';
   }
 
-  return game.winner === (bet.side === 'home' ? Winner.HOME : Winner.AWAY);
+  return game.winner === (bet.side === 'home' ? Winner.HOME : Winner.AWAY) ? 'won' : 'lost';
 }
+
+const BADGE_CLASSES: Record<BetOutcome | 'upcoming', string> = {
+  upcoming: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+  won: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+  lost: 'bg-red-500/10 text-red-600 dark:text-red-400',
+  push: 'bg-surface-500/10 text-surface-600 dark:text-surface-400',
+};
+
+const CHECK_CIRCLE_PATH =
+  'M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z';
+
+const BADGE_ICONS: Record<BetOutcome | 'upcoming', string> = {
+  upcoming: CHECK_CIRCLE_PATH,
+  won: CHECK_CIRCLE_PATH,
+  // x-circle
+  lost: 'M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z',
+  // minus-circle
+  push: 'M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z',
+};
 
 export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
   const { format } = useOddsFormatContext();
   const { strategy } = useStrategy();
   const valueBet = getBestBetFlag(game, strategy);
 
-  let cardClass: string;
-  if (valueBet) {
-    if (!game.hasBeenPlayed) {
-      cardClass =
-        'border-emerald-500/40 dark:border-emerald-500/20 !bg-emerald-50/30 dark:!bg-emerald-500/[0.03]';
-    } else if (strategyBetWon(game, valueBet, strategy)) {
-      cardClass =
-        'border-emerald-500/40 dark:border-emerald-500/20 !bg-emerald-50/30 dark:!bg-emerald-500/[0.03]';
-    } else {
-      cardClass = 'border-red-500/40 dark:border-red-500/20 !bg-red-50/30 dark:!bg-red-500/[0.03]';
-    }
-  } else {
-    cardClass = 'border-surface-200 dark:border-white/[0.06]';
-  }
+  const badgeState: BetOutcome | 'upcoming' | null = !valueBet
+    ? null
+    : game.hasBeenPlayed
+      ? strategyBetOutcome(game, valueBet, strategy)
+      : 'upcoming';
 
   const oddsColor = !game.hasBeenPlayed
     ? 'text-accent-500'
@@ -185,7 +210,7 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
     <Link
       to={`/game/${game.id}`}
       state={{ game }}
-      className={`card-hover glass rounded-xl px-5 py-4 block transition-all duration-200 active:scale-[0.98] ${cardClass}`}
+      className={`card-hover glass rounded-xl px-5 py-4 block transition-all duration-200 active:scale-[0.98] border-surface-200 dark:border-white/[0.06]`}
       onMouseEnter={(e) => {
         const rect = e.currentTarget.getBoundingClientRect();
         e.currentTarget.style.setProperty(
@@ -219,15 +244,13 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
           </span>
         </div>
       )}
-      {valueBet && (
+      {valueBet && badgeState && (
         <div className="flex justify-center mb-3">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-bold uppercase tracking-wide">
-            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                clipRule="evenodd"
-              />
+          <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide ${BADGE_CLASSES[badgeState]}`}
+          >
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+              <path fillRule="evenodd" d={BADGE_ICONS[badgeState]} clipRule="evenodd" />
             </svg>
             {(() => {
               const opt = STRATEGY_OPTIONS.find((o) => o.type === strategy.type);
@@ -243,6 +266,10 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
                 valueBet.side === 'home' ? game.homeTeam?.teamName : game.awayTeam?.teamName;
               return `Bet ${label} +${(valueBet.edge * 100).toFixed(0)}%`;
             })()}
+            <span className="pl-1.5 border-l border-current/30 font-semibold opacity-70">
+              {valueBet.bookmaker}
+            </span>
+            {badgeState === 'push' && <span className="opacity-70">· Push</span>}
           </span>
         </div>
       )}
@@ -329,10 +356,9 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
           )}
           {game.bookmakerOdds?.length > 0 &&
             (() => {
-              const pinned = ['DraftKings', 'Kalshi'];
-              const shown = pinned
-                .map((name) => game.bookmakerOdds.find((bm) => bm.bookmakerName === name))
-                .filter(Boolean) as BookmakerOddsVM[];
+              const shown = PINNED_BOOKMAKERS.map((name) =>
+                game.bookmakerOdds.find((bm) => bm.bookmakerName === name),
+              ).filter(Boolean) as BookmakerOddsVM[];
               return (
                 <>
                   {shown.map((bm) => (
@@ -341,6 +367,7 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
                       bm={bm}
                       oddsType={oddsType}
                       format={format}
+                      highlighted={valueBet?.bookmaker === bm.bookmakerName}
                     />
                   ))}
                 </>
