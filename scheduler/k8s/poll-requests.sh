@@ -44,10 +44,10 @@ spec:
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: nhl-odds-secret
-                  key: postgres-password
+                  name: nhl-odds-app-credentials
+                  key: password
             - name: NHL_DATABASE
-              value: "Host=nhl-odds-database-rw;Database=nhl;Username=postgres;Password=\$(POSTGRES_PASSWORD)"
+              value: "Host=nhl-odds-database-rw;Database=nhl;Username=nhl_app;Password=\$(POSTGRES_PASSWORD)"
             - name: ODDS_API_KEY
               valueFrom:
                 secretKeyRef:
@@ -92,10 +92,10 @@ spec:
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: nhl-odds-secret
-                  key: postgres-password
+                  name: nhl-odds-app-credentials
+                  key: password
             - name: NHL_DATABASE
-              value: "Host=nhl-odds-database-rw;Database=nhl;Username=postgres;Password=\$(POSTGRES_PASSWORD)"
+              value: "Host=nhl-odds-database-rw;Database=nhl;Username=nhl_app;Password=\$(POSTGRES_PASSWORD)"
 EOF
         ;;
 
