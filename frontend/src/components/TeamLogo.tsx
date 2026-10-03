@@ -17,7 +17,8 @@ export function TeamLogo({ src, alt, className }: Props) {
 
   const darkSrc = toDarkLogo(src);
   const current = dark && !failed.includes(darkSrc) ? darkSrc : src;
-  if (failed.includes(current)) return null;
+  // Keep the logo's box when every variant fails, so the layout doesn't shift
+  if (failed.includes(current)) return <span className={`block ${className ?? ''}`} />;
 
   return (
     <img
