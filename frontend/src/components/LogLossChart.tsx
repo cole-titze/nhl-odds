@@ -3,7 +3,10 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 import { formatShortDate } from '../utils/dates';
 import { calculateLogLoss } from '../utils/predictions';
 import type { GameOddsVM } from '../types';
-import { getChipClasses, getSwatchClasses } from '../utils/colorClass';
+import { getChipClasses } from '../utils/colorClass';
+import { dashFor, readableLineColor } from '../utils/chartSeries';
+import { useIsDarkTheme } from '../hooks/useRootTheme';
+import { LineKey } from './LineKey';
 
 const HOMEGROWN = 'In-House Model';
 
@@ -71,6 +74,11 @@ export function LogLossChart({ games, deduplicateById }: Props) {
   const allChips = useMemo(() => [HOMEGROWN, ...bookmakerNames], [bookmakerNames]);
 
   const [enabled, setEnabled] = useState<Set<string>>(DEFAULT_ENABLED);
+  const dark = useIsDarkTheme();
+  // Each series keeps its slot (color + dash pattern) whether or not it's shown
+  const lineColor = (name: string) =>
+    readableLineColor(getColor(name, allChips.indexOf(name)), dark);
+  const lineDash = (name: string) => dashFor(allChips.indexOf(name));
 
   const toggle = (name: string) => {
     setEnabled((prev) => {
@@ -145,8 +153,8 @@ export function LogLossChart({ games, deduplicateById }: Props) {
               onClick={() => toggle(name)}
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-medium transition-all ${getChipClasses(color, active)}`}
             >
-              <span aria-hidden="true" className={getSwatchClasses(color, active)} />
-              {name}
+              <LineKey color={lineColor(name)} dash={lineDash(name)} active={active} />
+              <span className={active ? '' : 'line-through'}>{name}</span>
             </button>
           );
         })}
@@ -181,9 +189,9 @@ export function LogLossChart({ games, deduplicateById }: Props) {
                       .filter((name) => enabled.has(name) && d[name] != null)
                       .map((name) => (
                         <div key={name} className="flex items-center gap-1.5">
-                          <span
-                            aria-hidden="true"
-                            className={getSwatchClasses(getColor(name, allChips.indexOf(name)))}
+                          <LineKey
+                            color={readableLineColor(getColor(name, allChips.indexOf(name)), true)}
+                            dash={lineDash(name)}
                           />
                           {name}: {d[name] as number}
                         </div>
@@ -196,13 +204,17 @@ export function LogLossChart({ games, deduplicateById }: Props) {
             {allChips
               .filter((name) => enabled.has(name))
               .map((name) => {
-                const color = getColor(name, allChips.indexOf(name));
+                const color = lineColor(name);
                 return (
                   <Line
                     key={name}
                     type="monotone"
                     dataKey={name}
                     stroke={color}
+                    strokeDasharray={lineDash(name) || undefined}
+                    // Recharts' draw-in animation overwrites strokeDasharray (and
+                    // blanks it under prefers-reduced-motion), erasing the patterns
+                    isAnimationActive={false}
                     strokeWidth={2.5}
                     dot={false}
                     activeDot={{ r: 4, fill: color, stroke: '#141418', strokeWidth: 2 }}

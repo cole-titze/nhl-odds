@@ -28,7 +28,7 @@ dotnet build src/DataGetter/DataGetter.csproj
 cd frontend && npm install    # install dependencies
 cd frontend && npm run dev    # Vite dev server on http://localhost:5173
 cd frontend && npm run build  # production build to frontend/dist/
-cd frontend && npm run a11y   # axe WCAG 2.2 AA scan of the build (mocked API; run build first)
+cd frontend && npm run a11y   # WCAG 2.2 AA checks: axe, 320px reflow, focus visibility (mocked API; run build first)
 
 # Python game predictor (from repo root)
 python3 -m venv .venv

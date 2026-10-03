@@ -10,7 +10,10 @@ import {
 } from 'recharts';
 import { formatShortDate } from '../utils/dates';
 import type { StrategyResult } from '../utils/bettingStrategies';
-import { getChipClasses, getSwatchClasses } from '../utils/colorClass';
+import { getChipClasses } from '../utils/colorClass';
+import { dashFor, readableLineColor } from '../utils/chartSeries';
+import { useIsDarkTheme } from '../hooks/useRootTheme';
+import { LineKey } from './LineKey';
 
 const STRATEGY_COLORS: Record<string, string> = {
   'In-House Winner': '#3b82f6',
@@ -31,6 +34,10 @@ export function StrategyChart({ results }: Props) {
   const strategyNames = useMemo(() => results.map((r) => r.name), [results]);
 
   const [enabled, setEnabled] = useState<Set<string>>(() => new Set(strategyNames));
+  const dark = useIsDarkTheme();
+  const baseColor = (name: string) => STRATEGY_COLORS[name] ?? '#737373';
+  const lineColor = (name: string) => readableLineColor(baseColor(name), dark);
+  const lineDash = (name: string) => dashFor(strategyNames.indexOf(name));
 
   // Reset enabled set when strategy names change (e.g. switching from moneyline to spread)
   useEffect(() => {
@@ -95,8 +102,8 @@ export function StrategyChart({ results }: Props) {
               onClick={() => toggle(name)}
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-medium transition-all ${getChipClasses(color, active)}`}
             >
-              <span aria-hidden="true" className={getSwatchClasses(color, active)} />
-              {name}
+              <LineKey color={lineColor(name)} dash={lineDash(name)} active={active} />
+              <span className={active ? '' : 'line-through'}>{name}</span>
             </button>
           );
         })}
@@ -132,9 +139,9 @@ export function StrategyChart({ results }: Props) {
                       .filter((name) => enabled.has(name) && d[name] != null)
                       .map((name) => (
                         <div key={name} className="flex items-center gap-1.5">
-                          <span
-                            aria-hidden="true"
-                            className={getSwatchClasses(STRATEGY_COLORS[name] ?? '#737373')}
+                          <LineKey
+                            color={readableLineColor(baseColor(name), true)}
+                            dash={lineDash(name)}
                           />
                           {name}: {(d[name] as number).toFixed(2)}u
                         </div>
@@ -146,13 +153,17 @@ export function StrategyChart({ results }: Props) {
             {strategyNames
               .filter((name) => enabled.has(name))
               .map((name) => {
-                const color = STRATEGY_COLORS[name] ?? '#737373';
+                const color = lineColor(name);
                 return (
                   <Line
                     key={name}
                     type="monotone"
                     dataKey={name}
                     stroke={color}
+                    strokeDasharray={lineDash(name) || undefined}
+                    // Recharts' draw-in animation overwrites strokeDasharray (and
+                    // blanks it under prefers-reduced-motion), erasing the patterns
+                    isAnimationActive={false}
                     strokeWidth={2.5}
                     dot={false}
                     activeDot={{

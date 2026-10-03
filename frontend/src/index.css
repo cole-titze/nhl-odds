@@ -71,6 +71,16 @@ html.dark {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
+/* Keep focused content clear of the sticky navbar (and any other sticky or
+   fixed bars a page reports via these variables), so keyboard focus is never
+   hidden behind them (WCAG 2.4.11). Set as scroll-margin on main's focusable
+   elements rather than scroll-padding on <html>: with the latter, focusing a
+   link inside the sticky header itself makes the browser scroll the page. */
+main :is(a, button, input, select, textarea, summary, [tabindex]) {
+  scroll-margin-top: var(--sticky-top, 5rem);
+  scroll-margin-bottom: var(--sticky-bottom, 0px);
+}
+
 /* <main> is focused programmatically on route changes and by the skip link */
 #main:focus {
   outline: none;
@@ -229,14 +239,30 @@ html.dark {
   display: none;
 }
 
-.theme-light { --status-bar: #fefefe; }
-.theme-dark { --status-bar: #131314; }
-.theme-ice { --status-bar: #f5f9fb; }
-.theme-stars { --status-bar: #070a12; }
-.theme-aurora { --status-bar: #151b22; }
-.theme-team { --status-bar: #0a0a10; }
-.theme-contrast-light { --status-bar: #ffffff; }
-.theme-contrast-dark { --status-bar: #000000; }
+.theme-light {
+  --status-bar: #fefefe;
+}
+.theme-dark {
+  --status-bar: #131314;
+}
+.theme-ice {
+  --status-bar: #f5f9fb;
+}
+.theme-stars {
+  --status-bar: #070a12;
+}
+.theme-aurora {
+  --status-bar: #151b22;
+}
+.theme-team {
+  --status-bar: #0a0a10;
+}
+.theme-contrast-light {
+  --status-bar: #ffffff;
+}
+.theme-contrast-dark {
+  --status-bar: #000000;
+}
 
 @supports (-webkit-touch-callout: none) {
   .status-bar-tint {

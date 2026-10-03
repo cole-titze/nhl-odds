@@ -38,13 +38,15 @@ const bookmaker = (bookmakerName, homeOdds) => ({
   underPrice: -110,
 });
 
+// Five weeks of games either side of today, so the Games feed can load older
+// and newer chunks the way it does against the real API
 const games = [];
-for (let offset = -6; offset <= 3; offset++) {
+for (let offset = -35; offset <= 35; offset++) {
   const date = new Date(today);
   date.setDate(date.getDate() + offset);
   const played = offset < 0;
   games.push({
-    id: 2026020010 + offset,
+    id: 2026020100 + offset,
     gameDate: `${isoDate(date)}T23:00:00Z`,
     homeTeam: matchupTeam(10, 'Toronto', 'Maple Leafs', 'TOR', 0.58, played ? 3 : 0),
     awayTeam: matchupTeam(6, 'Boston', 'Bruins', 'BOS', 0.42, played ? (offset % 2 ? 4 : 1) : 0),
@@ -75,7 +77,7 @@ const team = (id, locationName, teamName, abbrev) => ({
   draftKingsLogLoss: 0.66,
   draftKingsAccurateGameCount: 3,
   draftKingsGameCount: 6,
-  gameOddsVM: games,
+  gameOddsVM: games.slice(29, 41),
 });
 
 const job = (status) => ({
@@ -91,7 +93,7 @@ const job = (status) => ({
 
 const responses = {
   GetAnchorDate: { anchorDate: isoDate(today) },
-  GetGameOddsInDateRange: games,
+  // Filtered by date range below
   GetAllTeams: {
     teams: [team(10, 'Toronto', 'Maple Leafs', 'TOR'), team(6, 'Boston', 'Bruins', 'BOS')],
     seasonTotals: {
@@ -143,10 +145,16 @@ const responses = {
 };
 
 export function mockApi(url) {
+  if (url.includes('/GetGameOddsInDateRange')) {
+    const params = new URL(url).searchParams;
+    const start = params.get('startDate');
+    const end = params.get('endDate');
+    return games.filter((g) => g.gameDate.slice(0, 10) >= start && g.gameDate.slice(0, 10) <= end);
+  }
   const key = Object.keys(responses).find((k) => url.includes(`/${k}`));
   return key ? responses[key] : {};
 }
 
 export function pagesFor() {
-  return ['/', '/teams', '/team/10', `/game/${games[2].id}`, '/strategies', '/about', '/admin'];
+  return ['/', '/teams', '/team/10', `/game/${games[33].id}`, '/strategies', '/about', '/admin'];
 }

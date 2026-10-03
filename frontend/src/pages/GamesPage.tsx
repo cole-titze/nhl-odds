@@ -91,6 +91,24 @@ export function GamesPage() {
     return () => io.disconnect();
   }, [ready, loadNewer, loadOlder]);
 
+  // Tell the browser how much of the viewport the sticky navbar + filter bar
+  // (top) and the floating "Jump to today" button (bottom) cover, so tabbing
+  // through the feed never leaves the focused card hidden behind them.
+  useEffect(() => {
+    const root = document.documentElement;
+    const update = () => {
+      root.style.setProperty('--sticky-top', `${getStickyOffset()}px`);
+      root.style.setProperty('--sticky-bottom', '80px');
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('resize', update);
+      root.style.removeProperty('--sticky-top');
+      root.style.removeProperty('--sticky-bottom');
+    };
+  }, []);
+
   // Scroll to anchor date once the initial chunk is ready.
   useLayoutEffect(() => {
     if (initialStatus !== 'idle' || !anchorDate) return;
