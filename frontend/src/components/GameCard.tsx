@@ -1,3 +1,4 @@
+import type { PointerEvent } from 'react';
 import { Link } from 'react-router-dom';
 import type { GameOddsVM, BookmakerOddsVM } from '../types';
 import { Winner } from '../types';
@@ -194,6 +195,18 @@ const BADGE_ICONS: Record<BetOutcome | 'upcoming', string> = {
   push: 'M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z',
 };
 
+function setRippleOrigin(e: PointerEvent<HTMLElement>) {
+  const rect = e.currentTarget.getBoundingClientRect();
+  e.currentTarget.style.setProperty(
+    '--ripple-x',
+    `${((e.clientX - rect.left) / rect.width) * 100}%`,
+  );
+  e.currentTarget.style.setProperty(
+    '--ripple-y',
+    `${((e.clientY - rect.top) / rect.height) * 100}%`,
+  );
+}
+
 export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
   const { format } = useOddsFormatContext();
   const { strategy } = useStrategy();
@@ -216,17 +229,9 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
       to={`/game/${game.id}`}
       state={{ game }}
       className={`card-hover glass rounded-xl px-5 py-4 block transition-all duration-200 active:scale-[0.98] border-surface-200 dark:border-white/[0.06]`}
-      onMouseEnter={(e) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        e.currentTarget.style.setProperty(
-          '--ripple-x',
-          `${((e.clientX - rect.left) / rect.width) * 100}%`,
-        );
-        e.currentTarget.style.setProperty(
-          '--ripple-y',
-          `${((e.clientY - rect.top) / rect.height) * 100}%`,
-        );
-      }}
+      // Pointer (not mouse) events, so a touch sets the origin where the finger lands
+      onPointerEnter={setRippleOrigin}
+      onPointerDown={setRippleOrigin}
     >
       {game.gameType === 3 && (
         <div className="flex justify-center mb-2">
