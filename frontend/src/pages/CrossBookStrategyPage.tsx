@@ -257,7 +257,7 @@ export function CrossBookStrategyPage() {
                           }`}
                         >
                           <td
-                            className={`py-2 pr-4 font-semibold ${isSelected ? 'text-accent-600 dark:text-accent-400' : 'text-surface-800 dark:text-surface-200'}`}
+                            className={`py-2 pr-4 font-semibold ${isSelected ? 'text-accent-700 dark:text-accent-400' : 'text-surface-800 dark:text-surface-200'}`}
                           >
                             {/* Click bubbles to the row's handler */}
                             <button

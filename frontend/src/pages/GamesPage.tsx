@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { GamesFeed } from '../components/GamesFeed';
 import { SeasonSelector } from '../components/SeasonSelector';
 import { CardSkeleton } from '../components/Skeleton';
@@ -11,6 +11,32 @@ import { getCurrentSeason } from '../utils/season';
 export type OddsType = 'moneyline' | 'spread' | 'overUnder';
 
 const FILTER_BAR_ID = 'games-filter-bar';
+const FEED_ID = 'games-feed';
+const TABBABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+// The feed starts a week before the day the page opens scrolled to, so a plain
+// Tab out of the filter bar would land on an off-screen card from days ago (and
+// scroll up into a load of even older games). Send it to the first item that's
+// actually on screen instead, which is what comes next visually. Done on the
+// Tab keypress rather than by redirecting focus when it arrives, because moving
+// focus on focus is a change of context (WCAG 3.2.1).
+function handleFilterBarTab(e: KeyboardEvent<HTMLDivElement>) {
+  if (e.key !== 'Tab' || e.shiftKey) return;
+  const inBar = [...e.currentTarget.querySelectorAll<HTMLElement>(TABBABLE)];
+  if (document.activeElement !== inBar[inBar.length - 1]) return;
+  const feed = document.getElementById(FEED_ID);
+  if (!feed) return;
+  const items = [...feed.querySelectorAll<HTMLElement>(TABBABLE)];
+  const top = getStickyOffset();
+  const firstVisible = items.find((el) => {
+    const r = el.getBoundingClientRect();
+    return r.height > 0 && r.bottom > top && r.top < window.innerHeight;
+  });
+  if (!firstVisible || firstVisible === items[0]) return;
+  e.preventDefault();
+  firstVisible.focus();
+}
 
 // Height of the sticky navbar plus the filter bar, so date headers land below
 // them. Measured because the navbar is shorter on mobile and the filter bar
@@ -189,6 +215,7 @@ export function GamesPage() {
       <h1 className="sr-only">Games</h1>
       <div
         id={FILTER_BAR_ID}
+        onKeyDown={handleFilterBarTab}
         className="app-subbar sticky top-14 md:top-16 z-40 -mx-5 px-5 py-3 mb-6 backdrop-blur bg-white/70 dark:bg-surface-950/70 border-b border-surface-200/60 dark:border-white/[0.06]"
       >
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -253,21 +280,23 @@ export function GamesPage() {
       )}
 
       {ready && (
-        <GamesFeed
-          gamesByDate={gamesByDate}
-          earliestLoaded={earliestLoaded!}
-          latestLoaded={latestLoaded!}
-          oddsType={oddsType}
-          topSentinelRef={topSentinelRef}
-          bottomSentinelRef={bottomSentinelRef}
-          olderStatus={olderStatus}
-          newerStatus={newerStatus}
-          hasMoreOlder={hasMoreOlder}
-          hasMoreNewer={hasMoreNewer}
-          seasonStartYear={seasonStartYear}
-          onLoadPrevSeason={() => setSeason((s) => Math.max(2009, s - 1))}
-          onLoadNextSeason={() => setSeason((s) => Math.min(getCurrentSeason(), s + 1))}
-        />
+        <div id={FEED_ID}>
+          <GamesFeed
+            gamesByDate={gamesByDate}
+            earliestLoaded={earliestLoaded!}
+            latestLoaded={latestLoaded!}
+            oddsType={oddsType}
+            topSentinelRef={topSentinelRef}
+            bottomSentinelRef={bottomSentinelRef}
+            olderStatus={olderStatus}
+            newerStatus={newerStatus}
+            hasMoreOlder={hasMoreOlder}
+            hasMoreNewer={hasMoreNewer}
+            seasonStartYear={seasonStartYear}
+            onLoadPrevSeason={() => setSeason((s) => Math.max(2009, s - 1))}
+            onLoadNextSeason={() => setSeason((s) => Math.min(getCurrentSeason(), s + 1))}
+          />
+        </div>
       )}
 
       {ready && homePosition !== 'visible' && (

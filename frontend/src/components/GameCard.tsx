@@ -311,10 +311,10 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
                 valueBet.side === 'home' ? game.homeTeam?.teamName : game.awayTeam?.teamName;
               return `Bet ${label} +${(valueBet.edge * 100).toFixed(0)}%`;
             })()}
-            <span className="pl-1.5 border-l border-current/30 font-semibold opacity-70">
+            <span className="pl-1.5 border-l border-current/30 font-semibold">
               {valueBet.bookmakers.join(' · ')}
             </span>
-            {badgeState === 'push' && <span className="opacity-70">· Push</span>}
+            {badgeState === 'push' && <span>· Push</span>}
           </span>
         </div>
       )}

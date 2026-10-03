@@ -14,6 +14,7 @@ import { getChipClasses } from '../utils/colorClass';
 import { dashFor, readableLineColor } from '../utils/chartSeries';
 import { useIsDarkTheme } from '../hooks/useRootTheme';
 import { LineKey } from './LineKey';
+import { ChartDataTable } from './ChartDataTable';
 
 const STRATEGY_COLORS: Record<string, string> = {
   'In-House Winner': '#3b82f6',
@@ -179,6 +180,19 @@ export function StrategyChart({ results }: Props) {
           </LineChart>
         </ResponsiveContainer>
       </div>
+      <ChartDataTable
+        caption="Cumulative profit/loss in units by date"
+        rowHeader="Date"
+        columns={strategyNames.filter((name) => enabled.has(name))}
+        rows={chartData.map((point) => ({
+          key: point.sortKey as string,
+          label: point.date as string,
+          values: Object.fromEntries(
+            strategyNames.map((name) => [name, point[name] as number | undefined]),
+          ),
+        }))}
+        format={(v) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}u`}
+      />
     </div>
   );
 }

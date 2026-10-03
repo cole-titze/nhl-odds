@@ -14,6 +14,8 @@ export const THEMES = [
 
 const isoDate = (d) => d.toISOString().slice(0, 10);
 const today = new Date();
+/** The day the Games page opens scrolled to */
+export const ANCHOR_DATE = isoDate(today);
 
 const matchupTeam = (id, locationName, teamName, abbrev, modelOdds, goals) => ({
   id,
@@ -92,7 +94,7 @@ const job = (status) => ({
 });
 
 const responses = {
-  GetAnchorDate: { anchorDate: isoDate(today) },
+  GetAnchorDate: { anchorDate: ANCHOR_DATE },
   // Filtered by date range below
   GetAllTeams: {
     teams: [team(10, 'Toronto', 'Maple Leafs', 'TOR'), team(6, 'Boston', 'Bruins', 'BOS')],
@@ -109,7 +111,7 @@ const responses = {
   GetBestStrategies: [
     {
       betType: 'moneyline',
-      strategyType: 'valueBets',
+      strategyType: 'value',
       threshold: 0.05,
       bets: 100,
       wins: 55,

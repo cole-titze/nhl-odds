@@ -7,6 +7,7 @@ import { getChipClasses } from '../utils/colorClass';
 import { dashFor, readableLineColor } from '../utils/chartSeries';
 import { useIsDarkTheme } from '../hooks/useRootTheme';
 import { LineKey } from './LineKey';
+import { ChartDataTable, type ChartTableRow } from './ChartDataTable';
 
 const HOMEGROWN = 'In-House Model';
 
@@ -125,6 +126,19 @@ export function LogLossChart({ games, deduplicateById }: Props) {
     });
   }, [playedGames, bookmakerNames]);
 
+  // One row per day (the chart plots every game; a season has ~1,300)
+  const shown = allChips.filter((name) => enabled.has(name));
+  const tableRows = useMemo(() => {
+    const byDate = new Map<string, ChartTableRow>();
+    for (const point of chartData) {
+      const label = point.date as string;
+      const values: ChartTableRow['values'] = { Games: point.games as number };
+      for (const name of allChips) values[name] = point[name] as number | undefined;
+      byDate.set(label, { key: label, label, values });
+    }
+    return [...byDate.values()];
+  }, [chartData, allChips]);
+
   if (chartData.length <= 1) return null;
 
   // The SVG chart isn't readable by screen readers, so summarize where each line ends up
@@ -225,6 +239,13 @@ export function LogLossChart({ games, deduplicateById }: Props) {
           </LineChart>
         </ResponsiveContainer>
       </div>
+      <ChartDataTable
+        caption="Cumulative average log loss by date (lower is better)"
+        rowHeader="Date"
+        columns={['Games', ...shown]}
+        rows={tableRows}
+        format={(v, column) => (column === 'Games' ? String(v) : v.toFixed(4))}
+      />
     </div>
   );
 }

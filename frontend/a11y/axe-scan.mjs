@@ -10,13 +10,15 @@
 // 3. Focus not obscured (2.4.11): tab through each page at desktop and phone
 //    widths; every focused element must be visible, not hidden behind the
 //    sticky navbar, filter bar or other fixed elements
+// 4. Games feed focus order: Tab out of the filter bar must land on the day
+//    the page opened on, not on an off-screen card from days earlier
 //
 // Set CHROMIUM_PATH to use an existing Chromium instead of Playwright's.
 import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { chromium } from 'playwright';
-import { THEMES, pagesFor, mockApi } from './fixtures.mjs';
+import { ANCHOR_DATE, THEMES, pagesFor, mockApi } from './fixtures.mjs';
 
 const require = createRequire(import.meta.url);
 const axeSource = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
@@ -204,6 +206,32 @@ try {
       await load(page, path);
       total += report(`focus visible [${viewportName}] ${path}`, await tabThrough(page));
     }
+    await ctx.close();
+  }
+
+  // 4. Games feed focus order
+  for (const [viewportName, viewport] of Object.entries(VIEWPORTS)) {
+    const ctx = await newContext(browser, 'light', viewport);
+    const page = await ctx.newPage();
+    await load(page, '/');
+    // Focus the filter bar's last control, as if the user had tabbed to it
+    await page.evaluate(() => {
+      const tabbable = [
+        ...document.querySelectorAll('#games-filter-bar :is(a[href], button, input, select)'),
+      ];
+      tabbable[tabbable.length - 1].focus();
+    });
+    const before = await page.evaluate(() => window.scrollY);
+    await page.keyboard.press('Tab');
+    const result = await page.evaluate(
+      ([anchor, scrollBefore]) => {
+        const section = document.activeElement?.closest('section');
+        if (section?.id === `date-${anchor}`) return null;
+        return `Tab from the filter bar focused ${section ? section.id : document.activeElement?.tagName} (expected date-${anchor}); scroll ${Math.round(scrollBefore)} -> ${Math.round(window.scrollY)}`;
+      },
+      [ANCHOR_DATE, before],
+    );
+    total += report(`feed focus order [${viewportName}] /`, result ? [result] : []);
     await ctx.close();
   }
 } finally {
