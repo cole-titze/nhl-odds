@@ -10,18 +10,21 @@
 // 3. Focus not obscured (2.4.11): tab through each page at desktop and phone
 //    widths; every focused element must be visible, not hidden behind the
 //    sticky navbar, filter bar or other fixed elements
-// 4. Games feed focus order: Tab out of the filter bar must land on the day
-//    the page opened on, not on an off-screen card from days earlier
+// 4. Games feed focus order: Tab out of the filter bar must land on the first
+//    game fully on screen, without scrolling (the feed starts days before
+//    the date the page opens on, so the next card in DOM order is off screen)
 //
 // Set CHROMIUM_PATH to use an existing Chromium instead of Playwright's.
 import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
 import { chromium } from 'playwright';
 import { ANCHOR_DATE, THEMES, pagesFor, mockApi } from './fixtures.mjs';
 
 const require = createRequire(import.meta.url);
 const axeSource = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
+const VITE_BIN = join(dirname(require.resolve('vite/package.json')), 'bin/vite.js');
 const PORT = 4179;
 const BASE = `http://localhost:${PORT}`;
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'];
@@ -35,9 +38,20 @@ const LOGO_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5"/></svg>';
 
 async function startPreview() {
-  const server = spawn('npx', ['vite', 'preview', '--port', String(PORT), '--strictPort'], {
-    stdio: 'ignore',
-  });
+  // Anything already answering here (say a preview of another build left
+  // running) would get scanned instead of this build
+  const inUse = await fetch(BASE).then(
+    () => true,
+    () => false,
+  );
+  if (inUse) throw new Error(`port ${PORT} is already in use; stop whatever is serving ${BASE}`);
+  // Run vite's own entry point rather than through npx, so killing this
+  // process stops the server instead of orphaning it
+  const server = spawn(
+    process.execPath,
+    [VITE_BIN, 'preview', '--port', String(PORT), '--strictPort'],
+    { stdio: 'ignore' },
+  );
   for (let i = 0; i < 60; i++) {
     try {
       if ((await fetch(BASE)).ok) return server;
@@ -77,7 +91,8 @@ async function runAxe(page) {
     const result = await window.axe.run(document, { runOnly: tags });
     return result.violations.flatMap((v) =>
       v.nodes.map(
-        (n) => `${v.id} (${v.impact}) ${v.helpUrl}\n      ${n.target.join(' ')}\n      ${n.failureSummary}`,
+        (n) =>
+          `${v.id} (${v.impact}) ${v.helpUrl}\n      ${n.target.join(' ')}\n      ${n.failureSummary}`,
       ),
     );
   }, AXE_TAGS);
@@ -209,30 +224,60 @@ try {
     await ctx.close();
   }
 
-  // 4. Games feed focus order
+  // 4. Games feed focus order, from where the page opens and from a scroll
+  //    position that leaves a card peeking out from under the filter bar
   for (const [viewportName, viewport] of Object.entries(VIEWPORTS)) {
-    const ctx = await newContext(browser, 'light', viewport);
-    const page = await ctx.newPage();
-    await load(page, '/');
-    // Focus the filter bar's last control, as if the user had tabbed to it
-    await page.evaluate(() => {
-      const tabbable = [
-        ...document.querySelectorAll('#games-filter-bar :is(a[href], button, input, select)'),
-      ];
-      tabbable[tabbable.length - 1].focus();
-    });
-    const before = await page.evaluate(() => window.scrollY);
-    await page.keyboard.press('Tab');
-    const result = await page.evaluate(
-      ([anchor, scrollBefore]) => {
-        const section = document.activeElement?.closest('section');
-        if (section?.id === `date-${anchor}`) return null;
-        return `Tab from the filter bar focused ${section ? section.id : document.activeElement?.tagName} (expected date-${anchor}); scroll ${Math.round(scrollBefore)} -> ${Math.round(window.scrollY)}`;
-      },
-      [ANCHOR_DATE, before],
-    );
-    total += report(`feed focus order [${viewportName}] /`, result ? [result] : []);
-    await ctx.close();
+    for (const position of ['opened', 'card under bar']) {
+      const ctx = await newContext(browser, 'light', viewport);
+      const page = await ctx.newPage();
+      await load(page, '/');
+      if (position === 'card under bar') {
+        await page.evaluate(() => {
+          const bar = document.getElementById('games-filter-bar').getBoundingClientRect().bottom;
+          const cards = [...document.querySelectorAll('#games-feed a[href]')];
+          const next = cards.find((c) => c.getBoundingClientRect().top > bar + 50);
+          const partly = cards[cards.indexOf(next) - 1];
+          window.scrollBy(0, partly.getBoundingClientRect().bottom - (bar + 20));
+        });
+        await page.waitForTimeout(300);
+      }
+      // Focus the filter bar's last control, as if the user had tabbed to it
+      await page.evaluate(() => {
+        const tabbable = [
+          ...document.querySelectorAll('#games-filter-bar :is(a[href], button, input, select)'),
+        ];
+        tabbable[tabbable.length - 1].focus();
+      });
+      const before = await page.evaluate(() => window.scrollY);
+      await page.keyboard.press('Tab');
+      const result = await page.evaluate(
+        ([anchor, scrollBefore]) => {
+          const el = document.activeElement;
+          const feed = document.getElementById('games-feed');
+          const barsBottom = document
+            .getElementById('games-filter-bar')
+            .getBoundingClientRect().bottom;
+          const onScreen = [...feed.querySelectorAll('a[href], button:not([disabled])')].filter(
+            (n) => {
+              const r = n.getBoundingClientRect();
+              return r.height > 0 && r.top >= barsBottom - 1 && r.top < window.innerHeight;
+            },
+          );
+          const where = `${el?.closest('section')?.id ?? el?.tagName} (page opened on date-${anchor})`;
+          const problems = [];
+          if (Math.abs(window.scrollY - scrollBefore) > 1)
+            problems.push(
+              `page scrolled ${Math.round(scrollBefore)} -> ${Math.round(window.scrollY)}; focus went to ${where}`,
+            );
+          if (el !== onScreen[0])
+            problems.push(`focus went to ${where}, not the first game fully on screen`);
+          return problems;
+        },
+        [ANCHOR_DATE, before],
+      );
+      total += report(`feed focus order [${viewportName}, ${position}] /`, result);
+      await ctx.close();
+    }
   }
 } finally {
   await browser.close();

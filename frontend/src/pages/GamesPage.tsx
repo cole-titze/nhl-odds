@@ -28,10 +28,12 @@ function handleFilterBarTab(e: KeyboardEvent<HTMLDivElement>) {
   const feed = document.getElementById(FEED_ID);
   if (!feed) return;
   const items = [...feed.querySelectorAll<HTMLElement>(TABBABLE)];
-  const top = getStickyOffset();
+  // Fully below the sticky bars: an item only peeking out from under them
+  // would be scrolled to, which is the jump this avoids
+  const barsBottom = e.currentTarget.getBoundingClientRect().bottom;
   const firstVisible = items.find((el) => {
     const r = el.getBoundingClientRect();
-    return r.height > 0 && r.bottom > top && r.top < window.innerHeight;
+    return r.height > 0 && r.top >= barsBottom - 1 && r.top < window.innerHeight;
   });
   if (!firstVisible || firstVisible === items[0]) return;
   e.preventDefault();
