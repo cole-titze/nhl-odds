@@ -11,7 +11,7 @@ export function Layout() {
     <OddsFormatContext.Provider value={oddsFormat}>
       <div className="app-shell relative flex min-h-screen flex-col overflow-x-clip bg-surface-50 dark:bg-surface-950">
         <ThemeBackdrop />
-        {/* Invisible; gives iOS Safari a solid black to tint the status bar with */}
+        {/* Gives iOS Safari a solid, header-colored strip to tint the status bar with */}
         <div className="status-bar-tint" aria-hidden="true" />
         <Navbar />
         <main className="relative z-10 mx-auto w-full max-w-6xl flex-1 px-5 py-8">

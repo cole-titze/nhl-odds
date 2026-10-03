@@ -149,12 +149,23 @@ html.dark {
 /* iOS Safari 26+ ignores theme-color and tints the status bar from the
    background-color of whatever fixed/sticky element sits just below the top
    edge, and a translucent or hidden one leaves it grey or see-through. This
-   solid black strip above the navbar is what Safari samples, so the status
-   bar is always black. Only rendered on iOS Safari (the only engine with
-   -webkit-touch-callout), where it reads as part of the black status bar. */
+   solid strip above the navbar is what Safari samples. Its color is each
+   theme's navbar as rendered (glass composited over the page or scene,
+   measured in a browser), so the header appears to run up behind the status
+   bar. Only rendered on iOS Safari (the only engine with
+   -webkit-touch-callout), where it reads as part of the status bar. */
 .status-bar-tint {
   display: none;
 }
+
+.theme-light { --status-bar: #fefefe; }
+.theme-dark { --status-bar: #131314; }
+.theme-ice { --status-bar: #f5f9fb; }
+.theme-stars { --status-bar: #070a12; }
+.theme-aurora { --status-bar: #151b22; }
+.theme-team { --status-bar: #0a0a10; }
+.theme-contrast-light { --status-bar: #ffffff; }
+.theme-contrast-dark { --status-bar: #000000; }
 
 @supports (-webkit-touch-callout: none) {
   .status-bar-tint {
@@ -165,7 +176,7 @@ html.dark {
     right: 0;
     height: 6px;
     z-index: 60;
-    background-color: #000;
+    background-color: var(--status-bar, #000);
   }
 }
 
