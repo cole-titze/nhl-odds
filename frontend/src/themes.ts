@@ -114,12 +114,29 @@ export const DEFAULT_TEAM = 'TOR';
 export const teamLogo = (abbrev: string) =>
   `https://assets.nhle.com/logos/nhl/svg/${abbrev}_dark.svg`;
 
+function luminance(rgb: number[]): number {
+  const [r, g, b] = rgb.map((c) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/** Black or white, whichever reads better on the team's button fill
+ * (index.css draws it as the accent mixed 80% with black). */
+function onAccentColor(accent: string): string {
+  const fill = [1, 3, 5].map((i) => parseInt(accent.slice(i, i + 2), 16) * 0.8);
+  const l = luminance(fill);
+  return 1.05 / (l + 0.05) >= (l + 0.05) / 0.05 ? '#ffffff' : '#000000';
+}
+
 /** CSS custom properties the `team` theme reads (see index.css). */
 export function teamVars(abbrev: string): Record<string, string> {
   const team =
     TEAMS.find((t) => t.abbrev === abbrev) ?? TEAMS.find((t) => t.abbrev === DEFAULT_TEAM)!;
   return {
     '--team-accent': team.accent,
+    '--team-on-accent': onAccentColor(team.accent),
     '--team-1': team.primary,
     '--team-2': team.secondary,
     '--team-logo': `url("${teamLogo(team.abbrev)}")`,

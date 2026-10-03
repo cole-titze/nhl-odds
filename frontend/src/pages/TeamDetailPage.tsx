@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useFetch } from '../hooks/useFetch';
 import { getTeam } from '../api/teams';
 import { getCurrentSeason } from '../utils/season';
@@ -11,6 +11,7 @@ import { LogLossChart } from '../components/LogLossChart';
 import { Winner } from '../types';
 import { useOddsFormatContext } from '../contexts/OddsFormatContext';
 import { formatOdds } from '../utils/oddsFormat';
+import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
 
 function StatCard({
   label,
@@ -25,11 +26,13 @@ function StatCard({
 }) {
   return (
     <div className="glass rounded-xl p-4 text-center">
-      <div className={`stat-number text-2xl font-bold ${accent ? 'text-accent-500' : ''}`}>
+      <div
+        className={`stat-number text-2xl font-bold ${accent ? 'text-accent-600 dark:text-accent-400' : ''}`}
+      >
         {value}
       </div>
       <div className="text-xs text-surface-500 dark:text-surface-400 mt-1">{label}</div>
-      {sub && <div className="text-xs text-surface-400 dark:text-surface-500 mt-0.5">{sub}</div>}
+      {sub && <div className="text-xs text-surface-500 dark:text-surface-400 mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -74,14 +77,29 @@ export function TeamDetailPage() {
   if (loading) {
     return (
       <div className="space-y-4">
+        <PageTitle title="Team" />
+        <LoadingStatus label="Loading team…" />
         <Skeleton className="h-10 w-1/3" />
         <Skeleton className="h-64 w-full" />
       </div>
     );
   }
 
-  if (error) return <div className="glass rounded-xl text-center text-red-500 py-8">{error}</div>;
-  if (!team) return <div className="text-center text-surface-400 py-12">Team not found.</div>;
+  if (error)
+    return (
+      <div
+        role="alert"
+        className="glass rounded-xl text-center text-red-700 dark:text-red-400 py-8"
+      >
+        {error}
+      </div>
+    );
+  if (!team)
+    return (
+      <div className="text-center text-surface-500 dark:text-surface-400 py-12">
+        Team not found.
+      </div>
+    );
 
   const accuracyPct =
     team.totalGameCount > 0
@@ -94,11 +112,12 @@ export function TeamDetailPage() {
 
   return (
     <div>
+      <PageTitle title={`${team.locationName} ${team.teamName}`} />
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
         <div className="flex items-center gap-5">
           <img
             src={team.logoUri}
-            alt={team.teamName}
+            alt=""
             className="h-20 w-20 object-contain drop-shadow-lg"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none';
@@ -109,6 +128,7 @@ export function TeamDetailPage() {
               {team.locationName} {team.teamName}
             </h1>
             <span className="stat-number text-sm text-surface-500 dark:text-surface-400">
+              <span className="sr-only">Record (wins, losses, overtime losses): </span>
               {team.seasonWins}-{team.seasonLosses}-{team.seasonOvertimeLosses}
             </span>
           </div>
@@ -149,21 +169,49 @@ export function TeamDetailPage() {
 
       {team.gameOddsVM.length > 0 && (
         <div className="glass rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
+          <ScrollRegion label="Game log">
             <table className="w-full text-sm">
+              <caption className="sr-only">
+                Game log. Rows are tinted blue when the in-house model picked the winner and red
+                when it missed.
+              </caption>
               <thead>
-                <tr className="border-b border-surface-200 dark:border-white/[0.06] text-left text-xs uppercase tracking-wider text-surface-400 dark:text-surface-500">
-                  <th className="py-3 px-4 font-semibold">Date</th>
-                  <th className="py-3 px-4 font-semibold">Opponent</th>
-                  <th className="py-3 px-4 text-center font-semibold">H/A</th>
-                  <th className="py-3 px-4 text-center font-semibold">Home Odds</th>
-                  <th className="py-3 px-4 text-center font-semibold">DK Odds</th>
-                  <th className="py-3 px-4 text-center font-semibold">Kalshi Odds</th>
-                  <th className="py-3 px-4 text-center font-semibold">Score</th>
-                  <th className="py-3 px-4 text-center font-semibold">Result</th>
-                  <th className="py-3 px-4 text-center font-semibold">Home Loss</th>
-                  <th className="py-3 px-4 text-center font-semibold">DK Loss</th>
-                  <th className="py-3 px-4 text-center font-semibold">Kalshi Loss</th>
+                <tr className="border-b border-surface-200 dark:border-white/[0.06] text-left text-xs uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                  <th scope="col" className="py-3 px-4 font-semibold">
+                    Date
+                  </th>
+                  <th scope="col" className="py-3 px-4 font-semibold">
+                    Opponent
+                  </th>
+                  <th scope="col" className="py-3 px-4 text-center font-semibold">
+                    <abbr title="Home or away" className="no-underline">
+                      H/A
+                    </abbr>
+                  </th>
+                  <th scope="col" className="py-3 px-4 text-center font-semibold">
+                    Home Odds
+                  </th>
+                  <th scope="col" className="py-3 px-4 text-center font-semibold">
+                    DK Odds
+                  </th>
+                  <th scope="col" className="py-3 px-4 text-center font-semibold">
+                    Kalshi Odds
+                  </th>
+                  <th scope="col" className="py-3 px-4 text-center font-semibold">
+                    Score
+                  </th>
+                  <th scope="col" className="py-3 px-4 text-center font-semibold">
+                    Result
+                  </th>
+                  <th scope="col" className="py-3 px-4 text-center font-semibold">
+                    Home Loss
+                  </th>
+                  <th scope="col" className="py-3 px-4 text-center font-semibold">
+                    DK Loss
+                  </th>
+                  <th scope="col" className="py-3 px-4 text-center font-semibold">
+                    Kalshi Loss
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -189,7 +237,10 @@ export function TeamDetailPage() {
                   return (
                     <tr
                       key={game.id}
-                      onClick={() => navigate(`/game/${game.id}`, { state: { game } })}
+                      onClick={(e) => {
+                        if (!(e.target as HTMLElement).closest('a'))
+                          navigate(`/game/${game.id}`, { state: { game } });
+                      }}
                       className={`border-b border-surface-100 dark:border-white/[0.03] transition-colors cursor-pointer ${
                         correct
                           ? 'bg-blue-50/50 dark:bg-blue-500/[0.04] hover:bg-blue-50 dark:hover:bg-blue-500/[0.07]'
@@ -199,7 +250,13 @@ export function TeamDetailPage() {
                       }`}
                     >
                       <td className="py-3 px-4 font-mono text-xs">
-                        {formatShortDate(game.gameDate)}
+                        <Link
+                          to={`/game/${game.id}`}
+                          state={{ game }}
+                          className="hover:text-accent-600 dark:hover:text-accent-400 hover:underline"
+                        >
+                          {formatShortDate(game.gameDate)}
+                        </Link>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2.5">
@@ -222,15 +279,26 @@ export function TeamDetailPage() {
                         <span
                           className={`inline-block px-2 py-0.5 rounded text-xs font-mono font-semibold ${
                             isHome
-                              ? 'bg-accent-500/10 text-accent-500'
+                              ? 'bg-accent-500/10 text-accent-600 dark:text-accent-400'
                               : 'bg-surface-200/50 dark:bg-white/[0.05] text-surface-500 dark:text-surface-400'
                           }`}
                         >
-                          {isHome ? 'H' : 'A'}
+                          <span aria-hidden="true">{isHome ? 'H' : 'A'}</span>
+                          <span className="sr-only">{isHome ? 'Home' : 'Away'}</span>
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-center stat-number text-accent-500">
+                      <td className="py-3 px-4 text-center stat-number text-accent-600 dark:text-accent-400">
                         {teamSide ? formatOdds(teamSide.modelOdds, format) : '-'}
+                        {game.hasBeenPlayed && (
+                          <>
+                            <span aria-hidden="true" className="ml-1">
+                              {correct ? '\u2713' : '\u2717'}
+                            </span>
+                            <span className="sr-only">
+                              {correct ? ' (correct pick)' : ' (missed pick)'}
+                            </span>
+                          </>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-center stat-number">
                         {dkTeamOdds != null ? formatOdds(dkTeamOdds, format) : '-'}
@@ -247,13 +315,16 @@ export function TeamDetailPage() {
                         {game.hasBeenPlayed ? (
                           <span
                             className={`inline-block px-2 py-0.5 rounded text-xs font-bold ${
-                              won ? 'bg-blue-500/10 text-blue-500' : 'bg-red-500/10 text-red-500'
+                              won
+                                ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400'
+                                : 'bg-red-500/10 text-red-700 dark:text-red-400'
                             }`}
                           >
-                            {won ? 'W' : 'L'}
+                            <span aria-hidden="true">{won ? 'W' : 'L'}</span>
+                            <span className="sr-only">{won ? 'Win' : 'Loss'}</span>
                           </span>
                         ) : (
-                          <span className="text-surface-400">-</span>
+                          <span className="text-surface-500 dark:text-surface-400">-</span>
                         )}
                       </td>
                       <td className="py-3 px-4 text-center stat-number text-xs">
@@ -276,12 +347,12 @@ export function TeamDetailPage() {
                 })}
               </tbody>
             </table>
-          </div>
+          </ScrollRegion>
         </div>
       )}
 
       {team.gameOddsVM.length === 0 && (
-        <div className="text-center text-surface-400 dark:text-surface-500 py-12">
+        <div className="text-center text-surface-500 dark:text-surface-400 py-12">
           No games found for this team and season.
         </div>
       )}

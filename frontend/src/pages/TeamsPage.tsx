@@ -3,6 +3,7 @@ import { SeasonSelector } from '../components/SeasonSelector';
 import { TeamRow } from '../components/TeamRow';
 import { LogLossChart } from '../components/LogLossChart';
 import { Skeleton, StatCardSkeleton } from '../components/Skeleton';
+import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
 import { useFetch } from '../hooks/useFetch';
 import { getAllTeams } from '../api/teams';
 import { getCurrentSeason } from '../utils/season';
@@ -154,20 +155,46 @@ export function TeamsPage() {
     }
   }
 
-  const arrow = (key: SortKey) =>
-    sortKey === key ? (sortDir === 'asc' ? ' \u25B2' : ' \u25BC') : '';
+  const sortHeader = (key: SortKey, label: string, align: 'left' | 'center' = 'center') => {
+    const active = sortKey === key;
+    return (
+      <th
+        scope="col"
+        aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+        className={`py-3 px-4 font-semibold ${align === 'center' ? 'text-center' : ''}`}
+      >
+        <button
+          type="button"
+          onClick={() => handleSort(key)}
+          className="uppercase tracking-wider font-semibold cursor-pointer select-none hover:text-surface-900 dark:hover:text-white transition-colors"
+        >
+          {label}
+          {active && <span aria-hidden="true">{sortDir === 'asc' ? ' \u25B2' : ' \u25BC'}</span>}
+        </button>
+      </th>
+    );
+  };
 
   return (
     <div>
+      <PageTitle title="Teams" />
       <div className="flex items-center justify-between mb-8">
         <h1 className="font-display text-3xl font-bold tracking-tight">Teams</h1>
         <SeasonSelector value={season} onChange={setSeason} />
       </div>
 
-      {error && <div className="glass rounded-xl text-center text-red-500 py-8">{error}</div>}
+      {error && (
+        <div
+          role="alert"
+          className="glass rounded-xl text-center text-red-700 dark:text-red-400 py-8"
+        >
+          {error}
+        </div>
+      )}
 
       {loading && (
         <>
+          <LoadingStatus label="Loading teams…" />
           <Skeleton className="h-[310px] w-full mb-4 rounded-xl" />
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
             <StatCardSkeleton />
@@ -196,12 +223,12 @@ export function TeamsPage() {
               <div className="stat-number text-2xl sm:text-3xl text-surface-900 dark:text-white">
                 {data.seasonTotals.totalGameCount}
               </div>
-              <div className="text-[10px] sm:text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+              <div className="text-[10px] sm:text-xs font-medium text-surface-500 dark:text-surface-400 mt-1 uppercase tracking-wider">
                 Total Games
               </div>
             </div>
             <div className="glass rounded-xl p-4 sm:p-5 text-center">
-              <div className="stat-number text-2xl sm:text-3xl text-accent-500">
+              <div className="stat-number text-2xl sm:text-3xl text-accent-600 dark:text-accent-400">
                 {data.seasonTotals.totalGameCount > 0
                   ? (
                       (data.seasonTotals.totalModelAccurateGameCount /
@@ -211,7 +238,7 @@ export function TeamsPage() {
                   : '0.0'}
                 %
               </div>
-              <div className="text-[10px] sm:text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+              <div className="text-[10px] sm:text-xs font-medium text-surface-500 dark:text-surface-400 mt-1 uppercase tracking-wider">
                 Home Acc
               </div>
             </div>
@@ -219,7 +246,7 @@ export function TeamsPage() {
               <div className="stat-number text-2xl sm:text-3xl text-surface-900 dark:text-white">
                 {data.seasonTotals.modelLogLoss.toFixed(4)}
               </div>
-              <div className="text-[10px] sm:text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+              <div className="text-[10px] sm:text-xs font-medium text-surface-500 dark:text-surface-400 mt-1 uppercase tracking-wider">
                 Home Loss
               </div>
             </div>
@@ -230,12 +257,12 @@ export function TeamsPage() {
                 <div className="stat-number text-2xl sm:text-3xl text-surface-900 dark:text-white">
                   {data.seasonTotals.draftKingsGameCount}
                 </div>
-                <div className="text-[10px] sm:text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                <div className="text-[10px] sm:text-xs font-medium text-surface-500 dark:text-surface-400 mt-1 uppercase tracking-wider">
                   DK Games
                 </div>
               </div>
               <div className="glass rounded-xl p-4 sm:p-5 text-center">
-                <div className="stat-number text-2xl sm:text-3xl text-accent-500">
+                <div className="stat-number text-2xl sm:text-3xl text-accent-600 dark:text-accent-400">
                   {(
                     (data.seasonTotals.draftKingsAccurateGameCount /
                       data.seasonTotals.draftKingsGameCount) *
@@ -243,7 +270,7 @@ export function TeamsPage() {
                   ).toFixed(1)}
                   %
                 </div>
-                <div className="text-[10px] sm:text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                <div className="text-[10px] sm:text-xs font-medium text-surface-500 dark:text-surface-400 mt-1 uppercase tracking-wider">
                   DK Acc
                 </div>
               </div>
@@ -251,7 +278,7 @@ export function TeamsPage() {
                 <div className="stat-number text-2xl sm:text-3xl text-surface-900 dark:text-white">
                   {data.seasonTotals.draftKingsLogLoss.toFixed(4)}
                 </div>
-                <div className="text-[10px] sm:text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                <div className="text-[10px] sm:text-xs font-medium text-surface-500 dark:text-surface-400 mt-1 uppercase tracking-wider">
                   DK Loss
                 </div>
               </div>
@@ -263,15 +290,15 @@ export function TeamsPage() {
                 <div className="stat-number text-2xl sm:text-3xl text-surface-900 dark:text-white">
                   {kalshiSeasonTotals.games}
                 </div>
-                <div className="text-[10px] sm:text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                <div className="text-[10px] sm:text-xs font-medium text-surface-500 dark:text-surface-400 mt-1 uppercase tracking-wider">
                   Kalshi Games
                 </div>
               </div>
               <div className="glass rounded-xl p-4 sm:p-5 text-center">
-                <div className="stat-number text-2xl sm:text-3xl text-accent-500">
+                <div className="stat-number text-2xl sm:text-3xl text-accent-600 dark:text-accent-400">
                   {((kalshiSeasonTotals.accurate / kalshiSeasonTotals.games) * 100).toFixed(1)}%
                 </div>
-                <div className="text-[10px] sm:text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                <div className="text-[10px] sm:text-xs font-medium text-surface-500 dark:text-surface-400 mt-1 uppercase tracking-wider">
                   Kalshi Acc
                 </div>
               </div>
@@ -279,7 +306,7 @@ export function TeamsPage() {
                 <div className="stat-number text-2xl sm:text-3xl text-surface-900 dark:text-white">
                   {kalshiSeasonTotals.logLoss.toFixed(4)}
                 </div>
-                <div className="text-[10px] sm:text-xs font-medium text-surface-400 dark:text-surface-500 mt-1 uppercase tracking-wider">
+                <div className="text-[10px] sm:text-xs font-medium text-surface-500 dark:text-surface-400 mt-1 uppercase tracking-wider">
                   Kalshi Loss
                 </div>
               </div>
@@ -291,72 +318,22 @@ export function TeamsPage() {
 
       {!loading && sorted.length > 0 && (
         <div className="glass rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
+          <ScrollRegion label="Team standings">
             <table className="w-full text-sm">
+              <caption className="sr-only">
+                Team standings and prediction accuracy. Column headers are sortable.
+              </caption>
               <thead>
-                <tr className="border-b border-surface-200 dark:border-white/[0.06] text-left text-xs uppercase tracking-wider text-surface-400 dark:text-surface-500">
-                  <th
-                    className="py-3 px-4 cursor-pointer select-none hover:text-surface-900 dark:hover:text-white transition-colors font-semibold"
-                    onClick={() => handleSort('name')}
-                  >
-                    Team{arrow('name')}
-                  </th>
-                  <th
-                    className="py-3 px-4 text-center cursor-pointer select-none hover:text-surface-900 dark:hover:text-white transition-colors font-semibold"
-                    onClick={() => handleSort('points')}
-                  >
-                    Pts{arrow('points')}
-                  </th>
-                  <th
-                    className="py-3 px-4 text-center cursor-pointer select-none hover:text-surface-900 dark:hover:text-white transition-colors font-semibold"
-                    onClick={() => handleSort('record')}
-                  >
-                    Record{arrow('record')}
-                  </th>
-                  <th
-                    className="py-3 px-4 text-center cursor-pointer select-none hover:text-surface-900 dark:hover:text-white transition-colors font-semibold"
-                    onClick={() => handleSort('accuracy')}
-                  >
-                    Home Acc{arrow('accuracy')}
-                  </th>
-                  <th
-                    className="py-3 px-4 text-center cursor-pointer select-none hover:text-surface-900 dark:hover:text-white transition-colors font-semibold"
-                    onClick={() => handleSort('logLoss')}
-                  >
-                    Home Loss{arrow('logLoss')}
-                  </th>
-                  {hasDk && (
-                    <th
-                      className="py-3 px-4 text-center cursor-pointer select-none hover:text-surface-900 dark:hover:text-white transition-colors font-semibold"
-                      onClick={() => handleSort('dkAccuracy')}
-                    >
-                      DK Acc{arrow('dkAccuracy')}
-                    </th>
-                  )}
-                  {hasDk && (
-                    <th
-                      className="py-3 px-4 text-center cursor-pointer select-none hover:text-surface-900 dark:hover:text-white transition-colors font-semibold"
-                      onClick={() => handleSort('dkLogLoss')}
-                    >
-                      DK Loss{arrow('dkLogLoss')}
-                    </th>
-                  )}
-                  {hasKalshi && (
-                    <th
-                      className="py-3 px-4 text-center cursor-pointer select-none hover:text-surface-900 dark:hover:text-white transition-colors font-semibold"
-                      onClick={() => handleSort('kalshiAccuracy')}
-                    >
-                      Kalshi Acc{arrow('kalshiAccuracy')}
-                    </th>
-                  )}
-                  {hasKalshi && (
-                    <th
-                      className="py-3 px-4 text-center cursor-pointer select-none hover:text-surface-900 dark:hover:text-white transition-colors font-semibold"
-                      onClick={() => handleSort('kalshiLogLoss')}
-                    >
-                      Kalshi Loss{arrow('kalshiLogLoss')}
-                    </th>
-                  )}
+                <tr className="border-b border-surface-200 dark:border-white/[0.06] text-left text-xs uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                  {sortHeader('name', 'Team', 'left')}
+                  {sortHeader('points', 'Pts')}
+                  {sortHeader('record', 'Record')}
+                  {sortHeader('accuracy', 'Home Acc')}
+                  {sortHeader('logLoss', 'Home Loss')}
+                  {hasDk && sortHeader('dkAccuracy', 'DK Acc')}
+                  {hasDk && sortHeader('dkLogLoss', 'DK Loss')}
+                  {hasKalshi && sortHeader('kalshiAccuracy', 'Kalshi Acc')}
+                  {hasKalshi && sortHeader('kalshiLogLoss', 'Kalshi Loss')}
                 </tr>
               </thead>
               <tbody>
@@ -372,12 +349,12 @@ export function TeamsPage() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </ScrollRegion>
         </div>
       )}
 
       {!loading && !error && sorted.length === 0 && (
-        <div className="text-center text-surface-400 dark:text-surface-500 py-12">
+        <div className="text-center text-surface-500 dark:text-surface-400 py-12">
           No team data available for this season.
         </div>
       )}

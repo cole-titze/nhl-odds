@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { TeamVM } from '../types';
 import { TeamLogo } from './TeamLogo';
 
@@ -28,17 +28,26 @@ export function TeamRow({ team, season, showDk, showKalshi, kalshiStats }: TeamR
       ? ((team.draftKingsAccurateGameCount / team.draftKingsGameCount) * 100).toFixed(1)
       : '-';
 
+  const href = `/team/${team.id}?season=${season}`;
+
   return (
+    // The whole row is clickable for pointer users; the team name is the real
+    // link, so keyboard and screen reader users get a focusable target.
     <tr
-      onClick={() => navigate(`/team/${team.id}?season=${season}`)}
+      onClick={(e) => {
+        if (!(e.target as HTMLElement).closest('a')) navigate(href);
+      }}
       className="cursor-pointer table-row-hover border-b border-surface-100 dark:border-white/[0.04] group"
     >
       <td className="py-3.5 px-4">
         <div className="flex items-center gap-3">
-          <TeamLogo src={team.logoUri} alt={team.teamName} className="h-8 w-8 object-contain" />
-          <span className="font-medium group-hover:text-accent-500 transition-colors">
+          <TeamLogo src={team.logoUri} alt="" className="h-8 w-8 object-contain" />
+          <Link
+            to={href}
+            className="font-medium group-hover:text-accent-600 dark:group-hover:text-accent-400 transition-colors"
+          >
             {team.locationName} {team.teamName}
-          </span>
+          </Link>
         </div>
       </td>
       <td className="py-3.5 px-4 text-center stat-number text-sm">

@@ -3,6 +3,7 @@ import { GamesFeed } from '../components/GamesFeed';
 import { SeasonSelector } from '../components/SeasonSelector';
 import { CardSkeleton } from '../components/Skeleton';
 import { StrategyPicker } from '../components/StrategyPicker';
+import { LoadingStatus, PageTitle } from '../components/A11y';
 import { useBidirectionalGames } from '../hooks/useBidirectionalGames';
 import { toDateInputValue } from '../utils/dates';
 import { getCurrentSeason } from '../utils/season';
@@ -24,7 +25,8 @@ function scrollToDate(date: string, behavior: ScrollBehavior): boolean {
   const el = document.getElementById(`date-${date}`);
   if (!el) return false;
   const top = el.getBoundingClientRect().top + window.scrollY - getStickyOffset();
-  window.scrollTo({ top: Math.max(0, top), behavior });
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  window.scrollTo({ top: Math.max(0, top), behavior: reduceMotion ? 'instant' : behavior });
   return true;
 }
 
@@ -165,6 +167,8 @@ export function GamesPage() {
 
   return (
     <div>
+      <PageTitle title="Games" />
+      <h1 className="sr-only">Games</h1>
       <div
         id={FILTER_BAR_ID}
         className="app-subbar sticky top-14 md:top-16 z-40 -mx-5 px-5 py-3 mb-6 backdrop-blur bg-white/70 dark:bg-surface-950/70 border-b border-surface-200/60 dark:border-white/[0.06]"
@@ -178,6 +182,7 @@ export function GamesPage() {
                 if (!e.target.value) return;
                 jumpToDate(new Date(e.target.value + 'T12:00:00'));
               }}
+              aria-label="Jump to date"
               className="px-2.5 py-1.5 rounded-lg glass text-sm font-mono cursor-pointer"
             />
             <SeasonSelector value={season} onChange={setSeason} />
@@ -191,14 +196,16 @@ export function GamesPage() {
                   : 'overUnder'
             }
           />
-          <div className="flex gap-1">
+          <div className="flex gap-1" role="group" aria-label="Bet type">
             {(['moneyline', 'spread', 'overUnder'] as const).map((type) => (
               <button
                 key={type}
+                type="button"
+                aria-pressed={oddsType === type}
                 onClick={() => setOddsType(type)}
                 className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
                   oddsType === type
-                    ? 'bg-accent-500 text-white'
+                    ? 'bg-accent-600 text-on-accent'
                     : 'glass text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200'
                 }`}
               >
@@ -210,11 +217,17 @@ export function GamesPage() {
       </div>
 
       {initialError && (
-        <div className="glass rounded-xl text-center text-red-500 py-8 px-4">{error}</div>
+        <div
+          role="alert"
+          className="glass rounded-xl text-center text-red-700 dark:text-red-400 py-8 px-4"
+        >
+          {error}
+        </div>
       )}
 
       {initialLoading && (
         <div className="min-h-screen grid grid-cols-1 md:grid-cols-2 gap-4 content-start">
+          <LoadingStatus label="Loading games…" />
           {Array.from({ length: 6 }).map((_, i) => (
             <CardSkeleton key={i} />
           ))}
@@ -243,9 +256,12 @@ export function GamesPage() {
         <button
           onClick={jumpToToday}
           ref={setJumpButton}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 px-4 py-2 text-sm font-medium rounded-full bg-accent-500 text-white shadow-lg hover:bg-accent-600 transition-colors"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 px-4 py-2 text-sm font-medium rounded-full bg-accent-600 text-on-accent shadow-lg hover:bg-accent-700 transition-colors"
         >
-          {homePosition === 'above' ? '↑ ' : homePosition === 'below' ? '↓ ' : ''}Jump to today
+          <span aria-hidden="true">
+            {homePosition === 'above' ? '↑ ' : homePosition === 'below' ? '↓ ' : ''}
+          </span>
+          Jump to today
         </button>
       )}
     </div>

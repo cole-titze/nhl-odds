@@ -16,6 +16,7 @@ import { useStrategy } from '../contexts/StrategyContext';
 import { StrategyPicker } from '../components/StrategyPicker';
 import { Skeleton } from '../components/Skeleton';
 import { TeamLogo } from '../components/TeamLogo';
+import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
 
 function formatPoint(point: number): string {
   return point > 0 ? `+${point}` : `${point}`;
@@ -57,20 +58,40 @@ export function GamePage() {
   if (loading) {
     return (
       <div className="space-y-4 max-w-2xl mx-auto">
+        <PageTitle title="Game" />
+        <LoadingStatus label="Loading game…" />
         <Skeleton className="h-40 w-full" />
         <Skeleton className="h-64 w-full" />
       </div>
     );
   }
 
-  if (error) return <div className="glass rounded-xl text-center text-red-500 py-8">{error}</div>;
-  if (!game) return <div className="text-center text-surface-400 py-12">Game not found.</div>;
+  if (error)
+    return (
+      <div
+        role="alert"
+        className="glass rounded-xl text-center text-red-700 dark:text-red-400 py-8"
+      >
+        {error}
+      </div>
+    );
+  if (!game)
+    return (
+      <div className="text-center text-surface-500 dark:text-surface-400 py-12">
+        Game not found.
+      </div>
+    );
 
   const borderClass = predictionBorderClass(game);
   const correct = game.hasBeenPlayed ? wasCorrectlyPredicted(game) : null;
+  const matchup = `${game.awayTeam ? `${game.awayTeam.locationName} ${game.awayTeam.teamName}` : 'TBD'} at ${
+    game.homeTeam ? `${game.homeTeam.locationName} ${game.homeTeam.teamName}` : 'TBD'
+  }`;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      <PageTitle title={matchup} />
+      <h1 className="sr-only">{matchup}</h1>
       {/* Matchup Header */}
       <div className={`glass rounded-xl px-6 py-6 ${borderClass}`}>
         <div className="grid grid-cols-3 items-center">
@@ -82,7 +103,9 @@ export function GamePage() {
           <div className="flex flex-col items-center gap-1">
             <div
               className={`text-xs font-mono font-bold tracking-widest uppercase ${
-                game.hasBeenPlayed ? 'text-surface-500 dark:text-surface-400' : 'text-accent-500'
+                game.hasBeenPlayed
+                  ? 'text-surface-500 dark:text-surface-400'
+                  : 'text-accent-600 dark:text-accent-400'
               }`}
             >
               {game.hasBeenPlayed ? 'Final' : 'VS'}
@@ -90,12 +113,12 @@ export function GamePage() {
             {game.hasBeenPlayed ? (
               <div className="stat-number text-2xl text-surface-900 dark:text-white">
                 {game.awayTeam?.goals ?? 0}
-                <span className="text-surface-400 dark:text-surface-500 mx-2">-</span>
+                <span className="text-surface-500 dark:text-surface-400 mx-2">-</span>
                 {game.homeTeam?.goals ?? 0}
               </div>
             ) : (
               game.gameDate && (
-                <div className="text-xs font-mono text-surface-400 dark:text-surface-500">
+                <div className="text-xs font-mono text-surface-500 dark:text-surface-400">
                   {new Date(game.gameDate).toLocaleTimeString([], {
                     hour: 'numeric',
                     minute: '2-digit',
@@ -104,7 +127,7 @@ export function GamePage() {
               )
             )}
             {game.gameDate && (
-              <div className="text-xs text-surface-400 dark:text-surface-500 mt-1">
+              <div className="text-xs text-surface-500 dark:text-surface-400 mt-1">
                 {new Date(game.gameDate).toLocaleDateString([], {
                   weekday: 'short',
                   month: 'short',
@@ -124,17 +147,17 @@ export function GamePage() {
 
       {/* Model Prediction */}
       <div className="glass rounded-xl px-6 py-5">
-        <h2 className="text-xs font-mono font-bold tracking-widest uppercase text-surface-400 dark:text-surface-500 mb-4">
+        <h2 className="text-xs font-mono font-bold tracking-widest uppercase text-surface-500 dark:text-surface-400 mb-4">
           Model Prediction
         </h2>
         <div className="grid grid-cols-3 items-center text-sm font-mono">
-          <span className="text-center stat-number text-accent-500">
+          <span className="text-center stat-number text-accent-600 dark:text-accent-400">
             {game.awayTeam ? formatOdds(game.awayTeam.modelOdds, format) : '-'}
           </span>
-          <span className="text-center text-surface-400 dark:text-surface-500">
+          <span className="text-center text-surface-500 dark:text-surface-400">
             {getModelName(game.modelId)}
           </span>
-          <span className="text-center stat-number text-accent-500">
+          <span className="text-center stat-number text-accent-600 dark:text-accent-400">
             {game.homeTeam ? formatOdds(game.homeTeam.modelOdds, format) : '-'}
           </span>
         </div>
@@ -142,7 +165,9 @@ export function GamePage() {
           <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-surface-200/50 dark:border-white/[0.04]">
             <span
               className={`inline-block px-2.5 py-0.5 rounded text-xs font-bold ${
-                correct ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'
+                correct
+                  ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                  : 'bg-red-500/10 text-red-700 dark:text-red-400'
               }`}
             >
               {correct ? 'Correct' : 'Incorrect'}
@@ -157,21 +182,21 @@ export function GamePage() {
       {/* Spread & Total Predictions */}
       {(game.predictedSpread != null || game.predictedTotal != null) && (
         <div className="glass rounded-xl px-6 py-5">
-          <h2 className="text-xs font-mono font-bold tracking-widest uppercase text-surface-400 dark:text-surface-500 mb-4">
+          <h2 className="text-xs font-mono font-bold tracking-widest uppercase text-surface-500 dark:text-surface-400 mb-4">
             Spread & Total Predictions
           </h2>
           <div className="grid grid-cols-2 gap-4 text-sm">
             {game.predictedSpread != null && (
               <div className="text-center">
-                <div className="text-surface-400 dark:text-surface-500 text-xs mb-1">
+                <div className="text-surface-500 dark:text-surface-400 text-xs mb-1">
                   Predicted Spread
                 </div>
-                <div className="stat-number text-lg text-accent-500">
+                <div className="stat-number text-lg text-accent-600 dark:text-accent-400">
                   {game.predictedSpread > 0 ? '+' : ''}
                   {game.predictedSpread.toFixed(2)}
                 </div>
                 {game.spreadCoverProb != null && (
-                  <div className="text-xs text-surface-400 dark:text-surface-500 mt-1">
+                  <div className="text-xs text-surface-500 dark:text-surface-400 mt-1">
                     Cover: {(game.spreadCoverProb * 100).toFixed(0)}%
                   </div>
                 )}
@@ -179,14 +204,14 @@ export function GamePage() {
             )}
             {game.predictedTotal != null && (
               <div className="text-center">
-                <div className="text-surface-400 dark:text-surface-500 text-xs mb-1">
+                <div className="text-surface-500 dark:text-surface-400 text-xs mb-1">
                   Predicted Total
                 </div>
-                <div className="stat-number text-lg text-accent-500">
+                <div className="stat-number text-lg text-accent-600 dark:text-accent-400">
                   {game.predictedTotal.toFixed(1)}
                 </div>
                 {game.totalOverProb != null && (
-                  <div className="text-xs text-surface-400 dark:text-surface-500 mt-1">
+                  <div className="text-xs text-surface-500 dark:text-surface-400 mt-1">
                     Over: {(game.totalOverProb * 100).toFixed(0)}%
                   </div>
                 )}
@@ -200,38 +225,54 @@ export function GamePage() {
       {game.bookmakerOdds?.length > 0 && (
         <div className="glass rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-surface-200/50 dark:border-white/[0.04] flex items-center justify-between">
-            <h2 className="text-xs font-mono font-bold tracking-widest uppercase text-surface-400 dark:text-surface-500">
+            <h2 className="text-xs font-mono font-bold tracking-widest uppercase text-surface-500 dark:text-surface-400">
               Bookmaker Odds
             </h2>
             <StrategyPicker />
           </div>
-          <div className="overflow-x-auto">
+          <ScrollRegion label="Bookmaker odds">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-surface-200 dark:border-white/[0.06] text-left text-xs uppercase tracking-wider text-surface-400 dark:text-surface-500">
-                  <th className="py-3 px-4 font-semibold">Bookmaker</th>
-                  <th className="py-3 px-4 text-center font-semibold" colSpan={2}>
+                <tr className="border-b border-surface-200 dark:border-white/[0.06] text-left text-xs uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                  <th scope="col" className="py-3 px-4 font-semibold">
+                    Bookmaker
+                  </th>
+                  <th scope="colgroup" className="py-3 px-4 text-center font-semibold" colSpan={2}>
                     Moneyline
                   </th>
-                  <th className="py-3 px-4 text-center font-semibold" colSpan={2}>
+                  <th scope="colgroup" className="py-3 px-4 text-center font-semibold" colSpan={2}>
                     Spread
                   </th>
-                  <th className="py-3 px-4 text-center font-semibold" colSpan={2}>
+                  <th scope="colgroup" className="py-3 px-4 text-center font-semibold" colSpan={2}>
                     Over/Under
                   </th>
                   {game.hasBeenPlayed && (
-                    <th className="py-3 px-4 text-center font-semibold">Log Loss</th>
+                    <th scope="col" className="py-3 px-4 text-center font-semibold">
+                      Log Loss
+                    </th>
                   )}
                 </tr>
-                <tr className="border-b border-surface-100 dark:border-white/[0.03] text-[10px] uppercase tracking-wider text-surface-300 dark:text-surface-600">
-                  <th className="pb-2 px-4"></th>
-                  <th className="pb-2 px-2 text-center font-medium">Away</th>
-                  <th className="pb-2 px-2 text-center font-medium">Home</th>
-                  <th className="pb-2 px-2 text-center font-medium">Away</th>
-                  <th className="pb-2 px-2 text-center font-medium">Home</th>
-                  <th className="pb-2 px-2 text-center font-medium">Over</th>
-                  <th className="pb-2 px-2 text-center font-medium">Under</th>
-                  {game.hasBeenPlayed && <th className="pb-2 px-2"></th>}
+                <tr className="border-b border-surface-100 dark:border-white/[0.03] text-[10px] uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                  <td className="pb-2 px-4" />
+                  <th scope="col" className="pb-2 px-2 text-center font-medium">
+                    Away
+                  </th>
+                  <th scope="col" className="pb-2 px-2 text-center font-medium">
+                    Home
+                  </th>
+                  <th scope="col" className="pb-2 px-2 text-center font-medium">
+                    Away
+                  </th>
+                  <th scope="col" className="pb-2 px-2 text-center font-medium">
+                    Home
+                  </th>
+                  <th scope="col" className="pb-2 px-2 text-center font-medium">
+                    Over
+                  </th>
+                  <th scope="col" className="pb-2 px-2 text-center font-medium">
+                    Under
+                  </th>
+                  {game.hasBeenPlayed && <td className="pb-2 px-2" />}
                 </tr>
               </thead>
               <tbody>
@@ -246,7 +287,7 @@ export function GamePage() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </ScrollRegion>
         </div>
       )}
     </div>
@@ -262,18 +303,18 @@ function TeamHeader({
   isWinner: boolean;
   played: boolean;
 }) {
-  if (!team) return <div className="flex-1 text-center text-surface-400">TBD</div>;
+  if (!team)
+    return <div className="flex-1 text-center text-surface-500 dark:text-surface-400">TBD</div>;
 
   return (
     <div className={`flex flex-col items-center gap-2 ${isWinner && played ? 'font-bold' : ''}`}>
       <div className="relative">
-        <TeamLogo
-          src={team.logoUri}
-          alt={team.teamName}
-          className="h-20 w-20 object-contain drop-shadow-lg"
-        />
+        <TeamLogo src={team.logoUri} alt="" className="h-20 w-20 object-contain drop-shadow-lg" />
         {isWinner && played && (
-          <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-accent-500 flex items-center justify-center">
+          <div
+            aria-hidden="true"
+            className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-accent-500 flex items-center justify-center"
+          >
             <svg
               className="w-3 h-3 text-white"
               fill="none"
@@ -288,10 +329,11 @@ function TeamHeader({
       </div>
       <Link
         to={`/team/${team.id}`}
-        className="text-center leading-tight hover:text-accent-500 transition-colors"
+        className="text-center leading-tight hover:text-accent-600 dark:hover:text-accent-400 transition-colors"
       >
         <div className="text-xs text-surface-600 dark:text-surface-400">{team.locationName}</div>
         <div className="text-surface-900 dark:text-white text-sm font-medium">{team.teamName}</div>
+        {isWinner && played && <span className="sr-only"> (winner)</span>}
       </Link>
     </div>
   );
@@ -317,25 +359,25 @@ function BookmakerRow({
 
   return (
     <tr className="border-b border-surface-100 dark:border-white/[0.03] hover:bg-surface-50 dark:hover:bg-white/[0.02] transition-colors">
-      <td className="py-3 px-4 font-medium text-xs">
+      <th scope="row" className="py-3 px-4 font-medium text-xs text-left">
         <div className="flex items-center gap-2">
           {bm.bookmakerName}
           {valueBet && (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wide">
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wide">
               {valueBet.side === 'home' ? game.homeTeam?.teamName : game.awayTeam?.teamName}
               {' +'}
-              {(valueBet.edge * 100).toFixed(0)}%
+              {(valueBet.edge * 100).toFixed(0)}%<span className="sr-only"> suggested bet</span>
             </span>
           )}
         </div>
-      </td>
+      </th>
       <td
-        className={`${cellClass}${valueBet?.side === 'away' ? ' text-emerald-600 dark:text-emerald-400 font-bold' : ''}`}
+        className={`${cellClass}${valueBet?.side === 'away' ? ' text-emerald-700 dark:text-emerald-400 font-bold' : ''}`}
       >
         {formatOdds(bm.awayOdds, format)}
       </td>
       <td
-        className={`${cellClass}${valueBet?.side === 'home' ? ' text-emerald-600 dark:text-emerald-400 font-bold' : ''}`}
+        className={`${cellClass}${valueBet?.side === 'home' ? ' text-emerald-700 dark:text-emerald-400 font-bold' : ''}`}
       >
         {formatOdds(bm.homeOdds, format)}
       </td>

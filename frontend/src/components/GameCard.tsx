@@ -57,20 +57,20 @@ function TeamSide({
   isWinner: boolean;
   played: boolean;
 }) {
-  if (!team) return <div className="flex-1 text-center text-surface-400">TBD</div>;
+  if (!team)
+    return <div className="flex-1 text-center text-surface-500 dark:text-surface-400">TBD</div>;
 
   return (
     <div
       className={`flex-1 flex flex-col items-center gap-2 ${isWinner && played ? 'font-bold' : ''}`}
     >
       <div className="relative">
-        <TeamLogo
-          src={team.logoUri}
-          alt={team.teamName}
-          className="h-20 w-20 object-contain drop-shadow-lg"
-        />
+        <TeamLogo src={team.logoUri} alt="" className="h-20 w-20 object-contain drop-shadow-lg" />
         {isWinner && played && (
-          <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-accent-500 flex items-center justify-center">
+          <div
+            aria-hidden="true"
+            className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-accent-500 flex items-center justify-center"
+          >
             <svg
               className="w-2.5 h-2.5 text-white"
               fill="none"
@@ -87,6 +87,7 @@ function TeamSide({
         {team.locationName}
         <br />
         <span className="text-surface-900 dark:text-white text-sm">{team.teamName}</span>
+        {isWinner && played && <span className="sr-only"> (winner)</span>}
       </div>
     </div>
   );
@@ -111,7 +112,7 @@ function BookmakerOddsRow({
   const nameClass = `text-center truncate px-1 ${
     highlighted
       ? 'font-bold text-surface-700 dark:text-surface-200'
-      : 'text-surface-400 dark:text-surface-500'
+      : 'text-surface-500 dark:text-surface-400'
   }`;
 
   if (oddsType === 'spread') {
@@ -177,10 +178,17 @@ function strategyBetOutcome(
 }
 
 const BADGE_CLASSES: Record<BetOutcome | 'upcoming', string> = {
-  upcoming: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-  won: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-  lost: 'bg-red-500/10 text-red-600 dark:text-red-400',
+  upcoming: 'bg-blue-500/10 text-blue-700 dark:text-blue-400',
+  won: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+  lost: 'bg-red-500/10 text-red-700 dark:text-red-400',
   push: 'bg-surface-500/10 text-surface-600 dark:text-surface-400',
+};
+
+const BADGE_SR_LABELS: Record<BetOutcome | 'upcoming', string> = {
+  upcoming: 'Suggested bet:',
+  won: 'Bet won:',
+  lost: 'Bet lost:',
+  push: 'Bet pushed:',
 };
 
 const CHECK_CIRCLE_PATH =
@@ -194,6 +202,31 @@ const BADGE_ICONS: Record<BetOutcome | 'upcoming', string> = {
   // minus-circle
   push: 'M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z',
 };
+
+// Marks whether the model's moneyline pick came true, so the green/red odds
+// color isn't the only cue.
+function PickMark({ correct }: { correct: boolean | null }) {
+  if (correct == null) return null;
+  return (
+    <>
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        className={`inline-block w-3 h-3 mr-0.5 -mt-px align-middle ${
+          correct ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'
+        }`}
+      >
+        <path
+          fillRule="evenodd"
+          d={correct ? BADGE_ICONS.won : BADGE_ICONS.lost}
+          clipRule="evenodd"
+        />
+      </svg>
+      <span className="sr-only">{correct ? 'Correct pick: ' : 'Missed pick: '}</span>
+    </>
+  );
+}
 
 function setRippleOrigin(e: PointerEvent<HTMLElement>) {
   const rect = e.currentTarget.getBoundingClientRect();
@@ -218,11 +251,12 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
       ? strategyBetOutcome(game, valueBet, strategy)
       : 'upcoming';
 
+  const pickCorrect = game.hasBeenPlayed ? wasCorrectlyPredicted(game) : null;
   const oddsColor = !game.hasBeenPlayed
-    ? 'text-accent-500'
+    ? 'text-accent-600 dark:text-accent-400'
     : wasCorrectlyPredicted(game)
-      ? 'text-emerald-500'
-      : 'text-red-500';
+      ? 'text-emerald-700 dark:text-emerald-400'
+      : 'text-red-700 dark:text-red-400';
 
   return (
     <Link
@@ -235,7 +269,7 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
     >
       {game.gameType === 3 && (
         <div className="flex justify-center mb-2">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-widest">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-800 dark:text-amber-400 text-[10px] font-bold uppercase tracking-widest">
             <svg viewBox="0 0 24 24" className="w-3 h-3" fill="currentColor" aria-hidden="true">
               {/* Bowl — smaller, narrower */}
               <path d="M8 2h8v3c0 1.5-1.5 2.5-4 2.5S8 6.5 8 5V2z" />
@@ -262,6 +296,7 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
               <path fillRule="evenodd" d={BADGE_ICONS[badgeState]} clipRule="evenodd" />
             </svg>
+            <span className="sr-only">{BADGE_SR_LABELS[badgeState]}</span>
             {(() => {
               const opt = STRATEGY_OPTIONS.find((o) => o.type === strategy.type);
               if (opt?.betType === 'overUnder') {
@@ -292,7 +327,9 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
         <div className="flex flex-col items-center gap-1 px-2">
           <div
             className={`text-[10px] font-mono font-bold tracking-widest uppercase ${
-              game.hasBeenPlayed ? 'text-surface-500 dark:text-surface-400' : 'text-accent-500'
+              game.hasBeenPlayed
+                ? 'text-surface-500 dark:text-surface-400'
+                : 'text-accent-600 dark:text-accent-400'
             }`}
           >
             {game.hasBeenPlayed ? 'Final' : 'VS'}
@@ -300,12 +337,12 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
           {game.hasBeenPlayed ? (
             <div className="stat-number text-lg text-surface-900 dark:text-white">
               {game.awayTeam?.goals ?? 0}
-              <span className="text-surface-400 dark:text-surface-500 mx-1">-</span>
+              <span className="text-surface-500 dark:text-surface-400 mx-1">-</span>
               {game.homeTeam?.goals ?? 0}
             </div>
           ) : (
             game.gameDate && (
-              <div className="text-[11px] font-mono text-surface-400 dark:text-surface-500">
+              <div className="text-[11px] font-mono text-surface-500 dark:text-surface-400">
                 {new Date(game.gameDate).toLocaleTimeString([], {
                   hour: 'numeric',
                   minute: '2-digit',
@@ -329,7 +366,8 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
                   <span className={`text-center stat-number ${oddsColor}`}>
                     {game.awayTeam ? formatOdds(game.awayTeam.modelOdds, format) : '-'}
                   </span>
-                  <span className="text-center text-surface-400 dark:text-surface-500">
+                  <span className="text-center text-surface-500 dark:text-surface-400">
+                    <PickMark correct={pickCorrect} />
                     {getModelName(game.modelId)}
                   </span>
                   <span className={`text-center stat-number ${oddsColor}`}>
@@ -343,7 +381,8 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
                       ? formatPoint(+game.predictedSpread.toFixed(2))
                       : '-'}
                   </span>
-                  <span className="text-center text-surface-400 dark:text-surface-500">
+                  <span className="text-center text-surface-500 dark:text-surface-400">
+                    <PickMark correct={pickCorrect} />
                     {getModelName(game.modelId)}
                   </span>
                   <span className={`text-center stat-number ${oddsColor}`}>
@@ -355,7 +394,8 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
               ) : (
                 <>
                   <span className={`text-center stat-number ${oddsColor}`}>{'-'}</span>
-                  <span className="text-center text-surface-400 dark:text-surface-500">
+                  <span className="text-center text-surface-500 dark:text-surface-400">
+                    <PickMark correct={pickCorrect} />
                     {getModelName(game.modelId)}
                     {game.predictedTotal != null ? ` (${game.predictedTotal.toFixed(1)})` : ''}
                   </span>

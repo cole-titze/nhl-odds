@@ -64,9 +64,9 @@ export function GamesFeed({
           if (!games || games.length === 0) return null;
           return (
             <section key={date} id={`date-${date}`}>
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-surface-500 dark:text-surface-400 mb-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-surface-500 dark:text-surface-400 mb-3">
                 {formatDisplayDate(parseISO(date + 'T12:00:00'))}
-              </h3>
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {games.map((game) => (
                   <GameCard key={game.id} game={game} oddsType={oddsType} />
@@ -94,9 +94,9 @@ export function GamesFeed({
 
 function FeedLoaderBand() {
   return (
-    <div className="my-6 flex items-center justify-center">
+    <div className="my-6 flex items-center justify-center" role="status">
       <div className="relative overflow-hidden rounded-full glass px-4 py-2">
-        <div className="absolute inset-0 skeleton-shimmer" />
+        <div className="absolute inset-0 skeleton-shimmer" aria-hidden="true" />
         <span className="relative text-xs font-medium text-surface-500 dark:text-surface-400">
           Loading more games…
         </span>
@@ -116,13 +116,14 @@ function FeedBoundary({
 }) {
   return (
     <div className="my-8 flex flex-col items-center gap-3 text-center">
-      <div className="text-xs font-semibold uppercase tracking-wide text-surface-400 dark:text-surface-500">
+      <div className="text-xs font-semibold uppercase tracking-wide text-surface-500 dark:text-surface-400">
         {label}
       </div>
       {buttonLabel && (
         <button
+          type="button"
           onClick={onClick}
-          className="px-4 py-2 text-sm font-medium rounded-full glass text-surface-700 dark:text-surface-200 hover:text-accent-500 transition-colors"
+          className="px-4 py-2 text-sm font-medium rounded-full glass text-surface-700 dark:text-surface-200 hover:text-accent-600 dark:hover:text-accent-400 transition-colors"
         >
           {buttonLabel}
         </button>

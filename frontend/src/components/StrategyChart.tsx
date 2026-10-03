@@ -10,7 +10,7 @@ import {
 } from 'recharts';
 import { formatShortDate } from '../utils/dates';
 import type { StrategyResult } from '../utils/bettingStrategies';
-import { getButtonClasses, getTextClass } from '../utils/colorClass';
+import { getChipClasses, getSwatchClasses } from '../utils/colorClass';
 
 const STRATEGY_COLORS: Record<string, string> = {
   'In-House Winner': '#3b82f6',
@@ -70,88 +70,104 @@ export function StrategyChart({ results }: Props) {
 
   if (chartData.length <= 1) return null;
 
+  // The SVG chart isn't readable by screen readers, so summarize the final P/L
+  const summary = `Final cumulative profit/loss: ${results
+    .filter((r) => enabled.has(r.name) && r.bets.length > 0)
+    .map((r) => `${r.name} ${r.bets[r.bets.length - 1].cumulativePL.toFixed(2)} units`)
+    .join(', ')}.`;
+
   return (
     <div className="glass rounded-xl p-5">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
           Cumulative P/L (units)
         </h2>
       </div>
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex flex-wrap gap-2 mb-4" role="group" aria-label="Lines shown">
         {strategyNames.map((name) => {
           const color = STRATEGY_COLORS[name] ?? '#737373';
           const active = enabled.has(name);
           return (
             <button
               key={name}
+              type="button"
+              aria-pressed={active}
               onClick={() => toggle(name)}
-              className={`px-2.5 py-1 rounded-full text-xs font-mono font-medium transition-all ${getButtonClasses(color, active)}`}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-medium transition-all ${getChipClasses(color, active)}`}
             >
+              <span aria-hidden="true" className={getSwatchClasses(color, active)} />
               {name}
             </button>
           );
         })}
       </div>
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={chartData}>
-          <XAxis
-            dataKey="date"
-            tick={{ fontSize: 11, fontFamily: 'JetBrains Mono' }}
-            interval="preserveStartEnd"
-            stroke="#525252"
-            tickLine={false}
-            axisLine={false}
-          />
-          <YAxis
-            tick={{ fontSize: 11, fontFamily: 'JetBrains Mono' }}
-            domain={['auto', 'auto']}
-            stroke="#525252"
-            tickLine={false}
-            axisLine={false}
-          />
-          <ReferenceLine y={0} stroke="#525252" strokeDasharray="4 4" />
-          <Tooltip
-            content={({ active, payload, label }) => {
-              if (!active || !payload?.length) return null;
-              const d = payload[0].payload as Record<string, unknown>;
-              return (
-                <div className="bg-[rgba(10,10,10,0.9)] border border-white/8 rounded-lg font-mono text-xs text-white backdrop-blur-md py-2 px-3">
-                  <div>{label}</div>
-                  {strategyNames
-                    .filter((name) => enabled.has(name) && d[name] != null)
-                    .map((name) => (
-                      <div key={name} className={getTextClass(STRATEGY_COLORS[name] ?? '#737373')}>
-                        {name}: {(d[name] as number).toFixed(2)}u
-                      </div>
-                    ))}
-                </div>
-              );
-            }}
-          />
-          {strategyNames
-            .filter((name) => enabled.has(name))
-            .map((name) => {
-              const color = STRATEGY_COLORS[name] ?? '#737373';
-              return (
-                <Line
-                  key={name}
-                  type="monotone"
-                  dataKey={name}
-                  stroke={color}
-                  strokeWidth={2.5}
-                  dot={false}
-                  activeDot={{
-                    r: 4,
-                    fill: color,
-                    stroke: '#141418',
-                    strokeWidth: 2,
-                  }}
-                  connectNulls
-                />
-              );
-            })}
-        </LineChart>
-      </ResponsiveContainer>
+      <p className="sr-only">{summary}</p>
+      <div className="text-surface-600 dark:text-surface-400">
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={chartData}>
+            <XAxis
+              dataKey="date"
+              tick={{ fontSize: 11, fontFamily: 'JetBrains Mono', fill: 'currentColor' }}
+              interval="preserveStartEnd"
+              stroke="#525252"
+              tickLine={false}
+              axisLine={false}
+            />
+            <YAxis
+              tick={{ fontSize: 11, fontFamily: 'JetBrains Mono', fill: 'currentColor' }}
+              domain={['auto', 'auto']}
+              stroke="#525252"
+              tickLine={false}
+              axisLine={false}
+            />
+            <ReferenceLine y={0} stroke="currentColor" strokeDasharray="4 4" />
+            <Tooltip
+              content={({ active, payload, label }) => {
+                if (!active || !payload?.length) return null;
+                const d = payload[0].payload as Record<string, unknown>;
+                return (
+                  <div className="bg-[rgba(10,10,10,0.9)] border border-white/8 rounded-lg font-mono text-xs text-white backdrop-blur-md py-2 px-3">
+                    <div>{label}</div>
+                    {strategyNames
+                      .filter((name) => enabled.has(name) && d[name] != null)
+                      .map((name) => (
+                        <div key={name} className="flex items-center gap-1.5">
+                          <span
+                            aria-hidden="true"
+                            className={getSwatchClasses(STRATEGY_COLORS[name] ?? '#737373')}
+                          />
+                          {name}: {(d[name] as number).toFixed(2)}u
+                        </div>
+                      ))}
+                  </div>
+                );
+              }}
+            />
+            {strategyNames
+              .filter((name) => enabled.has(name))
+              .map((name) => {
+                const color = STRATEGY_COLORS[name] ?? '#737373';
+                return (
+                  <Line
+                    key={name}
+                    type="monotone"
+                    dataKey={name}
+                    stroke={color}
+                    strokeWidth={2.5}
+                    dot={false}
+                    activeDot={{
+                      r: 4,
+                      fill: color,
+                      stroke: '#141418',
+                      strokeWidth: 2,
+                    }}
+                    connectNulls
+                  />
+                );
+              })}
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }

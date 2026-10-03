@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @custom-variant dark (&:where(.dark, .dark *));
 @custom-variant hover (&:hover);
@@ -11,7 +11,8 @@
   --color-surface-200: #e4e4e4;
   --color-surface-300: #d1d1d1;
   --color-surface-400: #a0a0a0;
-  --color-surface-500: #737373;
+  /* #6b6b6b rather than #737373 so secondary text clears 4.5:1 on the lighter themes */
+  --color-surface-500: #6b6b6b;
   --color-surface-600: #525252;
   --color-surface-700: #404040;
   --color-surface-800: #262626;
@@ -21,6 +22,9 @@
   --color-accent-400: #60a5fa;
   --color-accent-500: #3b82f6;
   --color-accent-600: #2563eb;
+  --color-accent-700: #1d4ed8;
+  /* Text drawn on an accent-600 fill. Team Colors swaps it for light accents. */
+  --color-on-accent: #ffffff;
 }
 
 :root {
@@ -55,6 +59,37 @@ html.dark {
   background-size: 256px 256px;
 }
 
+/* Keyboard focus. Every theme gets a visible ring; the high contrast themes
+   override --focus-ring with a stronger color below. */
+:root {
+  --focus-ring: var(--color-accent-600);
+}
+.dark {
+  --focus-ring: var(--color-accent-400);
+}
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+/* <main> is focused programmatically on route changes and by the skip link */
+#main:focus {
+  outline: none;
+}
+
+/* Honor the OS reduced-motion setting everywhere, not just in scenic themes */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* Glass card effect */
 .glass {
   @apply bg-white/80 dark:bg-white/[0.04] backdrop-blur-xl;
@@ -67,8 +102,13 @@ html.dark {
 }
 
 /* Smooth transitions on theme toggle */
-*, *::before, *::after {
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.15s ease;
+*,
+*::before,
+*::after {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.15s ease;
 }
 
 /* Custom scrollbar for dark mode */
@@ -86,22 +126,47 @@ html.dark {
 
 /* Skeleton shimmer */
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 .skeleton-shimmer {
-  background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.06) 40%, rgba(0,0,0,0.06) 60%, transparent 100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.06) 40%,
+    rgba(0, 0, 0, 0.06) 60%,
+    transparent 100%
+  );
   animation: shimmer 1.5s ease-in-out infinite;
 }
 .dark .skeleton-shimmer {
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 40%, rgba(255,255,255,0.08) 60%, transparent 100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 40%,
+    rgba(255, 255, 255, 0.08) 60%,
+    transparent 100%
+  );
 }
 
 /* Admin progress bar */
 @keyframes progress-bar {
-  0% { width: 0%; margin-left: 0%; }
-  50% { width: 40%; margin-left: 30%; }
-  100% { width: 0%; margin-left: 100%; }
+  0% {
+    width: 0%;
+    margin-left: 0%;
+  }
+  50% {
+    width: 40%;
+    margin-left: 30%;
+  }
+  100% {
+    width: 0%;
+    margin-left: 100%;
+  }
 }
 .animate-progress-bar {
   animation: progress-bar 1.5s ease-in-out infinite;
@@ -117,8 +182,14 @@ html.dark {
 
 /* Game card hover — ripple expands from cursor entry point and stays lit */
 @keyframes card-ripple {
-  from { clip-path: circle(0% at var(--ripple-x, 50%) var(--ripple-y, 50%)); opacity: 1; }
-  to   { clip-path: circle(160% at var(--ripple-x, 50%) var(--ripple-y, 50%)); opacity: 1; }
+  from {
+    clip-path: circle(0% at var(--ripple-x, 50%) var(--ripple-y, 50%));
+    opacity: 1;
+  }
+  to {
+    clip-path: circle(160% at var(--ripple-x, 50%) var(--ripple-y, 50%));
+    opacity: 1;
+  }
 }
 
 .card-hover {
@@ -307,13 +378,31 @@ html.scenic {
   box-shadow: inherit;
 }
 
-.starfield-sm { width: 1px; height: 1px; animation-duration: 400s; }
-.starfield-md { width: 2px; height: 2px; border-radius: 50%; animation-duration: 270s; }
-.starfield-lg { width: 3px; height: 3px; border-radius: 50%; animation-duration: 170s; }
+.starfield-sm {
+  width: 1px;
+  height: 1px;
+  animation-duration: 400s;
+}
+.starfield-md {
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  animation-duration: 270s;
+}
+.starfield-lg {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  animation-duration: 170s;
+}
 
 @keyframes star-drift {
-  from { transform: translateY(0); }
-  to { transform: translateY(-2000px); }
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-2000px);
+  }
 }
 
 /* ---- Fresh Ice (light): resurfaced rink with center-ice markings ---- */
@@ -358,8 +447,12 @@ html.scenic {
   background: rgba(0, 56, 168, 0.16);
 }
 
-.rink-top { top: 18%; }
-.rink-bottom { bottom: 18%; }
+.rink-top {
+  top: 18%;
+}
+.rink-bottom {
+  bottom: 18%;
+}
 
 .rink-circle {
   position: absolute;
@@ -433,20 +526,38 @@ html.scenic {
 .aurora-top {
   top: -6%;
   height: 26%;
-  background: linear-gradient(90deg, transparent 5%, rgba(150, 90, 220, 0.26), rgba(200, 70, 130, 0.2), transparent 95%);
+  background: linear-gradient(
+    90deg,
+    transparent 5%,
+    rgba(150, 90, 220, 0.26),
+    rgba(200, 70, 130, 0.2),
+    transparent 95%
+  );
   animation-duration: 67s;
   animation-delay: -12s;
 }
 
 .aurora-1 {
   top: 2%;
-  background: linear-gradient(90deg, transparent, rgba(60, 210, 140, 0.28), rgba(40, 190, 170, 0.2), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(60, 210, 140, 0.28),
+    rgba(40, 190, 170, 0.2),
+    transparent
+  );
   animation-duration: 38s;
 }
 
 .aurora-2 {
   top: 16%;
-  background: linear-gradient(90deg, transparent, rgba(30, 170, 160, 0.18), rgba(90, 220, 150, 0.24), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(30, 170, 160, 0.18),
+    rgba(90, 220, 150, 0.24),
+    transparent
+  );
   animation-duration: 52s;
   animation-delay: -20s;
 }
@@ -454,7 +565,13 @@ html.scenic {
 .aurora-fringe {
   top: 34%;
   height: 18%;
-  background: linear-gradient(90deg, transparent 10%, rgba(225, 80, 165, 0.24), rgba(160, 90, 215, 0.17), transparent 90%);
+  background: linear-gradient(
+    90deg,
+    transparent 10%,
+    rgba(225, 80, 165, 0.24),
+    rgba(160, 90, 215, 0.17),
+    transparent 90%
+  );
   animation-duration: 44s;
   animation-delay: -28s;
 }
@@ -462,14 +579,26 @@ html.scenic {
 .aurora-3 {
   top: 48%;
   height: 28%;
-  background: linear-gradient(90deg, transparent 10%, rgba(70, 150, 200, 0.12), rgba(60, 200, 150, 0.1), transparent 90%);
+  background: linear-gradient(
+    90deg,
+    transparent 10%,
+    rgba(70, 150, 200, 0.12),
+    rgba(60, 200, 150, 0.1),
+    transparent 90%
+  );
   animation-duration: 61s;
   animation-delay: -35s;
 }
 
 @keyframes aurora-drift {
-  from { transform: translateX(-8%) skewX(-12deg) scaleY(0.9); opacity: 0.7; }
-  to { transform: translateX(8%) skewX(10deg) scaleY(1.25); opacity: 1; }
+  from {
+    transform: translateX(-8%) skewX(-12deg) scaleY(0.9);
+    opacity: 0.7;
+  }
+  to {
+    transform: translateX(8%) skewX(10deg) scaleY(1.25);
+    opacity: 1;
+  }
 }
 
 /* ---- Team Colors: --team-* are set on <html> by useTheme ---- */
@@ -479,14 +608,24 @@ html.scenic {
   --color-accent-400: color-mix(in srgb, var(--team-accent) 75%, white);
   --color-accent-500: var(--team-accent);
   --color-accent-600: color-mix(in srgb, var(--team-accent) 80%, black);
+  --color-accent-700: color-mix(in srgb, var(--team-accent) 65%, black);
+  --color-on-accent: var(--team-on-accent, #ffffff);
 }
 
 .team-glow {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(55% 45% at 15% 10%, color-mix(in srgb, var(--team-1) 30%, transparent), transparent 75%),
-    radial-gradient(50% 45% at 85% 90%, color-mix(in srgb, var(--team-2) 20%, transparent), transparent 75%);
+    radial-gradient(
+      55% 45% at 15% 10%,
+      color-mix(in srgb, var(--team-1) 30%, transparent),
+      transparent 75%
+    ),
+    radial-gradient(
+      50% 45% at 85% 90%,
+      color-mix(in srgb, var(--team-2) 20%, transparent),
+      transparent 75%
+    );
 }
 
 .team-logo {
@@ -516,6 +655,7 @@ html.scenic {
   --color-accent-400: #0040a0;
   --color-accent-500: #0047b3;
   --color-accent-600: #003580;
+  --color-accent-700: #002a66;
 }
 
 .theme-contrast-dark {
@@ -531,6 +671,7 @@ html.scenic {
   --color-accent-400: #7cc4ff;
   --color-accent-500: #0a6fe0;
   --color-accent-600: #0050b0;
+  --color-accent-700: #003d88;
 }
 
 .theme-contrast-light,

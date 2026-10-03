@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { ThemePicker } from './ThemePicker';
 import { useOddsFormatContext } from '../contexts/OddsFormatContext';
@@ -15,21 +15,38 @@ export function Navbar() {
   const { format, toggle: toggleOdds } = useOddsFormatContext();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [menuOpen]);
+
+  const oddsLabel =
+    format === 'pct'
+      ? 'Odds shown as percentages. Switch to American odds'
+      : 'Odds shown as American odds. Switch to percentages';
+
   return (
-    <nav className="app-nav sticky top-0 z-50 border-b border-surface-200/80 dark:border-white/[0.08] shadow-sm dark:shadow-black/20">
+    <header className="app-nav sticky top-0 z-50 border-b border-surface-200/80 dark:border-white/[0.08] shadow-sm dark:shadow-black/20">
       {/* Glass lives on this child, not the nav itself; see .app-nav-glass in index.css */}
       <div className="app-nav-glass" aria-hidden="true" />
       <div className="mx-auto max-w-6xl flex items-center justify-between px-5 h-14 md:h-16">
         <div className="flex items-center gap-8">
           <NavLink to="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-accent-500 flex items-center justify-center text-white font-bold text-sm tracking-tight shadow-lg shadow-accent-500/25">
+            <div
+              aria-hidden="true"
+              className="w-8 h-8 rounded-lg bg-accent-500 flex items-center justify-center text-white font-bold text-sm tracking-tight shadow-lg shadow-accent-500/25"
+            >
               N
             </div>
             <span className="font-display font-bold text-lg tracking-tight">
-              NHL <span className="text-accent-500">Odds</span>
+              NHL <span className="text-accent-600 dark:text-accent-400">Odds</span>
             </span>
           </NavLink>
-          <div className="hidden md:flex items-center gap-1">
+          <nav aria-label="Main" className="hidden md:flex items-center gap-1">
             {links.map((l) => (
               <NavLink
                 key={l.to}
@@ -45,13 +62,14 @@ export function Navbar() {
                 {l.label}
               </NavLink>
             ))}
-          </div>
+          </nav>
         </div>
         <div className="flex items-center gap-1">
           <button
             onClick={toggleOdds}
             className="px-2.5 py-1.5 rounded-lg cursor-pointer hover:bg-surface-100 dark:hover:bg-white/[0.06] text-surface-500 dark:text-surface-400 transition-colors text-xs font-mono font-semibold"
-            aria-label="Toggle odds format"
+            aria-label={oddsLabel}
+            title={oddsLabel}
           >
             {format === 'pct' ? '%' : '+-'}
           </button>
@@ -59,12 +77,15 @@ export function Navbar() {
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="md:hidden p-2.5 rounded-lg hover:bg-surface-100 dark:hover:bg-white/[0.06] text-surface-500 dark:text-surface-400 transition-colors"
-            aria-label="Toggle menu"
+            aria-label="Menu"
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
           >
             {menuOpen ? (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5"
+                aria-hidden="true"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -78,6 +99,7 @@ export function Navbar() {
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5"
+                aria-hidden="true"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -93,7 +115,11 @@ export function Navbar() {
       </div>
       {menuOpen && (
         // No background of its own: the nav's glass layer spans this too, so it picks up the theme's bar
-        <div className="app-nav-menu md:hidden border-t border-surface-200/80 dark:border-white/[0.08] px-5 pb-4 pt-2">
+        <nav
+          id="mobile-menu"
+          aria-label="Main"
+          className="app-nav-menu md:hidden border-t border-surface-200/80 dark:border-white/[0.08] px-5 pb-4 pt-2"
+        >
           <div className="flex flex-col gap-1">
             {links.map((l) => (
               <NavLink
@@ -112,8 +138,8 @@ export function Navbar() {
               </NavLink>
             ))}
           </div>
-        </div>
+        </nav>
       )}
-    </nav>
+    </header>
   );
 }

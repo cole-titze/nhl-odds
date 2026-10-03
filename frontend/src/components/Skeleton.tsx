@@ -1,6 +1,7 @@
 export function Skeleton({ className = '' }: { className?: string }) {
   return (
     <div
+      aria-hidden="true"
       className={`rounded-lg bg-surface-200/60 dark:bg-white/[0.06] overflow-hidden relative ${className}`}
     >
       <div className="absolute inset-0 skeleton-shimmer" />
@@ -42,7 +43,7 @@ function OddsRowSkeleton({ className = '' }: { className?: string }) {
 // Mirrors GameCard's layout (regular-season game with model + two bookmaker rows)
 export function CardSkeleton() {
   return (
-    <div className="glass rounded-xl px-5 py-4">
+    <div className="glass rounded-xl px-5 py-4" aria-hidden="true">
       <div className="grid grid-cols-3 items-center">
         <TeamSideSkeleton />
         <div className="flex flex-col items-center gap-1 px-2">

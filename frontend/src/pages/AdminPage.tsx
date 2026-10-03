@@ -15,13 +15,14 @@ import {
 } from '../api/admin';
 import { formatSeasonLabel } from '../utils/season';
 import { JobCardSkeleton, HealthCheckTableSkeleton } from '../components/Skeleton';
+import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
 
 const STATUS_STYLES: Record<string, string> = {
-  idle: 'bg-surface-200 dark:bg-white/[0.06] text-surface-500 dark:text-surface-400',
-  running: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
-  completed: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
-  failed: 'bg-red-500/15 text-red-600 dark:text-red-400',
-  requested: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
+  idle: 'bg-surface-200 dark:bg-white/[0.06] text-surface-600 dark:text-surface-400',
+  running: 'bg-amber-500/15 text-amber-800 dark:text-amber-400',
+  completed: 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-400',
+  failed: 'bg-red-500/15 text-red-700 dark:text-red-400',
+  requested: 'bg-blue-500/15 text-blue-700 dark:text-blue-400',
 };
 
 function formatTime(iso: string | null) {
@@ -67,7 +68,10 @@ function JobCard({ job, label, onStart }: { job: JobInfo; label: string; onStart
   return (
     <div className={`glass rounded-xl p-6 relative overflow-hidden`}>
       {isRunning && (
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-surface-200 dark:bg-white/[0.06]">
+        <div
+          aria-hidden="true"
+          className="absolute bottom-0 left-0 right-0 h-1 bg-surface-200 dark:bg-white/[0.06]"
+        >
           <div className="h-full bg-amber-500 dark:bg-amber-400 animate-progress-bar" />
         </div>
       )}
@@ -100,7 +104,7 @@ function JobCard({ job, label, onStart }: { job: JobInfo; label: string; onStart
           </>
         )}
         {job.error && (
-          <div className="mt-2 p-3 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-mono break-all">
+          <div className="mt-2 p-3 rounded-lg bg-red-500/10 text-red-700 dark:text-red-400 text-xs font-mono break-all">
             {job.error}
           </div>
         )}
@@ -121,12 +125,13 @@ function JobCard({ job, label, onStart }: { job: JobInfo; label: string; onStart
 
       {onStart && (
         <button
+          type="button"
           onClick={onStart}
           disabled={isRunning || isRequested || ranToday}
           className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-all ${
             isRunning || isRequested || ranToday
-              ? 'bg-surface-200 dark:bg-white/[0.04] text-surface-400 dark:text-surface-500 cursor-not-allowed'
-              : 'bg-accent-500 hover:bg-accent-600 text-white shadow-lg shadow-accent-500/25'
+              ? 'bg-surface-200 dark:bg-white/[0.04] text-surface-500 dark:text-surface-400 cursor-not-allowed'
+              : 'bg-accent-600 hover:bg-accent-700 text-on-accent shadow-lg shadow-accent-500/25'
           }`}
         >
           {isRunning
@@ -143,9 +148,9 @@ function JobCard({ job, label, onStart }: { job: JobInfo; label: string; onStart
 }
 
 function countClass(count: number) {
-  if (count < 0) return 'text-surface-400 dark:text-surface-500';
-  if (count === 0) return 'text-emerald-500';
-  return 'text-red-500 dark:text-red-400';
+  if (count < 0) return 'text-surface-500 dark:text-surface-400';
+  if (count === 0) return 'text-emerald-700 dark:text-emerald-400';
+  return 'text-red-700 dark:text-red-400';
 }
 
 function countDisplay(count: number) {
@@ -190,10 +195,21 @@ function HealthCheckRow({ check }: { check: SeasonHealthCheck }) {
         className={`border-b border-surface-200 dark:border-white/[0.04] last:border-0 cursor-pointer transition-colors hover:bg-surface-100/50 dark:hover:bg-white/[0.03] ${expanded ? 'bg-surface-100/30 dark:bg-white/[0.02]' : ''}`}
       >
         <td className="px-4 py-3 text-sm font-mono font-medium">
-          <span className="mr-1.5 text-surface-400 dark:text-surface-500 text-xs">
-            {expanded ? '\u25BC' : '\u25B6'}
-          </span>
-          {formatSeasonLabel(check.seasonStartYear)}
+          {/* Click bubbles to the row's toggle handler */}
+          <button
+            type="button"
+            aria-expanded={expanded}
+            className="font-mono font-medium cursor-pointer whitespace-nowrap"
+          >
+            <span
+              aria-hidden="true"
+              className="mr-1.5 text-surface-500 dark:text-surface-400 text-xs"
+            >
+              {expanded ? '\u25BC' : '\u25B6'}
+            </span>
+            {formatSeasonLabel(check.seasonStartYear)}
+            <span className="sr-only"> error log</span>
+          </button>
         </td>
         <td className="px-4 py-3 stat-number text-sm text-center">{check.totalGames}</td>
         <td className="px-4 py-3 stat-number text-sm text-center">{check.playedGames}</td>
@@ -232,9 +248,13 @@ function HealthCheckRow({ check }: { check: SeasonHealthCheck }) {
         </td>
         <td className="px-4 py-3 text-center">
           {hasIssues ? (
-            <span className="inline-block w-2 h-2 rounded-full bg-amber-500" />
+            <span title="Has issues" className="inline-block w-2 h-2 rounded-full bg-amber-500">
+              <span className="sr-only">Has issues</span>
+            </span>
           ) : (
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
+            <span title="OK" className="inline-block w-2 h-2 rounded-full bg-emerald-500">
+              <span className="sr-only">OK</span>
+            </span>
           )}
         </td>
       </tr>
@@ -243,12 +263,12 @@ function HealthCheckRow({ check }: { check: SeasonHealthCheck }) {
           <td colSpan={10} className="p-0">
             <div className="px-4 py-3 bg-surface-50/50 dark:bg-white/[0.01]">
               {loadingErrors && (
-                <div className="text-xs text-surface-400 dark:text-surface-500 py-2">
+                <div role="status" className="text-xs text-surface-500 dark:text-surface-400 py-2">
                   Loading errors...
                 </div>
               )}
               {!loadingErrors && errors.length === 0 && (
-                <div className="text-xs text-surface-400 dark:text-surface-500 py-2">
+                <div className="text-xs text-surface-500 dark:text-surface-400 py-2">
                   No errors for this season.
                 </div>
               )}
@@ -274,7 +294,7 @@ function HealthCheckRow({ check }: { check: SeasonHealthCheck }) {
                         <td className="px-3 py-2 text-xs font-mono text-surface-600 dark:text-surface-300 whitespace-nowrap">
                           {log.source}
                         </td>
-                        <td className="px-3 py-2 text-xs font-mono text-red-600 dark:text-red-400 whitespace-nowrap">
+                        <td className="px-3 py-2 text-xs font-mono text-red-700 dark:text-red-400 whitespace-nowrap">
                           {log.exceptionType}
                         </td>
                         <td className="px-3 py-2 text-xs text-surface-700 dark:text-surface-300">
@@ -336,6 +356,7 @@ export function AdminPage() {
 
   return (
     <div>
+      <PageTitle title="Admin" />
       <div className="mb-8">
         <h1 className="font-display text-3xl font-bold tracking-tight">Admin</h1>
         <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">
@@ -344,11 +365,17 @@ export function AdminPage() {
       </div>
 
       {error && (
-        <div className="glass rounded-xl text-center text-red-500 py-4 mb-6 text-sm">{error}</div>
+        <div
+          role="alert"
+          className="glass rounded-xl text-center text-red-700 dark:text-red-400 py-4 mb-6 text-sm"
+        >
+          {error}
+        </div>
       )}
 
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <LoadingStatus label="Loading job statuses…" />
           <JobCardSkeleton />
           <JobCardSkeleton />
           <JobCardSkeleton />
@@ -447,7 +474,7 @@ export function AdminPage() {
             </div>
             <div>
               <span className="font-medium text-surface-800 dark:text-surface-200">Errors</span> —
-              Pipeline errors logged for that season. Click the row arrow to expand.
+              Pipeline errors logged for that season. Select a season to expand its error log.
             </div>
           </div>
         </details>
@@ -459,7 +486,7 @@ export function AdminPage() {
             No data available.
           </div>
         ) : (
-          <div className="glass rounded-xl overflow-x-auto">
+          <ScrollRegion label="Health checks" className="glass rounded-xl overflow-x-auto">
             <table className="w-full text-sm min-w-[700px]">
               <thead>
                 <tr className="border-b border-surface-200 dark:border-white/[0.06] text-left text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">
@@ -473,7 +500,9 @@ export function AdminPage() {
                   <th className="px-4 py-3 text-center">Live Odds</th>
                   <th className="px-4 py-3 text-center">No Kalshi</th>
                   <th className="px-4 py-3 text-center">Errors</th>
-                  <th className="px-4 py-3 text-center w-10"></th>
+                  <th className="px-4 py-3 text-center w-10">
+                    <span className="sr-only">Status</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -482,7 +511,7 @@ export function AdminPage() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </ScrollRegion>
         )}
       </div>
     </div>

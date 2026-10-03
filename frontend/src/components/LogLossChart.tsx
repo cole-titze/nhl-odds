@@ -3,7 +3,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 import { formatShortDate } from '../utils/dates';
 import { calculateLogLoss } from '../utils/predictions';
 import type { GameOddsVM } from '../types';
-import { getButtonClasses, getTextClass } from '../utils/colorClass';
+import { getChipClasses, getSwatchClasses } from '../utils/colorClass';
 
 const HOMEGROWN = 'In-House Model';
 
@@ -119,86 +119,100 @@ export function LogLossChart({ games, deduplicateById }: Props) {
 
   if (chartData.length <= 1) return null;
 
+  // The SVG chart isn't readable by screen readers, so summarize where each line ends up
+  const last = chartData[chartData.length - 1];
+  const summary = `After ${last.games} games: ${allChips
+    .filter((name) => enabled.has(name) && last[name] != null)
+    .map((name) => `${name} ${last[name]}`)
+    .join(', ')}. Lower is better.`;
+
   return (
     <div className="glass rounded-xl p-5 mb-8">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
           Cumulative Avg Log Loss
         </h2>
       </div>
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex flex-wrap gap-2 mb-4" role="group" aria-label="Lines shown">
         {allChips.map((name, i) => {
           const color = getColor(name, i);
           const active = enabled.has(name);
           return (
             <button
               key={name}
+              type="button"
+              aria-pressed={active}
               onClick={() => toggle(name)}
-              className={`px-2.5 py-1 rounded-full text-xs font-mono font-medium transition-all ${getButtonClasses(color, active)}`}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-medium transition-all ${getChipClasses(color, active)}`}
             >
+              <span aria-hidden="true" className={getSwatchClasses(color, active)} />
               {name}
             </button>
           );
         })}
       </div>
-      <ResponsiveContainer width="100%" height={250}>
-        <LineChart data={chartData}>
-          <XAxis
-            dataKey="date"
-            tick={{ fontSize: 11, fontFamily: 'JetBrains Mono' }}
-            interval="preserveStartEnd"
-            stroke="#525252"
-            tickLine={false}
-            axisLine={false}
-          />
-          <YAxis
-            tick={{ fontSize: 11, fontFamily: 'JetBrains Mono' }}
-            domain={['auto', 'auto']}
-            stroke="#525252"
-            tickLine={false}
-            axisLine={false}
-          />
-          <Tooltip
-            content={({ active, payload, label }) => {
-              if (!active || !payload?.length) return null;
-              const d = payload[0].payload as Record<string, unknown>;
-              return (
-                <div className="bg-[rgba(10,10,10,0.9)] border border-white/8 rounded-lg font-mono text-xs text-white backdrop-blur-md py-2 px-3">
-                  <div>{label}</div>
-                  {allChips
-                    .filter((name) => enabled.has(name) && d[name] != null)
-                    .map((name) => (
-                      <div
-                        key={name}
-                        className={getTextClass(getColor(name, allChips.indexOf(name)))}
-                      >
-                        {name}: {d[name] as number}
-                      </div>
-                    ))}
-                  <div>games: {d.games as number}</div>
-                </div>
-              );
-            }}
-          />
-          {allChips
-            .filter((name) => enabled.has(name))
-            .map((name) => {
-              const color = getColor(name, allChips.indexOf(name));
-              return (
-                <Line
-                  key={name}
-                  type="monotone"
-                  dataKey={name}
-                  stroke={color}
-                  strokeWidth={2.5}
-                  dot={false}
-                  activeDot={{ r: 4, fill: color, stroke: '#141418', strokeWidth: 2 }}
-                  connectNulls
-                />
-              );
-            })}
-        </LineChart>
-      </ResponsiveContainer>
+      <p className="sr-only">{summary}</p>
+      <div className="text-surface-600 dark:text-surface-400">
+        <ResponsiveContainer width="100%" height={250}>
+          <LineChart data={chartData}>
+            <XAxis
+              dataKey="date"
+              tick={{ fontSize: 11, fontFamily: 'JetBrains Mono', fill: 'currentColor' }}
+              interval="preserveStartEnd"
+              stroke="#525252"
+              tickLine={false}
+              axisLine={false}
+            />
+            <YAxis
+              tick={{ fontSize: 11, fontFamily: 'JetBrains Mono', fill: 'currentColor' }}
+              domain={['auto', 'auto']}
+              stroke="#525252"
+              tickLine={false}
+              axisLine={false}
+            />
+            <Tooltip
+              content={({ active, payload, label }) => {
+                if (!active || !payload?.length) return null;
+                const d = payload[0].payload as Record<string, unknown>;
+                return (
+                  <div className="bg-[rgba(10,10,10,0.9)] border border-white/8 rounded-lg font-mono text-xs text-white backdrop-blur-md py-2 px-3">
+                    <div>{label}</div>
+                    {allChips
+                      .filter((name) => enabled.has(name) && d[name] != null)
+                      .map((name) => (
+                        <div key={name} className="flex items-center gap-1.5">
+                          <span
+                            aria-hidden="true"
+                            className={getSwatchClasses(getColor(name, allChips.indexOf(name)))}
+                          />
+                          {name}: {d[name] as number}
+                        </div>
+                      ))}
+                    <div>games: {d.games as number}</div>
+                  </div>
+                );
+              }}
+            />
+            {allChips
+              .filter((name) => enabled.has(name))
+              .map((name) => {
+                const color = getColor(name, allChips.indexOf(name));
+                return (
+                  <Line
+                    key={name}
+                    type="monotone"
+                    dataKey={name}
+                    stroke={color}
+                    strokeWidth={2.5}
+                    dot={false}
+                    activeDot={{ r: 4, fill: color, stroke: '#141418', strokeWidth: 2 }}
+                    connectNulls
+                  />
+                );
+              })}
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }

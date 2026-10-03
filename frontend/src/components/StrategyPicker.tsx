@@ -47,6 +47,7 @@ export function StrategyPicker({ betType, renameLabel }: Props) {
           const threshold = opt?.thresholds?.[Math.floor((opt.thresholds.length - 1) / 2)] ?? 0;
           setStrategy({ type, threshold });
         }}
+        aria-label="Betting strategy"
         className="glass px-3 py-1.5 rounded-lg text-xs font-medium bg-transparent border-0 cursor-pointer text-surface-700 dark:text-surface-300"
       >
         {filtered.map((opt) => (
@@ -57,10 +58,12 @@ export function StrategyPicker({ betType, renameLabel }: Props) {
         ))}
       </select>
       {current?.thresholds && (
-        <div className="flex gap-1">
+        <div className="flex gap-1" role="group" aria-label="Edge threshold">
           {current.thresholds.map((t) => (
             <button
               key={t}
+              type="button"
+              aria-pressed={strategy.threshold === t}
               onClick={() => setStrategy({ ...strategy, threshold: t })}
               title={
                 best?.strategyType === strategy.type && best.threshold === t
@@ -69,12 +72,17 @@ export function StrategyPicker({ betType, renameLabel }: Props) {
               }
               className={`px-2 py-1 text-[11px] font-mono font-medium rounded-md transition-colors ${
                 strategy.threshold === t
-                  ? 'bg-accent-500 text-white'
+                  ? 'bg-accent-600 text-on-accent'
                   : 'glass text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200'
               }`}
             >
               {formatThreshold(t)}
-              {best?.strategyType === strategy.type && best.threshold === t ? ' ★' : ''}
+              {best?.strategyType === strategy.type && best.threshold === t && (
+                <>
+                  <span aria-hidden="true"> ★</span>
+                  <span className="sr-only"> (best historical threshold)</span>
+                </>
+              )}
             </button>
           ))}
         </div>
@@ -90,7 +98,8 @@ export function StrategyPicker({ betType, renameLabel }: Props) {
                 className="px-2 py-1 rounded-full bg-accent-500/10 text-accent-600 dark:text-accent-400 text-[11px] font-semibold"
                 title={title}
               >
-                ★ Suggested · +{best.roi.toFixed(1)}% ROI
+                <span aria-hidden="true">★ </span>Suggested · +{best.roi.toFixed(1)}% ROI
+                <span className="sr-only">. {title}</span>
               </span>
             );
           }
@@ -103,7 +112,8 @@ export function StrategyPicker({ betType, renameLabel }: Props) {
               className="glass px-2 py-1 rounded-full text-[11px] font-medium text-surface-500 dark:text-surface-400 hover:text-accent-600 dark:hover:text-accent-400 transition-colors"
               title={title}
             >
-              ★ Use suggested: {renameLabel ? renameLabel(label) : label}
+              <span aria-hidden="true">★ </span>Use suggested:{' '}
+              {renameLabel ? renameLabel(label) : label}
             </button>
           );
         })()}

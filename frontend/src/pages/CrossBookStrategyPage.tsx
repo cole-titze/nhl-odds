@@ -15,6 +15,7 @@ import {
   getCoverage,
 } from '../utils/crossBookStrategy';
 import { formatShortDate } from '../utils/dates';
+import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
 
 const MARKET_OPTIONS = ['Kalshi', 'DraftKings'];
 
@@ -130,8 +131,9 @@ export function CrossBookStrategyPage() {
 
   const chevron = (open: boolean) => (
     <svg
+      aria-hidden="true"
       xmlns="http://www.w3.org/2000/svg"
-      className={`h-4 w-4 text-surface-400 transition-transform ${open ? 'rotate-180' : ''}`}
+      className={`h-4 w-4 text-surface-500 dark:text-surface-400 transition-transform ${open ? 'rotate-180' : ''}`}
       viewBox="0 0 20 20"
       fill="currentColor"
     >
@@ -145,6 +147,7 @@ export function CrossBookStrategyPage() {
 
   return (
     <div>
+      <PageTitle title="Strategies" />
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
         <h1 className="font-display text-2xl font-bold tracking-tight">Strategies</h1>
@@ -154,14 +157,20 @@ export function CrossBookStrategyPage() {
       {/* Betting market toggle */}
       {!loading && marketPairs.length > 0 && (
         <div className="flex items-center gap-3 mb-6 flex-wrap">
-          <div className="flex rounded-lg glass p-1 gap-1 flex-wrap">
+          <div
+            className="flex rounded-lg glass p-1 gap-1 flex-wrap"
+            role="group"
+            aria-label="Compare odds sources"
+          >
             {marketPairs.map((pair) => (
               <button
                 key={pair.label}
+                type="button"
+                aria-pressed={activePair.label === pair.label}
                 onClick={() => setSelectedPair(pair)}
                 className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
                   activePair.label === pair.label
-                    ? 'bg-accent-500 text-white'
+                    ? 'bg-accent-600 text-on-accent'
                     : 'text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200'
                 }`}
               >
@@ -173,11 +182,17 @@ export function CrossBookStrategyPage() {
       )}
 
       {error && (
-        <div className="glass rounded-xl text-center text-red-500 py-8 px-4 mb-8">{error}</div>
+        <div
+          role="alert"
+          className="glass rounded-xl text-center text-red-700 dark:text-red-400 py-8 px-4 mb-8"
+        >
+          {error}
+        </div>
       )}
 
       {loading && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+          <LoadingStatus label="Loading strategies…" />
           <div className="glass rounded-xl p-5 space-y-3">
             <Skeleton className="h-4 w-32" />
             {Array.from({ length: 7 }).map((_, i) => (
@@ -198,96 +213,108 @@ export function CrossBookStrategyPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8 items-start">
           {/* Rankings table — click a row to select strategy */}
           {rankings.length > 0 && (
-            <div className="glass rounded-xl p-5 overflow-x-auto">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500 mb-3">
+            <div className="glass rounded-xl p-5">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 mb-3">
                 Strategy Rankings
               </h2>
-              <table className="w-full text-xs font-mono">
-                <thead>
-                  <tr className="text-left text-surface-400 dark:text-surface-500 border-b border-surface-200 dark:border-white/[0.06]">
-                    <th className="pb-2 pr-4">Strategy</th>
-                    <th className="pb-2 pr-4">Type</th>
-                    <th className="pb-2 pr-4 text-right">Bets</th>
-                    <th className="pb-2 pr-4 text-right">Win%</th>
-                    <th className="pb-2 pr-4 text-right">P/L</th>
-                    <th className="pb-2 text-right">ROI</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rankings.map(({ opt, threshold, result }) => {
-                    const isSelected = strategy.type === opt.type;
-                    const thresholdLabel = opt.thresholds
-                      ? opt.thresholdFormat === 'goals'
-                        ? ` ${threshold}`
-                        : ` ${(threshold * 100).toFixed(0)}%`
-                      : '';
-                    const typeLabel =
-                      opt.betType === 'moneyline'
-                        ? 'ML'
-                        : opt.betType === 'spread'
-                          ? 'Spread'
-                          : 'O/U';
-                    return (
-                      <tr
-                        key={opt.type}
-                        onClick={() => setStrategy({ type: opt.type, threshold })}
-                        className={`border-b border-surface-200/50 dark:border-white/[0.03] cursor-pointer transition-colors ${
-                          isSelected
-                            ? 'bg-accent-500/10'
-                            : 'hover:bg-surface-100 dark:hover:bg-white/[0.03]'
-                        }`}
-                      >
-                        <td
-                          className={`py-2 pr-4 font-semibold ${isSelected ? 'text-accent-500' : 'text-surface-800 dark:text-surface-200'}`}
+              <ScrollRegion label="Strategy rankings">
+                <table className="w-full text-xs font-mono">
+                  <caption className="sr-only">
+                    Strategies ranked by ROI. Choose a strategy to select it.
+                  </caption>
+                  <thead>
+                    <tr className="text-left text-surface-500 dark:text-surface-400 border-b border-surface-200 dark:border-white/[0.06]">
+                      <th className="pb-2 pr-4">Strategy</th>
+                      <th className="pb-2 pr-4">Type</th>
+                      <th className="pb-2 pr-4 text-right">Bets</th>
+                      <th className="pb-2 pr-4 text-right">Win%</th>
+                      <th className="pb-2 pr-4 text-right">P/L</th>
+                      <th className="pb-2 text-right">ROI</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rankings.map(({ opt, threshold, result }) => {
+                      const isSelected = strategy.type === opt.type;
+                      const thresholdLabel = opt.thresholds
+                        ? opt.thresholdFormat === 'goals'
+                          ? ` ${threshold}`
+                          : ` ${(threshold * 100).toFixed(0)}%`
+                        : '';
+                      const typeLabel =
+                        opt.betType === 'moneyline'
+                          ? 'ML'
+                          : opt.betType === 'spread'
+                            ? 'Spread'
+                            : 'O/U';
+                      return (
+                        <tr
+                          key={opt.type}
+                          onClick={() => setStrategy({ type: opt.type, threshold })}
+                          className={`border-b border-surface-200/50 dark:border-white/[0.03] cursor-pointer transition-colors ${
+                            isSelected
+                              ? 'bg-accent-500/10'
+                              : 'hover:bg-surface-100 dark:hover:bg-white/[0.03]'
+                          }`}
                         >
-                          {result.name}
-                          {thresholdLabel}
-                        </td>
-                        <td className="py-2 pr-4 text-surface-500 dark:text-surface-400">
-                          {typeLabel}
-                        </td>
-                        <td className="py-2 pr-4 text-right text-surface-500 dark:text-surface-400">
-                          {result.totalBets}
-                        </td>
-                        <td className="py-2 pr-4 text-right text-surface-500 dark:text-surface-400">
-                          {(result.winRate * 100).toFixed(1)}%
-                        </td>
-                        <td
-                          className={`py-2 pr-4 text-right font-semibold ${result.totalPL >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
-                        >
-                          {result.totalPL >= 0 ? '+' : ''}
-                          {result.totalPL.toFixed(2)}u
-                        </td>
-                        <td
-                          className={`py-2 text-right font-semibold ${result.roi >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
-                        >
-                          {result.roi >= 0 ? '+' : ''}
-                          {result.roi.toFixed(1)}%
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                          <td
+                            className={`py-2 pr-4 font-semibold ${isSelected ? 'text-accent-600 dark:text-accent-400' : 'text-surface-800 dark:text-surface-200'}`}
+                          >
+                            {/* Click bubbles to the row's handler */}
+                            <button
+                              type="button"
+                              aria-pressed={isSelected}
+                              className="text-left font-semibold cursor-pointer"
+                            >
+                              {result.name}
+                              {thresholdLabel}
+                            </button>
+                          </td>
+                          <td className="py-2 pr-4 text-surface-500 dark:text-surface-400">
+                            {typeLabel}
+                          </td>
+                          <td className="py-2 pr-4 text-right text-surface-500 dark:text-surface-400">
+                            {result.totalBets}
+                          </td>
+                          <td className="py-2 pr-4 text-right text-surface-500 dark:text-surface-400">
+                            {(result.winRate * 100).toFixed(1)}%
+                          </td>
+                          <td
+                            className={`py-2 pr-4 text-right font-semibold ${result.totalPL >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'}`}
+                          >
+                            {result.totalPL >= 0 ? '+' : ''}
+                            {result.totalPL.toFixed(2)}u
+                          </td>
+                          <td
+                            className={`py-2 text-right font-semibold ${result.roi >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'}`}
+                          >
+                            {result.roi >= 0 ? '+' : ''}
+                            {result.roi.toFixed(1)}%
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </ScrollRegion>
             </div>
           )}
 
           {/* Upcoming bets */}
           <div className="glass rounded-xl p-5">
             <h2
-              className={`text-xs font-semibold uppercase tracking-wider mb-4 ${upcomingEntries.length > 0 ? 'text-emerald-500' : 'text-surface-400 dark:text-surface-500'}`}
+              className={`text-xs font-semibold uppercase tracking-wider mb-4 ${upcomingEntries.length > 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-surface-500 dark:text-surface-400'}`}
             >
               Upcoming Bets{upcomingEntries.length > 0 ? ` (${upcomingEntries.length})` : ''}
             </h2>
             {upcomingEntries.length === 0 ? (
-              <div className="flex items-center justify-center h-20 text-xs text-surface-400 dark:text-surface-500">
+              <div className="flex items-center justify-center h-20 text-xs text-surface-500 dark:text-surface-400">
                 No upcoming bets for this strategy
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <ScrollRegion label="Upcoming bets">
                 <table className="w-full text-xs font-mono">
                   <thead>
-                    <tr className="text-left text-surface-400 dark:text-surface-500 border-b border-surface-200 dark:border-white/[0.06]">
+                    <tr className="text-left text-surface-500 dark:text-surface-400 border-b border-surface-200 dark:border-white/[0.06]">
                       <th className="pb-2 pr-3">Date</th>
                       <th className="pb-2 pr-3">Matchup</th>
                       <th className="pb-2 pr-3">Bet</th>
@@ -306,15 +333,17 @@ export function CrossBookStrategyPage() {
                         <td className="py-1.5 pr-3 text-surface-800 dark:text-surface-200">
                           {e.awayTeam} @ {e.homeTeam}
                         </td>
-                        <td className="py-1.5 pr-3 font-semibold text-emerald-500">{e.betSide}</td>
-                        <td className="py-1.5 text-right font-semibold text-emerald-500">
+                        <td className="py-1.5 pr-3 font-semibold text-emerald-700 dark:text-emerald-400">
+                          {e.betSide}
+                        </td>
+                        <td className="py-1.5 text-right font-semibold text-emerald-700 dark:text-emerald-400">
                           {isMoneyline ? (e.edge * 100).toFixed(1) + '%' : e.edge.toFixed(2)}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </ScrollRegion>
             )}
           </div>
         </div>
@@ -323,21 +352,27 @@ export function CrossBookStrategyPage() {
       {/* Strategy stats + chart (collapsible) */}
       {!loading && !error && strategyResult && (
         <div className="glass rounded-xl p-5 mb-8">
-          <button
-            onClick={() => setShowChart(!showChart)}
-            className="w-full flex items-center justify-between cursor-pointer"
-          >
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+            <button
+              type="button"
+              onClick={() => setShowChart(!showChart)}
+              aria-expanded={showChart}
+              aria-controls="strategy-performance"
+              className="w-full flex items-center justify-between cursor-pointer uppercase tracking-wider font-semibold"
+            >
               {strategyResult.name} — Performance
-            </h2>
-            {chevron(showChart)}
-          </button>
+              {chevron(showChart)}
+            </button>
+          </h2>
           {showChart && (
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4 mt-4">
+            <div
+              id="strategy-performance"
+              className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4 mt-4"
+            >
               <div>
                 <StrategyCard result={strategyResult} />
                 {coverage && (
-                  <p className="text-xs text-surface-400 dark:text-surface-500 mt-2">
+                  <p className="text-xs text-surface-500 dark:text-surface-400 mt-2">
                     {coverage.matched} of {coverage.total} played games had odds from both sources
                   </p>
                 )}
@@ -351,87 +386,101 @@ export function CrossBookStrategyPage() {
       {/* Bet log (collapsible) */}
       {!loading && !error && playedEntries.length > 0 && (
         <div className="glass rounded-xl p-5 mb-8">
-          <button
-            onClick={() => setShowLog(!showLog)}
-            className="w-full flex items-center justify-between cursor-pointer"
-          >
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500">
-              Bet Log ({playedEntries.length})
-            </h2>
-            {chevron(showLog)}
-          </button>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+            <button
+              type="button"
+              onClick={() => setShowLog(!showLog)}
+              aria-expanded={showLog}
+              aria-controls="bet-log"
+              className="w-full flex items-center justify-between cursor-pointer uppercase tracking-wider font-semibold"
+            >
+              Bet Log ({playedEntries.length}){chevron(showLog)}
+            </button>
+          </h2>
           {showLog && (
-            <div className="overflow-x-auto mt-4">
-              <table className="w-full text-xs font-mono">
-                <thead>
-                  <tr className="text-left text-surface-400 dark:text-surface-500 border-b border-surface-200 dark:border-white/[0.06]">
-                    <th className="pb-2 pr-3">Date</th>
-                    <th className="pb-2 pr-3">Matchup</th>
-                    <th className="pb-2 pr-3">Bet</th>
-                    <th className="pb-2 pr-3 text-right">Ref</th>
-                    <th className="pb-2 pr-3 text-right">Market</th>
-                    <th className="pb-2 pr-3 text-right">Edge</th>
-                    <th className="pb-2 pr-3 text-right">Result</th>
-                    <th className="pb-2 text-right">P/L</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {playedEntries.map((e) => (
-                    <tr
-                      key={e.gameId}
-                      className="border-b border-surface-200/50 dark:border-white/[0.03]"
-                    >
-                      <td className="py-1.5 pr-3 text-surface-500 dark:text-surface-400">
-                        {formatShortDate(e.gameDate)}
-                      </td>
-                      <td className="py-1.5 pr-3 text-surface-800 dark:text-surface-200">
-                        {e.awayTeam} @ {e.homeTeam}
-                      </td>
-                      <td className="py-1.5 pr-3 font-semibold text-surface-800 dark:text-surface-200">
-                        {e.betSide}
-                      </td>
-                      <td className="py-1.5 pr-3 text-right text-surface-500 dark:text-surface-400">
-                        {isMoneyline ? (e.refValue * 100).toFixed(1) + '%' : e.refValue.toFixed(1)}
-                      </td>
-                      <td className="py-1.5 pr-3 text-right text-surface-500 dark:text-surface-400">
-                        {isMoneyline ? (e.betValue * 100).toFixed(1) + '%' : e.betValue.toFixed(1)}
-                      </td>
-                      <td className="py-1.5 pr-3 text-right text-surface-500 dark:text-surface-400">
-                        {isMoneyline ? (e.edge * 100).toFixed(1) + '%' : e.edge.toFixed(2)}
-                      </td>
-                      <td
-                        className={`py-1.5 pr-3 text-right font-semibold ${e.won ? 'text-emerald-500' : 'text-red-500'}`}
-                      >
-                        {e.won ? 'W' : 'L'}
-                      </td>
-                      <td
-                        className={`py-1.5 text-right font-semibold ${e.payout! >= 0 ? 'text-emerald-500' : 'text-red-500'}`}
-                      >
-                        {e.payout! >= 0 ? '+' : ''}
-                        {e.payout!.toFixed(2)}u
-                      </td>
+            <ScrollRegion label="Bet log" className="overflow-x-auto mt-4">
+              <div id="bet-log">
+                <table className="w-full text-xs font-mono">
+                  <thead>
+                    <tr className="text-left text-surface-500 dark:text-surface-400 border-b border-surface-200 dark:border-white/[0.06]">
+                      <th className="pb-2 pr-3">Date</th>
+                      <th className="pb-2 pr-3">Matchup</th>
+                      <th className="pb-2 pr-3">Bet</th>
+                      <th className="pb-2 pr-3 text-right">Ref</th>
+                      <th className="pb-2 pr-3 text-right">Market</th>
+                      <th className="pb-2 pr-3 text-right">Edge</th>
+                      <th className="pb-2 pr-3 text-right">Result</th>
+                      <th className="pb-2 text-right">P/L</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {playedEntries.map((e) => (
+                      <tr
+                        key={e.gameId}
+                        className="border-b border-surface-200/50 dark:border-white/[0.03]"
+                      >
+                        <td className="py-1.5 pr-3 text-surface-500 dark:text-surface-400">
+                          {formatShortDate(e.gameDate)}
+                        </td>
+                        <td className="py-1.5 pr-3 text-surface-800 dark:text-surface-200">
+                          {e.awayTeam} @ {e.homeTeam}
+                        </td>
+                        <td className="py-1.5 pr-3 font-semibold text-surface-800 dark:text-surface-200">
+                          {e.betSide}
+                        </td>
+                        <td className="py-1.5 pr-3 text-right text-surface-500 dark:text-surface-400">
+                          {isMoneyline
+                            ? (e.refValue * 100).toFixed(1) + '%'
+                            : e.refValue.toFixed(1)}
+                        </td>
+                        <td className="py-1.5 pr-3 text-right text-surface-500 dark:text-surface-400">
+                          {isMoneyline
+                            ? (e.betValue * 100).toFixed(1) + '%'
+                            : e.betValue.toFixed(1)}
+                        </td>
+                        <td className="py-1.5 pr-3 text-right text-surface-500 dark:text-surface-400">
+                          {isMoneyline ? (e.edge * 100).toFixed(1) + '%' : e.edge.toFixed(2)}
+                        </td>
+                        <td
+                          className={`py-1.5 pr-3 text-right font-semibold ${e.won ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'}`}
+                        >
+                          {e.won ? 'W' : 'L'}
+                        </td>
+                        <td
+                          className={`py-1.5 text-right font-semibold ${e.payout! >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'}`}
+                        >
+                          {e.payout! >= 0 ? '+' : ''}
+                          {e.payout!.toFixed(2)}u
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </ScrollRegion>
           )}
         </div>
       )}
 
       {/* How It Works (collapsible) */}
       <div className="glass rounded-xl p-6 mb-8">
-        <button
-          onClick={() => setShowHowItWorks(!showHowItWorks)}
-          className="w-full flex items-center justify-between cursor-pointer"
-        >
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+          <button
+            type="button"
+            onClick={() => setShowHowItWorks(!showHowItWorks)}
+            aria-expanded={showHowItWorks}
+            aria-controls="how-it-works"
+            className="w-full flex items-center justify-between cursor-pointer uppercase tracking-wider font-semibold"
+          >
             How It Works
-          </h2>
-          {chevron(showHowItWorks)}
-        </button>
+            {chevron(showHowItWorks)}
+          </button>
+        </h2>
         {showHowItWorks && (
-          <div className="space-y-4 text-sm text-surface-600 dark:text-surface-400 leading-relaxed mt-4">
+          <div
+            id="how-it-works"
+            className="space-y-4 text-sm text-surface-600 dark:text-surface-400 leading-relaxed mt-4"
+          >
             <p>
               This page simulates flat{' '}
               <strong className="text-surface-800 dark:text-surface-200">1-unit bets</strong> using
@@ -522,7 +571,7 @@ export function CrossBookStrategyPage() {
                 </div>
               </div>
             )}
-            <div className="border-t border-surface-200 dark:border-white/[0.06] pt-4 text-xs text-surface-400 dark:text-surface-500">
+            <div className="border-t border-surface-200 dark:border-white/[0.06] pt-4 text-xs text-surface-500 dark:text-surface-400">
               <p>
                 <strong>Win Rate</strong> = wins / total bets. <strong>P/L</strong> = total units
                 won minus total units lost. <strong>ROI</strong> = P/L / total bets as a percentage.
