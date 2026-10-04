@@ -12,8 +12,9 @@ public static class ApiCache
 {
     public const string ServiceKey = "api";
 
-    // ~15 full seasons of games — well above what the frontend keeps warm, well below the pod's memory limit
-    public const long SizeLimit = 20_000;
+    // ~6KB per unit (measured 2026-10-04): a full 20k cache took the pod to ~214Mi of its 256Mi limit.
+    // 10k (~60Mi) still fits the warmed current season (~4.2k) plus a few more seasons.
+    public const long SizeLimit = 10_000;
 
     // Ad-hoc date ranges aren't refreshed by the StartupCacheWarmer, so let them expire
     public static readonly TimeSpan DateRangeLifetime = TimeSpan.FromHours(1);
