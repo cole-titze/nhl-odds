@@ -13,13 +13,19 @@
 // 4. Games feed focus order: Tab out of the filter bar must land on the first
 //    game fully on screen, without scrolling (the feed starts days before
 //    the date the page opens on, so the next card in DOM order is off screen)
+// 5. Tabbing between the Games filter bar's controls must not scroll the feed
 //
-// Set CHROMIUM_PATH to use an existing Chromium instead of Playwright's.
+// axe runs in Chromium only (its rules don't depend on the engine); checks
+// 2-5 run in every browser in A11Y_BROWSERS (comma-separated, default
+// chromium,firefox,webkit), since scrolling and focus behave differently in
+// each. WebKit is driven with Option+Tab, as Safari's plain Tab skips links
+// and buttons. Set CHROMIUM_PATH to use an existing Chromium instead of
+// Playwright's.
 import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
-import { chromium } from 'playwright';
+import { chromium, firefox, webkit } from 'playwright';
 import { ANCHOR_DATE, THEMES, pagesFor, mockApi } from './fixtures.mjs';
 
 const require = createRequire(import.meta.url);
@@ -33,6 +39,16 @@ const VIEWPORTS = {
   phone: { width: 375, height: 812 },
 };
 const MAX_TABS = 80;
+const ENGINES = { chromium, firefox, webkit };
+const BROWSERS = (process.env.A11Y_BROWSERS || Object.keys(ENGINES).join(','))
+  .split(',')
+  .map((b) => b.trim());
+for (const b of BROWSERS) {
+  if (!ENGINES[b]) throw new Error(`unknown browser "${b}" in A11Y_BROWSERS`);
+}
+// Set per browser below
+let engine = BROWSERS[0];
+let TAB = 'Tab';
 
 const LOGO_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5"/></svg>';
@@ -159,7 +175,7 @@ function checkFocusVisible() {
 async function tabThrough(page) {
   const problems = [];
   for (let i = 0; i < MAX_TABS; i++) {
-    await page.keyboard.press('Tab');
+    await page.keyboard.press(TAB);
     const problem = await page.evaluate(checkFocusVisible);
     if (problem && !problems.includes(problem)) problems.push(problem);
   }
@@ -167,7 +183,7 @@ async function tabThrough(page) {
 }
 
 function report(label, problems) {
-  console.log(`${problems.length === 0 ? 'PASS' : 'FAIL'}  ${label}`);
+  console.log(`${problems.length === 0 ? 'PASS' : 'FAIL'}  ${engine}: ${label}`);
   for (const p of problems) console.log(`    - ${p}`);
   return problems.length;
 }
@@ -180,144 +196,154 @@ let browser;
 let total = 0;
 
 try {
-  browser = await chromium.launch(
-    process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
-  );
+  for (engine of BROWSERS) {
+    TAB = engine === 'webkit' ? 'Alt+Tab' : 'Tab';
+    browser = await ENGINES[engine].launch(
+      engine === 'chromium' && process.env.CHROMIUM_PATH
+        ? { executablePath: process.env.CHROMIUM_PATH }
+        : {},
+    );
 
-  // 1. axe
-  for (const [viewportName, viewport] of Object.entries(VIEWPORTS)) {
-    for (const theme of THEMES) {
-      const ctx = await newContext(browser, theme, viewport);
+    // 1. axe
+    if (engine === 'chromium') {
+      for (const [viewportName, viewport] of Object.entries(VIEWPORTS)) {
+        for (const theme of THEMES) {
+          const ctx = await newContext(browser, theme, viewport);
+          const page = await ctx.newPage();
+          for (const path of pagesFor()) {
+            await load(page, path);
+            // Open collapsed sections so their contents get scanned too
+            for (const button of await page.locator('main button[aria-expanded="false"]').all()) {
+              await button.click({ timeout: 1000 }).catch(() => {});
+            }
+            await page.waitForTimeout(300);
+            total += report(`axe [${viewportName} ${theme}] ${path}`, await runAxe(page));
+          }
+          if (viewportName === 'phone') {
+            await load(page, '/about');
+            await page.locator('header button[aria-controls="mobile-menu"]').click();
+            total += report(`axe [${viewportName} ${theme}] mobile menu open`, await runAxe(page));
+          }
+          await ctx.close();
+        }
+      }
+    }
+
+    // 2. Reflow at 320px
+    {
+      const ctx = await newContext(browser, 'light', { width: 320, height: 640 });
       const page = await ctx.newPage();
       for (const path of pagesFor()) {
         await load(page, path);
-        // Open collapsed sections so their contents get scanned too
-        for (const button of await page.locator('main button[aria-expanded="false"]').all()) {
-          await button.click({ timeout: 1000 }).catch(() => {});
-        }
-        await page.waitForTimeout(300);
-        total += report(`axe [${viewportName} ${theme}] ${path}`, await runAxe(page));
-      }
-      if (viewportName === 'phone') {
-        await load(page, '/about');
-        await page.locator('header button[aria-controls="mobile-menu"]').click();
-        total += report(`axe [${viewportName} ${theme}] mobile menu open`, await runAxe(page));
+        total += report(`reflow [320px] ${path}`, await page.evaluate(findReflowProblems));
       }
       await ctx.close();
     }
-  }
 
-  // 2. Reflow at 320px
-  {
-    const ctx = await newContext(browser, 'light', { width: 320, height: 640 });
-    const page = await ctx.newPage();
-    for (const path of pagesFor()) {
-      await load(page, path);
-      total += report(`reflow [320px] ${path}`, await page.evaluate(findReflowProblems));
+    // 3. Focus not obscured
+    for (const [viewportName, viewport] of Object.entries(VIEWPORTS)) {
+      const ctx = await newContext(browser, 'light', viewport);
+      const page = await ctx.newPage();
+      for (const path of pagesFor()) {
+        await load(page, path);
+        total += report(`focus visible [${viewportName}] ${path}`, await tabThrough(page));
+      }
+      await ctx.close();
     }
-    await ctx.close();
-  }
 
-  // 3. Focus not obscured
-  for (const [viewportName, viewport] of Object.entries(VIEWPORTS)) {
-    const ctx = await newContext(browser, 'light', viewport);
-    const page = await ctx.newPage();
-    for (const path of pagesFor()) {
-      await load(page, path);
-      total += report(`focus visible [${viewportName}] ${path}`, await tabThrough(page));
+    // 4. Games feed focus order, from where the page opens and from a scroll
+    //    position that leaves a card peeking out from under the filter bar
+    for (const [viewportName, viewport] of Object.entries(VIEWPORTS)) {
+      for (const position of ['opened', 'card under bar']) {
+        const ctx = await newContext(browser, 'light', viewport);
+        const page = await ctx.newPage();
+        await load(page, '/');
+        if (position === 'card under bar') {
+          await page.evaluate(() => {
+            const bar = document.getElementById('games-filter-bar').getBoundingClientRect().bottom;
+            const cards = [...document.querySelectorAll('#games-feed a[href]')];
+            const next = cards.find((c) => c.getBoundingClientRect().top > bar + 50);
+            const partly = cards[cards.indexOf(next) - 1];
+            window.scrollBy(0, partly.getBoundingClientRect().bottom - (bar + 20));
+          });
+          await page.waitForTimeout(300);
+        }
+        // Focus the filter bar's last control, as if the user had tabbed to it
+        await page.evaluate(() => {
+          const tabbable = [
+            ...document.querySelectorAll('#games-filter-bar :is(a[href], button, input, select)'),
+          ];
+          tabbable[tabbable.length - 1].focus();
+        });
+        const before = await page.evaluate(() => window.scrollY);
+        await page.keyboard.press(TAB);
+        const result = await page.evaluate(
+          ([anchor, scrollBefore]) => {
+            const el = document.activeElement;
+            const feed = document.getElementById('games-feed');
+            const barsBottom = document
+              .getElementById('games-filter-bar')
+              .getBoundingClientRect().bottom;
+            const onScreen = [...feed.querySelectorAll('a[href], button:not([disabled])')].filter(
+              (n) => {
+                const r = n.getBoundingClientRect();
+                return r.height > 0 && r.top >= barsBottom - 1 && r.top < window.innerHeight;
+              },
+            );
+            const where = `${el?.closest('section')?.id ?? el?.tagName} (page opened on date-${anchor})`;
+            const problems = [];
+            if (Math.abs(window.scrollY - scrollBefore) > 1)
+              problems.push(
+                `page scrolled ${Math.round(scrollBefore)} -> ${Math.round(window.scrollY)}; focus went to ${where}`,
+              );
+            if (el !== onScreen[0])
+              problems.push(`focus went to ${where}, not the first game fully on screen`);
+            return problems;
+          },
+          [ANCHOR_DATE, before],
+        );
+        total += report(`feed focus order [${viewportName}, ${position}] /`, result);
+        await ctx.close();
+      }
     }
-    await ctx.close();
-  }
 
-  // 4. Games feed focus order, from where the page opens and from a scroll
-  //    position that leaves a card peeking out from under the filter bar
-  for (const [viewportName, viewport] of Object.entries(VIEWPORTS)) {
-    for (const position of ['opened', 'card under bar']) {
+    // 5. Tabbing between the filter bar's controls must not scroll the feed
+    //    (they're always on screen; a scroll-margin on them used to push the
+    //    feed back a few days per Tab, and into loads of older games)
+    for (const [viewportName, viewport] of Object.entries(VIEWPORTS)) {
       const ctx = await newContext(browser, 'light', viewport);
       const page = await ctx.newPage();
       await load(page, '/');
-      if (position === 'card under bar') {
-        await page.evaluate(() => {
-          const bar = document.getElementById('games-filter-bar').getBoundingClientRect().bottom;
-          const cards = [...document.querySelectorAll('#games-feed a[href]')];
-          const next = cards.find((c) => c.getBoundingClientRect().top > bar + 50);
-          const partly = cards[cards.indexOf(next) - 1];
-          window.scrollBy(0, partly.getBoundingClientRect().bottom - (bar + 20));
-        });
-        await page.waitForTimeout(300);
-      }
-      // Focus the filter bar's last control, as if the user had tabbed to it
-      await page.evaluate(() => {
-        const tabbable = [
-          ...document.querySelectorAll('#games-filter-bar :is(a[href], button, input, select)'),
-        ];
-        tabbable[tabbable.length - 1].focus();
-      });
       const before = await page.evaluate(() => window.scrollY);
-      await page.keyboard.press('Tab');
-      const result = await page.evaluate(
-        ([anchor, scrollBefore]) => {
-          const el = document.activeElement;
-          const feed = document.getElementById('games-feed');
-          const barsBottom = document
-            .getElementById('games-filter-bar')
-            .getBoundingClientRect().bottom;
-          const onScreen = [...feed.querySelectorAll('a[href], button:not([disabled])')].filter(
-            (n) => {
-              const r = n.getBoundingClientRect();
-              return r.height > 0 && r.top >= barsBottom - 1 && r.top < window.innerHeight;
-            },
-          );
-          const where = `${el?.closest('section')?.id ?? el?.tagName} (page opened on date-${anchor})`;
-          const problems = [];
-          if (Math.abs(window.scrollY - scrollBefore) > 1)
-            problems.push(
-              `page scrolled ${Math.round(scrollBefore)} -> ${Math.round(window.scrollY)}; focus went to ${where}`,
-            );
-          if (el !== onScreen[0])
-            problems.push(`focus went to ${where}, not the first game fully on screen`);
-          return problems;
-        },
-        [ANCHOR_DATE, before],
+      await page.evaluate(() =>
+        document.querySelector('#games-filter-bar :is(a[href], button, input, select)').focus(),
       );
-      total += report(`feed focus order [${viewportName}, ${position}] /`, result);
+      const problems = [];
+      for (let i = 0; i < 12; i++) {
+        const step = await page.evaluate((scrollBefore) => {
+          const el = document.activeElement;
+          if (!el?.closest('#games-filter-bar')) return { done: true };
+          const label = (el.getAttribute('aria-label') || el.textContent || el.tagName).trim();
+          return {
+            moved:
+              Math.abs(window.scrollY - scrollBefore) > 1
+                ? `focusing "${label.slice(0, 30)}" scrolled ${Math.round(scrollBefore)} -> ${Math.round(window.scrollY)}`
+                : null,
+          };
+        }, before);
+        if (step.done) break;
+        if (step.moved) {
+          problems.push(step.moved);
+          break;
+        }
+        await page.keyboard.press(TAB);
+      }
+      total += report(`filter bar tabbing keeps scroll [${viewportName}] /`, problems);
       await ctx.close();
     }
-  }
 
-  // 5. Tabbing between the filter bar's controls must not scroll the feed
-  //    (they're always on screen; a scroll-margin on them used to push the
-  //    feed back a few days per Tab, and into loads of older games)
-  for (const [viewportName, viewport] of Object.entries(VIEWPORTS)) {
-    const ctx = await newContext(browser, 'light', viewport);
-    const page = await ctx.newPage();
-    await load(page, '/');
-    const before = await page.evaluate(() => window.scrollY);
-    await page.evaluate(() =>
-      document.querySelector('#games-filter-bar :is(a[href], button, input, select)').focus(),
-    );
-    const problems = [];
-    for (let i = 0; i < 12; i++) {
-      const step = await page.evaluate((scrollBefore) => {
-        const el = document.activeElement;
-        if (!el?.closest('#games-filter-bar')) return { done: true };
-        const label = (el.getAttribute('aria-label') || el.textContent || el.tagName).trim();
-        return {
-          moved:
-            Math.abs(window.scrollY - scrollBefore) > 1
-              ? `focusing "${label.slice(0, 30)}" scrolled ${Math.round(scrollBefore)} -> ${Math.round(window.scrollY)}`
-              : null,
-        };
-      }, before);
-      if (step.done) break;
-      if (step.moved) {
-        problems.push(step.moved);
-        break;
-      }
-      await page.keyboard.press('Tab');
-    }
-    total += report(`filter bar tabbing keeps scroll [${viewportName}] /`, problems);
-    await ctx.close();
+    await browser.close();
+    browser = undefined;
   }
 } finally {
   await browser?.close();

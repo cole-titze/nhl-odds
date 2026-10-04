@@ -18,8 +18,14 @@ env:
 
 jobs:
   axe:
-    name: axe WCAG 2.2 AA scan
+    # axe's WCAG rules run in the Chromium job; the focus, scroll and reflow
+    # checks run in all three, since those behave differently per engine
+    name: a11y scan (${{ matrix.browser }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
     permissions:
       contents: read
     defaults:
@@ -39,11 +45,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Install ${{ matrix.browser }}
+        run: npx playwright install --with-deps ${{ matrix.browser }}
 
       - name: Build
         run: npm run build
 
-      - name: Run axe scan
+      - name: Run a11y scan
         run: npm run a11y
+        env:
+          A11Y_BROWSERS: ${{ matrix.browser }}
