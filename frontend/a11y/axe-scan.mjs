@@ -173,12 +173,17 @@ function report(label, problems) {
 }
 
 const server = await startPreview();
-const browser = await chromium.launch(
-  process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
-);
+// Stop the server however the scan ends, including a crash, so the next run
+// doesn't find the port taken
+process.on('exit', () => server.kill());
+let browser;
 let total = 0;
 
 try {
+  browser = await chromium.launch(
+    process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
+  );
+
   // 1. axe
   for (const [viewportName, viewport] of Object.entries(VIEWPORTS)) {
     for (const theme of THEMES) {
@@ -280,7 +285,7 @@ try {
     }
   }
 } finally {
-  await browser.close();
+  await browser?.close();
   server.kill();
 }
 
