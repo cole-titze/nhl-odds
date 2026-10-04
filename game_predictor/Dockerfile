@@ -2,6 +2,8 @@ FROM python:3.12-slim
 WORKDIR /app
 RUN apt-get update && apt-get upgrade -y --no-install-recommends && apt-get install -y --no-install-recommends libgomp1 tzdata && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt .
+# Root is fine in a throwaway build layer; silences pip's warning about it
+ENV PIP_ROOT_USER_ACTION=ignore
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . game_predictor/
 ENV PREDICTOR_MODE=predict

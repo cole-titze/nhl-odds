@@ -9,9 +9,26 @@ env:
   REGISTRY: ghcr.io
   REPO: ${{ github.repository }}
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # Trivy itself; the action is pinned separately below. Bump both together.
+  TRIVY_VERSION: v0.75.0
 
 jobs:
+  # Downloads Trivy and its vulnerability DB once and caches them, so the scan
+  # jobs below all restore the cache instead of racing to save it
+  prime-cache:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Cache Trivy and its DB
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          version: ${{ env.TRIVY_VERSION }}
+
   scan:
+    needs: prime-cache
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -30,8 +47,9 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Scan ${{ matrix.image }}
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
+          version: ${{ env.TRIVY_VERSION }}
           image-ref: ${{ env.REGISTRY }}/${{ env.REPO }}/${{ matrix.image }}:latest
           format: table
           exit-code: 1
