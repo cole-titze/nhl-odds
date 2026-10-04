@@ -305,11 +305,16 @@ main :is(a, button, input, select, textarea, summary, [tabindex]) {
 
 /* Phones: the header slides off the top while scrolling down (Navbar.tsx
    toggles .nav-hidden) and the Games filter bar moves up into its place.
-   Keyboard focus inside the header brings it back. */
+   Keyboard focus inside the header brings it back, instantly, so the focused
+   control is never even briefly off screen. */
 @media (max-width: 767px) {
   .app-nav,
   .app-subbar {
     transition: transform 0.25s ease;
+  }
+  .app-nav:focus-within,
+  .app-nav:focus-within ~ main .app-subbar {
+    transition: none;
   }
   .nav-hidden .app-nav:not(:focus-within) {
     transform: translateY(-100%);

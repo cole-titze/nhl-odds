@@ -12,6 +12,3 @@ This is a personal hobby project, so there's no formal SLA, but I'll aim to ackn
 
 Only the latest `main` branch and the `:latest` container images published to `ghcr.io/cole-titze/nhl-odds/*` receive fixes.
 
-## Automated Scanning
-
-Container images are scanned weekly with Trivy (`.github/workflows/security-scan.yml`). Known findings that have been reviewed and judged unreachable are listed, with reasons, in `.trivyignore.yaml`.
