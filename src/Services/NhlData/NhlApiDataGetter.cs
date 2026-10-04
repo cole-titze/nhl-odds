@@ -4,6 +4,8 @@ namespace Services.NhlData;
 
 public class NhlApiDataGetter
 {
+    private const int BUBBLE_SEASON_START_YEAR = 2019;
+
     public INhlGameGetter GameDataGetter;
     public INhlPlayerGetter PlayerDataGetter;
     public INhlScheduleGetter ScheduleDataGetter;
@@ -40,9 +42,22 @@ public class NhlApiDataGetter
     /// Returns all possible playoff game IDs for a season using the NHL RSMG format.
     /// Round 1 has 8 series, Round 2 has 4, Round 3 has 2, Round 4 (Finals) has 1.
     /// Games not yet played will return null from the API and are skipped by the caller.
+    /// The 2019-20 bubble season also had a Round 0: two round-robin groups (series 0-1) and
+    /// eight qualifying series (series 2-9).
     /// </summary>
     public static IEnumerable<int> GetAllPlayoffGameIds(int seasonStartYear)
     {
+        if (seasonStartYear == BUBBLE_SEASON_START_YEAR)
+        {
+            for (int series = 0; series <= 9; series++)
+            {
+                for (int game = 1; game <= 7; game++)
+                {
+                    yield return GetPlayoffGameId(seasonStartYear, (series * 10) + game);
+                }
+            }
+        }
+
         int[] seriesPerRound = [8, 4, 2, 1];
         for (int round = 1; round <= 4; round++)
         {

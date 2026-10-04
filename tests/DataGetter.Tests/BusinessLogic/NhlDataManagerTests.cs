@@ -84,6 +84,29 @@ public class NhlDataManagerTests
     }
 
     [TestMethod]
+    public async Task GetNhlData_WhenPastSeasonHasPastUnplayedGames_ShouldNotSkipSeason()
+    {
+        // 2020: all games saved, but stale/placeholder playoff games remain -> should NOT skip
+        A.CallTo(() => _gameRepo.GetSavedGameCountForSeason(2020)).Returns(1312);
+        A.CallTo(() => _gameRepo.GetGameCountForSeason(2020)).Returns(1312);
+        A.CallTo(() => _gameRepo.HasPlayoffGamesForSeason(2020)).Returns(true);
+        A.CallTo(() => _gameRepo.HasPastUnplayedGamesForSeason(2020)).Returns(true);
+        A.CallTo(() => _teamRepo.HasSeasonTeams(2020)).Returns(true);
+        A.CallTo(() => _teamRepo.GetSeasonTeams(2020)).Returns(new List<Team>());
+
+        // 2021 current year
+        A.CallTo(() => _gameRepo.GetSavedGameCountForSeason(2021)).Returns(1312);
+        A.CallTo(() => _gameRepo.GetGameCountForSeason(2021)).Returns(1312);
+        A.CallTo(() => _teamRepo.HasSeasonTeams(2021)).Returns(true);
+        A.CallTo(() => _teamRepo.GetSeasonTeams(2021)).Returns(new List<Team>());
+
+        var sut = CreateSut();
+        await sut.GetNhlData(new YearRange(2020, 2021), ModeType.NhlAdd);
+
+        A.CallTo(() => _teamRepo.HasSeasonTeams(2020)).MustHaveHappened();
+    }
+
+    [TestMethod]
     public async Task GetNhlData_WhenModeIsUpdate_ShouldNotSkipSeason()
     {
         A.CallTo(() => _gameRepo.GetSavedGameCountForSeason(2020)).Returns(1312);

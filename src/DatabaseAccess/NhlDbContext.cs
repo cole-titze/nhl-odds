@@ -24,6 +24,7 @@ public partial class NhlDbContext : DbContext
     public virtual DbSet<DbSeasonGameCount> SeasonGameCount { get; set; } = null!;
     public virtual DbSet<DbGameCleaned> GameCleaned { get; set; } = null!;
     public virtual DbSet<DbGameOdds> GameOdds { get; set; } = null!;
+    public virtual DbSet<DbGameSpreadTotalOdds> GameSpreadTotalOdds { get; set; } = null!;
     public virtual DbSet<DbTvBroadcaster> TvBroadcaster { get; set; } = null!;
     public virtual DbSet<DbGameTvBroadcaster> GameTvBroadcaster { get; set; } = null!;
     public virtual DbSet<DbBookmakerOdds> BookmakerOdds { get; set; } = null!;
@@ -70,6 +71,8 @@ public partial class NhlDbContext : DbContext
         modelBuilder.Entity<DbBookmakerTotals>()
             .HasKey(c => new { c.GameId, c.BookmakerName });
         modelBuilder.Entity<DbGameOdds>()
+            .HasKey(c => new { c.GameId, c.ModelId, c.RunDateUTC });
+        modelBuilder.Entity<DbGameSpreadTotalOdds>()
             .HasKey(c => new { c.GameId, c.ModelId, c.RunDateUTC });
         modelBuilder.Entity<DbGameOfficial>()
             .HasKey(c => new { c.GameId, c.Name });

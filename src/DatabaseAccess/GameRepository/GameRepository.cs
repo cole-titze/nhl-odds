@@ -38,6 +38,17 @@ public class GameRepository : IGameRepository
     }
 
     /// <summary>
+    /// Whether the season has games whose date has passed but are still stored as unplayed:
+    /// either stale rows that need re-fetching or placeholders that need removing.
+    /// </summary>
+    public async Task<bool> HasPastUnplayedGamesForSeason(int seasonStartYear)
+    {
+        return await _dbContext.GameRaw
+            .Where(g => g.SeasonStartYear == seasonStartYear && !g.HasBeenPlayed && g.GameDateUTC < DateTime.UtcNow)
+            .AnyAsync();
+    }
+
+    /// <summary>
     /// Gets total games for given season
     /// </summary>
     /// <param name="seasonStartYear">season start year</param>
@@ -211,12 +222,28 @@ public class GameRepository : IGameRepository
     /// <summary>
     /// Removes a game placeholder row (e.g. a playoff game slot that was scheduled speculatively
     /// but never happened because the series ended early). Caller is responsible for Commit().
+    /// The FKs to GameRaw don't cascade, so rows that can exist for an unplayed game (cleaned
+    /// features, pre-game roster snapshot, odds, predictions) are removed with it.
     /// </summary>
     public async Task DeleteGame(int gameId)
     {
         var dbGame = await GetDbGame(gameId);
-        if (dbGame != null)
-            _dbContext.GameRaw.Remove(dbGame);
+        if (dbGame == null)
+            return;
+
+        _dbContext.GameCleaned.RemoveRange(await _dbContext.GameCleaned.Where(x => x.GameId == gameId).ToListAsync());
+        _dbContext.GameSkaterStats.RemoveRange(await _dbContext.GameSkaterStats.Where(x => x.GameId == gameId).ToListAsync());
+        _dbContext.GameGoalieStats.RemoveRange(await _dbContext.GameGoalieStats.Where(x => x.GameId == gameId).ToListAsync());
+        _dbContext.GameCoach.RemoveRange(await _dbContext.GameCoach.Where(x => x.GameId == gameId).ToListAsync());
+        _dbContext.GameOfficial.RemoveRange(await _dbContext.GameOfficial.Where(x => x.GameId == gameId).ToListAsync());
+        _dbContext.GameTvBroadcaster.RemoveRange(await _dbContext.GameTvBroadcaster.Where(x => x.GameId == gameId).ToListAsync());
+        _dbContext.GameOdds.RemoveRange(await _dbContext.GameOdds.Where(x => x.GameId == gameId).ToListAsync());
+        _dbContext.GameSpreadTotalOdds.RemoveRange(await _dbContext.GameSpreadTotalOdds.Where(x => x.GameId == gameId).ToListAsync());
+        _dbContext.BookmakerOdds.RemoveRange(await _dbContext.BookmakerOdds.Where(x => x.GameId == gameId).ToListAsync());
+        _dbContext.BookmakerSpreads.RemoveRange(await _dbContext.BookmakerSpreads.Where(x => x.GameId == gameId).ToListAsync());
+        _dbContext.BookmakerTotals.RemoveRange(await _dbContext.BookmakerTotals.Where(x => x.GameId == gameId).ToListAsync());
+        _dbContext.GameRaw.Remove(dbGame);
+        _cachedSeasonsGames[gameId / 1_000_000].Remove(dbGame);
     }
 
     public async Task<Game?> GetGame(int gameId)

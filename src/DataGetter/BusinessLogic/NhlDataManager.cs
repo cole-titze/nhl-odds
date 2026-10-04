@@ -360,6 +360,9 @@ public class NhlDataManager
         var gameCount = await _gameRepo.GetSavedGameCountForSeason(seasonStartYear);
         var seasonGameCount = await _gameRepo.GetGameCountForSeason(seasonStartYear);
         if (!(seasonGameCount > 0 && gameCount >= seasonGameCount)) return false;
-        return await _gameRepo.HasPlayoffGamesForSeason(seasonStartYear);
+        if (!await _gameRepo.HasPlayoffGamesForSeason(seasonStartYear)) return false;
+        // Stale or placeholder playoff games keep the season open after the Sept 15 rollover,
+        // otherwise they'd never be re-fetched or cleaned up
+        return !await _gameRepo.HasPastUnplayedGamesForSeason(seasonStartYear);
     }
 }
