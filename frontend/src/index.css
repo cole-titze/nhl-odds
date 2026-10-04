@@ -234,7 +234,9 @@ main :is(a, button, input, select, textarea, summary, [tabindex]) {
    theme's navbar as rendered (glass composited over the page or scene,
    measured in a browser), so the header appears to run up behind the status
    bar. Only rendered on iOS Safari (the only engine with
-   -webkit-touch-callout), where it reads as part of the status bar. */
+   -webkit-touch-callout), where it reads as part of the status bar.
+   StatusBarTint.tsx also writes the color inline and remounts the strip on
+   theme switches, to get Safari to re-sample without a reload. */
 .status-bar-tint {
   display: none;
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Navbar } from './Navbar';
 import { ThemeBackdrop } from './ThemeBackdrop';
+import { StatusBarTint } from './StatusBarTint';
 import { useOddsFormat } from '../hooks/useOddsFormat';
 import { OddsFormatContext } from '../contexts/OddsFormatContext';
 
@@ -35,8 +36,7 @@ export function Layout() {
           Skip to main content
         </a>
         <ThemeBackdrop />
-        {/* Gives iOS Safari a solid, header-colored strip to tint the status bar with */}
-        <div className="status-bar-tint" aria-hidden="true" />
+        <StatusBarTint />
         <Navbar />
         <main
           id="main"
