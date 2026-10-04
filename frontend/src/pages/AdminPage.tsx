@@ -8,6 +8,7 @@ import {
   startPrediction,
   startPredictionBackfill,
   startKalshiBackfill,
+  verifyAdminKey,
   AdminAuthError,
   type ErrorLog,
   type JobInfo,
@@ -324,9 +325,11 @@ function HealthCheckRow({ check }: { check: SeasonHealthCheck }) {
 
 function AdminKeyForm({
   message,
+  checking,
   onSubmit,
 }: {
   message: string | null;
+  checking: boolean;
   onSubmit: (key: string) => void;
 }) {
   const [value, setValue] = useState('');
@@ -335,7 +338,7 @@ function AdminKeyForm({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        if (value.trim()) onSubmit(value.trim());
+        if (value.trim() && !checking) onSubmit(value.trim());
       }}
       className="glass rounded-xl p-6 max-w-md"
     >
@@ -362,9 +365,10 @@ function AdminKeyForm({
       )}
       <button
         type="submit"
-        className="mt-4 w-full py-2.5 rounded-lg text-sm font-semibold transition-all bg-accent-600 hover:bg-accent-700 text-on-accent shadow-lg shadow-accent-500/25"
+        disabled={checking}
+        className="mt-4 w-full py-2.5 rounded-lg text-sm font-semibold transition-all bg-accent-600 hover:bg-accent-700 text-on-accent shadow-lg shadow-accent-500/25 disabled:opacity-60 disabled:cursor-wait"
       >
-        Unlock
+        {checking ? 'Checking…' : 'Unlock'}
       </button>
     </form>
   );
@@ -373,6 +377,7 @@ function AdminKeyForm({
 export function AdminPage() {
   const adminKey = useAdminKey();
   const [authError, setAuthError] = useState<string | null>(null);
+  const [checkingKey, setCheckingKey] = useState(false);
   // Dev APIs usually run without a key, so only ask for one there once the API rejects a request
   const needsKey = adminKey == null && (!import.meta.env.DEV || authError != null);
   const [statuses, setStatuses] = useState<JobStatuses | null>(null);
@@ -401,10 +406,18 @@ export function AdminPage() {
     return () => clearInterval(interval);
   }, [refresh, needsKey]);
 
-  function handleUnlock(key: string) {
-    setAuthError(null);
-    setError(null);
-    setAdminKey(key);
+  async function handleUnlock(key: string) {
+    setCheckingKey(true);
+    try {
+      await verifyAdminKey(key);
+      setAuthError(null);
+      setError(null);
+      setAdminKey(key);
+    } catch (e) {
+      setAuthError(e instanceof Error ? e.message : 'Could not check the admin key.');
+    } finally {
+      setCheckingKey(false);
+    }
   }
 
   async function handleStart(action: () => Promise<{ message: string }>) {
@@ -436,7 +449,7 @@ export function AdminPage() {
       </div>
 
       {needsKey ? (
-        <AdminKeyForm message={authError} onSubmit={handleUnlock} />
+        <AdminKeyForm message={authError} checking={checkingKey} onSubmit={handleUnlock} />
       ) : (
         <>
           {error && (

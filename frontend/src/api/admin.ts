@@ -5,14 +5,17 @@ const BASE_URL = import.meta.env.VITE_API_URL || '';
 /** Thrown when the API rejects the admin key (401) or has none configured (403). */
 export class AdminAuthError extends Error {}
 
-async function adminFetch(path: string, init?: RequestInit): Promise<Response> {
-  const key = getAdminKey();
+async function adminFetch(
+  path: string,
+  init?: RequestInit,
+  key = getAdminKey(),
+): Promise<Response> {
   const res = await fetch(`${BASE_URL}/api/Admin/${path}`, {
     ...init,
     headers: key ? { 'X-Admin-Key': key } : undefined,
   });
   if (res.status === 401) {
-    clearAdminKey();
+    if (key === getAdminKey()) clearAdminKey();
     throw new AdminAuthError('That admin key was rejected.');
   }
   if (res.status === 403) {
@@ -51,6 +54,12 @@ export interface JobStatuses {
   predictionBackfill: JobInfo;
   kalshiFetch: JobInfo;
   kalshiBackfill: JobInfo;
+}
+
+/** Checks a key against the API before it's stored, so a wrong key never unlocks the page. */
+export async function verifyAdminKey(key: string): Promise<void> {
+  const res = await adminFetch('GetJobStatuses', undefined, key);
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
 }
 
 export async function getJobStatuses(): Promise<JobStatuses> {
