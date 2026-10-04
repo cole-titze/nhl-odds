@@ -1,0 +1,73 @@
+# Trivy ignore list, used by .github/workflows/security-scan.yml.
+#
+# gosu (database image, inherited from the official postgres image): built with an old Go
+# stdlib. gosu only switches to the postgres user at container start and execs postgres; it
+# never touches TLS, x509, net/url, net/http, mail, mime, XML, templates or os.Root, so these
+# stdlib CVEs are unreachable. Scoped to the gosu path so the same CVEs still fail elsewhere.
+vulnerabilities:
+  - id: CVE-2025-68121
+    paths: ["usr/local/bin/gosu"]
+    statement: gosu stdlib CVE, unreachable (privilege drop only)
+  - id: CVE-2025-61726
+    paths: ["usr/local/bin/gosu"]
+    statement: gosu stdlib CVE, unreachable (privilege drop only)
+  - id: CVE-2025-61729
+    paths: ["usr/local/bin/gosu"]
+    statement: gosu stdlib CVE, unreachable (privilege drop only)
+  - id: CVE-2026-25679
+    paths: ["usr/local/bin/gosu"]
+    statement: gosu stdlib CVE, unreachable (privilege drop only)
+  - id: CVE-2026-27145
+    paths: ["usr/local/bin/gosu"]
+    statement: gosu stdlib CVE, unreachable (privilege drop only)
+  - id: CVE-2026-32280
+    paths: ["usr/local/bin/gosu"]
+    statement: gosu stdlib CVE, unreachable (privilege drop only)
+  - id: CVE-2026-32281
+    paths: ["usr/local/bin/gosu"]
+    statement: gosu stdlib CVE, unreachable (privilege drop only)
+  - id: CVE-2026-32283
+    paths: ["usr/local/bin/gosu"]
+    statement: gosu stdlib CVE, unreachable (privilege drop only)
+  - id: CVE-2026-33811
+    paths: ["usr/local/bin/gosu"]
+    statement: gosu stdlib CVE, unreachable (privilege drop only)
+  - id: CVE-2026-33814
+    paths: ["usr/local/bin/gosu"]
+    statement: gosu stdlib CVE, unreachable (privilege drop only)
+  - id: CVE-2026-33818
+    paths: ["usr/local/bin/gosu"]
+    statement: gosu stdlib CVE, unreachable (privilege drop only)
+  - id: CVE-2026-39820
+    paths: ["usr/local/bin/gosu"]
+    statement: gosu stdlib CVE, unreachable (privilege drop only)
+  - id: CVE-2026-39821
+    paths: ["usr/local/bin/gosu"]
+    statement: gosu stdlib CVE, unreachable (privilege drop only)
+  - id: CVE-2026-39822
+    paths: ["usr/local/bin/gosu"]
+    statement: gosu stdlib CVE, unreachable (privilege drop only)
+  - id: CVE-2026-39836
+    paths: ["usr/local/bin/gosu"]
+    statement: gosu stdlib CVE, unreachable (privilege drop only)
+  - id: CVE-2026-42499
+    paths: ["usr/local/bin/gosu"]
+    statement: gosu stdlib CVE, unreachable (privilege drop only)
+  - id: CVE-2026-42504
+    paths: ["usr/local/bin/gosu"]
+    statement: gosu stdlib CVE, unreachable (privilege drop only)
+  - id: CVE-2026-56853
+    paths: ["usr/local/bin/gosu"]
+    statement: gosu stdlib CVE, unreachable (privilege drop only)
+  - id: CVE-2026-56858
+    paths: ["usr/local/bin/gosu"]
+    statement: gosu stdlib CVE, unreachable (privilege drop only)
+  - id: CVE-2026-56859
+    paths: ["usr/local/bin/gosu"]
+    statement: gosu stdlib CVE, unreachable (privilege drop only)
+  - id: CVE-2026-56860
+    paths: ["usr/local/bin/gosu"]
+    statement: gosu stdlib CVE, unreachable (privilege drop only)
+  - id: CVE-2026-56862
+    paths: ["usr/local/bin/gosu"]
+    statement: gosu stdlib CVE, unreachable (privilege drop only)

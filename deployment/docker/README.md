@@ -99,6 +99,26 @@ docker exec nhl-odds-database-1 pg_dump -U postgres -Fc nhl > nhl.dump
 docker exec -i nhl-odds-database-1 pg_restore -U postgres --clean --if-exists -d nhl < nhl.dump
 ```
 
+### Upgrading from PostgreSQL 17
+
+The `database` image is now based on PostgreSQL 18, which can't read a PostgreSQL 17 data directory. The 18 image also stores its data under `/var/lib/postgresql` instead of `/var/lib/postgresql/data`, so the compose file mounts `pg-data` at the new path. To move an existing deployment over, dump before pulling the new compose file and restore afterwards:
+
+```bash
+# 1. With the old (17) stack still running, take a dump
+docker exec nhl-odds-database-1 pg_dump -U postgres -Fc nhl > nhl-pg17.dump
+
+# 2. Stop the stack and remove the old data volume
+docker compose down
+docker volume rm nhl-odds_pg-data
+
+# 3. Pull the new compose file and images, start the database (schema is created on first run)
+curl -o docker-compose.yml https://raw.githubusercontent.com/cole-titze/nhl-odds/main/docker-compose.prod.yml
+docker compose pull && docker compose up -d database
+
+# 4. Restore the dump
+docker exec -i nhl-odds-database-1 pg_restore -U postgres --clean --if-exists -d nhl < nhl-pg17.dump
+```
+
 ### Nightly Backup Cron Job
 
 Automatically back up the database every night, keeping the last 7 days:

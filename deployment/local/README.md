@@ -21,7 +21,7 @@ sudo apt-get update && sudo apt-get install -y dotnet-sdk-10.0
 ## Setup Database
 
 ```bash
-docker run --restart=always -e POSTGRES_DB=nhl -e POSTGRES_PASSWORD=<YOUR PASSWORD> -p 5432:5432 --name nhl-postgres -d postgres:17-alpine
+docker run --restart=always -e POSTGRES_DB=nhl -e POSTGRES_PASSWORD=<YOUR PASSWORD> -p 5432:5432 --name nhl-postgres -d postgres:18-alpine
 ```
 
 Connect to PostgreSQL and run the schema script:

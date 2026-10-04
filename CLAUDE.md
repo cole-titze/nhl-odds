@@ -62,7 +62,7 @@ Requires PostgreSQL running in Docker:
 
 ```bash
 docker run --restart=always -e POSTGRES_DB=nhl -e POSTGRES_PASSWORD=<YOUR PASSWORD> \
-  -p 5432:5432 --name nhl-postgres -d postgres:17-alpine
+  -p 5432:5432 --name nhl-postgres -d postgres:18-alpine
 ```
 
 Then run the schema script:
