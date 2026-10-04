@@ -218,9 +218,11 @@ export function GamesPage() {
       <div
         id={FILTER_BAR_ID}
         onKeyDown={handleFilterBarTab}
-        className="app-subbar sticky top-14 md:top-16 z-40 -mx-5 px-5 py-3 mb-6 backdrop-blur bg-white/70 dark:bg-surface-950/70 border-b border-surface-200/60 dark:border-white/[0.06]"
+        // Spans the full window like the navbar (the shell's overflow-x-clip
+        // trims the scrollbar's width off 100vw); controls stay in the column
+        className="app-subbar sticky top-14 md:top-16 z-40 mx-[calc(50%-50vw)] py-3 mb-6 backdrop-blur bg-white/70 dark:bg-surface-950/70 border-b border-surface-200/60 dark:border-white/[0.06]"
       >
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="mx-auto max-w-6xl px-5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <input
               type="date"
