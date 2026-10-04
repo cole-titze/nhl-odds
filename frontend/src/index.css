@@ -254,7 +254,7 @@ main :is(a, button, input, select, textarea, summary, [tabindex]) {
   --status-bar: #070a12;
 }
 .theme-aurora {
-  --status-bar: #151b22;
+  --status-bar: #0b1017;
 }
 .theme-team {
   --status-bar: #0a0a10;
@@ -301,6 +301,22 @@ main :is(a, button, input, select, textarea, summary, [tabindex]) {
   background: var(--nav-bg);
   backdrop-filter: var(--nav-filter);
   -webkit-backdrop-filter: var(--nav-filter);
+}
+
+/* Phones: the header slides off the top while scrolling down (Navbar.tsx
+   toggles .nav-hidden) and the Games filter bar moves up into its place.
+   Keyboard focus inside the header brings it back. */
+@media (max-width: 767px) {
+  .app-nav,
+  .app-subbar {
+    transition: transform 0.25s ease;
+  }
+  .nav-hidden .app-nav:not(:focus-within) {
+    transform: translateY(-100%);
+  }
+  .nav-hidden .app-nav:not(:focus-within) ~ main .app-subbar {
+    transform: translateY(-3.5rem);
+  }
 }
 
 /* ======================================================================

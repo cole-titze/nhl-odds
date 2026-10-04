@@ -24,6 +24,31 @@ export function Navbar() {
     return () => window.removeEventListener('keydown', onKey);
   }, [menuOpen]);
 
+  // On phones the header slides away while scrolling down and comes back on
+  // scroll up, to give the content more room. See
+  // .nav-hidden in index.css.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (menuOpen) {
+      root.classList.remove('nav-hidden');
+      return;
+    }
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y < 56) root.classList.remove('nav-hidden');
+      else if (y > lastY + 4) root.classList.add('nav-hidden');
+      else if (y < lastY - 4) root.classList.remove('nav-hidden');
+      else return;
+      lastY = y;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      root.classList.remove('nav-hidden');
+    };
+  }, [menuOpen]);
+
   const oddsLabel =
     format === 'pct'
       ? 'Odds shown as percentages. Switch to American odds'
