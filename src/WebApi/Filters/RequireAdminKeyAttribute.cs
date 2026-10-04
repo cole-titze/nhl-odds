@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Mvc.Filters;
 namespace WebApi.Filters;
 
 /// <summary>
-/// Requires an <c>X-Admin-Key</c> header matching the <c>ADMIN_API_KEY</c> setting. Used on actions that
-/// start jobs so the public API can't be used to run collection, backfills or predictions.
+/// Requires an <c>X-Admin-Key</c> header matching the <c>ADMIN_API_KEY</c> setting. Used on every admin action:
+/// starting jobs (collection, backfills, predictions) and reading job statuses, health checks and error logs.
 /// With no key configured, requests are allowed in Development (local admin page) and rejected elsewhere.
 /// </summary>
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]

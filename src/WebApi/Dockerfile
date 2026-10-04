@@ -19,4 +19,5 @@ COPY --from=build /app/publish .
 ENV ASPNETCORE_URLS=http://+:8080
 ENV DOTNET_EnableDiagnostics=0
 EXPOSE 8080
+USER $APP_UID
 ENTRYPOINT ["dotnet", "WebApi.dll"]

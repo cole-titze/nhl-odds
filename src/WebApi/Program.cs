@@ -12,6 +12,7 @@ using WebApi.BusinessLogic.JobService;
 using WebApi.BusinessLogic.StartupCacheWarmer;
 using WebApi.BusinessLogic.StrategyBacktester;
 using WebApi.BusinessLogic.TeamGetter;
+using WebApi.Caching;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
@@ -28,6 +29,7 @@ if (_connectionString == null)
 
 // Add services to the container
 builder.Services.AddMemoryCache();
+builder.Services.AddKeyedSingleton(ApiCache.ServiceKey, (_, _) => ApiCache.Create());
 builder.Services.AddSingleton<IJobService, JobService>();
 builder.Services.AddHostedService<StartupCacheWarmer>();
 if (builder.Environment.IsDevelopment())

@@ -6,5 +6,7 @@ COPY requirements.txt .
 ENV PIP_ROOT_USER_ACTION=ignore
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . game_predictor/
+RUN useradd --uid 10001 --create-home app
+USER 10001
 ENV PREDICTOR_MODE=predict
 ENTRYPOINT ["sh", "-c", "python -m game_predictor --mode $PREDICTOR_MODE"]

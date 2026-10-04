@@ -87,6 +87,8 @@ async function newContext(browser, theme, viewport) {
   await ctx.addInitScript((t) => {
     localStorage.setItem('theme', t);
     localStorage.removeItem('themeState');
+    // Unlocks /admin in the production build so the full page (not the key form) gets scanned
+    localStorage.setItem('adminKey', 'a11y');
   }, theme);
   await ctx.route('**/api/**', (route) => route.fulfill({ json: mockApi(route.request().url()) }));
   await ctx.route('https://assets.nhle.com/**', (route) =>

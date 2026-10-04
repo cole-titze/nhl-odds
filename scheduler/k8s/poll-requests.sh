@@ -32,10 +32,14 @@ spec:
   template:
     spec:
       restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: entry
           image: ghcr.io/cole-titze/nhl-odds/entry:latest
           imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
           env:
             - name: TZ
               value: America/Chicago
@@ -80,10 +84,14 @@ spec:
   template:
     spec:
       restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
       containers:
         - name: predictor
           image: ghcr.io/cole-titze/nhl-odds/predictor:latest
           imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
           env:
             - name: TZ
               value: America/Chicago

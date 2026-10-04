@@ -2,6 +2,7 @@ using Entities.Types;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using WebApi.BusinessLogic.GameOddsGetter;
+using WebApi.Caching;
 
 namespace WebApi.Controllers;
 
@@ -12,7 +13,7 @@ public class GameOddsController
     private readonly IGameOddsGetter _gameOddsGetter;
     private readonly IMemoryCache _cache;
 
-    public GameOddsController(IGameOddsGetter predictedGameBL, IMemoryCache cache)
+    public GameOddsController(IGameOddsGetter predictedGameBL, [FromKeyedServices(ApiCache.ServiceKey)] IMemoryCache cache)
     {
         _gameOddsGetter = predictedGameBL;
         _cache = cache;
@@ -32,7 +33,7 @@ public class GameOddsController
             return Results.Ok(cached);
 
         var result = await _gameOddsGetter.GetGameOddsInDateRange(dateRange, seasonStartYear);
-        _cache.Set(cacheKey, result);
+        _cache.Set(cacheKey, result, ApiCache.Entry(result.Count(), ApiCache.DateRangeLifetime));
         return Results.Ok(result);
     }
 
@@ -44,7 +45,7 @@ public class GameOddsController
             return Results.Ok(cached);
 
         var result = await _gameOddsGetter.GetAnchorDate(seasonStartYear);
-        _cache.Set(cacheKey, result, TimeSpan.FromMinutes(15));
+        _cache.Set(cacheKey, result, ApiCache.Entry(1, TimeSpan.FromMinutes(15)));
         return Results.Ok(result);
     }
 }

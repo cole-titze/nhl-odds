@@ -10,8 +10,8 @@ RUN apk update && \
     rm -rf /var/cache/apk/*
 
 WORKDIR /app
-COPY crontab /etc/crontabs/root
 COPY entrypoint.sh poll-requests.sh ./
-RUN chmod +x entrypoint.sh poll-requests.sh
+RUN chmod +x entrypoint.sh poll-requests.sh && adduser -D -u 10001 app
+USER 10001
 
 ENTRYPOINT ["/app/entrypoint.sh"]

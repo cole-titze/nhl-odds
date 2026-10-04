@@ -11,7 +11,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your environment}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pg-data:/var/lib/postgresql
     healthcheck:
@@ -80,7 +80,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     ports:
-      - "8081:80"
+      - "8081:8080"
     depends_on:
       - webapi
 

@@ -8,6 +8,7 @@ import {
   startPrediction,
   startPredictionBackfill,
   startKalshiBackfill,
+  AdminAuthError,
   type ErrorLog,
   type JobInfo,
   type JobStatuses,
@@ -16,6 +17,7 @@ import {
 import { formatSeasonLabel } from '../utils/season';
 import { JobCardSkeleton, HealthCheckTableSkeleton } from '../components/Skeleton';
 import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
+import { clearAdminKey, setAdminKey, useAdminKey } from '../hooks/useAdminKey';
 
 const STATUS_STYLES: Record<string, string> = {
   idle: 'bg-surface-200 dark:bg-white/[0.06] text-surface-600 dark:text-surface-400',
@@ -320,7 +322,59 @@ function HealthCheckRow({ check }: { check: SeasonHealthCheck }) {
   );
 }
 
+function AdminKeyForm({
+  message,
+  onSubmit,
+}: {
+  message: string | null;
+  onSubmit: (key: string) => void;
+}) {
+  const [value, setValue] = useState('');
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (value.trim()) onSubmit(value.trim());
+      }}
+      className="glass rounded-xl p-6 max-w-md"
+    >
+      <label htmlFor="admin-key" className="block text-sm font-medium mb-2">
+        Admin key
+      </label>
+      <input
+        id="admin-key"
+        type="password"
+        autoComplete="current-password"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        aria-describedby={message ? 'admin-key-error' : undefined}
+        className="w-full px-3 py-2 rounded-lg glass text-sm font-mono"
+      />
+      {message && (
+        <p
+          id="admin-key-error"
+          role="alert"
+          className="mt-2 text-sm text-red-700 dark:text-red-400"
+        >
+          {message}
+        </p>
+      )}
+      <button
+        type="submit"
+        className="mt-4 w-full py-2.5 rounded-lg text-sm font-semibold transition-all bg-accent-600 hover:bg-accent-700 text-on-accent shadow-lg shadow-accent-500/25"
+      >
+        Unlock
+      </button>
+    </form>
+  );
+}
+
 export function AdminPage() {
+  const adminKey = useAdminKey();
+  const [authError, setAuthError] = useState<string | null>(null);
+  // Dev APIs usually run without a key, so only ask for one there once the API rejects a request
+  const needsKey = adminKey == null && (!import.meta.env.DEV || authError != null);
   const [statuses, setStatuses] = useState<JobStatuses | null>(null);
   const [healthChecks, setHealthChecks] = useState<SeasonHealthCheck[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -333,6 +387,7 @@ export function AdminPage() {
       setHealthChecks(checksData);
       setError(null);
     } catch (e) {
+      if (e instanceof AdminAuthError) setAuthError(e.message);
       setError(e instanceof Error ? e.message : 'Failed to fetch statuses');
     } finally {
       setLoading(false);
@@ -340,10 +395,17 @@ export function AdminPage() {
   }, []);
 
   useEffect(() => {
+    if (needsKey) return;
     refresh();
     const interval = setInterval(refresh, 3000);
     return () => clearInterval(interval);
-  }, [refresh]);
+  }, [refresh, needsKey]);
+
+  function handleUnlock(key: string) {
+    setAuthError(null);
+    setError(null);
+    setAdminKey(key);
+  }
 
   async function handleStart(action: () => Promise<{ message: string }>) {
     try {
@@ -362,158 +424,175 @@ export function AdminPage() {
         <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">
           Manage data collection and prediction jobs
         </p>
-      </div>
-
-      {error && (
-        <div
-          role="alert"
-          className="glass rounded-xl text-center text-red-700 dark:text-red-400 py-4 mb-6 text-sm"
-        >
-          {error}
-        </div>
-      )}
-
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <LoadingStatus label="Loading job statuses…" />
-          <JobCardSkeleton />
-          <JobCardSkeleton />
-          <JobCardSkeleton />
-          <JobCardSkeleton />
-          <JobCardSkeleton />
-          <JobCardSkeleton />
-          <JobCardSkeleton />
-        </div>
-      ) : statuses ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <JobCard
-            job={statuses.dataCollection}
-            label="Data Collection"
-            onStart={import.meta.env.DEV ? () => handleStart(startDataCollection) : undefined}
-          />
-          {import.meta.env.DEV && (
-            <JobCard
-              job={statuses.predictionBackfill}
-              label="Prediction Backfill"
-              onStart={() => handleStart(startPredictionBackfill)}
-            />
-          )}
-          <JobCard
-            job={statuses.oddsBackfill}
-            label="Odds Backfill"
-            onStart={import.meta.env.DEV ? () => handleStart(startOddsBackfill) : undefined}
-          />
-          <JobCard
-            job={statuses.kalshiBackfill}
-            label="Kalshi Backfill"
-            onStart={import.meta.env.DEV ? () => handleStart(startKalshiBackfill) : undefined}
-          />
-          <JobCard job={statuses.kalshiFetch} label="Kalshi Fetch" />
-          <JobCard job={statuses.oddsFetch} label="Odds Fetch" />
-          <JobCard
-            job={statuses.prediction}
-            label="Prediction"
-            onStart={import.meta.env.DEV ? () => handleStart(startPrediction) : undefined}
-          />
-        </div>
-      ) : null}
-
-      <div className="mt-10">
-        <h2 className="font-display text-xl font-semibold mb-4">Health Checks</h2>
-
-        <details className="mb-4 glass rounded-xl">
-          <summary className="px-4 py-3 text-sm font-medium cursor-pointer select-none text-surface-600 dark:text-surface-300 hover:text-surface-900 dark:hover:text-white">
-            Column descriptions
-          </summary>
-          <div className="px-4 pb-4 pt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-sm text-surface-600 dark:text-surface-400">
-            <div>
-              <span className="font-medium text-surface-800 dark:text-surface-200">Season</span> —
-              NHL season start year (e.g. 2024 = 2024–25 season).
-            </div>
-            <div>
-              <span className="font-medium text-surface-800 dark:text-surface-200">Total</span> —
-              Total regular-season games scheduled that season.
-            </div>
-            <div>
-              <span className="font-medium text-surface-800 dark:text-surface-200">Played</span> —
-              Games confirmed completed in the database.
-            </div>
-            <div>
-              <span className="font-medium text-surface-800 dark:text-surface-200">
-                No In-House Odds
-              </span>{' '}
-              — Played games missing a model-generated win probability.
-            </div>
-            <div>
-              <span className="font-medium text-surface-800 dark:text-surface-200">
-                No Bookmaker Odds
-              </span>{' '}
-              — Played games with no historical bookmaker lines stored.
-            </div>
-            <div>
-              <span className="font-medium text-surface-800 dark:text-surface-200">
-                No Cleaned Data
-              </span>{' '}
-              — Games missing the cleaned/featurized row used for ML training.
-            </div>
-            <div>
-              <span className="font-medium text-surface-800 dark:text-surface-200">
-                No Odds Fetch
-              </span>{' '}
-              — Game days where no pre-game odds fetch was recorded.
-            </div>
-            <div>
-              <span className="font-medium text-surface-800 dark:text-surface-200">Live Odds</span>{' '}
-              — Games where the stored bookmaker odds were last updated after the game started.
-              These are in-game or post-game lines, not pre-game, so they're unreliable as
-              prediction inputs. Should be 0.
-            </div>
-            <div>
-              <span className="font-medium text-surface-800 dark:text-surface-200">No Kalshi</span>{' '}
-              — Played games with no Kalshi market odds stored.
-            </div>
-            <div>
-              <span className="font-medium text-surface-800 dark:text-surface-200">Errors</span> —
-              Pipeline errors logged for that season. Select a season to expand its error log.
-            </div>
-          </div>
-        </details>
-
-        {loading ? (
-          <HealthCheckTableSkeleton />
-        ) : healthChecks.length === 0 ? (
-          <div className="glass rounded-xl p-6 text-sm text-surface-500 dark:text-surface-400 text-center">
-            No data available.
-          </div>
-        ) : (
-          <ScrollRegion label="Health checks" className="glass rounded-xl overflow-x-auto">
-            <table className="w-full text-sm min-w-[700px]">
-              <thead>
-                <tr className="border-b border-surface-200 dark:border-white/[0.06] text-left text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">
-                  <th className="px-4 py-3">Season</th>
-                  <th className="px-4 py-3 text-center">Total</th>
-                  <th className="px-4 py-3 text-center">Played</th>
-                  <th className="px-4 py-3 text-center">No In-House Odds</th>
-                  <th className="px-4 py-3 text-center">No Bookmaker Odds</th>
-                  <th className="px-4 py-3 text-center">No Cleaned Data</th>
-                  <th className="px-4 py-3 text-center">No Odds Fetch</th>
-                  <th className="px-4 py-3 text-center">Live Odds</th>
-                  <th className="px-4 py-3 text-center">No Kalshi</th>
-                  <th className="px-4 py-3 text-center">Errors</th>
-                  <th className="px-4 py-3 text-center w-10">
-                    <span className="sr-only">Status</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {healthChecks.map((check) => (
-                  <HealthCheckRow key={check.seasonStartYear} check={check} />
-                ))}
-              </tbody>
-            </table>
-          </ScrollRegion>
+        {adminKey != null && (
+          <button
+            type="button"
+            onClick={clearAdminKey}
+            className="mt-2 text-sm underline text-surface-600 dark:text-surface-300 hover:text-surface-900 dark:hover:text-white"
+          >
+            Forget admin key
+          </button>
         )}
       </div>
+
+      {needsKey ? (
+        <AdminKeyForm message={authError} onSubmit={handleUnlock} />
+      ) : (
+        <>
+          {error && (
+            <div
+              role="alert"
+              className="glass rounded-xl text-center text-red-700 dark:text-red-400 py-4 mb-6 text-sm"
+            >
+              {error}
+            </div>
+          )}
+
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <LoadingStatus label="Loading job statuses…" />
+              <JobCardSkeleton />
+              <JobCardSkeleton />
+              <JobCardSkeleton />
+              <JobCardSkeleton />
+              <JobCardSkeleton />
+              <JobCardSkeleton />
+              <JobCardSkeleton />
+            </div>
+          ) : statuses ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <JobCard
+                job={statuses.dataCollection}
+                label="Data Collection"
+                onStart={() => handleStart(startDataCollection)}
+              />
+              <JobCard
+                job={statuses.predictionBackfill}
+                label="Prediction Backfill"
+                onStart={() => handleStart(startPredictionBackfill)}
+              />
+              <JobCard
+                job={statuses.oddsBackfill}
+                label="Odds Backfill"
+                onStart={() => handleStart(startOddsBackfill)}
+              />
+              <JobCard
+                job={statuses.kalshiBackfill}
+                label="Kalshi Backfill"
+                onStart={() => handleStart(startKalshiBackfill)}
+              />
+              <JobCard job={statuses.kalshiFetch} label="Kalshi Fetch" />
+              <JobCard job={statuses.oddsFetch} label="Odds Fetch" />
+              <JobCard
+                job={statuses.prediction}
+                label="Prediction"
+                onStart={() => handleStart(startPrediction)}
+              />
+            </div>
+          ) : null}
+
+          <div className="mt-10">
+            <h2 className="font-display text-xl font-semibold mb-4">Health Checks</h2>
+
+            <details className="mb-4 glass rounded-xl">
+              <summary className="px-4 py-3 text-sm font-medium cursor-pointer select-none text-surface-600 dark:text-surface-300 hover:text-surface-900 dark:hover:text-white">
+                Column descriptions
+              </summary>
+              <div className="px-4 pb-4 pt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-sm text-surface-600 dark:text-surface-400">
+                <div>
+                  <span className="font-medium text-surface-800 dark:text-surface-200">Season</span>{' '}
+                  — NHL season start year (e.g. 2024 = 2024–25 season).
+                </div>
+                <div>
+                  <span className="font-medium text-surface-800 dark:text-surface-200">Total</span>{' '}
+                  — Total regular-season games scheduled that season.
+                </div>
+                <div>
+                  <span className="font-medium text-surface-800 dark:text-surface-200">Played</span>{' '}
+                  — Games confirmed completed in the database.
+                </div>
+                <div>
+                  <span className="font-medium text-surface-800 dark:text-surface-200">
+                    No In-House Odds
+                  </span>{' '}
+                  — Played games missing a model-generated win probability.
+                </div>
+                <div>
+                  <span className="font-medium text-surface-800 dark:text-surface-200">
+                    No Bookmaker Odds
+                  </span>{' '}
+                  — Played games with no historical bookmaker lines stored.
+                </div>
+                <div>
+                  <span className="font-medium text-surface-800 dark:text-surface-200">
+                    No Cleaned Data
+                  </span>{' '}
+                  — Games missing the cleaned/featurized row used for ML training.
+                </div>
+                <div>
+                  <span className="font-medium text-surface-800 dark:text-surface-200">
+                    No Odds Fetch
+                  </span>{' '}
+                  — Game days where no pre-game odds fetch was recorded.
+                </div>
+                <div>
+                  <span className="font-medium text-surface-800 dark:text-surface-200">
+                    Live Odds
+                  </span>{' '}
+                  — Games where the stored bookmaker odds were last updated after the game started.
+                  These are in-game or post-game lines, not pre-game, so they're unreliable as
+                  prediction inputs. Should be 0.
+                </div>
+                <div>
+                  <span className="font-medium text-surface-800 dark:text-surface-200">
+                    No Kalshi
+                  </span>{' '}
+                  — Played games with no Kalshi market odds stored.
+                </div>
+                <div>
+                  <span className="font-medium text-surface-800 dark:text-surface-200">Errors</span>{' '}
+                  — Pipeline errors logged for that season. Select a season to expand its error log.
+                </div>
+              </div>
+            </details>
+
+            {loading ? (
+              <HealthCheckTableSkeleton />
+            ) : healthChecks.length === 0 ? (
+              <div className="glass rounded-xl p-6 text-sm text-surface-500 dark:text-surface-400 text-center">
+                No data available.
+              </div>
+            ) : (
+              <ScrollRegion label="Health checks" className="glass rounded-xl overflow-x-auto">
+                <table className="w-full text-sm min-w-[700px]">
+                  <thead>
+                    <tr className="border-b border-surface-200 dark:border-white/[0.06] text-left text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">
+                      <th className="px-4 py-3">Season</th>
+                      <th className="px-4 py-3 text-center">Total</th>
+                      <th className="px-4 py-3 text-center">Played</th>
+                      <th className="px-4 py-3 text-center">No In-House Odds</th>
+                      <th className="px-4 py-3 text-center">No Bookmaker Odds</th>
+                      <th className="px-4 py-3 text-center">No Cleaned Data</th>
+                      <th className="px-4 py-3 text-center">No Odds Fetch</th>
+                      <th className="px-4 py-3 text-center">Live Odds</th>
+                      <th className="px-4 py-3 text-center">No Kalshi</th>
+                      <th className="px-4 py-3 text-center">Errors</th>
+                      <th className="px-4 py-3 text-center w-10">
+                        <span className="sr-only">Status</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {healthChecks.map((check) => (
+                      <HealthCheckRow key={check.seasonStartYear} check={check} />
+                    ))}
+                  </tbody>
+                </table>
+              </ScrollRegion>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

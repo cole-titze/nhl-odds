@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using WebApi.BusinessLogic.TeamGetter;
+using WebApi.Caching;
 
 namespace WebApi.Controllers;
 
@@ -11,7 +12,7 @@ public class TeamController
     private readonly ITeamGetter _teamGetter;
     private readonly IMemoryCache _cache;
 
-    public TeamController(ITeamGetter teamGetter, IMemoryCache cache)
+    public TeamController(ITeamGetter teamGetter, [FromKeyedServices(ApiCache.ServiceKey)] IMemoryCache cache)
     {
         _teamGetter = teamGetter;
         _cache = cache;
@@ -26,7 +27,7 @@ public class TeamController
 
         var teamsVm = await _teamGetter.GetAllTeamsStats(seasonStartYear);
 
-        _cache.Set(cacheKey, teamsVm);
+        _cache.Set(cacheKey, teamsVm, ApiCache.Entry(ApiCache.SizeOf(teamsVm)));
         return Results.Ok(teamsVm);
     }
 

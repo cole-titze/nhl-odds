@@ -2,18 +2,23 @@ import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { ThemePicker } from './ThemePicker';
 import { useOddsFormatContext } from '../contexts/OddsFormatContext';
+import { useAdminKey } from '../hooks/useAdminKey';
 
 const links = [
   { to: '/strategies', label: 'Strategies' },
   { to: '/', label: 'Games' },
   { to: '/teams', label: 'Teams' },
   { to: '/about', label: 'About' },
-  { to: '/admin', label: 'Admin' },
 ];
+
+const adminLink = { to: '/admin', label: 'Admin' };
 
 export function Navbar() {
   const { format, toggle: toggleOdds } = useOddsFormatContext();
   const [menuOpen, setMenuOpen] = useState(false);
+  // /admin still works by URL; the link only shows once there's a key to use it with
+  const adminKey = useAdminKey();
+  const navLinks = import.meta.env.DEV || adminKey != null ? [...links, adminLink] : links;
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -72,7 +77,7 @@ export function Navbar() {
             </span>
           </NavLink>
           <nav aria-label="Main" className="hidden md:flex items-center gap-1">
-            {links.map((l) => (
+            {navLinks.map((l) => (
               <NavLink
                 key={l.to}
                 to={l.to}
@@ -146,7 +151,7 @@ export function Navbar() {
           className="app-nav-menu md:hidden border-t border-surface-200/80 dark:border-white/[0.08] px-5 pb-4 pt-2"
         >
           <div className="flex flex-col gap-1">
-            {links.map((l) => (
+            {navLinks.map((l) => (
               <NavLink
                 key={l.to}
                 to={l.to}

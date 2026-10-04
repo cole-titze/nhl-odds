@@ -54,7 +54,7 @@ The app reads config in priority order:
 
 3. **`src/WebApi/appsettings.Development.json`** (local dev for Web API, gitignored):
    - Needs a `ConnectionStrings:NHL_DATABASE` entry. Falls back to `NHL_DATABASE` env var.
-   - `ADMIN_API_KEY` (env var or config) — required in the `X-Admin-Key` header by the job-starting `POST /api/Admin/Start*` endpoints (`[RequireAdminKey]`). If unset, they're allowed in Development and return 403 elsewhere.
+   - `ADMIN_API_KEY` (env var or config) — required in the `X-Admin-Key` header by every `/api/Admin` endpoint (`[RequireAdminKey]` on `AdminController`). If unset, they're allowed in Development and return 403 elsewhere. The Admin page asks for the key and keeps it in localStorage; its nav link only shows in development or once a key is stored.
 
 ## Database Setup
 

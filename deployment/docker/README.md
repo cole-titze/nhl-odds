@@ -32,7 +32,7 @@ EOF
 | `ODDS_API_KEY` | No | The Odds API key for daily odds fetching |
 | `API_BACKFILL_KEY` | No | The Odds API key for historical odds backfill |
 | `CLOUDFLARE_TUNNEL_TOKEN` | No | Cloudflare Tunnel token for public access (see [Cloudflare Tunnel](#cloudflare-tunnel)) |
-| `ADMIN_API_KEY` | Yes, to start jobs on demand | Required in the `X-Admin-Key` header by `POST /api/Admin/Start*` (generate with `openssl rand -hex 32`). If unset, those endpoints return 403 outside Development |
+| `ADMIN_API_KEY` | Yes, to use the Admin page | Required in the `X-Admin-Key` header by every `/api/Admin` endpoint (generate with `openssl rand -hex 32`). If unset, those endpoints return 403 outside Development |
 | `THROTTLE_TIME_MS` | No | Delay between NHL API requests (default 250; the API returns 429s without one) |
 
 ## 4. Log in to GitHub Container Registry
@@ -87,7 +87,7 @@ The scheduler container runs two daily jobs via cron:
 - **3:00 AM CT** — Data collection (`entry` container with `RUN_MODE=NhlAdd`)
 - **6:00 AM CT** — Odds fetch pipeline: fetches bookmaker odds, Kalshi odds, then runs the ML predictor (sequential `entry` + `predictor` containers)
 
-Jobs can also be triggered manually (Admin page buttons in development, or `curl -X POST -H "X-Admin-Key: $ADMIN_API_KEY" <api>/api/Admin/Start<Job>`). The API writes a `requested` status to the database, and the scheduler picks it up within ~60 seconds.
+Jobs can also be triggered manually (buttons on the `/admin` page once it's unlocked with the key, or `curl -X POST -H "X-Admin-Key: $ADMIN_API_KEY" <api>/api/Admin/Start<Job>`). The API writes a `requested` status to the database, and the scheduler picks it up within ~60 seconds.
 
 ## Database Backup / Restore
 
@@ -153,7 +153,7 @@ A weekly [Trivy](https://github.com/aquasecurity/trivy) security scan (`security
 
 To expose the site publicly via [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/):
 
-1. Create a tunnel in the Cloudflare dashboard and configure it to route traffic to `http://frontend:80`
+1. Create a tunnel in the Cloudflare dashboard and configure it to route traffic to `http://frontend:8080`
 2. Add the tunnel token to your `.env` file as `CLOUDFLARE_TUNNEL_TOKEN`
 3. Start (or restart) with the tunnel profile: `docker compose --profile tunnel up -d`
 

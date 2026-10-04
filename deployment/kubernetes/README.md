@@ -25,6 +25,6 @@ The following variables must be set in `~/source/ansible-files/vars/nhl_vars.yml
 | `nhl_odds_api_key` | The Odds API key for daily odds fetching |
 | `nhl_odds_api_backfill_key` | The Odds API key for historical odds backfill |
 | `nhl_odds_cloudflare_tunnel_token` | Cloudflare tunnel token for external access |
-| `nhl_odds_admin_api_key` | Key required in the `X-Admin-Key` header to start jobs via `POST /api/Admin/Start*` (e.g. `openssl rand -hex 32`) |
+| `nhl_odds_admin_api_key` | Key required in the `X-Admin-Key` header by every `/api/Admin` endpoint (e.g. `openssl rand -hex 32`). Enter it on the `/admin` page to unlock it |
 
-> **Note:** Jobs run on CronJob schedules. On-demand runs go through the scheduler: `POST /api/Admin/Start<Job>` with the `X-Admin-Key` header marks the job `requested` in `JobStatus`, and `scheduler/k8s/poll-requests.sh` creates a Kubernetes Job for it within ~60 seconds (Admin page buttons are only shown in development).
+> **Note:** Jobs run on CronJob schedules. On-demand runs go through the scheduler: `POST /api/Admin/Start<Job>` with the `X-Admin-Key` header marks the job `requested` in `JobStatus`, and `scheduler/k8s/poll-requests.sh` creates a Kubernetes Job for it within ~60 seconds (or use the buttons on the `/admin` page once it's unlocked with the key).

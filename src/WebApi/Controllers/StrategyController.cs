@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using WebApi.BusinessLogic.StrategyBacktester;
+using WebApi.Caching;
 
 namespace WebApi.Controllers;
 
@@ -11,7 +12,7 @@ public class StrategyController
     private readonly IStrategyBacktester _backtester;
     private readonly IMemoryCache _cache;
 
-    public StrategyController(IStrategyBacktester backtester, IMemoryCache cache)
+    public StrategyController(IStrategyBacktester backtester, [FromKeyedServices(ApiCache.ServiceKey)] IMemoryCache cache)
     {
         _backtester = backtester;
         _cache = cache;
@@ -25,7 +26,7 @@ public class StrategyController
             return Results.Ok(cached);
 
         var result = await _backtester.GetBestStrategies(seasonStartYear);
-        _cache.Set(cacheKey, result, TimeSpan.FromDays(1));
+        _cache.Set(cacheKey, result, ApiCache.Entry(result.Count(), TimeSpan.FromDays(1)));
         return Results.Ok(result);
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Caching.Memory;
 using WebApi.BusinessLogic.GameOddsGetter;
 using WebApi.BusinessLogic.StrategyBacktester;
 using WebApi.BusinessLogic.TeamGetter;
+using WebApi.Caching;
 
 namespace WebApi.BusinessLogic.StartupCacheWarmer;
 
@@ -14,7 +15,7 @@ public class StartupCacheWarmer : BackgroundService
     private readonly IMemoryCache _cache;
     private readonly ILogger<StartupCacheWarmer> _logger;
 
-    public StartupCacheWarmer(IServiceScopeFactory scopeFactory, IMemoryCache cache, ILogger<StartupCacheWarmer> logger)
+    public StartupCacheWarmer(IServiceScopeFactory scopeFactory, [FromKeyedServices(ApiCache.ServiceKey)] IMemoryCache cache, ILogger<StartupCacheWarmer> logger)
     {
         _scopeFactory = scopeFactory;
         _cache = cache;
@@ -56,7 +57,7 @@ public class StartupCacheWarmer : BackgroundService
         {
             var teamGetter = scope.ServiceProvider.GetRequiredService<ITeamGetter>();
             var teamsVm = await teamGetter.GetAllTeamsStats(seasonStartYear);
-            _cache.Set($"AllTeams_{seasonStartYear}", teamsVm);
+            _cache.Set($"AllTeams_{seasonStartYear}", teamsVm, ApiCache.Entry(ApiCache.SizeOf(teamsVm)));
         }
         catch (Exception ex)
         {
@@ -69,16 +70,16 @@ public class StartupCacheWarmer : BackgroundService
 
             var todayRange = new DateRange { StartDate = today, EndDate = today };
             var todayOdds = await gameOddsGetter.GetGameOddsInDateRange(todayRange, seasonStartYear);
-            _cache.Set($"GameOdds_{today:yyyy-MM-dd}_{today:yyyy-MM-dd}_{seasonStartYear}", todayOdds);
+            _cache.Set($"GameOdds_{today:yyyy-MM-dd}_{today:yyyy-MM-dd}_{seasonStartYear}", todayOdds, ApiCache.Entry(todayOdds.Count()));
 
             var seasonStart = new DateTime(seasonStartYear, 9, 1);
             var seasonEnd = new DateTime(seasonStartYear + 1, 7, 31);
             var seasonRange = new DateRange { StartDate = seasonStart, EndDate = seasonEnd };
             var seasonOdds = await gameOddsGetter.GetGameOddsInDateRange(seasonRange, seasonStartYear);
-            _cache.Set($"GameOdds_{seasonStart:yyyy-MM-dd}_{seasonEnd:yyyy-MM-dd}_{seasonStartYear}", seasonOdds);
+            _cache.Set($"GameOdds_{seasonStart:yyyy-MM-dd}_{seasonEnd:yyyy-MM-dd}_{seasonStartYear}", seasonOdds, ApiCache.Entry(seasonOdds.Count()));
 
             var anchor = await gameOddsGetter.GetAnchorDate(seasonStartYear);
-            _cache.Set($"AnchorDate_{seasonStartYear}", anchor, TimeSpan.FromMinutes(15));
+            _cache.Set($"AnchorDate_{seasonStartYear}", anchor, ApiCache.Entry(1, TimeSpan.FromMinutes(15)));
         }
         catch (Exception ex)
         {
@@ -89,7 +90,7 @@ public class StartupCacheWarmer : BackgroundService
         {
             var backtester = scope.ServiceProvider.GetRequiredService<IStrategyBacktester>();
             var best = await backtester.GetBestStrategies(seasonStartYear);
-            _cache.Set($"BestStrategies_{seasonStartYear}", best, TimeSpan.FromDays(1));
+            _cache.Set($"BestStrategies_{seasonStartYear}", best, ApiCache.Entry(best.Count(), TimeSpan.FromDays(1)));
         }
         catch (Exception ex)
         {

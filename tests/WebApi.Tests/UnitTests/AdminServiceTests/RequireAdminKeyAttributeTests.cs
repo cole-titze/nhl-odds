@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using WebApi.Controllers;
 using WebApi.Filters;
 
 namespace WebApi.Tests.BusinessLogic.UnitTests.AdminServiceTests;
@@ -70,5 +71,12 @@ public class RequireAdminKeyAttributeTests
     public void WithNoKeyConfigured_InDevelopment_ShouldAllow()
     {
         Run(null, Environments.Development, null).Result.Should().BeNull();
+    }
+
+    [TestMethod]
+    public void AdminController_ShouldRequireAdminKeyOnEveryAction()
+    {
+        typeof(AdminController).GetCustomAttributes(typeof(RequireAdminKeyAttribute), inherit: true)
+            .Should().ContainSingle();
     }
 }

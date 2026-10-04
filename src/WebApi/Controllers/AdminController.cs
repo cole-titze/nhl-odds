@@ -8,6 +8,7 @@ namespace WebApi.Controllers;
 
 [Route("api/[controller]/[action]")]
 [ApiController]
+[RequireAdminKey]
 public class AdminController
 {
     private readonly IJobService _jobService;
@@ -28,7 +29,6 @@ public class AdminController
     }
 
     [HttpPost]
-    [RequireAdminKey]
     public IResult StartDataCollection()
     {
         if (CompletedToday(DataCollectionJob))
@@ -41,7 +41,6 @@ public class AdminController
     }
 
     [HttpPost]
-    [RequireAdminKey]
     public IResult StartPrediction()
     {
         if (CompletedToday(PredictionJob))
@@ -54,7 +53,6 @@ public class AdminController
     }
 
     [HttpPost]
-    [RequireAdminKey]
     public IResult StartOddsBackfill()
     {
         if (CompletedToday(OddsBackfillJob))
@@ -67,7 +65,6 @@ public class AdminController
     }
 
     [HttpPost]
-    [RequireAdminKey]
     public IResult StartPredictionBackfill()
     {
         if (CompletedToday(PredictionBackfillJob))
@@ -80,7 +77,6 @@ public class AdminController
     }
 
     [HttpPost]
-    [RequireAdminKey]
     public IResult StartKalshiBackfill()
     {
         if (CompletedToday(KalshiBackfillJob))
