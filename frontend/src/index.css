@@ -80,6 +80,13 @@ main :is(a, button, input, select, textarea, summary, [tabindex]) {
   scroll-margin-top: var(--sticky-top, 5rem);
   scroll-margin-bottom: var(--sticky-bottom, 0px);
 }
+/* ...except inside a sticky bar in main (the Games filter bar), whose controls
+   are always on screen. With the margin, focusing one makes the browser scroll
+   to clear it, but the bar moves with the scroll, so every Tab pushed the feed
+   further back. */
+main .app-subbar :is(a, button, input, select, textarea, summary, [tabindex]) {
+  scroll-margin: 0;
+}
 
 /* <main> is focused programmatically on route changes and by the skip link */
 #main:focus {

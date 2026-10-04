@@ -284,6 +284,41 @@ try {
       await ctx.close();
     }
   }
+
+  // 5. Tabbing between the filter bar's controls must not scroll the feed
+  //    (they're always on screen; a scroll-margin on them used to push the
+  //    feed back a few days per Tab, and into loads of older games)
+  for (const [viewportName, viewport] of Object.entries(VIEWPORTS)) {
+    const ctx = await newContext(browser, 'light', viewport);
+    const page = await ctx.newPage();
+    await load(page, '/');
+    const before = await page.evaluate(() => window.scrollY);
+    await page.evaluate(() =>
+      document.querySelector('#games-filter-bar :is(a[href], button, input, select)').focus(),
+    );
+    const problems = [];
+    for (let i = 0; i < 12; i++) {
+      const step = await page.evaluate((scrollBefore) => {
+        const el = document.activeElement;
+        if (!el?.closest('#games-filter-bar')) return { done: true };
+        const label = (el.getAttribute('aria-label') || el.textContent || el.tagName).trim();
+        return {
+          moved:
+            Math.abs(window.scrollY - scrollBefore) > 1
+              ? `focusing "${label.slice(0, 30)}" scrolled ${Math.round(scrollBefore)} -> ${Math.round(window.scrollY)}`
+              : null,
+        };
+      }, before);
+      if (step.done) break;
+      if (step.moved) {
+        problems.push(step.moved);
+        break;
+      }
+      await page.keyboard.press('Tab');
+    }
+    total += report(`filter bar tabbing keeps scroll [${viewportName}] /`, problems);
+    await ctx.close();
+  }
 } finally {
   await browser?.close();
   server.kill();
