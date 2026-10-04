@@ -98,7 +98,6 @@ static string BuildMcpInstructions(int currentSeason) => $"""
         - Use GetGamesInDateRange for historical results or a specific week/range.
         - Use GetAllTeams for standings, model accuracy comparisons, or league-wide stats.
         - Use GetTeamStats when the user asks about a specific team — it includes full game history.
-        - Use GetHealthChecks only for data pipeline diagnostics, not general questions.
 
         Odds are win probabilities (0–1). Log loss measures prediction accuracy — lower is better;
         random guessing scores ~0.693.
