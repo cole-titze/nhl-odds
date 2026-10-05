@@ -6,6 +6,7 @@ using DatabaseAccess.WebGameOddsRepository;
 using DatabaseAccess.WebTeamRepository;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Prometheus;
 using WebApi.BusinessLogic.AdminService;
 using WebApi.BusinessLogic.GameOddsGetter;
 using WebApi.BusinessLogic.JobService;
@@ -44,6 +45,8 @@ builder.Services.AddScoped<IWebAdminRepository, WebAdminRepository>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddDbContext<GameDbContext>(x => x.UseNpgsql(_connectionString));
 builder.Services.AddLogging();
+// Prometheus scrapes a separate port so /metrics is never reachable through nginx/Cloudflare
+builder.Services.AddMetricServer(options => options.Port = 9091);
 
 builder.Services.AddRateLimiter(options =>
 {
@@ -145,6 +148,8 @@ if (app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+// Before the rate limiter so 429s are counted; labels requests by route template
+app.UseHttpMetrics();
 app.UseRateLimiter();
 app.UseAuthorization();
 
