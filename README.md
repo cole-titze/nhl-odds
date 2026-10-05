@@ -25,6 +25,8 @@ The nhl project. This repo collects nhl data from the nhl api, cleans it, and th
 
 Every container is rebuilt weekly (Sundays 08:00 UTC) to pick up base-image patches, as well as on pushes to `main`. A Trivy [security scan](.github/workflows/security-scan.yml) of the published images runs two hours later (Sundays 10:00 UTC). The Kubernetes deployment then picks up new images automatically: a nightly `nightly-image-updater` CronJob (04:00 America/Chicago) rolling-restarts the `nhl-odds` deployments.
 
+The cluster nodes' OS is patched nightly by the [ansible-setup](https://github.com/cole-titze/ansible-setup) node-maintenance cron. Workers run `apt-get full-upgrade` at 01:15 and 01:30 America/Chicago and never reboot themselves. When a kernel update needs a reboot, [kured](https://kured.dev) drains and reboots one worker at a time between 02:00 and 02:55, and the CNPG database fails over to the other node. The control-plane node upgrades and reboots itself at 03:30.
+
 Maintenance skills live in [claude-skills](https://github.com/cole-titze/claude-skills). That repo is private, but the descriptions below give the gist of what each one does:
 
 | Skill | Purpose |
