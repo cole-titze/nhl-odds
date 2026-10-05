@@ -112,6 +112,10 @@ builder.Services.AddMcpServer(options =>
 })
     .WithHttpTransport(transport =>
     {
+        // No server-side sessions: with 2 webapi replicas behind nginx, a session held in one pod's
+        // memory 404'd ("Session not found") whenever a request landed on the other pod. The tools
+        // are plain request/response, so nothing needs per-session state.
+        transport.Stateless = true;
         // Built per session so the current season stays correct without a restart
         transport.ConfigureSessionOptions = (_, options, _) =>
         {
