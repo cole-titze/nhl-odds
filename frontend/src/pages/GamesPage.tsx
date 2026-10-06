@@ -3,6 +3,7 @@ import { GamesFeed } from '../components/GamesFeed';
 import { SeasonSelector } from '../components/SeasonSelector';
 import { CardSkeleton } from '../components/Skeleton';
 import { StrategyPicker } from '../components/StrategyPicker';
+import { useStrategy } from '../contexts/StrategyContext';
 import { LoadingStatus, PageTitle } from '../components/A11y';
 import { useBidirectionalGames } from '../hooks/useBidirectionalGames';
 import { toDateInputValue } from '../utils/dates';
@@ -37,7 +38,27 @@ function handleFilterBarTab(e: KeyboardEvent<HTMLDivElement>) {
   });
   if (!firstVisible || firstVisible === items[0]) return;
   e.preventDefault();
-  firstVisible.focus();
+  // Already fully on screen; without preventScroll WebKit still scrolls it
+  firstVisible.focus({ preventScroll: true });
+}
+
+// The card at the top of the view (just below the sticky bars) and how far below them
+// it sits, so the view can be put back after a reflow
+interface ViewAnchor {
+  el: Element;
+  offset: number;
+  at: number;
+}
+
+function captureViewAnchor(): ViewAnchor | null {
+  const feed = document.getElementById(FEED_ID);
+  if (!feed) return null;
+  const barsBottom = getStickyOffset();
+  for (const el of feed.querySelectorAll('.grid > *')) {
+    const r = el.getBoundingClientRect();
+    if (r.bottom > barsBottom) return { el, offset: r.top - barsBottom, at: Date.now() };
+  }
+  return null;
 }
 
 // Height of the sticky navbar plus the filter bar, so date headers land below
@@ -143,6 +164,24 @@ export function GamesPage() {
     scrollToDate(anchorDate, 'instant');
   }, [initialStatus, anchorDate]);
 
+  // Changing the strategy or bet type adds and removes bet badges on every card (and
+  // resizes the filter bar), which reflows the week of cards above the view and shoves
+  // it around. Browser scroll anchoring would cover this, but Safari has none. So any
+  // filter-bar interaction notes the top card, and the next renders put it back. Kept
+  // briefly rather than used once, because a bet-type change re-renders twice (the
+  // picker then switches to that bet type's strategy).
+  const { strategy } = useStrategy();
+  const viewAnchor = useRef<ViewAnchor | null>(null);
+  const noteViewAnchor = () => {
+    viewAnchor.current = captureViewAnchor();
+  };
+  useLayoutEffect(() => {
+    const anchor = viewAnchor.current;
+    if (!anchor || Date.now() - anchor.at > 1000 || !anchor.el.isConnected) return;
+    const shift = anchor.el.getBoundingClientRect().top - getStickyOffset() - anchor.offset;
+    if (Math.abs(shift) >= 1) window.scrollBy({ top: shift, behavior: 'instant' });
+  }, [strategy.type, strategy.threshold, oddsType]);
+
   // Restore scroll position after a prepend so the user's view stays anchored
   // to the same content. Snapshot was captured at dispatch time inside the hook.
   useLayoutEffect(() => {
@@ -218,6 +257,8 @@ export function GamesPage() {
       <div
         id={FILTER_BAR_ID}
         onKeyDown={handleFilterBarTab}
+        onClickCapture={noteViewAnchor}
+        onChangeCapture={noteViewAnchor}
         // Spans the full window like the navbar (the shell's overflow-x-clip
         // trims the scrollbar's width off 100vw); controls stay in the column
         className="app-subbar sticky top-14 md:top-16 z-40 mx-[calc(50%-50vw)] py-3 mb-6 backdrop-blur bg-white/70 dark:bg-surface-950/70 border-b border-surface-200/60 dark:border-white/[0.06]"
