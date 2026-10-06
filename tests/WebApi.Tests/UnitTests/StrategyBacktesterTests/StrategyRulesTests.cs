@@ -46,6 +46,26 @@ public class StrategyRulesTests
     }
 
     [TestMethod]
+    public void UnderdogValue_ShouldBetBookUnderdog_EvenWhenModelPicksFavorite()
+    {
+        var game = Game(0.6, 3, 2, Book("DraftKings", 0.65, 0.33));
+
+        var flag = StrategyRules.GetBestBetFlag(game, "underdogValue", 0.06);
+
+        flag.Should().NotBeNull();
+        flag!.BetHome.Should().BeFalse();
+        flag.Edge.Should().BeApproximately(0.07, 1e-9);
+    }
+
+    [TestMethod]
+    public void UnderdogValue_ShouldSkipFavoriteSideEdge()
+    {
+        var game = Game(0.75, 3, 2, Book("DraftKings", 0.6, 0.43));
+
+        StrategyRules.GetBestBetFlag(game, "underdogValue", 0.02).Should().BeNull();
+    }
+
+    [TestMethod]
     public void GetBestBetFlag_ShouldIgnoreUnpinnedBooks_AndPickLargestEdge()
     {
         var game = Game(0.6, 3, 2,
@@ -126,5 +146,46 @@ public class StrategyRulesTests
         best.FirstSeason.Should().Be(2022);
         best.LastSeason.Should().Be(2025);
         best.Roi.Should().BeGreaterThan(0);
+    }
+
+    [TestMethod]
+    public void PickBest_ShouldSkipStrategy_WithALosingSeason()
+    {
+        // Model underdogs win every game in 2023 and lose every game in 2024: profitable
+        // overall, but not in every season.
+        var games = Enumerable.Range(0, 150)
+            .Select(_ => Game(0.55, 3, 2, Book("DraftKings", 0.45, 0.58)))
+            .ToList();
+        for (var i = 0; i < games.Count; i++)
+        {
+            var winning = i < 100;
+            games[i].Id = (winning ? 2023 : 2024) * 1_000_000 + 20_000 + i;
+            if (!winning)
+            {
+                games[i].Winner = Winner.AWAY;
+                games[i].HomeTeam!.Goals = 1;
+            }
+        }
+
+        StrategyBacktester.PickBest(games, 2023, 2024)
+            .Should().NotContain(b => b.BetType == "moneyline");
+    }
+
+    [TestMethod]
+    public void SeasonResults_ShouldSplitBySeason_AndBook()
+    {
+        // DraftKings-only game in 2023 (underdog wins), Kalshi-only game in 2024 (underdog loses)
+        var dk = Game(0.55, 3, 2, Book("DraftKings", 0.45, 0.58));
+        dk.Id = 2023020001;
+        var kalshi = Game(0.55, 1, 2, Book("Kalshi", 0.45, 0.58));
+        kalshi.Id = 2024020001;
+
+        var results = StrategyBacktester.SeasonResults(new[] { dk, kalshi })
+            .Where(r => r.StrategyType == "underdog")
+            .ToDictionary(r => r.Book);
+
+        results["DraftKings"].Seasons.Should().ContainSingle(s => s.Season == 2023 && s.Bets == 1 && s.Roi > 0);
+        results["Kalshi"].Seasons.Should().ContainSingle(s => s.Season == 2024 && s.Roi == -100);
+        results["best"].Seasons.Select(s => s.Season).Should().Equal(2023, 2024);
     }
 }

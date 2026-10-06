@@ -1,9 +1,36 @@
 import type { GameOddsVM, BookmakerOddsVM } from '../types';
 import { Winner } from '../types';
-import { americanToDecimalPayout, computeStrategyResult, spreadCovered } from './bettingStrategies';
+import {
+  americanToDecimalPayout,
+  computeStrategyResult,
+  getBestBetFlag,
+  PINNED_BOOKMAKERS,
+  spreadCovered,
+} from './bettingStrategies';
 import type { BetResult, StrategyResult, StrategyType } from './bettingStrategies';
 
 export const MODEL_REFERENCE = 'In-House Model';
+// Pseudo-book that bets each game at whichever pinned book has the largest edge,
+// like the game card and the suggested-strategy backtest
+export const BEST_PRICE = 'DraftKings + Kalshi';
+
+type BestPriceOdds = BookmakerOddsVM & { sourceBookmaker: string };
+
+// Adds a BEST_PRICE entry to each game holding the odds of the pinned book the strategy
+// would bet. Only meaningful against the model, which is what checkStrategy compares.
+function withBestPrice(games: GameOddsVM[], strategyType: StrategyType, threshold: number) {
+  return games.map((g) => {
+    const flag = getBestBetFlag(g, { type: strategyType, threshold });
+    const bm = flag && g.bookmakerOdds.find((b) => b.bookmakerName === flag.bookmaker);
+    if (!bm) return g;
+    const best: BestPriceOdds = {
+      ...bm,
+      bookmakerName: BEST_PRICE,
+      sourceBookmaker: bm.bookmakerName,
+    };
+    return { ...g, bookmakerOdds: [...g.bookmakerOdds, best] };
+  });
+}
 
 export interface CrossBookEntry {
   gameId: number;
@@ -17,6 +44,8 @@ export interface CrossBookEntry {
   payout: number | null;
   won: boolean | null;
   upcoming: boolean;
+  // Book the bet was placed at
+  book: string;
 }
 
 function removeVig(homeProb: number, awayProb: number): { home: number; away: number } {
@@ -186,6 +215,60 @@ export function crossBookUnderdog(
   return computeStrategyResult('In-House Underdog', bets);
 }
 
+export function crossBookUnderdogValue(
+  games: GameOddsVM[],
+  refBookmaker: string,
+  betBookmaker: string,
+  edgeThreshold: number,
+): StrategyResult {
+  const bets: BetResult[] = [];
+  for (const g of games) {
+    if (!g.hasBeenPlayed || !g.homeTeam || !g.awayTeam) continue;
+    const ref = getRefOdds(g, refBookmaker);
+    const bet = findBookmaker(g, betBookmaker);
+    if (!ref || !bet) continue;
+    if (
+      (ref.homeOdds ?? 0) <= 0 ||
+      (ref.awayOdds ?? 0) <= 0 ||
+      bet.homeOdds <= 0 ||
+      bet.awayOdds <= 0
+    )
+      continue;
+
+    const trueRef = getRefProbs(ref, refBookmaker);
+    const side = underdogValueSide(trueRef, bet, edgeThreshold);
+    if (!side) continue;
+
+    const isHome = side === 'home';
+    const betProb = isHome ? bet.homeOdds : bet.awayOdds;
+    const won = g.winner === (isHome ? Winner.HOME : Winner.AWAY);
+    bets.push({
+      gameId: g.id,
+      gameDate: g.gameDate,
+      betSide: side,
+      modelProb: isHome ? trueRef.home : trueRef.away,
+      bookmakerProb: betProb,
+      payout: +(won ? 1 / betProb - 1 : -1).toFixed(4),
+      won,
+      cumulativePL: 0,
+    });
+  }
+  return computeStrategyResult('Underdog Value', bets);
+}
+
+// Value bet restricted to the betting book's underdog (implied probability < 50%)
+function underdogValueSide(
+  trueRef: { home: number; away: number },
+  bet: BookmakerOddsVM,
+  edgeThreshold: number,
+): 'home' | 'away' | null {
+  const homeEdge = bet.homeOdds < 0.5 ? trueRef.home - bet.homeOdds : -Infinity;
+  const awayEdge = bet.awayOdds < 0.5 ? trueRef.away - bet.awayOdds : -Infinity;
+  if (homeEdge >= edgeThreshold && homeEdge >= awayEdge) return 'home';
+  if (awayEdge >= edgeThreshold) return 'away';
+  return null;
+}
+
 export function crossBookConfidence(
   games: GameOddsVM[],
   refBookmaker: string,
@@ -328,6 +411,7 @@ export function runStrategy(
   betBookmaker: string,
   threshold: number,
 ): StrategyResult {
+  if (betBookmaker === BEST_PRICE) games = withBestPrice(games, strategyType, threshold);
   switch (strategyType) {
     case 'value':
       return crossBookMoneyline(games, refBookmaker, betBookmaker, threshold);
@@ -335,6 +419,8 @@ export function runStrategy(
       return crossBookWinner(games, refBookmaker, betBookmaker);
     case 'underdog':
       return crossBookUnderdog(games, refBookmaker, betBookmaker);
+    case 'underdogValue':
+      return crossBookUnderdogValue(games, refBookmaker, betBookmaker, threshold);
     case 'confidence':
       return crossBookConfidence(games, refBookmaker, betBookmaker, threshold);
     case 'spreadAll':
@@ -364,6 +450,7 @@ export function crossBookLog(
         ? 'overUnder'
         : 'moneyline';
 
+  if (betBookmaker === BEST_PRICE) games = withBestPrice(games, strategyType, threshold);
   const entries: CrossBookEntry[] = [];
 
   for (const g of games) {
@@ -374,6 +461,7 @@ export function crossBookLog(
 
     const homeName = `${g.homeTeam.locationName} ${g.homeTeam.teamName}`;
     const awayName = `${g.awayTeam.locationName} ${g.awayTeam.teamName}`;
+    const book = (bet as Partial<BestPriceOdds>).sourceBookmaker ?? bet.bookmakerName;
 
     if (betType === 'moneyline') {
       if (
@@ -415,6 +503,13 @@ export function crossBookLog(
         if (betValue >= 0.5) continue;
         refValue = side === 'home' ? trueRef.home : trueRef.away;
         edge = refValue - betValue;
+      } else if (strategyType === 'underdogValue') {
+        side = underdogValueSide(trueRef, bet, threshold);
+        if (side) {
+          refValue = side === 'home' ? trueRef.home : trueRef.away;
+          betValue = side === 'home' ? bet.homeOdds : bet.awayOdds;
+          edge = refValue - betValue;
+        }
       } else if (strategyType === 'confidence') {
         if (trueRef.home >= threshold) {
           side = 'home';
@@ -445,6 +540,7 @@ export function crossBookLog(
           payout: +payout.toFixed(4),
           won,
           upcoming: false,
+          book,
         });
       } else {
         entries.push({
@@ -459,6 +555,7 @@ export function crossBookLog(
           payout: null,
           won: null,
           upcoming: true,
+          book,
         });
       }
     } else if (betType === 'spread') {
@@ -486,6 +583,7 @@ export function crossBookLog(
           payout: +payout.toFixed(4),
           won: covered,
           upcoming: false,
+          book,
         });
       } else {
         entries.push({
@@ -500,6 +598,7 @@ export function crossBookLog(
           payout: null,
           won: null,
           upcoming: true,
+          book,
         });
       }
     } else {
@@ -528,6 +627,7 @@ export function crossBookLog(
           payout: +payout.toFixed(4),
           won,
           upcoming: false,
+          book,
         });
       } else {
         entries.push({
@@ -542,6 +642,7 @@ export function crossBookLog(
           payout: null,
           won: null,
           upcoming: true,
+          book,
         });
       }
     }
@@ -563,8 +664,11 @@ export function getCoverage(
     if (!g.hasBeenPlayed || !g.homeTeam || !g.awayTeam) continue;
     total++;
     const ref = getRefOdds(g, refBookmaker);
-    const bet = findBookmaker(g, betBookmaker);
-    if (ref && bet && (ref.homeOdds ?? 0) > 0 && bet.homeOdds > 0) matched++;
+    const bets =
+      betBookmaker === BEST_PRICE
+        ? PINNED_BOOKMAKERS.map((b) => findBookmaker(g, b))
+        : [findBookmaker(g, betBookmaker)];
+    if (ref && (ref.homeOdds ?? 0) > 0 && bets.some((b) => b && b.homeOdds > 0)) matched++;
   }
   return { matched, total };
 }

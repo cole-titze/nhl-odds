@@ -96,6 +96,7 @@ export type StrategyType =
   | 'value'
   | 'modelWinner'
   | 'underdog'
+  | 'underdogValue'
   | 'confidence'
   | 'spreadAll'
   | 'spreadValue'
@@ -129,6 +130,13 @@ export const STRATEGY_OPTIONS: StrategyOption[] = [
   },
   { type: 'modelWinner', label: 'In-House Winner', betType: 'moneyline' },
   { type: 'underdog', label: 'In-House Underdog', betType: 'moneyline' },
+  {
+    type: 'underdogValue',
+    label: 'Underdog Value',
+    betType: 'moneyline',
+    thresholds: [0.02, 0.04, 0.06, 0.08, 0.1],
+    thresholdFormat: 'pct',
+  },
   {
     type: 'confidence',
     label: 'Confidence',
@@ -197,6 +205,19 @@ export function checkStrategy(
       const edge = (side === 'home' ? homeModel : awayModel) - bookProb;
       return { side, edge };
     }
+    case 'underdogValue': {
+      if (bm.homeOdds <= 0 || bm.awayOdds <= 0) return null;
+      const homeModel = game.homeTeam.modelOdds;
+      const awayModel = game.awayTeam.modelOdds;
+      if (homeModel == null || awayModel == null) return null;
+      // Value bets, but only on the side the book has as the underdog
+      const homeEdge = bm.homeOdds < 0.5 ? homeModel - bm.homeOdds : -Infinity;
+      const awayEdge = bm.awayOdds < 0.5 ? awayModel - bm.awayOdds : -Infinity;
+      if (homeEdge >= strategy.threshold && homeEdge >= awayEdge)
+        return { side: 'home', edge: homeEdge };
+      if (awayEdge >= strategy.threshold) return { side: 'away', edge: awayEdge };
+      return null;
+    }
     case 'confidence': {
       if (bm.homeOdds <= 0 || bm.awayOdds <= 0) return null;
       const homeModel = game.homeTeam.modelOdds;
@@ -236,6 +257,33 @@ export function checkStrategy(
       return { side, edge };
     }
   }
+}
+
+// Only these books are shown on the game card, so only they can back a bet.
+// Mirrors StrategyRules.PinnedBookmakers in the API.
+export const PINNED_BOOKMAKERS = ['DraftKings', 'Kalshi'];
+
+export type BestBetFlag = BetFlag & {
+  // Book with the largest edge; the bet is graded against its line
+  bookmaker: string;
+  // Every pinned book that flags the same side, in PINNED_BOOKMAKERS order
+  bookmakers: string[];
+};
+
+// The bet the game card shows: the pinned book with the largest edge.
+export function getBestBetFlag(game: GameOddsVM, strategy: StrategyConfig): BestBetFlag | null {
+  const flags: (BetFlag & { bookmaker: string })[] = [];
+  for (const name of PINNED_BOOKMAKERS) {
+    const bm = game.bookmakerOdds?.find((b) => b.bookmakerName === name);
+    const flag = bm && checkStrategy(game, bm, strategy);
+    if (flag) flags.push({ ...flag, bookmaker: name });
+  }
+  if (flags.length === 0) return null;
+  const best = flags.reduce((a, b) => (b.edge > a.edge ? b : a));
+  return {
+    ...best,
+    bookmakers: flags.filter((f) => f.side === best.side).map((f) => f.bookmaker),
+  };
 }
 
 // Whether a spread bet on the given side covered the bookmaker's line.

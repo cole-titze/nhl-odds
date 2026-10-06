@@ -6,9 +6,11 @@ import { Skeleton } from '../components/Skeleton';
 import { useFetch } from '../hooks/useFetch';
 import { useStrategy } from '../contexts/StrategyContext';
 import { getGameOddsInDateRange } from '../api/gameOdds';
-import { getCurrentSeason } from '../utils/season';
-import { STRATEGY_OPTIONS } from '../utils/bettingStrategies';
+import { getStrategySeasonResults, type SeasonResultVM } from '../api/strategy';
+import { formatSeasonLabel, getCurrentSeason } from '../utils/season';
+import { STRATEGY_OPTIONS, type StrategyType } from '../utils/bettingStrategies';
 import {
+  BEST_PRICE,
   MODEL_REFERENCE,
   runStrategy,
   crossBookLog,
@@ -17,7 +19,38 @@ import {
 import { formatShortDate } from '../utils/dates';
 import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
 
-const MARKET_OPTIONS = ['Kalshi', 'DraftKings'];
+const MARKET_OPTIONS = ['DraftKings', 'Kalshi'];
+
+// Per-season ROI for past seasons, e.g. "+3.1" — "–" when the strategy didn't bet that season
+function SeasonRois({ seasons, all }: { seasons: SeasonResultVM[] | undefined; all: number[] }) {
+  return (
+    <span className="inline-flex gap-1.5">
+      {all.map((year) => {
+        const s = seasons?.find((r) => r.season === year);
+        const label = formatSeasonLabel(year);
+        if (!s)
+          return (
+            <span key={year} className="w-10 text-right text-surface-500 dark:text-surface-400">
+              <span aria-hidden="true">–</span>
+              <span className="sr-only">{label}: no bets</span>
+            </span>
+          );
+        return (
+          <span
+            key={year}
+            title={`${label}: ${s.bets} bets, ${s.roi >= 0 ? '+' : ''}${s.roi.toFixed(1)}% ROI`}
+            className={`w-10 text-right ${s.roi >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'}`}
+          >
+            <span className="sr-only">{label}: </span>
+            {s.roi >= 0 ? '+' : ''}
+            {s.roi.toFixed(0)}
+            <span className="sr-only">% ROI over {s.bets} bets</span>
+          </span>
+        );
+      })}
+    </span>
+  );
+}
 
 interface MarketPair {
   ref: string;
@@ -29,8 +62,8 @@ export function CrossBookStrategyPage() {
   const [season, setSeason] = useState(getCurrentSeason());
   const [selectedPair, setSelectedPair] = useState<MarketPair>({
     ref: MODEL_REFERENCE,
-    bet: 'Kalshi',
-    label: 'In-House vs Kalshi',
+    bet: 'DraftKings',
+    label: 'In-House vs DraftKings',
   });
   const [showLog, setShowLog] = useState(false);
   const [showChart, setShowChart] = useState(false);
@@ -71,6 +104,7 @@ export function CrossBookStrategyPage() {
       }
     }
     if (MARKET_OPTIONS.every((m) => bookmakerNames.includes(m))) {
+      pairs.push({ ref: MODEL_REFERENCE, bet: BEST_PRICE, label: `In-House vs ${BEST_PRICE}` });
       pairs.push({
         ref: MARKET_OPTIONS[0],
         bet: MARKET_OPTIONS[1],
@@ -89,6 +123,26 @@ export function CrossBookStrategyPage() {
     marketPairs.find((p) => p.label === selectedPair.label) ?? marketPairs[0] ?? selectedPair;
   const refBookmaker = activePair.ref;
   const betBookmaker = activePair.bet;
+
+  // Past-season results come from the API's backtest, which only compares against the model
+  const { data: seasonResults } = useFetch(() => getStrategySeasonResults(getCurrentSeason()), []);
+  const seasonBook =
+    refBookmaker === MODEL_REFERENCE ? (betBookmaker === BEST_PRICE ? 'best' : betBookmaker) : null;
+  const pastSeasons = useMemo(() => {
+    const current = getCurrentSeason();
+    return [4, 3, 2, 1].map((n) => current - n);
+  }, []);
+  const seasonsFor = (type: StrategyType, threshold: number) =>
+    seasonBook
+      ? seasonResults?.find(
+          (r) =>
+            r.book === seasonBook &&
+            r.strategyType === type &&
+            Math.abs(r.threshold - threshold) < 1e-9,
+        )?.seasons
+      : undefined;
+  const showSeasons = !!seasonBook && !!seasonResults;
+  const showBook = betBookmaker === BEST_PRICE;
 
   const strategyResult = useMemo(() => {
     if (!games) return null;
@@ -220,7 +274,8 @@ export function CrossBookStrategyPage() {
               <ScrollRegion label="Strategy rankings">
                 <table className="w-full text-xs font-mono">
                   <caption className="sr-only">
-                    Strategies ranked by ROI. Choose a strategy to select it.
+                    Strategies ranked by ROI this season, with ROI in each past season. Choose a
+                    strategy to select it.
                   </caption>
                   <thead>
                     <tr className="text-left text-surface-500 dark:text-surface-400 border-b border-surface-200 dark:border-white/[0.06]">
@@ -230,6 +285,14 @@ export function CrossBookStrategyPage() {
                       <th className="pb-2 pr-4 text-right">Win%</th>
                       <th className="pb-2 pr-4 text-right">P/L</th>
                       <th className="pb-2 text-right">ROI</th>
+                      {showSeasons && (
+                        <th
+                          className="pb-2 pl-4 text-right whitespace-nowrap"
+                          title="ROI in each past season (backtest, same bets as the selected market)"
+                        >
+                          {formatSeasonLabel(pastSeasons[0])} → {formatSeasonLabel(pastSeasons[3])}
+                        </th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
@@ -290,6 +353,14 @@ export function CrossBookStrategyPage() {
                             {result.roi >= 0 ? '+' : ''}
                             {result.roi.toFixed(1)}%
                           </td>
+                          {showSeasons && (
+                            <td className="py-2 pl-4 text-right whitespace-nowrap">
+                              <SeasonRois
+                                seasons={seasonsFor(opt.type, threshold)}
+                                all={pastSeasons}
+                              />
+                            </td>
+                          )}
                         </tr>
                       );
                     })}
@@ -318,6 +389,7 @@ export function CrossBookStrategyPage() {
                       <th className="pb-2 pr-3">Date</th>
                       <th className="pb-2 pr-3">Matchup</th>
                       <th className="pb-2 pr-3">Bet</th>
+                      {showBook && <th className="pb-2 pr-3">Book</th>}
                       <th className="pb-2 text-right">Edge</th>
                     </tr>
                   </thead>
@@ -336,6 +408,11 @@ export function CrossBookStrategyPage() {
                         <td className="py-1.5 pr-3 font-semibold text-emerald-700 dark:text-emerald-400">
                           {e.betSide}
                         </td>
+                        {showBook && (
+                          <td className="py-1.5 pr-3 text-surface-800 dark:text-surface-200">
+                            {e.book}
+                          </td>
+                        )}
                         <td className="py-1.5 text-right font-semibold text-emerald-700 dark:text-emerald-400">
                           {isMoneyline ? (e.edge * 100).toFixed(1) + '%' : e.edge.toFixed(2)}
                         </td>
@@ -371,6 +448,26 @@ export function CrossBookStrategyPage() {
             >
               <div>
                 <StrategyCard result={strategyResult} />
+                {showSeasons && (
+                  <div className="glass rounded-xl px-5 py-3 mt-2 text-xs font-mono">
+                    <div className="font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 mb-1">
+                      ROI by past season
+                    </div>
+                    <div className="flex justify-between text-surface-500 dark:text-surface-400">
+                      {pastSeasons.map((y) => (
+                        <span key={y} aria-hidden="true" className="w-10 text-right">
+                          {formatSeasonLabel(y).slice(2)}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex justify-between">
+                      <SeasonRois
+                        seasons={seasonsFor(strategy.type, strategy.threshold)}
+                        all={pastSeasons}
+                      />
+                    </div>
+                  </div>
+                )}
                 {coverage && (
                   <p className="text-xs text-surface-500 dark:text-surface-400 mt-2">
                     {coverage.matched} of {coverage.total} played games had odds from both sources
@@ -406,6 +503,7 @@ export function CrossBookStrategyPage() {
                       <th className="pb-2 pr-3">Date</th>
                       <th className="pb-2 pr-3">Matchup</th>
                       <th className="pb-2 pr-3">Bet</th>
+                      {showBook && <th className="pb-2 pr-3">Book</th>}
                       <th className="pb-2 pr-3 text-right">Ref</th>
                       <th className="pb-2 pr-3 text-right">Market</th>
                       <th className="pb-2 pr-3 text-right">Edge</th>
@@ -428,6 +526,11 @@ export function CrossBookStrategyPage() {
                         <td className="py-1.5 pr-3 font-semibold text-surface-800 dark:text-surface-200">
                           {e.betSide}
                         </td>
+                        {showBook && (
+                          <td className="py-1.5 pr-3 text-surface-500 dark:text-surface-400">
+                            {e.book}
+                          </td>
+                        )}
                         <td className="py-1.5 pr-3 text-right text-surface-500 dark:text-surface-400">
                           {isMoneyline
                             ? (e.refValue * 100).toFixed(1) + '%'
@@ -514,6 +617,16 @@ export function CrossBookStrategyPage() {
                   <p>
                     Only bets when the model's pick is the betting market's underdog (implied
                     probability {'<'}50%). Contrarian bets with longer odds.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-surface-800 dark:text-surface-200 mb-1">
+                    Underdog Value
+                  </h3>
+                  <p>
+                    Value bets restricted to the betting market's underdog: bets the underdog when
+                    the model's probability beats its implied probability by at least the edge
+                    threshold, even if the model still expects it to lose.
                   </p>
                 </div>
                 <div>

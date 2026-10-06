@@ -29,4 +29,16 @@ public class StrategyController
         _cache.Set(cacheKey, result, ApiCache.Entry(result.Count(), TimeSpan.FromDays(1)));
         return Results.Ok(result);
     }
+
+    [HttpGet]
+    public async Task<IResult> GetSeasonResults(int seasonStartYear)
+    {
+        var cacheKey = $"StrategySeasonResults_{seasonStartYear}";
+        if (_cache.TryGetValue(cacheKey, out object? cached))
+            return Results.Ok(cached);
+
+        var result = await _backtester.GetSeasonResults(seasonStartYear);
+        _cache.Set(cacheKey, result, ApiCache.Entry(result.Count(), TimeSpan.FromDays(1)));
+        return Results.Ok(result);
+    }
 }

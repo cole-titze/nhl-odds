@@ -91,6 +91,9 @@ public class StartupCacheWarmer : BackgroundService
             var backtester = scope.ServiceProvider.GetRequiredService<IStrategyBacktester>();
             var best = await backtester.GetBestStrategies(seasonStartYear);
             _cache.Set($"BestStrategies_{seasonStartYear}", best, ApiCache.Entry(best.Count(), TimeSpan.FromDays(1)));
+            var seasonResults = await backtester.GetSeasonResults(seasonStartYear);
+            _cache.Set($"StrategySeasonResults_{seasonStartYear}", seasonResults,
+                ApiCache.Entry(seasonResults.Count(), TimeSpan.FromDays(1)));
         }
         catch (Exception ex)
         {

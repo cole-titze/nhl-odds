@@ -8,40 +8,16 @@ import { getModelName } from '../utils/modelNames';
 import { formatOdds, formatAmericanOdds } from '../utils/oddsFormat';
 import type { OddsType } from '../pages/GamesPage';
 import {
-  checkStrategy,
+  getBestBetFlag,
+  PINNED_BOOKMAKERS,
   STRATEGY_OPTIONS,
-  type BetFlag,
+  type BestBetFlag,
   type StrategyConfig,
 } from '../utils/bettingStrategies';
 import { useStrategy } from '../contexts/StrategyContext';
 import { TeamLogo } from './TeamLogo';
 
-// Only these books are shown on the card, so only they can back the bet badge.
-const PINNED_BOOKMAKERS = ['DraftKings', 'Kalshi'];
-
 type BetOutcome = 'won' | 'lost' | 'push';
-
-type BestBetFlag = BetFlag & {
-  // Book with the largest edge; the bet is graded against its line
-  bookmaker: string;
-  // Every pinned book that flags the same side, in PINNED_BOOKMAKERS order
-  bookmakers: string[];
-};
-
-function getBestBetFlag(game: GameOddsVM, strategy: StrategyConfig): BestBetFlag | null {
-  const flags: (BetFlag & { bookmaker: string })[] = [];
-  for (const name of PINNED_BOOKMAKERS) {
-    const bm = game.bookmakerOdds?.find((b) => b.bookmakerName === name);
-    const flag = bm && checkStrategy(game, bm, strategy);
-    if (flag) flags.push({ ...flag, bookmaker: name });
-  }
-  if (flags.length === 0) return null;
-  const best = flags.reduce((a, b) => (b.edge > a.edge ? b : a));
-  return {
-    ...best,
-    bookmakers: flags.filter((f) => f.side === best.side).map((f) => f.bookmaker),
-  };
-}
 
 interface GameCardProps {
   game: GameOddsVM;

@@ -89,7 +89,7 @@ export function StrategyPicker({ betType, renameLabel }: Props) {
       )}
       {best &&
         (() => {
-          const title = `Best backtested strategy: ${best.wins}/${best.bets} bets won, ${formatSeasonLabel(best.firstSeason)} through ${formatSeasonLabel(best.lastSeason)}, DraftKings + Kalshi`;
+          const title = `Best backtested strategy: ${best.wins}/${best.bets} bets won, ${formatSeasonLabel(best.firstSeason)} through ${formatSeasonLabel(best.lastSeason)}, DraftKings + Kalshi, profitable every season`;
           const onSuggested =
             strategy.type === best.strategyType && strategy.threshold === best.threshold;
           if (onSuggested) {

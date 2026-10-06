@@ -24,6 +24,7 @@ public static class StrategyRules
         new("value", "moneyline", new[] { 0.03, 0.05, 0.07, 0.1, 0.15 }),
         new("modelWinner", "moneyline", new[] { 0.0 }),
         new("underdog", "moneyline", new[] { 0.0 }),
+        new("underdogValue", "moneyline", new[] { 0.02, 0.04, 0.06, 0.08, 0.1 }),
         new("confidence", "moneyline", new[] { 0.52, 0.55, 0.58, 0.6, 0.65 }),
         new("spreadAll", "spread", new[] { 0.0 }),
         new("spreadValue", "spread", new[] { 0.25, 0.5, 0.75, 1.0, 1.5 }),
@@ -41,6 +42,7 @@ public static class StrategyRules
             case "value":
             case "modelWinner":
             case "underdog":
+            case "underdogValue":
             case "confidence":
                 return CheckMoneyline(game, bm, type, threshold);
             case "spreadAll":
@@ -104,6 +106,17 @@ public static class StrategyRules
                     return null;
                 return new BetFlag(betHome, betHome ? homeEdge : awayEdge, bm);
             }
+            case "underdogValue":
+            {
+                // Value bets, but only on the side the book has as the underdog
+                var homeDogEdge = bm.HomeOdds < 0.5 ? homeEdge : double.NegativeInfinity;
+                var awayDogEdge = bm.AwayOdds < 0.5 ? awayEdge : double.NegativeInfinity;
+                if (homeDogEdge >= threshold && homeDogEdge >= awayDogEdge)
+                    return new BetFlag(true, homeDogEdge, bm);
+                if (awayDogEdge >= threshold)
+                    return new BetFlag(false, awayDogEdge, bm);
+                return null;
+            }
             case "confidence":
                 if (homeModel.Value >= threshold)
                     return new BetFlag(true, homeEdge, bm);
@@ -115,13 +128,16 @@ public static class StrategyRules
         }
     }
 
-    // The bet the card shows: the pinned bookmaker with the largest edge.
-    public static BetFlag? GetBestBetFlag(GameOddsVM game, string type, double threshold)
+    // The bet the card shows: the pinned bookmaker with the largest edge. Pass books to
+    // restrict the choice to a subset (e.g. a single book).
+    public static BetFlag? GetBestBetFlag(
+        GameOddsVM game, string type, double threshold, IReadOnlyCollection<string>? books = null)
     {
+        books ??= PinnedBookmakers;
         BetFlag? best = null;
         foreach (var bm in game.BookmakerOdds)
         {
-            if (!PinnedBookmakers.Contains(bm.BookmakerName))
+            if (!books.Contains(bm.BookmakerName))
                 continue;
             var flag = CheckStrategy(game, bm, type, threshold);
             if (flag != null && (best == null || flag.Edge > best.Edge))
