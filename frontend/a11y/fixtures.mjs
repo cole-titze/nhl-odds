@@ -93,11 +93,6 @@ const job = (status) => ({
   completedToday: status === 'completed',
 });
 
-// Same rule as getCurrentSeason (src/utils/season.ts): seasons start September 20
-const now = new Date();
-const PAST_SEASON_BASE =
-  now >= new Date(now.getFullYear(), 8, 20) ? now.getFullYear() : now.getFullYear() - 1;
-
 const responses = {
   GetAnchorDate: { anchorDate: ANCHOR_DATE },
   // Filtered by date range below
@@ -125,25 +120,6 @@ const responses = {
       lastSeason: 2025,
     },
   ],
-  // Past four seasons, one with no bets and one losing, so every cell style is scanned
-  GetSeasonResults: ['DraftKings', 'Kalshi', 'best'].flatMap((book) =>
-    [
-      ['value', 0.07],
-      ['value', 0.1],
-      ['underdog', 0],
-      ['modelWinner', 0],
-    ].map(([strategyType, threshold]) => ({
-      book,
-      betType: 'moneyline',
-      strategyType,
-      threshold,
-      seasons: [4, 2, 1].map((n, i) => ({
-        season: PAST_SEASON_BASE - n,
-        bets: 80 + i * 10,
-        roi: [5.2, -3.4, 8.1][i],
-      })),
-    })),
-  ),
   GetJobStatuses: {
     dataCollection: job('completed'),
     oddsFetch: job('running'),

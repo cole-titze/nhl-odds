@@ -8,8 +8,6 @@ public class StrategyBacktester : IStrategyBacktester
 {
     public const int SEASONS_TO_TEST = 4;
     public const int MIN_BETS = 100;
-    // Book key meaning "whichever pinned book has the largest edge", as the game card bets
-    public const string BEST_BOOK = "best";
 
     private readonly IGameOddsGetter _gameOddsGetter;
 
@@ -25,14 +23,6 @@ public class StrategyBacktester : IStrategyBacktester
     {
         var games = await LoadTestSeasons(seasonStartYear);
         return PickBest(games, seasonStartYear - SEASONS_TO_TEST, seasonStartYear - 1);
-    }
-
-    // Per-season results for every strategy/threshold over the same seasons GetBestStrategies
-    // tests, against each pinned book alone and against the best of them.
-    public async Task<IEnumerable<StrategySeasonResultsVM>> GetSeasonResults(int seasonStartYear)
-    {
-        var games = await LoadTestSeasons(seasonStartYear);
-        return SeasonResults(games);
     }
 
     private async Task<List<GameOddsVM>> LoadTestSeasons(int seasonStartYear)
@@ -55,7 +45,7 @@ public class StrategyBacktester : IStrategyBacktester
         var played = Played(games);
 
         var results = StrategyRules.Options
-            .SelectMany(opt => opt.Thresholds.Select(t => Backtest(played, opt, t, StrategyRules.PinnedBookmakers)))
+            .SelectMany(opt => opt.Thresholds.Select(t => Backtest(played, opt, t)))
             .Where(r => r.Bets >= MIN_BETS && r.ProfitBySeason.Count > 0 && r.ProfitBySeason.Values.All(p => p > 0))
             .Select(r => new BestStrategyVM
             {
@@ -75,36 +65,6 @@ public class StrategyBacktester : IStrategyBacktester
             .ToList();
     }
 
-    public static IEnumerable<StrategySeasonResultsVM> SeasonResults(IReadOnlyCollection<GameOddsVM> games)
-    {
-        var played = Played(games);
-        var books = StrategyRules.PinnedBookmakers
-            .Select(b => (Key: b, Books: new[] { b }))
-            .Append((Key: BEST_BOOK, Books: StrategyRules.PinnedBookmakers));
-
-        return books
-            .SelectMany(book => StrategyRules.Options.SelectMany(opt => opt.Thresholds.Select(t =>
-            {
-                var r = Backtest(played, opt, t, book.Books);
-                return new StrategySeasonResultsVM
-                {
-                    Book = book.Key,
-                    BetType = opt.BetType,
-                    StrategyType = opt.Type,
-                    Threshold = t,
-                    Seasons = r.BetsBySeason.Keys.Order()
-                        .Select(s => new SeasonResultVM
-                        {
-                            Season = s,
-                            Bets = r.BetsBySeason[s],
-                            Roi = Math.Round(r.ProfitBySeason[s] / r.BetsBySeason[s] * 100, 2),
-                        })
-                        .ToList(),
-                };
-            })))
-            .ToList();
-    }
-
     private static List<GameOddsVM> Played(IEnumerable<GameOddsVM> games) => games
         .Where(g => g.HasBeenPlayed && g.HomeTeam != null && g.AwayTeam != null)
         .ToList();
@@ -115,19 +75,16 @@ public class StrategyBacktester : IStrategyBacktester
         int Bets,
         int Wins,
         double Profit,
-        Dictionary<int, int> BetsBySeason,
         Dictionary<int, double> ProfitBySeason);
 
-    private static BacktestResult Backtest(
-        List<GameOddsVM> games, StrategyOption opt, double threshold, IReadOnlyCollection<string> books)
+    private static BacktestResult Backtest(List<GameOddsVM> games, StrategyOption opt, double threshold)
     {
         int bets = 0, wins = 0;
         double profit = 0;
-        var betsBySeason = new Dictionary<int, int>();
         var profitBySeason = new Dictionary<int, double>();
         foreach (var game in games)
         {
-            var flag = StrategyRules.GetBestBetFlag(game, opt.Type, threshold, books);
+            var flag = StrategyRules.GetBestBetFlag(game, opt.Type, threshold);
             if (flag == null)
                 continue;
             var payout = StrategyRules.Payout(game, flag, opt.BetType);
@@ -139,10 +96,9 @@ public class StrategyBacktester : IStrategyBacktester
             profit += payout.Value;
             // The first 4 digits of a game ID are the season start year
             var season = game.Id / 1_000_000;
-            betsBySeason[season] = betsBySeason.GetValueOrDefault(season) + 1;
             profitBySeason[season] = profitBySeason.GetValueOrDefault(season) + payout.Value;
         }
 
-        return new BacktestResult(opt, threshold, bets, wins, profit, betsBySeason, profitBySeason);
+        return new BacktestResult(opt, threshold, bets, wins, profit, profitBySeason);
     }
 }

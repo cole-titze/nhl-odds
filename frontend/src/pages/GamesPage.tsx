@@ -42,8 +42,8 @@ function handleFilterBarTab(e: KeyboardEvent<HTMLDivElement>) {
   firstVisible.focus({ preventScroll: true });
 }
 
-// The card at the top of the view (just below the sticky bars) and how far below them
-// it sits, so the view can be put back after a reflow
+// The card at the top of the view (just below the sticky bars) and where it sits in the
+// viewport, so the view can be put back after a reflow
 interface ViewAnchor {
   el: Element;
   offset: number;
@@ -56,7 +56,7 @@ function captureViewAnchor(): ViewAnchor | null {
   const barsBottom = getStickyOffset();
   for (const el of feed.querySelectorAll('.grid > *')) {
     const r = el.getBoundingClientRect();
-    if (r.bottom > barsBottom) return { el, offset: r.top - barsBottom, at: Date.now() };
+    if (r.bottom > barsBottom) return { el, offset: r.top, at: Date.now() };
   }
   return null;
 }
@@ -167,7 +167,9 @@ export function GamesPage() {
   // Changing the strategy or bet type adds and removes bet badges on every card (and
   // resizes the filter bar), which reflows the week of cards above the view and shoves
   // it around. Browser scroll anchoring would cover this, but Safari has none. So any
-  // filter-bar interaction notes the top card, and the next renders put it back. Kept
+  // filter-bar interaction notes the top card, and the next renders put it back at the
+  // same spot on screen; if the filter bar grew, it overlaps the card rather than
+  // pushing the feed down. Kept
   // briefly rather than used once, because a bet-type change re-renders twice (the
   // picker then switches to that bet type's strategy).
   const { strategy } = useStrategy();
@@ -178,7 +180,7 @@ export function GamesPage() {
   useLayoutEffect(() => {
     const anchor = viewAnchor.current;
     if (!anchor || Date.now() - anchor.at > 1000 || !anchor.el.isConnected) return;
-    const shift = anchor.el.getBoundingClientRect().top - getStickyOffset() - anchor.offset;
+    const shift = anchor.el.getBoundingClientRect().top - anchor.offset;
     if (Math.abs(shift) >= 1) window.scrollBy({ top: shift, behavior: 'instant' });
   }, [strategy.type, strategy.threshold, oddsType]);
 

@@ -171,21 +171,4 @@ public class StrategyRulesTests
             .Should().NotContain(b => b.BetType == "moneyline");
     }
 
-    [TestMethod]
-    public void SeasonResults_ShouldSplitBySeason_AndBook()
-    {
-        // DraftKings-only game in 2023 (underdog wins), Kalshi-only game in 2024 (underdog loses)
-        var dk = Game(0.55, 3, 2, Book("DraftKings", 0.45, 0.58));
-        dk.Id = 2023020001;
-        var kalshi = Game(0.55, 1, 2, Book("Kalshi", 0.45, 0.58));
-        kalshi.Id = 2024020001;
-
-        var results = StrategyBacktester.SeasonResults(new[] { dk, kalshi })
-            .Where(r => r.StrategyType == "underdog")
-            .ToDictionary(r => r.Book);
-
-        results["DraftKings"].Seasons.Should().ContainSingle(s => s.Season == 2023 && s.Bets == 1 && s.Roi > 0);
-        results["Kalshi"].Seasons.Should().ContainSingle(s => s.Season == 2024 && s.Roi == -100);
-        results["best"].Seasons.Select(s => s.Season).Should().Equal(2023, 2024);
-    }
 }

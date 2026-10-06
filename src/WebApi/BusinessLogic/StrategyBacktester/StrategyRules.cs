@@ -128,16 +128,13 @@ public static class StrategyRules
         }
     }
 
-    // The bet the card shows: the pinned bookmaker with the largest edge. Pass books to
-    // restrict the choice to a subset (e.g. a single book).
-    public static BetFlag? GetBestBetFlag(
-        GameOddsVM game, string type, double threshold, IReadOnlyCollection<string>? books = null)
+    // The bet the card shows: the pinned bookmaker with the largest edge.
+    public static BetFlag? GetBestBetFlag(GameOddsVM game, string type, double threshold)
     {
-        books ??= PinnedBookmakers;
         BetFlag? best = null;
         foreach (var bm in game.BookmakerOdds)
         {
-            if (!books.Contains(bm.BookmakerName))
+            if (!PinnedBookmakers.Contains(bm.BookmakerName))
                 continue;
             var flag = CheckStrategy(game, bm, type, threshold);
             if (flag != null && (best == null || flag.Edge > best.Edge))
