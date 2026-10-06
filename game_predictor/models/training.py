@@ -31,6 +31,7 @@ _CLS_TO_FACTORY = {
     "KNeighborsClassifier": "knn",
     "LogisticRegression": "logistic_regression",
     "CatBoostClassifier": "catboost",
+    "TabM_D_Classifier": "tabm",
 }
 
 # Params set internally by factories — omit from copy-paste output
@@ -44,6 +45,7 @@ _INTERNAL_PARAMS = {
     "verbose",
     "allow_writing_files",
     "thread_count",
+    "device",
 }
 
 
