@@ -28,24 +28,16 @@ public class GameOddsController
             EndDate = endDate.Date
         };
 
-        var cacheKey = $"GameOdds_{dateRange.StartDate:yyyy-MM-dd}_{dateRange.EndDate:yyyy-MM-dd}_{seasonStartYear}";
-        if (_cache.TryGetValue(cacheKey, out object? cached))
-            return Results.Ok(cached);
-
-        var result = await _gameOddsGetter.GetGameOddsInDateRange(dateRange, seasonStartYear);
-        _cache.Set(cacheKey, result, ApiCache.Entry(result.Count(), ApiCache.DateRangeLifetime));
+        var result = await _cache.GetOrSetAsync(ApiCache.GameOddsKey(dateRange, seasonStartYear),
+            () => _gameOddsGetter.GetGameOddsInDateRange(dateRange, seasonStartYear), r => r.Count(), ApiCache.DateRangeLifetime);
         return Results.Ok(result);
     }
 
     [HttpGet]
     public async Task<IResult> GetAnchorDate(int seasonStartYear)
     {
-        var cacheKey = $"AnchorDate_{seasonStartYear}";
-        if (_cache.TryGetValue(cacheKey, out object? cached))
-            return Results.Ok(cached);
-
-        var result = await _gameOddsGetter.GetAnchorDate(seasonStartYear);
-        _cache.Set(cacheKey, result, ApiCache.Entry(1, TimeSpan.FromMinutes(15)));
+        var result = await _cache.GetOrSetAsync(ApiCache.AnchorDateKey(seasonStartYear),
+            () => _gameOddsGetter.GetAnchorDate(seasonStartYear), _ => 1, TimeSpan.FromMinutes(15));
         return Results.Ok(result);
     }
 }

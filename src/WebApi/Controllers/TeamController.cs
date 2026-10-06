@@ -21,20 +21,16 @@ public class TeamController
     [HttpGet]
     public async Task<IResult> GetAllTeams(int seasonStartYear)
     {
-        var cacheKey = $"AllTeams_{seasonStartYear}";
-        if (_cache.TryGetValue(cacheKey, out object? cached))
-            return Results.Ok(cached);
-
-        var teamsVm = await _teamGetter.GetAllTeamsStats(seasonStartYear);
-
-        _cache.Set(cacheKey, teamsVm, ApiCache.Entry(ApiCache.SizeOf(teamsVm)));
+        var teamsVm = await _cache.GetOrSetAsync(ApiCache.AllTeamsKey(seasonStartYear),
+            () => _teamGetter.GetAllTeamsStats(seasonStartYear), ApiCache.SizeOf);
         return Results.Ok(teamsVm);
     }
 
     [HttpGet]
     public async Task<IResult> GetTeam(int teamId, int seasonStartYear)
     {
-        var teamVm = await _teamGetter.GetTeamStats(teamId, seasonStartYear);
+        var teamVm = await _cache.GetOrSetAsync(ApiCache.TeamKey(teamId, seasonStartYear),
+            () => _teamGetter.GetTeamStats(teamId, seasonStartYear), ApiCache.SizeOf, ApiCache.DateRangeLifetime);
         return Results.Ok(teamVm);
     }
 }
