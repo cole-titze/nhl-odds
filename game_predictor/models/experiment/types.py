@@ -28,6 +28,8 @@ class Experiment:
 
     tune controls whether Optuna hyperparameter tuning runs for this experiment
     during backfill. tune_trials sets how many Optuna trials to run.
+    tune_pipeline=False keeps the experiment's own pipeline and decay and only tunes the
+    models — for slow models (e.g. TabM) where the parallel pipeline search is too costly.
 
     decay controls exponential recency weighting: weight = exp(-decay * seasons_ago),
     normalized to mean=1. decay=0.0 disables weighting. Try 0.2-0.5 to start.
@@ -40,6 +42,7 @@ class Experiment:
     calibration: str = "sigmoid"
     tune: bool = False
     tune_trials: int = 100
+    tune_pipeline: bool = True
     decay: float = 0.0
 
 

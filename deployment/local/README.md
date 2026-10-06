@@ -42,7 +42,8 @@ docker exec -i nhl-postgres pg_restore -U postgres -d nhl < nhl.dump
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r game_predictor/requirements.txt
-pip install -r game_predictor/requirements-experimental.txt  # optional: local-only models (CatBoost)
+pip install -r game_predictor/requirements-experimental.txt  # optional: local-only models (CatBoost, TabM)
+python -m game_predictor.libomp  # macOS, after installing the above: fixes a torch/lightgbm OpenMP clash
 python -m game_predictor
 ```
 

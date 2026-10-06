@@ -1,4 +1,0 @@
-# TabM (PyTorch) deps. Install into a SEPARATE venv: on macOS torch clashes with
-# lightgbm/xgboost (see game_predictor/__init__.py), so run only the TabM experiment there.
--r requirements-experimental.txt
-pytabkit>=1.7

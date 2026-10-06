@@ -191,8 +191,8 @@ EXPERIMENTS: dict[str, Experiment] = {
     ),
 }
 
-# Local-only models: their deps are in requirements-experimental.txt / requirements-tabm.txt,
-# not in the predictor image, so they only register when installed.
+# Local-only models: their deps are in requirements-experimental.txt, not in the predictor
+# image, so they only register when installed.
 if importlib.util.find_spec("catboost"):
     EXPERIMENTS["CatBoost"] = Experiment(
         models={
@@ -213,11 +213,12 @@ if importlib.util.find_spec("catboost"):
     )
 
 if importlib.util.find_spec("pytabkit"):
+    # Untuned pytabkit defaults: 30 Optuna trials scored no better (they overfit the tuning seasons)
     EXPERIMENTS["TabM"] = Experiment(
         models={
             "TabM": tabm(),
         },
-        pipeline=standard_pipeline(k_best=99, pca_components=90),
+        pipeline=standard_pipeline(k_best=99, pca_components=None),
         calibration="none",
         decay=0.0,
         tune=False,

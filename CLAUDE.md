@@ -34,9 +34,8 @@ cd frontend && npm run a11y   # WCAG 2.2 AA checks: axe (Chromium) + reflow/focu
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r game_predictor/requirements.txt
-pip install -r game_predictor/requirements-experimental.txt  # local-only models (CatBoost); not in the predictor image
-# TabM needs PyTorch, which clashes with lightgbm/xgboost on macOS: use a separate venv
-# (e.g. ~/.venvs/nhl-odds-tabm) with requirements-tabm.txt and run only the TabM experiment there.
+pip install -r game_predictor/requirements-experimental.txt  # local-only models (CatBoost, TabM); not in the predictor image
+python -m game_predictor.libomp  # macOS: make torch share Homebrew's libomp (re-run after torch upgrades)
 python -m game_predictor
 ```
 

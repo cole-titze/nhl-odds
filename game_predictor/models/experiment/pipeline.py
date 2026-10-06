@@ -8,16 +8,16 @@ from ...db.queries import FEATURE_COLUMNS
 N_FEATURES = len(FEATURE_COLUMNS)
 
 
-def standard_pipeline(k_best: int = 50, pca_components: int = 15, regression: bool = False) -> Pipeline:
-    """Standard preprocessing pipeline used by most experiments."""
+def standard_pipeline(k_best: int = 50, pca_components: int | None = 15, regression: bool = False) -> Pipeline:
+    """Standard preprocessing pipeline used by most experiments. pca_components=None skips PCA."""
     score_func = f_regression if regression else f_classif
-    return Pipeline(
-        [
-            ("scaler", StandardScaler()),
-            ("select", SelectKBest(score_func, k=k_best)),
-            ("pca", PCA(n_components=pca_components)),
-        ]
-    )
+    steps = [
+        ("scaler", StandardScaler()),
+        ("select", SelectKBest(score_func, k=k_best)),
+    ]
+    if pca_components is not None:
+        steps.append(("pca", PCA(n_components=pca_components)))
+    return Pipeline(steps)
 
 
 def _tune_pipeline(raw_folds, model_cls, model_params, n_trials, progress_callback, regression, study_name):

@@ -404,14 +404,23 @@ def _tune_experiment(exp, df, tune_seasons):
         X_val, y_val = _xy(split.test)
         raw_folds.append((X_train, X_val, y_train, y_val, split.train["SeasonStartYear"].values))
 
-    first_cfg = next(iter(exp.models.values()))
-    print(f"    Tuning pipeline ({exp.tune_trials} trials)...")
-    pipe_study = tune_pipeline(
-        raw_folds, first_cfg.cls, first_cfg.params, exp.tune_trials, progress_callback(exp.tune_trials)
-    )
-    print_best_params(pipe_study, "pipeline")
-    pipeline_params = pipe_study.best_params.copy()
-    decay = pipeline_params.pop("decay")
+    if exp.tune_pipeline:
+        first_cfg = next(iter(exp.models.values()))
+        print(f"    Tuning pipeline ({exp.tune_trials} trials)...")
+        pipe_study = tune_pipeline(
+            raw_folds, first_cfg.cls, first_cfg.params, exp.tune_trials, progress_callback(exp.tune_trials)
+        )
+        print_best_params(pipe_study, "pipeline")
+        pipeline_params = pipe_study.best_params.copy()
+        decay = pipeline_params.pop("decay")
+    else:
+        steps = exp.pipeline.named_steps
+        pipeline_params = {
+            "k_best": steps["select"].k,
+            "pca_components": steps["pca"].n_components if "pca" in steps else None,
+        }
+        decay = exp.decay
+        print(f"    Keeping pipeline {pipeline_params}, decay={decay}")
 
     folds = []
     for X_train, X_val, y_train, y_val, train_seasons in raw_folds:

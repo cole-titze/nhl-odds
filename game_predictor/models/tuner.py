@@ -6,6 +6,7 @@ from .experiment.lgbm import tune_lgbm, tune_lgbm_regressor
 from .experiment.logistic_regression import tune_logistic_regression
 from .experiment.mlp import mlp_params_from_study, mlp_regressor_params_from_study, tune_mlp, tune_mlp_regressor
 from .experiment.random_forest import tune_random_forest, tune_random_forest_regressor
+from .experiment.tabm import tune_tabm
 from .experiment.xgboost import tune_xgboost, tune_xgboost_regressor
 
 optuna.logging.set_verbosity(optuna.logging.WARNING)
@@ -19,6 +20,7 @@ TUNERS = {
     "RandomForestClassifier": tune_random_forest,
     "LogisticRegression": tune_logistic_regression,
     "CatBoostClassifier": tune_catboost,
+    "TabM_D_Classifier": tune_tabm,
 }
 
 REGRESSION_TUNERS = {

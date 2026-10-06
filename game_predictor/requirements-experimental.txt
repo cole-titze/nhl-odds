@@ -1,4 +1,6 @@
-# Local-only model deps (CatBoost). Not installed in the predictor image (Dockerfile uses
+# Local-only model deps (CatBoost, TabM). Not installed in the predictor image (Dockerfile uses
 # requirements.txt), so experiments using these only register when the package is present.
+# TabM pulls in PyTorch: on macOS run `python -m game_predictor.libomp` after installing.
 -r requirements.txt
 catboost>=1.2
+pytabkit>=1.7
