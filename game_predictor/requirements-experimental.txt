@@ -1,0 +1,4 @@
+# Local-only model deps (CatBoost). Not installed in the predictor image (Dockerfile uses
+# requirements.txt), so experiments using these only register when the package is present.
+-r requirements.txt
+catboost>=1.2

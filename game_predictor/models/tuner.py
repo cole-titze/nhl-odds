@@ -1,5 +1,6 @@
 import optuna
 
+from .experiment.catboost import tune_catboost, tune_catboost_regressor
 from .experiment.knn import tune_knn
 from .experiment.lgbm import tune_lgbm, tune_lgbm_regressor
 from .experiment.logistic_regression import tune_logistic_regression
@@ -17,6 +18,7 @@ TUNERS = {
     "MLPClassifier": tune_mlp,
     "RandomForestClassifier": tune_random_forest,
     "LogisticRegression": tune_logistic_regression,
+    "CatBoostClassifier": tune_catboost,
 }
 
 REGRESSION_TUNERS = {
@@ -24,6 +26,7 @@ REGRESSION_TUNERS = {
     "XGBRegressor": tune_xgboost_regressor,
     "MLPRegressor": tune_mlp_regressor,
     "RandomForestRegressor": tune_random_forest_regressor,
+    "CatBoostRegressor": tune_catboost_regressor,
 }
 
 # Maps model class name -> function that converts study.best_params to constructor params.

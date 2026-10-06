@@ -15,9 +15,12 @@
 # Set SAVE_SPREAD_EXPERIMENT / SAVE_TOTAL_EXPERIMENT to None to disable.
 # ============================================================================
 
+import importlib.util
+
 from ..models.experiment import (
     Experiment,
     RegressionExperiment,
+    catboost,
     knn,
     lgbm,
     lgbm_regressor,
@@ -186,6 +189,27 @@ EXPERIMENTS: dict[str, Experiment] = {
         tune=False,
     ),
 }
+
+# Local-only models: their deps are in requirements-experimental.txt, not in the predictor
+# image, so they only register when installed.
+if importlib.util.find_spec("catboost"):
+    EXPERIMENTS["CatBoost"] = Experiment(
+        models={
+            "CatBoost": catboost(
+                iterations=386,
+                learning_rate=0.0250923,
+                depth=5,
+                l2_leaf_reg=0.949754,
+                random_strength=0.483826,
+                bagging_temperature=3.83555,
+                border_count=64,
+            ),
+        },
+        pipeline=standard_pipeline(k_best=63, pca_components=45),
+        calibration="sigmoid",
+        decay=0.006325,
+        tune=False,
+    )
 
 SAVE_EXPERIMENT = "Default"
 

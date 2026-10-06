@@ -1,3 +1,4 @@
+from .catboost import catboost, catboost_regressor
 from .knn import knn
 from .lgbm import lgbm, lgbm_regressor
 from .logistic_regression import logistic_regression
@@ -11,6 +12,8 @@ __all__ = [
     "Experiment",
     "ModelConfig",
     "RegressionExperiment",
+    "catboost",
+    "catboost_regressor",
     "knn",
     "lgbm",
     "lgbm_regressor",

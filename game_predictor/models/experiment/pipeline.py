@@ -36,6 +36,8 @@ def _tune_pipeline(raw_folds, model_cls, model_params, n_trials, progress_callba
         # One thread per trial — Optuna already runs trials in parallel
         if "n_jobs" in model.get_params():
             model.set_params(n_jobs=1)
+        elif hasattr(model, "get_all_params"):  # CatBoost names it thread_count
+            model.set_params(thread_count=1)
         return model
 
     def objective(trial):

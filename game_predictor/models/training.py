@@ -30,10 +30,21 @@ _CLS_TO_FACTORY = {
     "RandomForestClassifier": "random_forest",
     "KNeighborsClassifier": "knn",
     "LogisticRegression": "logistic_regression",
+    "CatBoostClassifier": "catboost",
 }
 
 # Params set internally by factories — omit from copy-paste output
-_INTERNAL_PARAMS = {"random_state", "verbosity", "use_label_encoder", "early_stopping", "solver"}
+_INTERNAL_PARAMS = {
+    "random_state",
+    "verbosity",
+    "use_label_encoder",
+    "early_stopping",
+    "solver",
+    "random_seed",
+    "verbose",
+    "allow_writing_files",
+    "thread_count",
+}
 
 
 def _fmt(v) -> str:

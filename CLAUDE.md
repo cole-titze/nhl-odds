@@ -34,6 +34,7 @@ cd frontend && npm run a11y   # WCAG 2.2 AA checks: axe (Chromium) + reflow/focu
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r game_predictor/requirements.txt
+pip install -r game_predictor/requirements-experimental.txt  # local-only models (CatBoost); not in the predictor image
 python -m game_predictor
 ```
 

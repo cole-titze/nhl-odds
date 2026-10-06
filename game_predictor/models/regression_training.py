@@ -13,9 +13,18 @@ _REGRESSOR_TO_FACTORY = {
     "XGBRegressor": "xgboost_regressor",
     "MLPRegressor": "mlp_regressor",
     "RandomForestRegressor": "random_forest_regressor",
+    "CatBoostRegressor": "catboost_regressor",
 }
 
-_INTERNAL_PARAMS = {"random_state", "verbosity", "early_stopping"}
+_INTERNAL_PARAMS = {
+    "random_state",
+    "verbosity",
+    "early_stopping",
+    "random_seed",
+    "verbose",
+    "allow_writing_files",
+    "thread_count",
+}
 
 
 def _fmt(v) -> str:

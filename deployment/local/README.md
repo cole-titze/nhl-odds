@@ -42,6 +42,7 @@ docker exec -i nhl-postgres pg_restore -U postgres -d nhl < nhl.dump
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r game_predictor/requirements.txt
+pip install -r game_predictor/requirements-experimental.txt  # optional: local-only models (CatBoost)
 python -m game_predictor
 ```
 
