@@ -99,7 +99,7 @@ static string BuildMcpInstructions(int currentSeason) => $"""
         Tool guidance:
         - Use GetTodaysGames first when the user asks about today's games or upcoming matchups.
         - Use GetGamesInDateRange for historical results or a specific week/range.
-        - Use GetAllTeams for standings, model accuracy comparisons, or league-wide stats.
+        - Use GetAllTeams for standings, model accuracy comparisons, or league-wide stats (no games).
         - Use GetTeamStats when the user asks about a specific team — it includes full game history.
 
         Odds are win probabilities (0–1). Log loss measures prediction accuracy — lower is better;
