@@ -38,6 +38,11 @@ updates:
       # Types follow the Node major the frontend builds with (node:24 in the Dockerfile)
       - dependency-name: "@types/node"
         update-types: [version-update:semver-major]
+      # ESLint 10 waits for eslint-plugin-react and eslint-plugin-jsx-a11y to support it
+      - dependency-name: "eslint"
+        update-types: [version-update:semver-major]
+      - dependency-name: "@eslint/js"
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: docker
     directories:
