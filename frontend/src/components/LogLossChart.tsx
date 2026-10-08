@@ -99,7 +99,8 @@ export function LogLossChart({ games, deduplicateById }: Props) {
     let count = 0;
     const cumByBookmaker: Record<string, { sum: number; count: number }> = {};
 
-    return sorted.map((g) => {
+    const points: Record<string, string | number | undefined>[] = [];
+    for (const g of sorted) {
       cumLogLoss += g.logLoss ?? 0;
       count++;
 
@@ -122,8 +123,9 @@ export function LogLossChart({ games, deduplicateById }: Props) {
         }
       }
 
-      return point;
-    });
+      points.push(point);
+    }
+    return points;
   }, [playedGames, bookmakerNames]);
 
   // One row per day (the chart plots every game; a season has ~1,300)
