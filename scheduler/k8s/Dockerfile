@@ -1,4 +1,4 @@
-FROM alpine:3.21
+FROM alpine:3.23
 
 # Fetch the index once (rather than --no-cache on each command, which warns
 # about the missing cache) and remove it at the end
