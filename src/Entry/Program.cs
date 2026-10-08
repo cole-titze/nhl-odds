@@ -60,6 +60,7 @@ var jobName = settings.Mode switch
     ModeType.KalshiFetch => "kalshi-fetch",
     ModeType.BackfillKalshi => "kalshi-backfill",
     ModeType.BackfillGame => "game-backfill",
+    ModeType.CleanAll => "clean-all",
     _ => null,
 };
 

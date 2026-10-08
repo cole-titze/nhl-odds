@@ -33,8 +33,10 @@ public class DbGameGoalieStats : IDbGamePlayerStats
             PlayerId = goalieStats.PlayerId;
             EvenStrengthShotsSaved = goalieStats.EvenStrengthShotsSaved;
             PowerPlayShotsSaved = goalieStats.PowerPlayShotsSaved;
+            ShortHandedShotsSaved = goalieStats.ShortHandedShotsSaved;
             EvenStrengthGoalsAllowed = goalieStats.EvenStrengthGoalsAllowed;
             PowerPlayGoalsAllowed = goalieStats.PowerPlayGoalsAllowed;
+            ShortHandedGoalsAllowed = goalieStats.ShortHandedGoalsAllowed;
             TimeOnIceSeconds = goalieStats.TimeOnIceSeconds;
             IsStarter = goalieStats.IsStarter;
             Position = goalieStats.Position;

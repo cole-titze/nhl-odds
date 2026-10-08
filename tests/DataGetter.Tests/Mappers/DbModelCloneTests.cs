@@ -60,7 +60,10 @@ public class DbModelCloneTests
             Team = Team,
             Player = Player,
         };
-        var final = new DbGameGoalieStats { GameId = 1, PlayerId = 100, TeamId = 10, IsStarter = true };
+        var final = new DbGameGoalieStats
+        {
+            GameId = 1, PlayerId = 100, TeamId = 10, IsStarter = true, ShortHandedShotsSaved = 2, ShortHandedGoalsAllowed = 1,
+        };
 
         tracked.Clone(final);
 
@@ -68,6 +71,7 @@ public class DbModelCloneTests
         tracked.Team.Should().BeSameAs(Team);
         tracked.Player.Should().BeSameAs(Player);
         tracked.IsStarter.Should().BeTrue();
+        tracked.IsEquivalentTo(final).Should().BeTrue();
     }
 
     [TestMethod]

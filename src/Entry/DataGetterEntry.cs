@@ -134,9 +134,13 @@ public class DataGetterEntry
         }
         else
         {
-            _logger.LogTrace("Starting Data Getter");
-            await dataManager.GetNhlData(yearRange, modeSettings.Mode);
-            _logger.LogTrace("Completed Data Getter");
+            var cleanAll = modeSettings.Mode == ModeType.CleanAll;
+            if (!cleanAll)
+            {
+                _logger.LogTrace("Starting Data Getter");
+                await dataManager.GetNhlData(yearRange, modeSettings.Mode);
+                _logger.LogTrace("Completed Data Getter");
+            }
 
             // Run data cleaner with a separate DbContext to avoid EF tracking conflicts
             var cleanerDbContext = new NhlDbContext(modeSettings.ConnectionString);
@@ -149,7 +153,7 @@ public class DataGetterEntry
             var gameCleaner = new GameCleaner(gameSeasonRepo, cleanedGameRepo, playerStatsRepo, gameEventSeasonRepo, cleanerErrorRepo, _loggerFactory);
 
             _logger.LogTrace("Starting Data Cleaner");
-            await gameCleaner.CleanGamesInSeasons(yearRange);
+            await gameCleaner.CleanGamesInSeasons(yearRange, cleanAll);
             _logger.LogTrace("Completed Data Cleaner");
         }
 

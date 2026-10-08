@@ -45,7 +45,7 @@ The app reads config in priority order:
 
 1. **Environment variables** (production):
    - `NHL_DATABASE` — full PostgreSQL connection string (e.g. `Host=localhost;Database=nhl;Username=postgres;Password=...`)
-   - `RUN_MODE` — `"NhlAdd"`, `"NhlUpdate"`, `"NextDayOdds"`, `"BackfillOdds"`, `"KalshiFetch"`, `"BackfillKalshi"`, or `"BackfillGame"`
+   - `RUN_MODE` — `"NhlAdd"`, `"NhlUpdate"`, `"NextDayOdds"`, `"BackfillOdds"`, `"KalshiFetch"`, `"BackfillKalshi"`, `"BackfillGame"`, or `"CleanAll"`
    - `THROTTLE_TIME_MS` — delay between NHL API requests (ms)
    - `BACKFILL_GAME_IDS` — comma-separated game IDs to re-fetch (for `BackfillGame` mode)
    - `ODDS_API_KEY` — The Odds API key (for `NextDayOdds` mode)
@@ -146,6 +146,7 @@ HTTP Request
 - `BackfillOdds` — backfills historical odds from The Odds API (rate-limited, uses caching)
 - `KalshiFetch` — fetches current Kalshi open market odds for upcoming games
 - `BackfillKalshi` — backfills historical Kalshi odds using candlestick data at 6am CT on game day (no API key needed)
+- `CleanAll` — skips data collection and re-cleans every game in every season (run after changing how `GameCleaned` features are computed)
 
 **Game ID encoding** (`NhlApiDataGetter.GetGameId`):
 ```

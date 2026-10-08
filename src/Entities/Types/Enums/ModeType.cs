@@ -8,7 +8,8 @@ public enum ModeType
     BackfillOdds,
     KalshiFetch,
     BackfillKalshi,
-    BackfillGame
+    BackfillGame,
+    CleanAll
 }
 public static class ModeTypeParser
 {
@@ -31,6 +32,8 @@ public static class ModeTypeParser
                 return ModeType.BackfillKalshi;
             case "BackfillGame":
                 return ModeType.BackfillGame;
+            case "CleanAll":
+                return ModeType.CleanAll;
             default:
                 throw new ArgumentException($"Invalid ModeType value: {modeType}", nameof(modeType));
         }
