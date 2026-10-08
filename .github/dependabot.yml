@@ -1,0 +1,58 @@
+# Weekly dependency PRs. Minor and patch updates are grouped into one PR per
+# ecosystem; majors get their own PRs. Majors that track the .NET, Node or
+# Postgres version are ignored and upgraded on purpose instead.
+# game_predictor/requirements*.txt is unpinned (prod installs the latest on
+# every image build), so pip has nothing for Dependabot to bump.
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      nuget:
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "Microsoft.*"
+        update-types: [version-update:semver-major]
+      - dependency-name: "Npgsql*"
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    groups:
+      npm:
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directories:
+      - /database
+      - /frontend
+      - /game_predictor
+      - /scheduler
+      - /scheduler/k8s
+      - /src/Entry
+      - /src/WebApi
+    schedule:
+      interval: weekly
+    groups:
+      docker:
+        update-types: [minor, patch]
+        exclude-patterns: ["python"]  # a new Python minor gets its own PR; the local venv follows it
+    ignore:
+      - dependency-name: "*dotnet/*"
+        update-types: [version-update:semver-major]
+      - dependency-name: "node"
+        update-types: [version-update:semver-major]
+      - dependency-name: "postgres"
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
