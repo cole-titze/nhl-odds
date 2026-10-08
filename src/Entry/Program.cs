@@ -37,14 +37,16 @@ if (string.IsNullOrEmpty(settings.ConnectionString))
     var config = new ConfigurationBuilder().AddJsonFile("appsettings.Local.json").Build();
     if (runModeEnv == null)
         settings.Mode = ModeTypeParser.ParseFromString(config["ModeSettings:RUN_MODE"]);
-    settings.ThrottleTimeMs = int.Parse(config["ModeSettings:THROTTLE_TIME_MS"] ?? "0");
+    // Like RUN_MODE, the file only fills in what the environment didn't set
+    if (Environment.GetEnvironmentVariable("THROTTLE_TIME_MS") == null)
+        settings.ThrottleTimeMs = int.Parse(config["ModeSettings:THROTTLE_TIME_MS"] ?? "0");
     settings.ConnectionString = config.GetConnectionString("NHL_DATABASE") ?? string.Empty;
     if (string.IsNullOrEmpty(settings.OddsApiKey))
         settings.OddsApiKey = config["OddsApi:API_FUTURE_KEY"] ?? string.Empty;
     if (string.IsNullOrEmpty(settings.OddsApiBackfillKey))
         settings.OddsApiBackfillKey = config["OddsApi:API_BACKFILL_KEY"] ?? string.Empty;
     var gameIdsConfig = config["ModeSettings:BACKFILL_GAME_IDS"];
-    if (!string.IsNullOrEmpty(gameIdsConfig))
+    if (!settings.BackfillGameIds.Any() && !string.IsNullOrEmpty(gameIdsConfig))
         settings.BackfillGameIds = gameIdsConfig.Split(',', StringSplitOptions.RemoveEmptyEntries)
             .Select(int.Parse);
 }
@@ -60,6 +62,7 @@ var jobName = settings.Mode switch
     ModeType.KalshiFetch => "kalshi-fetch",
     ModeType.BackfillKalshi => "kalshi-backfill",
     ModeType.BackfillGame => "game-backfill",
+    ModeType.BackfillGoalieStats => "goalie-stats-backfill",
     ModeType.CleanAll => "clean-all",
     _ => null,
 };
