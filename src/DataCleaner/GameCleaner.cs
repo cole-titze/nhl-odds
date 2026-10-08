@@ -94,10 +94,15 @@ public class GameCleaner
             var allGamesForScorer = seasonGames.Concat(lastSeasonGames)
                 .Select(g => new DbGameRaw { Id = g.Id, GameDateUTC = g.GameDateUTC, HomeTeamId = g.HomeTeamId, AwayTeamId = g.AwayTeamId });
 
+            // Roster report snapshots covering this season's games (empty before snapshots were collected)
+            var rosterStatuses = await _playerStatsRepo.GetRosterStatuses(
+                new DateTime(seasonStartYear, 7, 1), new DateTime(seasonStartYear + 1, 7, 1));
+
             var rosterScorer = new RosterScorer(
                 currentSkaterStats.Concat(lastSkaterStats),
                 currentGoalieStats.Concat(lastGoalieStats),
-                allGamesForScorer);
+                allGamesForScorer,
+                rosterStatuses);
 
             // Load event data for current + previous season to build event aggregator
             var currentPenalties = await _gameEventSeasonRepo.GetSeasonPenalties(seasonStartYear);

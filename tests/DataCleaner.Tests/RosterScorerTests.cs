@@ -210,4 +210,98 @@ public class RosterScorerTests
 
         Assert.Equal((PRIOR, PRIOR), scorer.GetTeamSavePct(1, TEAM));
     }
+
+    private static DbRosterStatus Status(DateTime snapshot, int playerId, bool isInjuredReserve, int teamId = TEAM) => new()
+    {
+        SnapshotUTC = snapshot,
+        PlayerId = playerId,
+        TeamId = teamId,
+        IsInjuredReserve = isInjuredReserve,
+    };
+
+    [Fact]
+    public void GetTeamRosterValues_InjuredSkaterReplacedByLatestHealthyPlayer()
+    {
+        var games = new[] { Game(1, START), Game(2, START.AddDays(2)), Game(3, START.AddDays(4)), Game(4, START.AddDays(6)) };
+        var skaters = new[]
+        {
+            // Player 12 last played in game 1, player 13 in game 2; game 3's lineup is players 10 and 11
+            Skater(1, 12, 0), Skater(2, 13, 2),
+            Skater(3, 10, 3), Skater(3, 11, 1),
+        };
+        var snapshot = START.AddDays(6).AddHours(-12);
+        var statuses = new[] { Status(snapshot, 10, true), Status(snapshot, 11, false), Status(snapshot, 12, false), Status(snapshot, 13, false) };
+
+        var values = new RosterScorer(skaters, [], games, statuses).GetTeamRosterValues(4, TEAM);
+
+        // Player 10 (IR) is swapped for player 13, the healthy forward who played most recently (not player 12):
+        // player 11 (1 goal, 3 shots) + player 13 (2 goals, 3 shots), each per 20 minutes -> per 60
+        Assert.Equal((0.75 * 1 + 0.075 * 3) * 3 + (0.75 * 2 + 0.075 * 3) * 3, values.RosterOffenseValue, 6);
+    }
+
+    [Fact]
+    public void GetTeamRosterValues_InjuredDefensemanNotReplacedByForward()
+    {
+        var games = new[] { Game(1, START), Game(2, START.AddDays(2)), Game(3, START.AddDays(4)) };
+        var defenseman = Skater(2, 10, 1);
+        defenseman.Position = POSITION.Defenseman;
+        var skaters = new[] { Skater(1, 12, 3), defenseman };
+        var snapshot = START.AddDays(4).AddHours(-12);
+        var statuses = new[] { Status(snapshot, 10, true), Status(snapshot, 12, false) };
+
+        var values = new RosterScorer(skaters, [], games, statuses).GetTeamRosterValues(3, TEAM);
+
+        Assert.Equal(0, values.RosterOffenseValue);
+    }
+
+    [Fact]
+    public void GetTeamRosterValues_IgnoresOldOrLaterSnapshots()
+    {
+        var games = new[] { Game(1, START), Game(2, START.AddDays(5)) };
+        var skaters = new[] { Skater(1, 10, 1) };
+        var before = new RosterScorer(skaters, [], games).GetTeamRosterValues(2, TEAM);
+
+        // Three days before the game is too old; after puck drop wasn't known yet
+        var statuses = new[] { Status(START.AddDays(2), 10, true), Status(START.AddDays(5).AddHours(1), 10, true) };
+        var after = new RosterScorer(skaters, [], games, statuses).GetTeamRosterValues(2, TEAM);
+
+        Assert.Equal(before, after);
+        Assert.NotEqual(0, after.RosterOffenseValue);
+    }
+
+    [Fact]
+    public void GetTeamRosterValues_InjuredGoalieDropped()
+    {
+        // Same starts as the start-share test: goalie 30 (.900) 3 of 4, goalie 31 (.800) 1 of 4; 30 goes on IR
+        var games = Enumerable.Range(1, 5).Select(i => Game(i, START.AddDays(3 * i))).ToList();
+        var goalies = new[]
+        {
+            Goalie(1, 30, true, 90, 10), Goalie(2, 30, true, 90, 10), Goalie(3, 31, true, 80, 20), Goalie(4, 30, true, 90, 10),
+        };
+        var snapshot = START.AddDays(15).AddHours(-12);
+        var statuses = new[] { Status(snapshot, 30, true), Status(snapshot, 31, false) };
+
+        var values = new RosterScorer([], goalies, games, statuses).GetTeamRosterValues(5, TEAM);
+
+        Assert.Equal(Shrunk(80, 100), values.RosterGoalieValue, 6);
+    }
+
+    [Fact]
+    public void GetTeamRosterValues_AllStartersInjured_UsesHealthyGoalies()
+    {
+        // Goalie 30 started every game; goalie 31 dressed as the backup in game 1 after starting game 0
+        var games = Enumerable.Range(0, 4).Select(i => Game(i, START.AddDays(3 * i))).ToList();
+        var goalies = new[]
+        {
+            Goalie(0, 31, true, 80, 20),
+            Goalie(1, 30, true, 90, 10), Goalie(1, 31, false, 0, 0),
+        };
+        var lastStarts = Enumerable.Range(2, 1).Select(i => Goalie(i, 30, true, 90, 10));
+        var snapshot = START.AddDays(9).AddHours(-12);
+        var statuses = new[] { Status(snapshot, 30, true), Status(snapshot, 31, false) };
+
+        var values = new RosterScorer([], goalies.Concat(lastStarts), games, statuses).GetTeamRosterValues(3, TEAM);
+
+        Assert.Equal(Shrunk(80, 100), values.RosterGoalieValue, 6);
+    }
 }

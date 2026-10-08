@@ -11,6 +11,7 @@ using DatabaseAccess.GameRepository;
 using DatabaseAccess.GameSeasonRepository;
 using DatabaseAccess.PlayerRepository;
 using DatabaseAccess.PlayerStatsSeasonRepository;
+using DatabaseAccess.RosterStatusRepository;
 using DatabaseAccess.TeamRepository;
 using DataCleaner;
 using DataGetter.BusinessLogic;
@@ -140,6 +141,19 @@ public class DataGetterEntry
                 _logger.LogTrace("Starting Data Getter");
                 await dataManager.GetNhlData(yearRange, modeSettings.Mode);
                 _logger.LogTrace("Completed Data Getter");
+
+                // Snapshot who is on injured reserve before cleaning, so today's projected lineups can use it
+                try
+                {
+                    var rosterStatusDbContext = new NhlDbContext(modeSettings.ConnectionString);
+                    var rosterStatusManager = new NhlRosterStatusManager(
+                        new RosterStatusRepository(rosterStatusDbContext), new NhlRosterReportGetter(_loggerFactory), _loggerFactory);
+                    await rosterStatusManager.SaveRosterSnapshot(DateTime.UtcNow);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to save roster snapshot; cleaning without it");
+                }
             }
 
             // Run data cleaner with a separate DbContext to avoid EF tracking conflicts

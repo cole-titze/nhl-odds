@@ -17,6 +17,8 @@ public record TeamRosterValues(
 /// values are the same whether it is upcoming (served to the predictor) or already played (training).
 /// Skaters come from the team's most recent prior lineup; the goalie value is weighted by each goalie's
 /// share of the team's recent starts, flipped toward the backup on the second night of a back-to-back.
+/// When a roster report snapshot was taken shortly before the game, players it lists on injured reserve are
+/// dropped: IR skaters are replaced by the team's most recently used healthy player at the same position.
 /// </summary>
 public class RosterScorer
 {
@@ -34,6 +36,9 @@ public class RosterScorer
     private const double SAVE_PCT_PRIOR_SHOTS = 1000;
     // Fallback league save percentage when the previous season isn't loaded
     private const double DEFAULT_LEAGUE_SAVE_PCT = 0.91;
+    // Roster snapshots older than this before puck drop are ignored, so one snapshot isn't applied to games
+    // weeks away (and played games use only what was known shortly before them)
+    private static readonly TimeSpan ROSTER_SNAPSHOT_MAX_AGE = TimeSpan.FromDays(2);
 
     // gameId -> list of skater stats for that game
     private readonly Dictionary<int, List<DbGameSkaterStats>> _skaterStatsByGame = new();
@@ -53,13 +58,24 @@ public class RosterScorer
     private readonly Dictionary<int, List<DateTime>> _teamGameDates = new();
     // gameId -> game date lookup
     private readonly Dictionary<int, DateTime> _gameDates;
+    // teamId -> roster report snapshots (playerId -> is on injured reserve), ordered by snapshot time
+    private readonly Dictionary<int, List<(DateTime SnapshotUTC, Dictionary<int, bool> IsInjuredReserve)>> _teamRosterSnapshots = new();
 
     public RosterScorer(
         IEnumerable<DbGameSkaterStats> allSkaterStats,
         IEnumerable<DbGameGoalieStats> allGoalieStats,
-        IEnumerable<DbGameRaw> games)
+        IEnumerable<DbGameRaw> games,
+        IEnumerable<DbRosterStatus>? rosterStatuses = null)
     {
         var gameList = games.ToList();
+
+        foreach (var teamSnapshot in (rosterStatuses ?? []).GroupBy(s => (s.TeamId, s.SnapshotUTC)))
+        {
+            AddToList(_teamRosterSnapshots, teamSnapshot.Key.TeamId,
+                (teamSnapshot.Key.SnapshotUTC, teamSnapshot.ToDictionary(s => s.PlayerId, s => s.IsInjuredReserve)));
+        }
+        foreach (var snapshots in _teamRosterSnapshots.Values)
+            snapshots.Sort((a, b) => a.SnapshotUTC.CompareTo(b.SnapshotUTC));
         _gameDates = gameList.ToDictionary(g => g.Id, g => g.GameDateUTC);
 
         foreach (var game in gameList)
@@ -197,9 +213,24 @@ public class RosterScorer
     }
 
     /// <summary>
-    /// The skaters the team dressed in its most recent game before the given date.
+    /// The team's latest roster report snapshot taken before the game and at most ROSTER_SNAPSHOT_MAX_AGE
+    /// earlier, as playerId -> is on injured reserve; null when there is none.
     /// </summary>
-    private IEnumerable<DbGameSkaterStats> GetProjectedLineup(int teamId, DateTime gameDate)
+    private Dictionary<int, bool>? GetRosterSnapshot(int teamId, DateTime gameDate)
+    {
+        if (!_teamRosterSnapshots.TryGetValue(teamId, out var snapshots))
+            return null;
+
+        var latest = snapshots.LastOrDefault(s => s.SnapshotUTC < gameDate);
+        return latest == default || gameDate - latest.SnapshotUTC > ROSTER_SNAPSHOT_MAX_AGE ? null : latest.IsInjuredReserve;
+    }
+
+    /// <summary>
+    /// The skaters the team dressed in its most recent game before the given date. Skaters the roster snapshot
+    /// lists on injured reserve are swapped for the healthy player at the same position (forward or defense)
+    /// who isn't in the lineup and played most recently.
+    /// </summary>
+    private List<(int PlayerId, POSITION Position)> GetProjectedLineup(int teamId, DateTime gameDate)
     {
         if (!_teamLineupGames.TryGetValue(teamId, out var lineupGames))
             return [];
@@ -208,7 +239,49 @@ public class RosterScorer
         if (lastLineup == default)
             return [];
 
-        return _skaterStatsByGame[lastLineup.GameId].Where(s => s.TeamId == teamId);
+        var lineup = _skaterStatsByGame[lastLineup.GameId]
+            .Where(s => s.TeamId == teamId)
+            .Select(s => (s.PlayerId, s.Position))
+            .ToList();
+        var snapshot = GetRosterSnapshot(teamId, gameDate);
+        if (snapshot == null)
+            return lineup;
+
+        var injured = lineup.Where(s => snapshot.GetValueOrDefault(s.PlayerId)).ToList();
+        if (injured.Count == 0)
+            return lineup;
+
+        var projected = lineup.Except(injured).ToList();
+        var taken = lineup.Select(s => s.PlayerId).ToHashSet();
+        // Healthy skaters on the team's list who aren't in the lineup, most recently played first
+        var bench = snapshot
+            .Where(kvp => !kvp.Value && !taken.Contains(kvp.Key))
+            .Select(kvp => LastSkaterGameBefore(kvp.Key, gameDate))
+            .Where(g => g != null)
+            .Select(g => g!.Value)
+            .OrderByDescending(g => g.GameDate)
+            .ToList();
+        foreach (var (_, position) in injured)
+        {
+            var isDefense = position == POSITION.Defenseman;
+            var replacement = bench.FirstOrDefault(g => (g.Stats.Position == POSITION.Defenseman) == isDefense);
+            if (replacement == default)
+                continue;
+
+            bench.Remove(replacement);
+            projected.Add((replacement.Stats.PlayerId, replacement.Stats.Position));
+        }
+
+        return projected;
+    }
+
+    private (int GameId, DateTime GameDate, DbGameSkaterStats Stats)? LastSkaterGameBefore(int playerId, DateTime gameDate)
+    {
+        if (!_skaterHistory.TryGetValue(playerId, out var history))
+            return null;
+
+        var last = history.LastOrDefault(h => h.GameDate < gameDate);
+        return last == default ? null : last;
     }
 
     private (double SeasonOffense, double SeasonDefense, double RecentOffense, double RecentDefense) ComputeSkaterValues(
@@ -279,17 +352,27 @@ public class RosterScorer
     /// Probability that each goalie starts the team's game on the given date: their share of the team's
     /// last STARTER_WINDOW starts, excluding goalies whose latest appearance was for another team. On the
     /// second night of a back-to-back, the previous night's starter keeps only BACK_TO_BACK_REPEAT_SHARE.
+    /// Goalies the roster snapshot lists on injured reserve are left out; if that leaves none, the snapshot's
+    /// healthy goalies who last played for the team share the start equally.
     /// </summary>
     private Dictionary<int, double> GetStarterWeights(int teamId, DateTime gameDate)
     {
         if (!_teamStarters.TryGetValue(teamId, out var starters))
             return new Dictionary<int, double>();
 
+        var snapshot = GetRosterSnapshot(teamId, gameDate);
         var recentStarts = starters.Where(s => s.GameDate < gameDate).TakeLast(STARTER_WINDOW).ToList();
         var startCounts = recentStarts
             .Where(s => LastTeamBefore(s.GoalieId, gameDate) == teamId)
+            .Where(s => snapshot == null || !snapshot.GetValueOrDefault(s.GoalieId))
             .GroupBy(s => s.GoalieId)
             .ToDictionary(g => g.Key, g => (double)g.Count());
+        if (startCounts.Count == 0 && snapshot != null)
+        {
+            startCounts = snapshot
+                .Where(kvp => !kvp.Value && LastTeamBefore(kvp.Key, gameDate) == teamId)
+                .ToDictionary(kvp => kvp.Key, _ => 1.0);
+        }
         var totalStarts = startCounts.Values.Sum();
         if (totalStarts == 0)
             return new Dictionary<int, double>();

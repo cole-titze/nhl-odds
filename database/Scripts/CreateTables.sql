@@ -820,6 +820,20 @@ CREATE TABLE "JobStatus"
     CONSTRAINT "PK_JobStatus" PRIMARY KEY("JobName")
 );
 
+-- Snapshots of the NHL's public roster report (Active / Injured Reserve lists), one row per matched player
+CREATE TABLE "RosterStatus"
+(
+    "SnapshotUTC" TIMESTAMP NOT NULL,
+    "PlayerId" INTEGER NOT NULL,
+    "TeamId" INTEGER NOT NULL,
+    "IsInjuredReserve" BOOLEAN NOT NULL,
+    "InjuredReserveDate" TIMESTAMP NULL,
+    "ReportUpdated" TIMESTAMP NULL,
+    CONSTRAINT "PK_RosterStatus" PRIMARY KEY("SnapshotUTC", "PlayerId"),
+    FOREIGN KEY ("PlayerId") REFERENCES "Player"("Id"),
+    FOREIGN KEY ("TeamId") REFERENCES "Team"("Id")
+);
+
 CREATE TABLE "ErrorLog"
 (
     "Id" SERIAL NOT NULL,

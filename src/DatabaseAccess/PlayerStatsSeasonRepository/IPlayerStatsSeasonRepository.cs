@@ -6,4 +6,5 @@ public interface IPlayerStatsSeasonRepository
 {
     Task<IEnumerable<DbGameSkaterStats>> GetSeasonSkaterStats(int seasonStartYear);
     Task<IEnumerable<DbGameGoalieStats>> GetSeasonGoalieStats(int seasonStartYear);
+    Task<IEnumerable<DbRosterStatus>> GetRosterStatuses(DateTime fromUtc, DateTime toUtc);
 }
