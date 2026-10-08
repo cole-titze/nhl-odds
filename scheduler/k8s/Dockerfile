@@ -4,7 +4,7 @@ FROM alpine:3.23
 # about the missing cache) and remove it at the end
 RUN apk update && \
     apk upgrade && \
-    apk add bash curl postgresql16-client tzdata && \
+    apk add bash curl postgresql18-client tzdata && \
     curl -LO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl" && \
     chmod +x kubectl && mv kubectl /usr/local/bin/ && \
     rm -rf /var/cache/apk/*

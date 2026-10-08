@@ -10,7 +10,7 @@ For deploying to a Kubernetes cluster, see the [ansible-setup](https://github.co
 
 PostgreSQL is managed by [CloudNativePG (CNPG)](https://cloudnative-pg.io/), a CNCF-backed Kubernetes-native operator. It replaces the custom `database` container used in Docker Compose with a proper `Cluster` resource:
 
-- Uses `ghcr.io/cloudnative-pg/postgresql:17` directly — no custom Dockerfile needed
+- Uses `ghcr.io/cloudnative-pg/postgresql:18` directly — no custom Dockerfile needed
 - Schema is initialized via `postInitApplicationSQLRefs`, pulling `CreateTables.sql` from the nhl-odds repo at deploy time
 - CNPG automatically creates a `nhl-odds-database-rw` service pointing to the primary instance
 - The operator is installed cluster-wide by the Ansible playbook before applying manifests
