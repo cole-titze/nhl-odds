@@ -147,4 +147,19 @@ public class NhlDataManagerTests
         A.CallTo(() => _teamRepo.HasSeasonTeams(2020)).MustHaveHappened();
     }
 
+    [TestMethod]
+    public async Task BackfillGoalieShortHandedStats_UpdatesEachGameAndClearsTrackingAfterAFailure()
+    {
+        var stats = new List<GameGoalieStats> { new() { PlayerId = 1, ShortHandedShotsSaved = 3 } };
+        A.CallTo(() => _playerRepo.GetGameIdsWithoutGoalieShortHandedStats(2020)).Returns(new List<int> { 2020020001, 2020020002 });
+        A.CallTo(() => _nhlDataGetter.PlayerDataGetter.GetGameGoalieStats(2020020001)).Throws(new HttpRequestException("boom"));
+        A.CallTo(() => _nhlDataGetter.PlayerDataGetter.GetGameGoalieStats(2020020002)).Returns(stats);
+
+        var sut = CreateSut();
+        await sut.BackfillGoalieShortHandedStats(new YearRange(2020, 2020));
+
+        A.CallTo(() => _gameRepo.ClearTracking()).MustHaveHappenedOnceExactly();
+        A.CallTo(() => _playerRepo.UpdateGoalieShortHandedStats(2020020002, stats)).MustHaveHappenedOnceExactly();
+        A.CallTo(() => _playerRepo.Commit()).MustHaveHappenedOnceExactly();
+    }
 }

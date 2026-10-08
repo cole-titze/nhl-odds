@@ -133,6 +133,12 @@ public class DataGetterEntry
             await dataManager.BackfillGames(modeSettings.BackfillGameIds);
             _logger.LogTrace("Completed Game Backfill");
         }
+        else if (modeSettings.Mode == ModeType.BackfillGoalieStats)
+        {
+            _logger.LogTrace("Starting Goalie Stats Backfill");
+            await dataManager.BackfillGoalieShortHandedStats(yearRange);
+            _logger.LogTrace("Completed Goalie Stats Backfill");
+        }
         else
         {
             var cleanAll = modeSettings.Mode == ModeType.CleanAll;

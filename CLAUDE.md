@@ -45,7 +45,7 @@ The app reads config in priority order:
 
 1. **Environment variables** (production):
    - `NHL_DATABASE` — full PostgreSQL connection string (e.g. `Host=localhost;Database=nhl;Username=postgres;Password=...`)
-   - `RUN_MODE` — `"NhlAdd"`, `"NhlUpdate"`, `"NextDayOdds"`, `"BackfillOdds"`, `"KalshiFetch"`, `"BackfillKalshi"`, `"BackfillGame"`, or `"CleanAll"`
+   - `RUN_MODE` — `"NhlAdd"`, `"NhlUpdate"`, `"NextDayOdds"`, `"BackfillOdds"`, `"KalshiFetch"`, `"BackfillKalshi"`, `"BackfillGame"`, `"BackfillGoalieStats"`, or `"CleanAll"`
    - `THROTTLE_TIME_MS` — delay between NHL API requests (ms)
    - `BACKFILL_GAME_IDS` — comma-separated game IDs to re-fetch (for `BackfillGame` mode)
    - `ODDS_API_KEY` — The Odds API key (for `NextDayOdds` mode)
@@ -53,6 +53,7 @@ The app reads config in priority order:
 
 2. **`src/Entry/appsettings.Local.json`** (local dev, gitignored):
    - Copy the structure from `src/Entry/appsettings.json` and fill in the connection string.
+   - Read only when `NHL_DATABASE` isn't set. Its values fill in only what the environment didn't set, so `RUN_MODE=... BACKFILL_GAME_IDS=... dotnet run --project src/Entry` works locally.
 
 3. **`src/WebApi/appsettings.Development.json`** (local dev for Web API, gitignored):
    - Needs a `ConnectionStrings:NHL_DATABASE` entry. Falls back to `NHL_DATABASE` env var.
@@ -146,6 +147,8 @@ HTTP Request
 - `BackfillOdds` — backfills historical odds from The Odds API (rate-limited, uses caching)
 - `KalshiFetch` — fetches current Kalshi open market odds for upcoming games
 - `BackfillKalshi` — backfills historical Kalshi odds using candlestick data at 6am CT on game day (no API key needed)
+- `BackfillGame` — force re-fetches the games in `BACKFILL_GAME_IDS` and overwrites them
+- `BackfillGoalieStats` — re-fetches only goalies' shorthanded shots/goals (one boxscore request per game) for games saved before the mapper read them; re-runnable, skips games that already have them
 - `CleanAll` — skips data collection and re-cleans every game in every season (run after changing how `GameCleaned` features are computed)
 
 **Game ID encoding** (`NhlApiDataGetter.GetGameId`):

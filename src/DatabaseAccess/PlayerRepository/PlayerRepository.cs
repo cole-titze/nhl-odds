@@ -82,6 +82,47 @@ public class PlayerRepository : IPlayerRepository
             .Where(x => x.GameId == game.Id && !playedIds.Contains(x.PlayerId)).ToListAsync());
     }
     /// <summary>
+    /// Gets the season's games whose goalie rows have no shorthanded shots or goals at all. Games saved before the
+    /// goalie mapper read the API's "shorthanded…" fields have zeros there; a few games are genuinely zero.
+    /// </summary>
+    /// <param name="seasonStartYear">Season to check</param>
+    /// <returns>Game ids, ascending</returns>
+    public async Task<List<int>> GetGameIdsWithoutGoalieShortHandedStats(int seasonStartYear)
+    {
+        int minId = seasonStartYear * 1_000_000, maxId = (seasonStartYear + 1) * 1_000_000;
+        return await _dbContext.GameGoalieStats
+            .Where(x => x.GameId >= minId && x.GameId < maxId)
+            .GroupBy(x => x.GameId)
+            .Where(g => g.Sum(x => x.ShortHandedShotsSaved + x.ShortHandedGoalsAllowed) == 0)
+            .Select(g => g.Key)
+            .OrderBy(id => id)
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// Updates only the shorthanded fields of a game's existing goalie rows; everything else is left alone
+    /// </summary>
+    /// <param name="gameId">Game the stats belong to</param>
+    /// <param name="goalieStats">Goalie stats from the game's boxscore</param>
+    /// <returns>Number of rows changed</returns>
+    public async Task<int> UpdateGoalieShortHandedStats(int gameId, IEnumerable<GameGoalieStats> goalieStats)
+    {
+        var dbRows = await _dbContext.GameGoalieStats.Where(x => x.GameId == gameId).ToListAsync();
+        var changed = 0;
+        foreach (var stats in goalieStats)
+        {
+            var row = dbRows.FirstOrDefault(x => x.PlayerId == stats.PlayerId);
+            if (row == null || (row.ShortHandedShotsSaved == stats.ShortHandedShotsSaved
+                                && row.ShortHandedGoalsAllowed == stats.ShortHandedGoalsAllowed))
+                continue;
+            row.ShortHandedShotsSaved = stats.ShortHandedShotsSaved;
+            row.ShortHandedGoalsAllowed = stats.ShortHandedGoalsAllowed;
+            changed++;
+        }
+        return changed;
+    }
+
+    /// <summary>
     /// Gets a player based on the id
     /// </summary>
     /// <param name="playerId">Id of the player to get</param>

@@ -9,6 +9,7 @@ public interface IGameRepository
     Task AddUpdateGameOfficials(Game game);
     Task AddUpdateGameCoaches(Game game);
     Task Commit();
+    void ClearTracking();
     Task<Game?> GetGame(int gameId);
     Task<Game?> GetGameSummary(int gameId);
     Task<bool> IsGamePlayed(int gameId);

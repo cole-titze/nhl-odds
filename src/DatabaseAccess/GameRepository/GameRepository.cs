@@ -194,6 +194,15 @@ public class GameRepository : IGameRepository
     }
 
     /// <summary>
+    /// Drops all unsaved changes. Call after a failed save so the failed entities aren't retried (and fail again)
+    /// on the next game's commit; the repositories share one context.
+    /// </summary>
+    public void ClearTracking()
+    {
+        _dbContext.ChangeTracker.Clear();
+    }
+
+    /// <summary>
     /// Gets a game based on the id
     /// </summary>
     /// <param name="gameId">Id of the game to get</param>

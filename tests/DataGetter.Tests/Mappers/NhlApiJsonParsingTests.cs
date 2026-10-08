@@ -509,4 +509,26 @@ public class NhlApiJsonParsingTests
         bos.Division.Should().Be("Atlantic");
         bos.Conference.Should().Be("Eastern");
     }
+
+    [TestMethod]
+    public void MapGoalEvent_GoalieIdZero_IsEmptyNet()
+    {
+        // Game 2009020694, 3rd period 19:49: an empty-net goal with "goalieInNetId": 0
+        const string json = """
+            {
+              "plays": [{
+                "eventId": 300, "typeCode": 505, "typeDescKey": "goal", "sortOrder": 300,
+                "situationCode": "0651", "homeTeamDefendingSide": "left",
+                "timeInPeriod": "19:49", "timeRemaining": "00:11",
+                "periodDescriptor": { "number": 3, "periodType": "REG", "maxRegulationPeriods": 3 },
+                "details": { "eventOwnerTeamId": 3, "scoringPlayerId": 8471686, "goalieInNetId": 0, "zoneCode": "N" }
+              }]
+            }
+            """;
+
+        var goal = MapGameEventsResponseToGameEvents.Map(JsonNode.Parse(json))
+            .Events.OfType<Goal>().Single();
+
+        goal.GoalieId.Should().BeNull();
+    }
 }

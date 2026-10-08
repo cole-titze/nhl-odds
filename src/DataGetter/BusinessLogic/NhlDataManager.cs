@@ -91,8 +91,46 @@ public class NhlDataManager
             }
             catch (Exception ex)
             {
+                _gameRepo.ClearTracking();
                 _logger.LogError(ex, "Error backfilling game {GameId}.", gameId);
             }
+        }
+    }
+
+    /// <summary>
+    /// Re-fetches the shorthanded shots and goals of goalies in games saved before the mapper read them, one boxscore
+    /// request per game, and updates only those fields. Re-runnable: games that already have them are skipped.
+    /// </summary>
+    /// <param name="seasonYearRange">The seasons to backfill</param>
+    public async Task BackfillGoalieShortHandedStats(YearRange seasonYearRange)
+    {
+        for (int seasonStartYear = seasonYearRange.StartYear; seasonStartYear <= seasonYearRange.EndYear; seasonStartYear++)
+        {
+            var gameIds = await _playerRepo.GetGameIdsWithoutGoalieShortHandedStats(seasonStartYear);
+            _logger.LogInformation("Backfilling goalie shorthanded stats for {Count} game(s) in season {Season}", gameIds.Count, seasonStartYear);
+            int updatedGames = 0, failedGames = 0;
+            foreach (var gameId in gameIds)
+            {
+                try
+                {
+                    var goalieStats = await _gameManager.GetGameGoalieStats(gameId);
+                    if (goalieStats == null)
+                    {
+                        failedGames++;
+                        continue;
+                    }
+                    if (await _playerRepo.UpdateGoalieShortHandedStats(gameId, goalieStats) > 0)
+                        updatedGames++;
+                    await _playerRepo.Commit();
+                }
+                catch (Exception ex)
+                {
+                    _gameRepo.ClearTracking();
+                    failedGames++;
+                    _logger.LogError(ex, "Error backfilling goalie stats for game {GameId}.", gameId);
+                }
+            }
+            _logger.LogInformation("Season {Season}: updated {Updated} game(s), {Failed} failed", seasonStartYear, updatedGames, failedGames);
         }
     }
 
@@ -192,6 +230,7 @@ public class NhlDataManager
             }
             catch (Exception ex)
             {
+                _gameRepo.ClearTracking();
                 _logger.LogError(ex, "Error processing game {GameId} in season {Season}. Skipping.", gameId, seasonStartYear);
                 var stackTrace = ex.StackTrace ?? string.Empty;
                 var stackFrames = stackTrace.Split('\n', StringSplitOptions.RemoveEmptyEntries);
@@ -255,6 +294,7 @@ public class NhlDataManager
             }
             catch (Exception ex)
             {
+                _gameRepo.ClearTracking();
                 _logger.LogError(ex, "Error processing game {GameId} in season {Season}. Skipping.", gameId, seasonStartYear);
                 var stackTrace = ex.StackTrace ?? string.Empty;
                 var stackFrames = stackTrace.Split('\n', StringSplitOptions.RemoveEmptyEntries);

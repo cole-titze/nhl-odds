@@ -27,7 +27,8 @@ public static class MapGoalEvent
             ShotType = ShotTypeParser.ParseFromString(responseGameEvent["details"]!["shotType"]?.GetValue<string>()),
             ScoringPlayerTeamId = responseGameEvent["details"]!["eventOwnerTeamId"]!.GetValue<int>(),
             ScoringPlayerId = responseGameEvent["details"]!["scoringPlayerId"]!.GetValue<int>(),
-            GoalieId = responseGameEvent["details"]!["goalieInNetId"]?.GetValue<int>(),
+            // Some old games use goalie id 0 for an empty net; there is no player 0
+            GoalieId = responseGameEvent["details"]!["goalieInNetId"]?.GetValue<int>() is int goalieId && goalieId != 0 ? goalieId : null,
             AssistOnePlayerId = responseGameEvent["details"]!["assist1PlayerId"]?.GetValue<int>(),
             AssistTwoPlayerId = responseGameEvent["details"]!["assist2PlayerId"]?.GetValue<int>(),
             Zone = ZoneParser.ParseFromString(responseGameEvent["details"]!["zoneCode"]?.GetValue<string>()),

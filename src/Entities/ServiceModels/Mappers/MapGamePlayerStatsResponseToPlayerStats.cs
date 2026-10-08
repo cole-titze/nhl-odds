@@ -36,6 +36,18 @@ public static class MapGamePlayerStatsResponseToGamePlayerStats
         return gameRosterStats;
     }
 
+    /// <summary>
+    /// Maps both teams' goalie stats from a game's boxscore response
+    /// </summary>
+    public static IEnumerable<GameGoalieStats> MapGoalies(JsonNode boxscoreResponse)
+    {
+        var homeTeamId = boxscoreResponse["homeTeam"]!["id"]!.GetValue<int>();
+        var awayTeamId = boxscoreResponse["awayTeam"]!["id"]!.GetValue<int>();
+        return GetGameGoalies(boxscoreResponse["playerByGameStats"]!["homeTeam"]!["goalies"]!, homeTeamId)
+            .Concat(GetGameGoalies(boxscoreResponse["playerByGameStats"]!["awayTeam"]!["goalies"]!, awayTeamId))
+            .Cast<GameGoalieStats>();
+    }
+
     private static IEnumerable<IGamePlayerStats> GetGameGoalies(JsonNode goalies, int homeTeamId)
     {
         var gameGoalies = new List<IGamePlayerStats>();

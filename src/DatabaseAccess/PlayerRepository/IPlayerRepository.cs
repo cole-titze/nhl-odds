@@ -9,5 +9,7 @@ public interface IPlayerRepository
     Task AddUpdatePlayers(IEnumerable<Player> players);
     Task<int> GetPlayerStatsCountBySeason(int seasonStartYear);
     Task<Player?> GetPlayer(int playerId);
+    Task<List<int>> GetGameIdsWithoutGoalieShortHandedStats(int seasonStartYear);
+    Task<int> UpdateGoalieShortHandedStats(int gameId, IEnumerable<GameGoalieStats> goalieStats);
     Task Commit();
 }

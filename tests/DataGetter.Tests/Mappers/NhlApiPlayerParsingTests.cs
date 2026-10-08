@@ -430,4 +430,18 @@ public class NhlApiPlayerParsingTests
         mtl.LeagueId.Should().Be(133);
         mtl.Abbreviation.Should().Be("MTL");
     }
+
+    [TestMethod]
+    public void MapGoalies_ReturnsBothTeamsGoaliesFromTheBoxscore()
+    {
+        var goalies = MapGamePlayerStatsResponseToGamePlayerStats.MapGoalies(JsonNode.Parse(BoxscoreWithPlayerStatsJson)!).ToList();
+
+        goalies.Select(g => (g.PlayerId, g.TeamId)).Should().BeEquivalentTo(new[] { (8477992, 14), (8471306, 18) });
+        var home = goalies.Single(g => g.PlayerId == 8477992);
+        home.ShortHandedShotsSaved.Should().Be(1);
+        home.ShortHandedGoalsAllowed.Should().Be(1);
+        var away = goalies.Single(g => g.PlayerId == 8471306);
+        away.ShortHandedShotsSaved.Should().Be(0);   // null in the API
+        away.ShortHandedGoalsAllowed.Should().Be(0);
+    }
 }

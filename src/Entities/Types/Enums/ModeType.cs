@@ -9,6 +9,7 @@ public enum ModeType
     KalshiFetch,
     BackfillKalshi,
     BackfillGame,
+    BackfillGoalieStats,
     CleanAll
 }
 public static class ModeTypeParser
@@ -32,6 +33,8 @@ public static class ModeTypeParser
                 return ModeType.BackfillKalshi;
             case "BackfillGame":
                 return ModeType.BackfillGame;
+            case "BackfillGoalieStats":
+                return ModeType.BackfillGoalieStats;
             case "CleanAll":
                 return ModeType.CleanAll;
             default:

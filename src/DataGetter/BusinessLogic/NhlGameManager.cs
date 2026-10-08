@@ -52,6 +52,12 @@ public class NhlGameManager
     }
 
     /// <summary>
+    /// Gets only the goalie stats of a played game
+    /// </summary>
+    public Task<IEnumerable<GameGoalieStats>?> GetGameGoalieStats(int gameId) =>
+        _nhlDataGetter.PlayerDataGetter.GetGameGoalieStats(gameId);
+
+    /// <summary>
     /// Gets the season game count
     /// </summary>
     /// <param name="seasonStartYear">The season to get the game count for</param>
