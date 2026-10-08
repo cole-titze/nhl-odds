@@ -7,10 +7,6 @@ namespace DataCleaner.Mappers;
 public static class MapGameToDbGameCleaned
 {
     private const int RECENT_GAMES = 5;
-    // Season-to-date stats use at least this many games, borrowing the most recent ones from last season
-    private const int MIN_SEASON_GAMES = 10;
-    // Longer rests (season openers, breaks) are treated the same
-    private const double MAX_HOURS_SINCE_LAST_GAME = 120;
 
     public static DbGameCleaned Map(Game game, SeasonGames seasonGames, RosterScorer? rosterScorer = null)
     {
@@ -19,9 +15,6 @@ public static class MapGameToDbGameCleaned
         // Lists of team games for current season
         var homeTeamSeasonGames = homeTeamGames.CurrentSeasonGames.PlayedBefore(game.GameDateUTC);
         var awayTeamSeasonGames = awayTeamGames.CurrentSeasonGames.PlayedBefore(game.GameDateUTC);
-        // Season-to-date averages, topped up with last season's games early in the season so they don't start at 0
-        var homeTeamSeasonStatGames = TopUpSeasonGames(homeTeamSeasonGames, homeTeamGames.Games.PlayedBefore(game.GameDateUTC));
-        var awayTeamSeasonStatGames = TopUpSeasonGames(awayTeamSeasonGames, awayTeamGames.Games.PlayedBefore(game.GameDateUTC));
         // List of recently played team games
         var homeTeamRecentGames = homeTeamGames.Games.PlayedBefore(game.GameDateUTC).Take(RECENT_GAMES);
         var awayTeamRecentGames = awayTeamGames.Games.PlayedBefore(game.GameDateUTC).Take(RECENT_GAMES);
@@ -43,11 +36,11 @@ public static class MapGameToDbGameCleaned
         {
             GameId = game.Id,
 
-            HomeWinRatio = GetWinRatioOfGames(homeTeamSeasonStatGames, game.HomeTeamId),
+            HomeWinRatio = GetWinRatioOfGames(homeTeamSeasonGames, game.HomeTeamId),
             HomeRecentWinRatio = GetWinRatioOfGames(homeTeamRecentGames, game.HomeTeamId),
-            HomeGoalsAvg = GetStatAvg(homeTeamSeasonStatGames, game.HomeTeamId, g => g.HomeGoals, g => g.AwayGoals),
+            HomeGoalsAvg = GetStatAvg(homeTeamSeasonGames, game.HomeTeamId, g => g.HomeGoals, g => g.AwayGoals),
             HomeRecentGoalsAvg = GetStatAvg(homeTeamRecentGames, game.HomeTeamId, g => g.HomeGoals, g => g.AwayGoals),
-            HomeConcededGoalsAvg = GetStatAvg(homeTeamSeasonStatGames, game.HomeTeamId, g => g.AwayGoals, g => g.HomeGoals),
+            HomeConcededGoalsAvg = GetStatAvg(homeTeamSeasonGames, game.HomeTeamId, g => g.AwayGoals, g => g.HomeGoals),
             HomeRecentConcededGoalsAvg = GetStatAvg(homeTeamRecentGames, game.HomeTeamId, g => g.AwayGoals, g => g.HomeGoals),
             HomeRecentSogAvg = GetStatAvg(homeTeamRecentGames, game.HomeTeamId, g => g.HomeSOG, g => g.AwaySOG),
             HomeRecentBlockedShotsAvg = GetStatAvg(homeTeamRecentGames, game.HomeTeamId, g => g.HomeBlockedShots, g => g.AwayBlockedShots),
@@ -60,7 +53,7 @@ public static class MapGameToDbGameCleaned
             HomeRecentConcededGoalsAvgAtHome = GetStatAvg(homeTeamHomeGames.Take(RECENT_GAMES), game.HomeTeamId, g => g.AwayGoals, g => g.HomeGoals),
             HomeGoalsAvgAtHome = GetStatAvg(homeTeamHomeGames, game.HomeTeamId, g => g.HomeGoals, g => g.AwayGoals),
             HomeRecentGoalsAvgAtHome = GetStatAvg(homeTeamRecentHomeGames, game.HomeTeamId, g => g.HomeGoals, g => g.AwayGoals),
-            HomeHoursSinceLastGame = Math.Min(game.GetHoursBetweenGames(homeTeamSeasonGames.FirstOrDefault()), MAX_HOURS_SINCE_LAST_GAME),
+            HomeHoursSinceLastGame = game.GetHoursBetweenGames(homeTeamSeasonGames.FirstOrDefault()),
             HomeRosterOffenseValue = homeRoster?.RosterOffenseValue ?? 0,
             HomeRosterDefenseValue = homeRoster?.RosterDefenseValue ?? 0,
             HomeRosterGoalieValue = homeRoster?.RosterGoalieValue ?? 0,
@@ -68,11 +61,11 @@ public static class MapGameToDbGameCleaned
             HomeRecentRosterDefenseValue = homeRoster?.RecentRosterDefenseValue ?? 0,
             HomeRecentRosterGoalieValue = homeRoster?.RecentRosterGoalieValue ?? 0,
 
-            AwayWinRatio = GetWinRatioOfGames(awayTeamSeasonStatGames, game.AwayTeamId),
+            AwayWinRatio = GetWinRatioOfGames(awayTeamSeasonGames, game.AwayTeamId),
             AwayRecentWinRatio = GetWinRatioOfGames(awayTeamRecentGames, game.AwayTeamId),
-            AwayGoalsAvg = GetStatAvg(awayTeamSeasonStatGames, game.AwayTeamId, g => g.HomeGoals, g => g.AwayGoals),
+            AwayGoalsAvg = GetStatAvg(awayTeamSeasonGames, game.AwayTeamId, g => g.HomeGoals, g => g.AwayGoals),
             AwayRecentGoalsAvg = GetStatAvg(awayTeamRecentGames, game.AwayTeamId, g => g.HomeGoals, g => g.AwayGoals),
-            AwayConcededGoalsAvg = GetStatAvg(awayTeamSeasonStatGames, game.AwayTeamId, g => g.AwayGoals, g => g.HomeGoals),
+            AwayConcededGoalsAvg = GetStatAvg(awayTeamSeasonGames, game.AwayTeamId, g => g.AwayGoals, g => g.HomeGoals),
             AwayRecentConcededGoalsAvg = GetStatAvg(awayTeamRecentGames, game.AwayTeamId, g => g.AwayGoals, g => g.HomeGoals),
             AwayRecentSogAvg = GetStatAvg(awayTeamRecentGames, game.AwayTeamId, g => g.HomeSOG, g => g.AwaySOG),
             AwayRecentBlockedShotsAvg = GetStatAvg(awayTeamRecentGames, game.AwayTeamId, g => g.HomeBlockedShots, g => g.AwayBlockedShots),
@@ -85,7 +78,7 @@ public static class MapGameToDbGameCleaned
             AwayRecentConcededGoalsAvgAtAway = GetStatAvg(awayTeamRecentAwayGames, game.AwayTeamId, g => g.AwayGoals, g => g.HomeGoals),
             AwayGoalsAvgAtAway = GetStatAvg(awayTeamAwayGames, game.AwayTeamId, g => g.HomeGoals, g => g.AwayGoals),
             AwayRecentGoalsAvgAtAway = GetStatAvg(awayTeamRecentAwayGames, game.AwayTeamId, g => g.HomeGoals, g => g.AwayGoals),
-            AwayHoursSinceLastGame = Math.Min(game.GetHoursBetweenGames(awayTeamSeasonGames.FirstOrDefault()), MAX_HOURS_SINCE_LAST_GAME),
+            AwayHoursSinceLastGame = game.GetHoursBetweenGames(awayTeamSeasonGames.FirstOrDefault()),
             AwayRosterOffenseValue = awayRoster?.RosterOffenseValue ?? 0,
             AwayRosterDefenseValue = awayRoster?.RosterDefenseValue ?? 0,
             AwayRosterGoalieValue = awayRoster?.RosterGoalieValue ?? 0,
@@ -103,8 +96,8 @@ public static class MapGameToDbGameCleaned
         cleanedGame.AwayRecentShotAttemptsAvg = GetStatAvg(awayTeamRecentGames, game.AwayTeamId,
             g => g.HomeSOG + g.AwayBlockedShots, g => g.AwaySOG + g.HomeBlockedShots);
 
-        cleanedGame.HomeGoalDiffAvg = GetGoalDiffAvg(homeTeamSeasonStatGames, game.HomeTeamId);
-        cleanedGame.AwayGoalDiffAvg = GetGoalDiffAvg(awayTeamSeasonStatGames, game.AwayTeamId);
+        cleanedGame.HomeGoalDiffAvg = GetGoalDiffAvg(homeTeamSeasonGames, game.HomeTeamId);
+        cleanedGame.AwayGoalDiffAvg = GetGoalDiffAvg(awayTeamSeasonGames, game.AwayTeamId);
         cleanedGame.HomeRecentGoalDiffAvg = GetGoalDiffAvg(homeTeamRecentGames, game.HomeTeamId);
         cleanedGame.AwayRecentGoalDiffAvg = GetGoalDiffAvg(awayTeamRecentGames, game.AwayTeamId);
 
@@ -122,49 +115,49 @@ public static class MapGameToDbGameCleaned
         }
         else
         {
-            cleanedGame.HomeSavePct = GetSavePct(homeTeamSeasonStatGames, game.HomeTeamId);
-            cleanedGame.AwaySavePct = GetSavePct(awayTeamSeasonStatGames, game.AwayTeamId);
+            cleanedGame.HomeSavePct = GetSavePct(homeTeamSeasonGames, game.HomeTeamId);
+            cleanedGame.AwaySavePct = GetSavePct(awayTeamSeasonGames, game.AwayTeamId);
             cleanedGame.HomeRecentSavePct = GetSavePct(homeTeamRecentGames, game.HomeTeamId);
             cleanedGame.AwayRecentSavePct = GetSavePct(awayTeamRecentGames, game.AwayTeamId);
         }
 
-        cleanedGame.HomeSogAvg = GetStatAvg(homeTeamSeasonStatGames, game.HomeTeamId, g => g.HomeSOG, g => g.AwaySOG);
-        cleanedGame.AwaySogAvg = GetStatAvg(awayTeamSeasonStatGames, game.AwayTeamId, g => g.HomeSOG, g => g.AwaySOG);
-        cleanedGame.HomePpgAvg = GetStatAvg(homeTeamSeasonStatGames, game.HomeTeamId, g => g.HomePPG, g => g.AwayPPG);
-        cleanedGame.AwayPpgAvg = GetStatAvg(awayTeamSeasonStatGames, game.AwayTeamId, g => g.HomePPG, g => g.AwayPPG);
-        cleanedGame.HomeHitsAvg = GetStatAvg(homeTeamSeasonStatGames, game.HomeTeamId, g => g.HomeHits, g => g.AwayHits);
-        cleanedGame.AwayHitsAvg = GetStatAvg(awayTeamSeasonStatGames, game.AwayTeamId, g => g.HomeHits, g => g.AwayHits);
-        cleanedGame.HomePimAvg = GetStatAvg(homeTeamSeasonStatGames, game.HomeTeamId, g => g.HomePIM, g => g.AwayPIM);
-        cleanedGame.AwayPimAvg = GetStatAvg(awayTeamSeasonStatGames, game.AwayTeamId, g => g.HomePIM, g => g.AwayPIM);
-        cleanedGame.HomeBlockedShotsAvg = GetStatAvg(homeTeamSeasonStatGames, game.HomeTeamId, g => g.HomeBlockedShots, g => g.AwayBlockedShots);
-        cleanedGame.AwayBlockedShotsAvg = GetStatAvg(awayTeamSeasonStatGames, game.AwayTeamId, g => g.HomeBlockedShots, g => g.AwayBlockedShots);
-        cleanedGame.HomeTakeawaysAvg = GetStatAvg(homeTeamSeasonStatGames, game.HomeTeamId, g => g.HomeTakeaways, g => g.AwayTakeaways);
-        cleanedGame.AwayTakeawaysAvg = GetStatAvg(awayTeamSeasonStatGames, game.AwayTeamId, g => g.HomeTakeaways, g => g.AwayTakeaways);
-        cleanedGame.HomeGiveawaysAvg = GetStatAvg(homeTeamSeasonStatGames, game.HomeTeamId, g => g.HomeGiveaways, g => g.AwayGiveaways);
-        cleanedGame.AwayGiveawaysAvg = GetStatAvg(awayTeamSeasonStatGames, game.AwayTeamId, g => g.HomeGiveaways, g => g.AwayGiveaways);
+        cleanedGame.HomeSogAvg = GetStatAvg(homeTeamSeasonGames, game.HomeTeamId, g => g.HomeSOG, g => g.AwaySOG);
+        cleanedGame.AwaySogAvg = GetStatAvg(awayTeamSeasonGames, game.AwayTeamId, g => g.HomeSOG, g => g.AwaySOG);
+        cleanedGame.HomePpgAvg = GetStatAvg(homeTeamSeasonGames, game.HomeTeamId, g => g.HomePPG, g => g.AwayPPG);
+        cleanedGame.AwayPpgAvg = GetStatAvg(awayTeamSeasonGames, game.AwayTeamId, g => g.HomePPG, g => g.AwayPPG);
+        cleanedGame.HomeHitsAvg = GetStatAvg(homeTeamSeasonGames, game.HomeTeamId, g => g.HomeHits, g => g.AwayHits);
+        cleanedGame.AwayHitsAvg = GetStatAvg(awayTeamSeasonGames, game.AwayTeamId, g => g.HomeHits, g => g.AwayHits);
+        cleanedGame.HomePimAvg = GetStatAvg(homeTeamSeasonGames, game.HomeTeamId, g => g.HomePIM, g => g.AwayPIM);
+        cleanedGame.AwayPimAvg = GetStatAvg(awayTeamSeasonGames, game.AwayTeamId, g => g.HomePIM, g => g.AwayPIM);
+        cleanedGame.HomeBlockedShotsAvg = GetStatAvg(homeTeamSeasonGames, game.HomeTeamId, g => g.HomeBlockedShots, g => g.AwayBlockedShots);
+        cleanedGame.AwayBlockedShotsAvg = GetStatAvg(awayTeamSeasonGames, game.AwayTeamId, g => g.HomeBlockedShots, g => g.AwayBlockedShots);
+        cleanedGame.HomeTakeawaysAvg = GetStatAvg(homeTeamSeasonGames, game.HomeTeamId, g => g.HomeTakeaways, g => g.AwayTakeaways);
+        cleanedGame.AwayTakeawaysAvg = GetStatAvg(awayTeamSeasonGames, game.AwayTeamId, g => g.HomeTakeaways, g => g.AwayTakeaways);
+        cleanedGame.HomeGiveawaysAvg = GetStatAvg(homeTeamSeasonGames, game.HomeTeamId, g => g.HomeGiveaways, g => g.AwayGiveaways);
+        cleanedGame.AwayGiveawaysAvg = GetStatAvg(awayTeamSeasonGames, game.AwayTeamId, g => g.HomeGiveaways, g => g.AwayGiveaways);
 
-        cleanedGame.HomeFaceOffWinPctAvg = GetDoubleStatAvg(homeTeamSeasonStatGames, game.HomeTeamId, g => g.HomeFaceOffWinPercent, g => g.AwayFaceOffWinPercent);
-        cleanedGame.AwayFaceOffWinPctAvg = GetDoubleStatAvg(awayTeamSeasonStatGames, game.AwayTeamId, g => g.HomeFaceOffWinPercent, g => g.AwayFaceOffWinPercent);
+        cleanedGame.HomeFaceOffWinPctAvg = GetDoubleStatAvg(homeTeamSeasonGames, game.HomeTeamId, g => g.HomeFaceOffWinPercent, g => g.AwayFaceOffWinPercent);
+        cleanedGame.AwayFaceOffWinPctAvg = GetDoubleStatAvg(awayTeamSeasonGames, game.AwayTeamId, g => g.HomeFaceOffWinPercent, g => g.AwayFaceOffWinPercent);
         cleanedGame.HomeRecentFaceOffWinPctAvg = GetDoubleStatAvg(homeTeamRecentGames, game.HomeTeamId, g => g.HomeFaceOffWinPercent, g => g.AwayFaceOffWinPercent);
         cleanedGame.AwayRecentFaceOffWinPctAvg = GetDoubleStatAvg(awayTeamRecentGames, game.AwayTeamId, g => g.HomeFaceOffWinPercent, g => g.AwayFaceOffWinPercent);
 
-        cleanedGame.HomeOvertimeRatio = GetOvertimeRatio(homeTeamSeasonStatGames);
-        cleanedGame.AwayOvertimeRatio = GetOvertimeRatio(awayTeamSeasonStatGames);
+        cleanedGame.HomeOvertimeRatio = GetOvertimeRatio(homeTeamSeasonGames);
+        cleanedGame.AwayOvertimeRatio = GetOvertimeRatio(awayTeamSeasonGames);
         cleanedGame.HomeRecentOvertimeRatio = GetOvertimeRatio(homeTeamRecentGames);
         cleanedGame.AwayRecentOvertimeRatio = GetOvertimeRatio(awayTeamRecentGames);
 
-        cleanedGame.HomeRegulationWinRatio = GetRegulationWinRatio(homeTeamSeasonStatGames, game.HomeTeamId);
-        cleanedGame.AwayRegulationWinRatio = GetRegulationWinRatio(awayTeamSeasonStatGames, game.AwayTeamId);
+        cleanedGame.HomeRegulationWinRatio = GetRegulationWinRatio(homeTeamSeasonGames, game.HomeTeamId);
+        cleanedGame.AwayRegulationWinRatio = GetRegulationWinRatio(awayTeamSeasonGames, game.AwayTeamId);
         cleanedGame.HomeRecentRegulationWinRatio = GetRegulationWinRatio(homeTeamRecentGames, game.HomeTeamId);
         cleanedGame.AwayRecentRegulationWinRatio = GetRegulationWinRatio(awayTeamRecentGames, game.AwayTeamId);
 
-        cleanedGame.HomeShootingPct = GetShootingPct(homeTeamSeasonStatGames, game.HomeTeamId);
-        cleanedGame.AwayShootingPct = GetShootingPct(awayTeamSeasonStatGames, game.AwayTeamId);
+        cleanedGame.HomeShootingPct = GetShootingPct(homeTeamSeasonGames, game.HomeTeamId);
+        cleanedGame.AwayShootingPct = GetShootingPct(awayTeamSeasonGames, game.AwayTeamId);
         cleanedGame.HomeRecentShootingPct = GetShootingPct(homeTeamRecentGames, game.HomeTeamId);
         cleanedGame.AwayRecentShootingPct = GetShootingPct(awayTeamRecentGames, game.AwayTeamId);
 
-        cleanedGame.HomeStrengthOfSchedule = GetStrengthOfSchedule(homeTeamSeasonStatGames, game.HomeTeamId, seasonGames);
-        cleanedGame.AwayStrengthOfSchedule = GetStrengthOfSchedule(awayTeamSeasonStatGames, game.AwayTeamId, seasonGames);
+        cleanedGame.HomeStrengthOfSchedule = GetStrengthOfSchedule(homeTeamSeasonGames, game.HomeTeamId, seasonGames);
+        cleanedGame.AwayStrengthOfSchedule = GetStrengthOfSchedule(awayTeamSeasonGames, game.AwayTeamId, seasonGames);
         cleanedGame.HomeRecentStrengthOfSchedule = GetStrengthOfSchedule(homeTeamRecentGames, game.HomeTeamId, seasonGames);
         cleanedGame.AwayRecentStrengthOfSchedule = GetStrengthOfSchedule(awayTeamRecentGames, game.AwayTeamId, seasonGames);
 
@@ -177,12 +170,6 @@ public static class MapGameToDbGameCleaned
     /// </summary>
     private static IEnumerable<Game> PlayedBefore(this IEnumerable<Game> games, DateTime date) =>
         games.GetGamesBeforeDate(date).Where(g => g.HasBeenPlayed).ToList();
-
-    /// <summary>
-    /// The season's games (newest first), or the team's MIN_SEASON_GAMES most recent games when the season has fewer.
-    /// </summary>
-    private static IEnumerable<Game> TopUpSeasonGames(IEnumerable<Game> seasonGames, IEnumerable<Game> allGames) =>
-        seasonGames.Count() >= MIN_SEASON_GAMES ? seasonGames : allGames.Take(MIN_SEASON_GAMES).ToList();
 
     public static double GetWinRatioOfGames(IEnumerable<Game> teamSeasonGames, int teamId)
     {
