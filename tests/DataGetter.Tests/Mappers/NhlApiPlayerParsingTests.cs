@@ -244,10 +244,10 @@ public class NhlApiPlayerParsingTests
                   "playerId": 8477992,
                   "evenStrengthShotsAgainst": "21/23",
                   "powerPlayShotsAgainst": "6/7",
-                  "shortHandedShotsAgainst": null,
+                  "shorthandedShotsAgainst": "1/2",
                   "evenStrengthGoalsAgainst": 2,
                   "powerPlayGoalsAgainst": 1,
-                  "shortHandedGoalsAgainst": null,
+                  "shorthandedGoalsAgainst": 1,
                   "toi": "60:00",
                   "starter": true
                 }
@@ -270,10 +270,10 @@ public class NhlApiPlayerParsingTests
                   "playerId": 8471306,
                   "evenStrengthShotsAgainst": "28/32",
                   "powerPlayShotsAgainst": "3/3",
-                  "shortHandedShotsAgainst": null,
+                  "shorthandedShotsAgainst": null,
                   "evenStrengthGoalsAgainst": 4,
                   "powerPlayGoalsAgainst": 0,
-                  "shortHandedGoalsAgainst": null,
+                  "shorthandedGoalsAgainst": null,
                   "toi": "60:00",
                   "starter": true
                 }
@@ -335,10 +335,10 @@ public class NhlApiPlayerParsingTests
         goalie.TeamId.Should().Be(14);
         goalie.EvenStrengthShotsSaved.Should().Be(21); // "21/23" → 21 saved
         goalie.PowerPlayShotsSaved.Should().Be(6);     // "6/7"  → 6 saved
-        goalie.ShortHandedShotsSaved.Should().Be(0);   // null   → 0
+        goalie.ShortHandedShotsSaved.Should().Be(1);   // "1/2"  → 1 saved
         goalie.EvenStrengthGoalsAllowed.Should().Be(2);
         goalie.PowerPlayGoalsAllowed.Should().Be(1);
-        goalie.ShortHandedGoalsAllowed.Should().Be(0);
+        goalie.ShortHandedGoalsAllowed.Should().Be(1);
         goalie.TimeOnIceSeconds.Should().Be(3600);     // 60:00
         goalie.IsStarter.Should().BeTrue();
     }

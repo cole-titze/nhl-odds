@@ -33,8 +33,35 @@ def _calculate_log_loss(winner: int, home_odds: float, away_odds: float) -> floa
     return -(winner * math.log(away_odds) + (1 - winner) * math.log(home_odds))
 
 
-def _save_unplayed_predictions(conn, save_pipeline, save_model, save_name, run_date):
+# Features that are never legitimately 0 once a team has played a game. If they are 0 for upcoming
+# games, the cleaner is serving inputs the model never saw in training (issue #104).
+_GUARDED_FEATURES = [
+    "HomeRosterOffenseValue",
+    "AwayRosterOffenseValue",
+    "HomeRosterGoalieValue",
+    "AwayRosterGoalieValue",
+]
+_MAX_ZERO_SHARE = 0.2
+
+
+def _load_checked_unplayed_games(conn) -> pd.DataFrame:
+    """Load unplayed games and refuse to predict if key features are mostly 0."""
     unplayed_df = load_unplayed_games(conn)
+    if unplayed_df.empty:
+        return unplayed_df
+
+    zero_shares = {col: float((unplayed_df[col] == 0).mean()) for col in _GUARDED_FEATURES}
+    bad = {col: share for col, share in zero_shares.items() if share > _MAX_ZERO_SHARE}
+    if bad:
+        detail = ", ".join(f"{col} {share:.0%}" for col, share in bad.items())
+        raise RuntimeError(
+            f"Unplayed games have zeroed features ({detail} of {len(unplayed_df)} games); not predicting"
+        )
+    return unplayed_df
+
+
+def _save_unplayed_predictions(conn, save_pipeline, save_model, save_name, run_date):
+    unplayed_df = _load_checked_unplayed_games(conn)
 
     if unplayed_df.empty:
         print("\nNo unplayed games to predict.")
@@ -150,7 +177,7 @@ def _run_backfill(conn, train_df):
 
 def _save_unplayed_regression(conn, pipeline, model, residual_std, target, model_id, exp_name, run_date):
     """Predict spread or total for unplayed games and save to DB."""
-    unplayed_df = load_unplayed_games(conn)
+    unplayed_df = _load_checked_unplayed_games(conn)
     if unplayed_df.empty:
         print(f"\nNo unplayed games for {target} prediction.")
         return

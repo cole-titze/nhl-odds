@@ -13,17 +13,17 @@ public static class MapGameToDbGameCleaned
         var homeTeamGames = seasonGames.GamesMap[game.HomeTeamId];
         var awayTeamGames = seasonGames.GamesMap[game.AwayTeamId];
         // Lists of team games for current season
-        var homeTeamSeasonGames = homeTeamGames.CurrentSeasonGames.GetGamesBeforeDate(game.GameDateUTC);
-        var awayTeamSeasonGames = awayTeamGames.CurrentSeasonGames.GetGamesBeforeDate(game.GameDateUTC);
+        var homeTeamSeasonGames = homeTeamGames.CurrentSeasonGames.PlayedBefore(game.GameDateUTC);
+        var awayTeamSeasonGames = awayTeamGames.CurrentSeasonGames.PlayedBefore(game.GameDateUTC);
         // List of recently played team games
-        var homeTeamRecentGames = homeTeamGames.Games.GetGamesBeforeDate(game.GameDateUTC).Take(RECENT_GAMES);
-        var awayTeamRecentGames = awayTeamGames.Games.GetGamesBeforeDate(game.GameDateUTC).Take(RECENT_GAMES);
+        var homeTeamRecentGames = homeTeamGames.Games.PlayedBefore(game.GameDateUTC).Take(RECENT_GAMES);
+        var awayTeamRecentGames = awayTeamGames.Games.PlayedBefore(game.GameDateUTC).Take(RECENT_GAMES);
         // List of team games played that match current home/away position
-        var homeTeamHomeGames = homeTeamGames.HomeGames.GetGamesBeforeDate(game.GameDateUTC);
-        var awayTeamAwayGames = awayTeamGames.AwayGames.GetGamesBeforeDate(game.GameDateUTC);
+        var homeTeamHomeGames = homeTeamGames.HomeGames.PlayedBefore(game.GameDateUTC);
+        var awayTeamAwayGames = awayTeamGames.AwayGames.PlayedBefore(game.GameDateUTC);
         // List of recent team games played that match current home/away position
-        var homeTeamRecentHomeGames = homeTeamGames.HomeGames.GetGamesBeforeDate(game.GameDateUTC).Take(RECENT_GAMES);
-        var awayTeamRecentAwayGames = awayTeamGames.AwayGames.GetGamesBeforeDate(game.GameDateUTC).Take(RECENT_GAMES);
+        var homeTeamRecentHomeGames = homeTeamGames.HomeGames.PlayedBefore(game.GameDateUTC).Take(RECENT_GAMES);
+        var awayTeamRecentAwayGames = awayTeamGames.AwayGames.PlayedBefore(game.GameDateUTC).Take(RECENT_GAMES);
 
         // Head-to-head games between these two teams this season
         var headToHeadGames = homeTeamSeasonGames.Where(g =>
@@ -108,10 +108,18 @@ public static class MapGameToDbGameCleaned
         cleanedGame.AwayWinRatioAtAway = GetWinRatioOfGames(awayTeamAwayGames, game.AwayTeamId);
         cleanedGame.HeadToHeadWinRatio = GetWinRatioOfGames(headToHeadGames, game.HomeTeamId);
 
-        cleanedGame.HomeSavePct = GetSavePct(homeTeamSeasonGames, game.HomeTeamId);
-        cleanedGame.AwaySavePct = GetSavePct(awayTeamSeasonGames, game.AwayTeamId);
-        cleanedGame.HomeRecentSavePct = GetSavePct(homeTeamRecentGames, game.HomeTeamId);
-        cleanedGame.AwayRecentSavePct = GetSavePct(awayTeamRecentGames, game.AwayTeamId);
+        if (rosterScorer != null)
+        {
+            (cleanedGame.HomeSavePct, cleanedGame.HomeRecentSavePct) = rosterScorer.GetTeamSavePct(game.Id, game.HomeTeamId);
+            (cleanedGame.AwaySavePct, cleanedGame.AwayRecentSavePct) = rosterScorer.GetTeamSavePct(game.Id, game.AwayTeamId);
+        }
+        else
+        {
+            cleanedGame.HomeSavePct = GetSavePct(homeTeamSeasonGames, game.HomeTeamId);
+            cleanedGame.AwaySavePct = GetSavePct(awayTeamSeasonGames, game.AwayTeamId);
+            cleanedGame.HomeRecentSavePct = GetSavePct(homeTeamRecentGames, game.HomeTeamId);
+            cleanedGame.AwayRecentSavePct = GetSavePct(awayTeamRecentGames, game.AwayTeamId);
+        }
 
         cleanedGame.HomeSogAvg = GetStatAvg(homeTeamSeasonGames, game.HomeTeamId, g => g.HomeSOG, g => g.AwaySOG);
         cleanedGame.AwaySogAvg = GetStatAvg(awayTeamSeasonGames, game.AwayTeamId, g => g.HomeSOG, g => g.AwaySOG);
@@ -155,6 +163,13 @@ public static class MapGameToDbGameCleaned
 
         return cleanedGame;
     }
+
+    /// <summary>
+    /// Played games before the given date. Upcoming games are cleaned too, and unplayed games between now and
+    /// then would otherwise count as 0-goal non-wins.
+    /// </summary>
+    private static IEnumerable<Game> PlayedBefore(this IEnumerable<Game> games, DateTime date) =>
+        games.GetGamesBeforeDate(date).Where(g => g.HasBeenPlayed).ToList();
 
     public static double GetWinRatioOfGames(IEnumerable<Game> teamSeasonGames, int teamId)
     {
@@ -334,7 +349,7 @@ public static class MapGameToDbGameCleaned
             if (!seasonGames.GamesMap.TryGetValue(opponentId, out var opponentGames))
                 continue;
 
-            var opponentPriorGames = opponentGames.CurrentSeasonGames.GetGamesBeforeDate(game.GameDateUTC);
+            var opponentPriorGames = opponentGames.CurrentSeasonGames.PlayedBefore(game.GameDateUTC);
             totalOpponentWinPct += GetWinRatioOfGames(opponentPriorGames, opponentId);
             count++;
         }

@@ -58,7 +58,9 @@ public class GameCleaner
         return $"{ex.Message} | Inner: {innerDetail}";
     }
 
-    public async Task CleanGamesInSeasons(YearRange seasonYearRange)
+    /// <param name="cleanAll">Re-clean every game, not just new and future games of past seasons. Needed after
+    /// a change to how features are computed.</param>
+    public async Task CleanGamesInSeasons(YearRange seasonYearRange, bool cleanAll = false)
     {
         for (int seasonStartYear = seasonYearRange.StartYear; seasonStartYear <= seasonYearRange.EndYear; seasonStartYear++)
         {
@@ -68,7 +70,7 @@ public class GameCleaner
             var gamesToClean = (IEnumerable<Game>)seasonGames;
             var existingCleanedGames = await _cleanedGameRepo.GetSeasonOfCleanedGames(seasonStartYear);
 
-            if (seasonStartYear != seasonYearRange.EndYear)
+            if (seasonStartYear != seasonYearRange.EndYear && !cleanAll)
                 gamesToClean = GetGamesToClean(existingCleanedGames, seasonGames);
 
             if (!gamesToClean.Any())
@@ -90,7 +92,7 @@ public class GameCleaner
 
             // Build game list from the raw games for date lookup
             var allGamesForScorer = seasonGames.Concat(lastSeasonGames)
-                .Select(g => new DbGameRaw { Id = g.Id, GameDateUTC = g.GameDateUTC });
+                .Select(g => new DbGameRaw { Id = g.Id, GameDateUTC = g.GameDateUTC, HomeTeamId = g.HomeTeamId, AwayTeamId = g.AwayTeamId });
 
             var rosterScorer = new RosterScorer(
                 currentSkaterStats.Concat(lastSkaterStats),

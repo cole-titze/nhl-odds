@@ -45,11 +45,12 @@ public static class MapGamePlayerStatsResponseToGamePlayerStats
                 int.Parse(new string(goalie["evenStrengthShotsAgainst"]!.GetValue<string>().TakeWhile(Char.IsDigit).ToArray()));
             var powerPlayShotsSaved = goalie["powerPlayShotsAgainst"] == null ? 0 :
                 int.Parse(new string(goalie["powerPlayShotsAgainst"]!.GetValue<string>().TakeWhile(Char.IsDigit).ToArray()));
-            var shortHandedShotsSaved = goalie["shortHandedShotsAgainst"] == null ? 0 :
-                int.Parse(new string(goalie["shortHandedShotsAgainst"]!.GetValue<string>().TakeWhile(Char.IsDigit).ToArray()));
+            // The API spells these "shorthanded" (lowercase h)
+            var shortHandedShotsSaved = goalie["shorthandedShotsAgainst"] == null ? 0 :
+                int.Parse(new string(goalie["shorthandedShotsAgainst"]!.GetValue<string>().TakeWhile(Char.IsDigit).ToArray()));
             var evenStrengthGoalsAllowed = goalie["evenStrengthGoalsAgainst"] == null ? 0 : goalie["evenStrengthGoalsAgainst"]!.GetValue<int>();
             var powerPlayGoalsAllowed = goalie["powerPlayGoalsAgainst"] == null ? 0 : goalie["powerPlayGoalsAgainst"]!.GetValue<int>();
-            var shortHandedGoalsAllowed = goalie["shortHandedGoalsAgainst"] == null ? 0 : goalie["shortHandedGoalsAgainst"]!.GetValue<int>();
+            var shortHandedGoalsAllowed = goalie["shorthandedGoalsAgainst"] == null ? 0 : goalie["shorthandedGoalsAgainst"]!.GetValue<int>();
             var timeOnIceSeconds = goalie["toi"] == null ? 0 : goalie["toi"]!.GetValue<string>().ParseIceTimeToSeconds();
 
             var goalieStats = new GameGoalieStats()
