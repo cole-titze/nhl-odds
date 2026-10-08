@@ -139,10 +139,14 @@ public class RosterScorer
     private static double ShrinkSavePct(int saves, int shots, double prior) =>
         (saves + SAVE_PCT_PRIOR_SHOTS * prior) / (shots + SAVE_PCT_PRIOR_SHOTS);
 
+    /// <summary>
+    /// Even-strength and power-play shots only. Shorthanded shots were stored as 0 for every game ingested before
+    /// the mapper fix, so counting them only for new games would skew live values against training.
+    /// </summary>
     private static (int Saves, int Shots) GetSavesAndShots(DbGameGoalieStats stats)
     {
-        int saves = stats.EvenStrengthShotsSaved + stats.PowerPlayShotsSaved + stats.ShortHandedShotsSaved;
-        int goalsAllowed = stats.EvenStrengthGoalsAllowed + stats.PowerPlayGoalsAllowed + stats.ShortHandedGoalsAllowed;
+        int saves = stats.EvenStrengthShotsSaved + stats.PowerPlayShotsSaved;
+        int goalsAllowed = stats.EvenStrengthGoalsAllowed + stats.PowerPlayGoalsAllowed;
         return (saves, saves + goalsAllowed);
     }
 
