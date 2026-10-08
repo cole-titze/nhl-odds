@@ -1,6 +1,8 @@
-# Weekly dependency PRs. Minor and patch updates are grouped into one PR per
-# ecosystem; majors get their own PRs. Majors that track the .NET, Node or
-# Postgres version are ignored and upgraded on purpose instead.
+# Weekly dependency PRs: one PR per ecosystem for minor/patch updates (merged
+# automatically by dependabot-merge.yml once CI passes) and one for majors (the
+# "-majors" groups, handled by the k8s-major-upgrade skill). Grouping majors also
+# stops Dependabot from opening one PR per project for the same bump. Majors that
+# track the .NET, Node or Postgres version are ignored and upgraded on purpose.
 # game_predictor/requirements*.txt is unpinned (prod installs the latest on
 # every image build), so pip has nothing for Dependabot to bump.
 version: 2
@@ -12,7 +14,12 @@ updates:
     groups:
       nuget:
         update-types: [minor, patch]
+      nuget-majors:
+        update-types: [major]
     ignore:
+      # 8.x moved to a license that's free only for non-commercial use
+      - dependency-name: "FluentAssertions"
+        versions: [">=8"]
       - dependency-name: "Microsoft.*"
         update-types: [version-update:semver-major]
       - dependency-name: "Npgsql*"
@@ -25,6 +32,12 @@ updates:
     groups:
       npm:
         update-types: [minor, patch]
+      npm-majors:
+        update-types: [major]
+    ignore:
+      # Types follow the Node major the frontend builds with (node:24 in the Dockerfile)
+      - dependency-name: "@types/node"
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: docker
     directories:
