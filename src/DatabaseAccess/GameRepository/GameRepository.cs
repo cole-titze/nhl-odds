@@ -49,6 +49,20 @@ public class GameRepository : IGameRepository
     }
 
     /// <summary>
+    /// Gets the played games that started on or after a time
+    /// </summary>
+    /// <param name="sinceUtc">Earliest start time</param>
+    /// <returns>Game ids, ascending</returns>
+    public async Task<IList<int>> GetPlayedGameIdsSince(DateTime sinceUtc)
+    {
+        return await _dbContext.GameRaw
+            .Where(g => g.HasBeenPlayed && g.GameDateUTC >= sinceUtc)
+            .OrderBy(g => g.Id)
+            .Select(g => g.Id)
+            .ToListAsync();
+    }
+
+    /// <summary>
     /// Gets total games for given season
     /// </summary>
     /// <param name="seasonStartYear">season start year</param>

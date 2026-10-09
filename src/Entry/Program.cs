@@ -30,6 +30,7 @@ var settings = new ModeSettings()
         .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
         .Select(int.Parse)
         .ToList(),
+    RefetchDays = int.Parse(Environment.GetEnvironmentVariable("REFETCH_DAYS") ?? "7"),
 };
 
 if (string.IsNullOrEmpty(settings.ConnectionString))

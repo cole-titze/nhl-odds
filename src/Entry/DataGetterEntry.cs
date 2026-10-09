@@ -148,6 +148,10 @@ public class DataGetterEntry
                 await dataManager.GetNhlData(yearRange, modeSettings.Mode);
                 _logger.LogTrace("Completed Data Getter");
 
+                // NhlUpdate already re-fetched everything
+                if (modeSettings.Mode == ModeType.NhlAdd && modeSettings.RefetchDays > 0)
+                    await dataManager.RefetchRecentGames(modeSettings.RefetchDays);
+
                 // Snapshot who is on injured reserve before cleaning, so today's projected lineups can use it
                 try
                 {

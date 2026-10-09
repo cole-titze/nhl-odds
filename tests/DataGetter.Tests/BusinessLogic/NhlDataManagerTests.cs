@@ -162,4 +162,20 @@ public class NhlDataManagerTests
         A.CallTo(() => _playerRepo.UpdateGoalieShortHandedStats(2020020002, stats)).MustHaveHappenedOnceExactly();
         A.CallTo(() => _playerRepo.Commit()).MustHaveHappenedOnceExactly();
     }
+
+    [TestMethod]
+    public async Task RefetchRecentGames_RefetchesPlayedGamesFromTheLookbackWindow()
+    {
+        var since = DateTime.MinValue;
+        A.CallTo(() => _gameRepo.GetPlayedGameIdsSince(A<DateTime>.Ignored))
+            .Invokes((DateTime d) => since = d)
+            .Returns(new List<int> { 2026020001, 2026020002 });
+
+        var sut = CreateSut();
+        await sut.RefetchRecentGames(7);
+
+        since.Should().BeCloseTo(DateTime.UtcNow.AddDays(-7), TimeSpan.FromMinutes(1));
+        A.CallTo(() => _nhlDataGetter.GameDataGetter.GetGame(2026020001)).MustHaveHappenedOnceExactly();
+        A.CallTo(() => _nhlDataGetter.GameDataGetter.GetGame(2026020002)).MustHaveHappenedOnceExactly();
+    }
 }

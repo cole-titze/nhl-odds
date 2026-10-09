@@ -10,4 +10,6 @@ public class ModeSettings
     public string OddsApiKey { get; set; } = string.Empty;
     public string OddsApiBackfillKey { get; set; } = string.Empty;
     public IEnumerable<int> BackfillGameIds { get; set; } = [];
+    // NhlAdd re-fetches games played in this many past days to pick up NHL stat corrections; 0 turns it off
+    public int RefetchDays { get; set; } = 7;
 }

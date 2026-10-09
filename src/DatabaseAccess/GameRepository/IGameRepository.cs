@@ -18,5 +18,6 @@ public interface IGameRepository
     Task<int?> GetGameCountForSeason(int seasonStartYear);
     Task<bool> HasPlayoffGamesForSeason(int seasonStartYear);
     Task<bool> HasPastUnplayedGamesForSeason(int seasonStartYear);
+    Task<IList<int>> GetPlayedGameIdsSince(DateTime sinceUtc);
     Task DeleteGame(int gameId);
 }

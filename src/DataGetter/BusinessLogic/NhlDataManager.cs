@@ -98,6 +98,19 @@ public class NhlDataManager
     }
 
     /// <summary>
+    /// Re-fetches the games played in the last few days. The NHL keeps correcting box scores and play-by-play
+    /// (shots, hits, blocks, re-typed shots, rescinded penalties) for days after a game, and a played game is otherwise
+    /// never fetched again.
+    /// </summary>
+    /// <param name="days">How many days back to re-fetch</param>
+    public async Task RefetchRecentGames(int days)
+    {
+        var gameIds = await _gameRepo.GetPlayedGameIdsSince(DateTime.UtcNow.AddDays(-days));
+        _logger.LogInformation("Re-fetching {Count} game(s) played in the last {Days} day(s)", gameIds.Count, days);
+        await BackfillGames(gameIds);
+    }
+
+    /// <summary>
     /// Re-fetches the shorthanded shots and goals of goalies in games saved before the mapper read them, one boxscore
     /// request per game, and updates only those fields. Re-runnable: games that already have them are skipped.
     /// </summary>

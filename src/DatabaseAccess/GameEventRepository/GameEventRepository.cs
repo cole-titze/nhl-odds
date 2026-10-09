@@ -42,7 +42,7 @@ public class GameEventRepository : IGameEventRepository
     /// <returns>None</returns>
     public async Task AddUpdateGameEvents(Game game)
     {
-        var dbGameEvents = MapGameToDbGameEvent.Map(game);
+        var dbGameEvents = MapGameToDbGameEvent.Map(game).ToList();
 
         // Batch-load all existing events for this game in one pass (one query per event type)
         var existingEvents = await GetAllDbGameEvents(game.Id);
@@ -81,6 +81,26 @@ public class GameEventRepository : IGameEventRepository
         await AddOrUpdateEvents(_dbContext.GameStoppageEvent, addList, updateList);
         await AddOrUpdateEvents(_dbContext.GamePeriodEndEvent, addList, updateList);
         await AddOrUpdateEvents(_dbContext.GameFailedShotAttemptEvent, addList, updateList);
+
+        // Only called for played games, so the play-by-play is authoritative: drop events the NHL has since
+        // removed or re-typed (a shot re-scored as a miss keeps its event id, so the old row would count it twice)
+        _dbContext.RemoveRange(GetStaleEvents(existingEvents, dbGameEvents));
+    }
+
+    /// <summary>
+    /// Gets the stored events that are no longer in the game's play-by-play. Returns none when the new play-by-play
+    /// has fewer than half the stored events, so a truncated API response can't wipe a game.
+    /// </summary>
+    /// <param name="existingEvents">The game's stored events</param>
+    /// <param name="newEvents">The game's events from the latest play-by-play</param>
+    /// <returns>Events to delete</returns>
+    public static IEnumerable<IDbGameEvent> GetStaleEvents(IEnumerable<IDbGameEvent> existingEvents, IEnumerable<IDbGameEvent> newEvents)
+    {
+        var existing = existingEvents.ToList();
+        var newKeys = newEvents.Select(e => (e.GetType(), e.Id)).ToHashSet();
+        if (newKeys.Count * 2 < existing.Count)
+            return [];
+        return existing.Where(e => !newKeys.Contains((e.GetType(), e.Id))).ToList();
     }
 
     /// <summary>
