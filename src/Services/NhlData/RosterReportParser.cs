@@ -11,8 +11,9 @@ namespace Services.NhlData;
 public static partial class RosterReportParser
 {
     // Optional sweater number (missing on some long-term IR rows), name, position, height, weight, birthdate,
-    // birthplace, then an optional IR date separated by 2+ spaces
-    [GeneratedRegex(@"^\s*(?:\d+)?\s+(?<name>\S.*?)\s+(?<pos>[GDCLR])\s+\d+'\d+""\s+\d+lbs\.\s+(?<born>\d{4}-\d{2}-\d{2})(?:\s+.*?)?(?:\s{2,}(?<ir>\d{4}-\d{2}-\d{2}))?\s*$")]
+    // birthplace, then an optional IR date separated by 2+ spaces. Columns are fixed-width, so a birthplace that
+    // fills its column runs straight into the date ("Fort Saskatchewan AB, CAN2026-10-07").
+    [GeneratedRegex(@"^\s*(?:\d+)?\s+(?<name>\S.*?)\s+(?<pos>[GDCLR])\s+\d+'\d+""\s+\d+lbs\.\s+(?<born>\d{4}-\d{2}-\d{2})(?:\s+.*?)?(?:(?:\s{2,}|(?<=[A-Za-z]))(?<ir>\d{4}-\d{2}-\d{2}))?\s*$")]
     private static partial Regex PlayerRow();
 
     [GeneratedRegex(@"^Last update:\s*(?<value>\d{2}:\d{2}:\d{2} \d{2}/\d{2}/\d{4})")]

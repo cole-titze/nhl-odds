@@ -59,6 +59,25 @@ public class NhlRosterStatusManagerTests
     }
 
     [TestMethod]
+    public void Parse_ReadsInjuredReserveDateRunningIntoLongBirthplace()
+    {
+        const string report = """
+            Playing Roster - EDMONTON OILERS
+
+            Injury Reserve List -
+            34        COLTON DACH              C         6'3"      215lbs.        2003-01-04     Fort Saskatchewan AB, CAN2026-10-07
+
+            Active - 0
+            """;
+
+        var dach = RosterReportParser.Parse(report).Single();
+
+        dach.IsInjuredReserve.Should().BeTrue();
+        dach.BirthDate.Should().Be(new DateTime(2003, 1, 4));
+        dach.InjuredReserveDate.Should().Be(new DateTime(2026, 10, 7));
+    }
+
+    [TestMethod]
     public void MatchEntries_MatchesByBirthDateAndName()
     {
         var entries = RosterReportParser.Parse(REPORT);
