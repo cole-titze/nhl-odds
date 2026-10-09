@@ -444,4 +444,17 @@ public class NhlApiPlayerParsingTests
         away.ShortHandedShotsSaved.Should().Be(0);   // null in the API
         away.ShortHandedGoalsAllowed.Should().Be(0);
     }
+
+    [TestMethod]
+    public void MapGoalies_NegativeShotsAgainst_CountsAsZero()
+    {
+        // Games 2013020073 and 2019020092 report "shorthandedShotsAgainst": "-1/0"
+        var json = BoxscoreWithPlayerStatsJson.Replace("\"shorthandedShotsAgainst\": \"1/2\"", "\"shorthandedShotsAgainst\": \"-1/0\"");
+
+        var home = MapGamePlayerStatsResponseToGamePlayerStats.MapGoalies(JsonNode.Parse(json)!)
+            .Single(g => g.PlayerId == 8477992);
+
+        home.ShortHandedShotsSaved.Should().Be(0);
+        home.EvenStrengthShotsSaved.Should().Be(21);
+    }
 }

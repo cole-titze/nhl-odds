@@ -48,18 +48,25 @@ public static class MapGamePlayerStatsResponseToGamePlayerStats
             .Cast<GameGoalieStats>();
     }
 
+    /// <summary>
+    /// Saves from a "saves/shots" string like "21/23". A few old games have bad values like "-1/0"; those count as 0
+    /// rather than failing the whole game.
+    /// </summary>
+    private static int ParseShotsSaved(JsonNode? shotsAgainst)
+    {
+        var saves = shotsAgainst?.GetValue<string>().Split('/')[0];
+        return int.TryParse(saves, out var value) && value > 0 ? value : 0;
+    }
+
     private static IEnumerable<IGamePlayerStats> GetGameGoalies(JsonNode goalies, int homeTeamId)
     {
         var gameGoalies = new List<IGamePlayerStats>();
         foreach (var goalie in goalies.AsArray())
         {
-            var evenStrengthShotsSaved = goalie!["evenStrengthShotsAgainst"] == null ? 0 :
-                int.Parse(new string(goalie["evenStrengthShotsAgainst"]!.GetValue<string>().TakeWhile(Char.IsDigit).ToArray()));
-            var powerPlayShotsSaved = goalie["powerPlayShotsAgainst"] == null ? 0 :
-                int.Parse(new string(goalie["powerPlayShotsAgainst"]!.GetValue<string>().TakeWhile(Char.IsDigit).ToArray()));
+            var evenStrengthShotsSaved = ParseShotsSaved(goalie!["evenStrengthShotsAgainst"]);
+            var powerPlayShotsSaved = ParseShotsSaved(goalie["powerPlayShotsAgainst"]);
             // The API spells these "shorthanded" (lowercase h)
-            var shortHandedShotsSaved = goalie["shorthandedShotsAgainst"] == null ? 0 :
-                int.Parse(new string(goalie["shorthandedShotsAgainst"]!.GetValue<string>().TakeWhile(Char.IsDigit).ToArray()));
+            var shortHandedShotsSaved = ParseShotsSaved(goalie["shorthandedShotsAgainst"]);
             var evenStrengthGoalsAllowed = goalie["evenStrengthGoalsAgainst"] == null ? 0 : goalie["evenStrengthGoalsAgainst"]!.GetValue<int>();
             var powerPlayGoalsAllowed = goalie["powerPlayGoalsAgainst"] == null ? 0 : goalie["powerPlayGoalsAgainst"]!.GetValue<int>();
             var shortHandedGoalsAllowed = goalie["shorthandedGoalsAgainst"] == null ? 0 : goalie["shorthandedGoalsAgainst"]!.GetValue<int>();
