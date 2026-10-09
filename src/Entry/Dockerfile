@@ -15,7 +15,7 @@ COPY . .
 RUN dotnet publish src/Entry/Entry.csproj -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine
-RUN apk upgrade --no-cache && apk add --no-cache icu-libs tzdata
+RUN apk upgrade --no-cache && apk add --no-cache icu-libs krb5-libs tzdata
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 WORKDIR /app
 COPY --from=build /app/publish .
