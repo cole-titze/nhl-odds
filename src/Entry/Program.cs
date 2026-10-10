@@ -66,6 +66,7 @@ var jobName = settings.Mode switch
     ModeType.BackfillGame => "game-backfill",
     ModeType.BackfillGoalieStats => "goalie-stats-backfill",
     ModeType.CleanAll => "clean-all",
+    ModeType.LineupSnapshot => "lineup-snapshot",
     _ => null,
 };
 

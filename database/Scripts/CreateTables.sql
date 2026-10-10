@@ -834,6 +834,17 @@ CREATE TABLE "RosterStatus"
     FOREIGN KEY ("TeamId") REFERENCES "Team"("Id")
 );
 
+-- Each version of NHL.com's lineup projections article, saved the first time its text is seen
+CREATE TABLE "LineupArticle"
+(
+    "ContentHash" CHAR(64) NOT NULL,
+    "FirstSeenUTC" TIMESTAMP NOT NULL,
+    "ContentDate" TIMESTAMP NULL,
+    "LastUpdated" TIMESTAMP NULL,
+    "RawJson" TEXT NOT NULL,
+    CONSTRAINT "PK_LineupArticle" PRIMARY KEY("ContentHash")
+);
+
 CREATE TABLE "ErrorLog"
 (
     "Id" SERIAL NOT NULL,

@@ -6,6 +6,7 @@ using DatabaseAccess.BroadcasterRepository;
 using DatabaseAccess.ErrorRepository;
 using DatabaseAccess.GameEventRepository;
 using DatabaseAccess.GameRepository;
+using DatabaseAccess.LineupArticleRepository;
 using DatabaseAccess.PlayerRepository;
 using DatabaseAccess.RosterStatusRepository;
 using DatabaseAccess.TeamRepository;
@@ -67,7 +68,13 @@ public class DataGetterEntry
 
         var dataManager = new NhlDataManager(gameRepo, playerRepo, teamRepo, errorRepo, broadcasterRepo, gameEventRepo, gameGetter, playerGetter, teamGetter, _loggerFactory);
 
-        if (modeSettings.Mode == ModeType.KalshiFetch)
+        if (modeSettings.Mode == ModeType.LineupSnapshot)
+        {
+            var lineupManager = new NhlLineupArticleManager(
+                new LineupArticleRepository(nhlDbContext), new NhlLineupArticleGetter(_loggerFactory), _loggerFactory);
+            await lineupManager.SaveLineupArticle(DateTime.UtcNow);
+        }
+        else if (modeSettings.Mode == ModeType.KalshiFetch)
         {
             var kalshiDbContext = new NhlDbContext(modeSettings.ConnectionString);
             var kalshiOddsRepo = new BookmakerOddsRepository(kalshiDbContext);

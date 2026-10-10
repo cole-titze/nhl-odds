@@ -33,6 +33,7 @@ public partial class NhlDbContext : DbContext
     public virtual DbSet<DbBookmakerOddsResponse> BookmakerOddsResponse { get; set; } = null!;
     public virtual DbSet<DbErrorLog> ErrorLog { get; set; } = null!;
     public virtual DbSet<DbRosterStatus> RosterStatus { get; set; } = null!;
+    public virtual DbSet<DbLineupArticle> LineupArticle { get; set; } = null!;
 
     // Game Event Tables
     public virtual DbSet<DbBlockedShot> GameBlockedShotEvent { get; set; } = null!;
@@ -73,6 +74,8 @@ public partial class NhlDbContext : DbContext
             .HasKey(c => new { c.GameId, c.BookmakerName });
         modelBuilder.Entity<DbRosterStatus>()
             .HasKey(c => new { c.SnapshotUTC, c.PlayerId });
+        modelBuilder.Entity<DbLineupArticle>()
+            .HasKey(c => c.ContentHash);
         modelBuilder.Entity<DbGameOdds>()
             .HasKey(c => new { c.GameId, c.ModelId, c.RunDateUTC });
         modelBuilder.Entity<DbGameSpreadTotalOdds>()

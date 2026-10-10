@@ -45,7 +45,7 @@ The app reads config in priority order:
 
 1. **Environment variables** (production):
    - `NHL_DATABASE` — full PostgreSQL connection string (e.g. `Host=localhost;Database=nhl;Username=postgres;Password=...`)
-   - `RUN_MODE` — `"NhlAdd"`, `"NhlUpdate"`, `"NextDayOdds"`, `"BackfillOdds"`, `"KalshiFetch"`, `"BackfillKalshi"`, `"BackfillGame"`, `"BackfillGoalieStats"`, or `"CleanAll"`
+   - `RUN_MODE` — `"NhlAdd"`, `"NhlUpdate"`, `"NextDayOdds"`, `"BackfillOdds"`, `"KalshiFetch"`, `"BackfillKalshi"`, `"BackfillGame"`, `"BackfillGoalieStats"`, `"CleanAll"`, or `"LineupSnapshot"`
    - `THROTTLE_TIME_MS` — delay between NHL API requests (ms)
    - `BACKFILL_GAME_IDS` — comma-separated game IDs to re-fetch (for `BackfillGame` mode)
    - `REFETCH_DAYS` — `NhlAdd` re-fetches games played in this many past days to pick up NHL stat corrections (default 7, `0` turns it off)
@@ -152,6 +152,7 @@ HTTP Request
 - `BackfillGame` — force re-fetches the games in `BACKFILL_GAME_IDS` and overwrites them
 - `BackfillGoalieStats` — re-fetches only goalies' shorthanded shots/goals (one boxscore request per game) for games saved before the mapper read them; re-runnable, skips games that already have them
 - `CleanAll` — skips data collection and re-cleans every game in every season (run after changing how `GameCleaned` features are computed)
+- `LineupSnapshot` — saves NHL.com's lineup projections article to `LineupArticle` when its text has changed (the article is rewritten daily; runs every 30 min on game days)
 
 **Game ID encoding** (`NhlApiDataGetter.GetGameId`):
 ```
