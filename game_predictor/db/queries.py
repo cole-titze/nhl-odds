@@ -149,6 +149,7 @@ FEATURE_COLUMNS = GAME_CLEANED_COLUMNS + XG_FEATURE_COLUMNS
 
 _feature_cols_sql = ", ".join(f'gc."{col}"' for col in GAME_CLEANED_COLUMNS)
 
+# Game queries are ordered so training sees the same row order however the table was last rewritten (CleanAll)
 TRAINING_DATA_QUERY = f"""
 SELECT {_feature_cols_sql},
        gr."Winner", gr."SeasonStartYear",
@@ -158,6 +159,7 @@ FROM "GameCleaned" gc
 JOIN "GameRaw" gr ON gc."GameId" = gr."Id"
 WHERE gr."HasBeenPlayed" = true
   AND gr."GameType" = 2
+ORDER BY gr."GameDateUTC", gr."Id"
 """
 
 UNPLAYED_GAMES_QUERY = f"""
@@ -167,6 +169,7 @@ FROM "GameCleaned" gc
 JOIN "GameRaw" gr ON gc."GameId" = gr."Id"
 WHERE gr."HasBeenPlayed" = false
   AND gr."GameType" = 2
+ORDER BY gr."GameDateUTC", gr."Id"
 """
 
 CURRENT_SEASON_GAMES_QUERY = f"""
@@ -177,6 +180,7 @@ FROM "GameCleaned" gc
 JOIN "GameRaw" gr ON gc."GameId" = gr."Id"
 WHERE gr."SeasonStartYear" = (SELECT MAX("SeasonStartYear") FROM "GameRaw")
   AND gr."GameType" = 2
+ORDER BY gr."GameDateUTC", gr."Id"
 """
 
 TEAM_NAMES_QUERY = """
