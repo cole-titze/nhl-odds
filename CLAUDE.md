@@ -49,6 +49,7 @@ The app reads config in priority order:
    - `THROTTLE_TIME_MS` — delay between NHL API requests (ms)
    - `BACKFILL_GAME_IDS` — comma-separated game IDs to re-fetch (for `BackfillGame` mode)
    - `REFETCH_DAYS` — `NhlAdd` re-fetches games played in this many past days to pick up NHL stat corrections (default 7, `0` turns it off)
+   - `BACKFILL_START_YEAR` — first season for `BackfillGameDetails` (default: 2009)
    - `CLEAN_PARALLELISM` — how many seasons the data cleaner cleans at once (default 4; each holds two seasons of data in memory)
    - `ODDS_API_KEY` — The Odds API key (for `NextDayOdds` mode)
    - `API_BACKFILL_KEY` — The Odds API key for backfill (can be different quota)
@@ -152,6 +153,7 @@ HTTP Request
 - `BackfillGame` — force re-fetches the games in `BACKFILL_GAME_IDS` and overwrites them
 - `BackfillGoalieStats` — re-fetches only goalies' shorthanded shots/goals (one boxscore request per game) for games saved before the mapper read them; re-runnable, skips games that already have them
 - `CleanAll` — skips data collection and re-cleans every game in every season (run after changing how `GameCleaned` features are computed)
+- `BackfillGameDetails` — fetches every played game's roster (`GameRosterSpot`) and shift chart (`GameShift`) and every goal's tracking replay (`GoalReplay`, `GoalReplayPosition`: player and puck x/y every 0.1 s) not saved yet; re-runnable, games and replays run side by side. `NhlAdd` does the same for recent games after cleaning (re-fetching rosters/shifts inside `REFETCH_DAYS`); `GameDetailFetch` records what's done
 - `LineupSnapshot` — saves NHL.com content that only shows its current state, each step independent (failures go to `ErrorLog` and fail the job at the end); runs every 30 min on game days:
   - the lineup projections article → `LineupArticle` when its text has changed, then each new game section → `LineupGame` (game, teams, status report) and `LineupPlayer` (forward lines, defense pairs, goalie order, scratched/injured/suspended, matched to player ids through each team's current NHL roster, else a unique name in `Player`); `LineupArticleParse` marks versions parsed
   - the betting-partner odds widget (DraftKings US, FanDuel CA) → `PartnerOdds`, one row per team per line (`Line`/`Outcome` split from the qualifier), each new version (after puck drop it shows live odds: pre-game lines are `PartnerUpdatedUTC < StartTimeUTC`)

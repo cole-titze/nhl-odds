@@ -32,6 +32,7 @@ var settings = new ModeSettings()
         .ToList(),
     RefetchDays = int.Parse(Environment.GetEnvironmentVariable("REFETCH_DAYS") ?? "7"),
     CleanParallelism = int.Parse(Environment.GetEnvironmentVariable("CLEAN_PARALLELISM") ?? "4"),
+    BackfillStartYear = int.TryParse(Environment.GetEnvironmentVariable("BACKFILL_START_YEAR"), out var backfillStart) ? backfillStart : null,
 };
 
 if (string.IsNullOrEmpty(settings.ConnectionString))
@@ -67,6 +68,7 @@ var jobName = settings.Mode switch
     ModeType.BackfillGoalieStats => "goalie-stats-backfill",
     ModeType.CleanAll => "clean-all",
     ModeType.LineupSnapshot => "lineup-snapshot",
+    ModeType.BackfillGameDetails => "game-details-backfill",
     _ => null,
 };
 

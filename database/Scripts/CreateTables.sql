@@ -845,6 +845,77 @@ CREATE TABLE "LineupArticle"
     CONSTRAINT "PK_LineupArticle" PRIMARY KEY("ContentHash")
 );
 
+-- Players dressed for each game (play-by-play rosterSpots)
+CREATE TABLE "GameRosterSpot"
+(
+    "GameId" INTEGER NOT NULL,
+    "PlayerId" INTEGER NOT NULL,
+    "TeamId" INTEGER NOT NULL,
+    "SweaterNumber" SMALLINT NULL,
+    "PositionCode" VARCHAR(2) NOT NULL,
+    CONSTRAINT "PK_GameRosterSpot" PRIMARY KEY("GameId", "PlayerId")
+);
+
+-- Each game's shift chart: player shifts (TypeCode 517) and goal markers (505); times are seconds into the period
+CREATE TABLE "GameShift"
+(
+    "Id" BIGINT NOT NULL,
+    "GameId" INTEGER NOT NULL,
+    "PlayerId" INTEGER NOT NULL,
+    "TeamId" INTEGER NOT NULL,
+    "Period" SMALLINT NOT NULL,
+    "ShiftNumber" SMALLINT NOT NULL,
+    "StartSeconds" SMALLINT NOT NULL,
+    "EndSeconds" SMALLINT NOT NULL,
+    "DurationSeconds" SMALLINT NULL,
+    "TypeCode" SMALLINT NOT NULL,
+    "DetailCode" SMALLINT NOT NULL,
+    "EventNumber" INTEGER NULL,
+    "EventDescription" TEXT NULL,
+    "EventDetails" TEXT NULL,
+    CONSTRAINT "PK_GameShift" PRIMARY KEY("Id")
+);
+CREATE INDEX "IX_GameShift_GameId" ON "GameShift"("GameId");
+
+-- Each goal's tracking replay fetch (GameGoalEvent.PptReplayUrl); HttpStatus 403/404 when the NHL doesn't serve it
+CREATE TABLE "GoalReplay"
+(
+    "GameId" INTEGER NOT NULL,
+    "EventId" INTEGER NOT NULL,
+    "HttpStatus" SMALLINT NOT NULL,
+    "FrameCount" SMALLINT NOT NULL,
+    "FirstTimeStamp" BIGINT NULL,
+    "FetchedUTC" TIMESTAMP NOT NULL,
+    CONSTRAINT "PK_GoalReplay" PRIMARY KEY("GameId", "EventId")
+);
+
+-- Player and puck positions in each frame (a tenth of a second) of a goal replay. TrackId 1 is the puck (no player).
+CREATE TABLE "GoalReplayPosition"
+(
+    "GameId" INTEGER NOT NULL,
+    "EventId" INTEGER NOT NULL,
+    "Frame" SMALLINT NOT NULL,
+    "TrackId" INTEGER NOT NULL,
+    "TimeStamp" BIGINT NOT NULL,
+    "PlayerId" INTEGER NULL,
+    "TeamId" INTEGER NULL,
+    "SweaterNumber" SMALLINT NULL,
+    "X" REAL NOT NULL,
+    "Y" REAL NOT NULL,
+    CONSTRAINT "PK_GoalReplayPosition" PRIMARY KEY("GameId", "EventId", "Frame", "TrackId")
+);
+COMMENT ON TABLE "GoalReplayPosition" IS 'X/Y are the replay''s own rink pixels (about 0-2400 by 0-1020), not the play-by-play''s feet from center ice';
+
+-- When each game's roster or shift chart was last fetched and how many rows it had (0 is a real answer before 2010)
+CREATE TABLE "GameDetailFetch"
+(
+    "GameId" INTEGER NOT NULL,
+    "Kind" VARCHAR(10) NOT NULL,
+    "FetchedUTC" TIMESTAMP NOT NULL,
+    "Rows" INTEGER NOT NULL,
+    CONSTRAINT "PK_GameDetailFetch" PRIMARY KEY("GameId", "Kind")
+);
+
 -- Each game section of the lineup projections article, saved the first time its text is seen
 CREATE TABLE "LineupGame"
 (

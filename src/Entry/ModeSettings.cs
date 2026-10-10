@@ -14,4 +14,6 @@ public class ModeSettings
     public int RefetchDays { get; set; } = 7;
     // How many seasons the cleaner works on at once
     public int CleanParallelism { get; set; } = 4;
+    // BackfillGameDetails starts at this season (default: the first season collected)
+    public int? BackfillStartYear { get; set; }
 }

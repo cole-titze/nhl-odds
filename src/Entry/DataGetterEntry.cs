@@ -4,6 +4,7 @@ using DatabaseAccess;
 using DatabaseAccess.BookmakerOddsRepository;
 using DatabaseAccess.BroadcasterRepository;
 using DatabaseAccess.ErrorRepository;
+using DatabaseAccess.GameDetailRepository;
 using DatabaseAccess.GameEventRepository;
 using DatabaseAccess.GameRepository;
 using DatabaseAccess.LineupArticleRepository;
@@ -136,6 +137,13 @@ public class DataGetterEntry
             await dataManager.BackfillGames(modeSettings.BackfillGameIds);
             _logger.LogTrace("Completed Game Backfill");
         }
+        else if (modeSettings.Mode == ModeType.BackfillGameDetails)
+        {
+            _logger.LogTrace("Starting Game Details Backfill");
+            await CreateGameDetailManager(modeSettings).Backfill(
+                new YearRange(modeSettings.BackfillStartYear ?? START_YEAR, DateTime.Now));
+            _logger.LogTrace("Completed Game Details Backfill");
+        }
         else if (modeSettings.Mode == ModeType.BackfillGoalieStats)
         {
             _logger.LogTrace("Starting Goalie Stats Backfill");
@@ -176,12 +184,44 @@ public class DataGetterEntry
             _logger.LogTrace("Starting Data Cleaner");
             await gameCleaner.CleanGamesInSeasons(yearRange, cleanAll);
             _logger.LogTrace("Completed Data Cleaner");
+
+            // Rosters, shift charts and goal replays aren't model inputs, so they come after cleaning
+            if (!cleanAll)
+            {
+                try
+                {
+                    var recentGameIds = modeSettings.RefetchDays > 0
+                        ? await gameRepo.GetPlayedGameIdsSince(DateTime.UtcNow.AddDays(-modeSettings.RefetchDays))
+                        : [];
+                    await CreateGameDetailManager(modeSettings).FetchRecent(yearRange.EndYear, recentGameIds);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to fetch game details");
+                    await errorRepo.AddError(new DbErrorLog
+                    {
+                        TimestampUTC = DateTime.UtcNow,
+                        ExceptionType = ex.GetType().FullName ?? ex.GetType().Name,
+                        Message = ex.Message,
+                        StackTrace = ex.StackTrace ?? string.Empty,
+                        Source = "GameDetails",
+                    });
+                }
+            }
         }
 
         watch.Stop();
         var elapsedTime = watch.Elapsed;
         var minutes = elapsedTime.TotalMinutes.ToString();
         _logger.LogTrace("Completed Data Collection in " + minutes + " minutes");
+    }
+
+    private GameDetailManager CreateGameDetailManager(ModeSettings modeSettings)
+    {
+        return new GameDetailManager(
+            () => new GameDetailRepository(new NhlDbContext(modeSettings.ConnectionString)),
+            () => new ErrorRepository(new NhlDbContext(modeSettings.ConnectionString)),
+            new NhlGameDetailGetter(), _loggerFactory);
     }
 
     /// <summary>
