@@ -5,7 +5,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from ..db.queries import FEATURE_COLUMNS
 from ..prediction.experiments import REGRESSION_EXPERIMENTS, SAVE_SPREAD_EXPERIMENT, SAVE_TOTAL_EXPERIMENT
 from .ensemble import RegressionEnsemble
-from .trainer import _fit, build_models
+from .trainer import build_models, fit_models
 from .training import EVAL_SEASONS, TUNE_SEASONS, _walk_forward_splits
 
 _REGRESSOR_TO_FACTORY = {
@@ -87,8 +87,7 @@ def _final_result(results: dict) -> tuple[str, dict]:
 def _train_and_evaluate_regression(models, X_train, X_test, y_train, y_test, ensemble_names, sample_weight=None):
     results = {}
 
-    for name, model in models.items():
-        _fit(model, X_train, y_train, sample_weight)
+    for name, model in fit_models(models, X_train, y_train, sample_weight).items():
         y_pred = model.predict(X_test)
         results[name] = {
             "model": model,
@@ -146,9 +145,7 @@ def train_regression_default(train_df, target: str):
     pipeline = exp.pipeline
     X_train_t = pipeline.fit_transform(X_train_raw, y_train)
 
-    built = build_models(exp.models)
-    for model in built.values():
-        _fit(model, X_train_t, y_train, w_train)
+    built = fit_models(build_models(exp.models), X_train_t, y_train, w_train)
 
     if exp.ensemble and len(exp.ensemble) > 1:
         ensemble_models = [built[n] for n in exp.ensemble]
@@ -204,7 +201,7 @@ def train_regression_for_season(train_df, target: str):
     for model in built.values():
         if hasattr(model, "n_neighbors") and model.n_neighbors > n_samples:
             model.n_neighbors = max(1, n_samples - 1)
-        _fit(model, X_t, y, w)
+    built = fit_models(built, X_t, y, w)
 
     if exp.ensemble and len(exp.ensemble) > 1:
         ensemble_models = [built[n] for n in exp.ensemble]
@@ -279,7 +276,7 @@ def train_regression_for_day(train_df, target: str):
     for model in built.values():
         if hasattr(model, "n_neighbors") and model.n_neighbors > n_samples:
             model.n_neighbors = max(1, n_samples - 1)
-        _fit(model, X_train_t, y_train, w_train)
+    built = fit_models(built, X_train_t, y_train, w_train)
 
     if exp.ensemble and len(exp.ensemble) > 1:
         ensemble_models = [built[n] for n in exp.ensemble]

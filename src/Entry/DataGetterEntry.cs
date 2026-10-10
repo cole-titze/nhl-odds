@@ -3,14 +3,10 @@ using BookmakerOddsGetter;
 using DatabaseAccess;
 using DatabaseAccess.BookmakerOddsRepository;
 using DatabaseAccess.BroadcasterRepository;
-using DatabaseAccess.CleanedGameRepository;
 using DatabaseAccess.ErrorRepository;
 using DatabaseAccess.GameEventRepository;
-using DatabaseAccess.GameEventSeasonRepository;
 using DatabaseAccess.GameRepository;
-using DatabaseAccess.GameSeasonRepository;
 using DatabaseAccess.PlayerRepository;
-using DatabaseAccess.PlayerStatsSeasonRepository;
 using DatabaseAccess.RosterStatusRepository;
 using DatabaseAccess.TeamRepository;
 using DataCleaner;
@@ -166,15 +162,9 @@ public class DataGetterEntry
                 }
             }
 
-            // Run data cleaner with a separate DbContext to avoid EF tracking conflicts
-            var cleanerDbContext = new NhlDbContext(modeSettings.ConnectionString);
-            var gameSeasonRepo = new GameSeasonRepository(cleanerDbContext);
-            var cleanedGameRepo = new CleanedGameRepository(cleanerDbContext);
-            var playerStatsRepo = new PlayerStatsSeasonRepository(cleanerDbContext);
-            var cleanerErrorDbContext = new NhlDbContext(modeSettings.ConnectionString);
-            var cleanerErrorRepo = new ErrorRepository(cleanerErrorDbContext);
-            var gameEventSeasonRepo = new GameEventSeasonRepository(cleanerDbContext);
-            var gameCleaner = new GameCleaner(gameSeasonRepo, cleanedGameRepo, playerStatsRepo, gameEventSeasonRepo, cleanerErrorRepo, _loggerFactory);
+            // The cleaner makes its own DbContexts (one per season) to avoid EF tracking conflicts
+            var gameCleaner = new GameCleaner(() => new NhlDbContext(modeSettings.ConnectionString), _loggerFactory,
+                modeSettings.CleanParallelism);
 
             _logger.LogTrace("Starting Data Cleaner");
             await gameCleaner.CleanGamesInSeasons(yearRange, cleanAll);

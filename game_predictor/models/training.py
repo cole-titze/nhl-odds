@@ -12,7 +12,7 @@ from ..db.queries import FEATURE_COLUMNS
 from ..prediction.experiments import EXPERIMENTS, SAVE_EXPERIMENT
 from .calibration import calibrate_model
 from .ensemble import Ensemble, WeightedStackingClassifier
-from .trainer import _fit, build_models, train_and_evaluate
+from .trainer import build_models, fit_models, train_and_evaluate
 
 
 def _compute_weights(seasons: np.ndarray, decay: float) -> np.ndarray | None:
@@ -134,9 +134,7 @@ def train_default(train_df):
     pipeline = exp.pipeline
     X_train_t = pipeline.fit_transform(X_train_raw, y_train)
 
-    built = build_models(exp.models)
-    for model in built.values():
-        _fit(model, X_train_t, y_train, w_train)
+    built = fit_models(build_models(exp.models), X_train_t, y_train, w_train)
 
     if exp.ensemble and len(exp.ensemble) > 1:
         if exp.stack:
@@ -144,7 +142,8 @@ def train_default(train_df):
 
             estimators = [(n, clone(built[n])) for n in exp.ensemble]
             save_model = WeightedStackingClassifier(estimators=estimators)
-            save_model.fit(X_train_t, y_train, sample_weight=w_train)
+            fitted = [built[n] for n in exp.ensemble]
+            save_model.fit(X_train_t, y_train, sample_weight=w_train, fitted_estimators=fitted)
         else:
             ensemble_models = [built[n] for n in exp.ensemble]
             save_model = Ensemble(models=ensemble_models)
@@ -191,7 +190,7 @@ def train_for_season(train_df):
     for model in built.values():
         if hasattr(model, "n_neighbors") and model.n_neighbors > n_samples:
             model.n_neighbors = max(1, n_samples - 1)
-        _fit(model, X_t, y, w)
+    built = fit_models(built, X_t, y, w)
 
     if exp.ensemble and len(exp.ensemble) > 1:
         if exp.stack:
@@ -199,7 +198,8 @@ def train_for_season(train_df):
 
             estimators = [(n, clone(built[n])) for n in exp.ensemble]
             save_model = WeightedStackingClassifier(estimators=estimators)
-            save_model.fit(X_t, y, sample_weight=w)
+            fitted = [built[n] for n in exp.ensemble]
+            save_model.fit(X_t, y, sample_weight=w, fitted_estimators=fitted)
         else:
             ensemble_models = [built[n] for n in exp.ensemble]
             save_model = Ensemble(models=ensemble_models)
@@ -283,7 +283,7 @@ def train_for_day(train_df):
         # Cap KNN neighbors to training size
         if hasattr(model, "n_neighbors") and model.n_neighbors > n_samples:
             model.n_neighbors = max(1, n_samples - 1)
-        _fit(model, X_train_t, y_train, w_train)
+    built = fit_models(built, X_train_t, y_train, w_train)
 
     if exp.ensemble and len(exp.ensemble) > 1:
         if exp.stack:
@@ -291,7 +291,8 @@ def train_for_day(train_df):
 
             estimators = [(n, clone(built[n])) for n in exp.ensemble]
             save_model = WeightedStackingClassifier(estimators=estimators)
-            save_model.fit(X_train_t, y_train, sample_weight=w_train)
+            fitted = [built[n] for n in exp.ensemble]
+            save_model.fit(X_train_t, y_train, sample_weight=w_train, fitted_estimators=fitted)
         else:
             ensemble_models = [built[n] for n in exp.ensemble]
             save_model = Ensemble(models=ensemble_models)
