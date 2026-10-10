@@ -80,6 +80,7 @@ public class GameEventRepository : IGameEventRepository
         await AddOrUpdateEvents(_dbContext.GamePeriodStartEvent, addList, updateList);
         await AddOrUpdateEvents(_dbContext.GameStoppageEvent, addList, updateList);
         await AddOrUpdateEvents(_dbContext.GamePeriodEndEvent, addList, updateList);
+        await AddOrUpdateEvents(_dbContext.GameShootoutCompleteEvent, addList, updateList);
         await AddOrUpdateEvents(_dbContext.GameFailedShotAttemptEvent, addList, updateList);
 
         // Only called for played games, so the play-by-play is authoritative: drop events the NHL has since
