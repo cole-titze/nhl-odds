@@ -36,7 +36,22 @@ from ..models.experiment import (
 )
 
 EXPERIMENTS: dict[str, Experiment] = {
+    # LR + KNN stack: ties Stack6 in walk-forward evals (log loss +0.0002 on 2019-22, +0.0003 on 2023-26,
+    # both within noise) for about a tenth of the training compute. LR carries the stack.
     "Default": Experiment(
+        models={
+            "KNN": knn(n_neighbors=152, weights="distance", metric="minkowski", p=2),
+            "LR": logistic_regression(C=0.0768651, l1_ratio=1.0),
+        },
+        pipeline=standard_pipeline(k_best=99, pca_components=90),
+        ensemble=["KNN", "LR"],
+        calibration="none",
+        decay=0.08,
+        stack=True,
+        tune=False,
+    ),
+    # Previous Default: six-model stack
+    "Stack6": Experiment(
         models={
             "MLP": mlp(hidden_layer_sizes=(212,), learning_rate_init=0.00112711, alpha=0.0367419, activation="relu"),
             "LightGBM": lgbm(
