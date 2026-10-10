@@ -48,6 +48,7 @@ The app reads config in priority order:
    - `RUN_MODE` — `"NhlAdd"`, `"NhlUpdate"`, `"NextDayOdds"`, `"BackfillOdds"`, `"KalshiFetch"`, `"BackfillKalshi"`, `"BackfillGame"`, `"BackfillGoalieStats"`, or `"CleanAll"`
    - `THROTTLE_TIME_MS` — delay between NHL API requests (ms)
    - `BACKFILL_GAME_IDS` — comma-separated game IDs to re-fetch (for `BackfillGame` mode)
+   - `REFETCH_DAYS` — `NhlAdd` re-fetches games played in this many past days to pick up NHL stat corrections (default 7, `0` turns it off)
    - `ODDS_API_KEY` — The Odds API key (for `NextDayOdds` mode)
    - `API_BACKFILL_KEY` — The Odds API key for backfill (can be different quota)
 
@@ -161,5 +162,7 @@ The first 4 digits of a game ID are always the season start year.
 **Game event tables** — each play-by-play event type (Goal, Shot, Hit, Penalty, etc.) has its own DB table and `DbModel`. `GameRepository` handles all of them via a typed `_dbSetEventMap` dictionary and `AddOrUpdateEvents<T>`.
 
 **Commits are explicit** — repositories accumulate EF change tracking; callers must invoke `repo.Commit()` (which calls `SaveChangesAsync()`). `NhlDataManager` commits after each logical save step.
+
+**Predictor features** — `game_predictor` reads the `GameCleaned` columns (`GAME_CLEANED_COLUMNS`) and adds 16 expected-goals features it computes itself from the shot events (`game_predictor/features/expected_goals.py`, `XG_FEATURE_COLUMNS`). `FEATURE_COLUMNS` is both lists and feeds the win, spread and total models alike.
 
 **Data collection starts at 2009** (first season with modern play-by-play stats), defined as `START_YEAR` in `src/Entry/DataGetterEntry.cs`.

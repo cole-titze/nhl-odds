@@ -1,4 +1,5 @@
-FEATURE_COLUMNS = [
+# Features the C# cleaner stores in GameCleaned
+GAME_CLEANED_COLUMNS = [
     "HomeWinRatio",
     "HomeRecentWinRatio",
     "HomeRecentGoalsAvg",
@@ -127,7 +128,26 @@ FEATURE_COLUMNS = [
     "AwayRecentStrengthOfSchedule",
 ]
 
-_feature_cols_sql = ", ".join(f'gc."{col}"' for col in FEATURE_COLUMNS)
+# Expected-goals features computed by the predictor from play-by-play (issue #107). Each is the home team's value
+# minus the away team's over its last 10 or 82 games, like RestAdvantage.
+XG_FEATURE_COLUMNS = [
+    f"Last{n}{stat}Advantage"
+    for n in (10, 82)
+    for stat in (
+        "FenwickPct5v5",
+        "XgPct5v5",
+        "XgAvg",
+        "ConcededXgAvg",
+        "GoalsSavedAboveXgAvg",
+        "GoalsAboveXgAvg",
+        "PpXgAvg",
+        "PkConcededXgAvg",
+    )
+]
+
+FEATURE_COLUMNS = GAME_CLEANED_COLUMNS + XG_FEATURE_COLUMNS
+
+_feature_cols_sql = ", ".join(f'gc."{col}"' for col in GAME_CLEANED_COLUMNS)
 
 TRAINING_DATA_QUERY = f"""
 SELECT {_feature_cols_sql},
@@ -202,4 +222,23 @@ ON CONFLICT ("GameId", "ModelId", "RunDateUTC") DO UPDATE SET
     "AwayOdds" = EXCLUDED."AwayOdds",
     "LogLoss" = EXCLUDED."LogLoss",
     "Notes" = EXCLUDED."Notes";
+"""
+
+_ATTEMPT_COLS = (
+    'e."GameId", e."Id", e."SortOrder", e."SituationCode", e."PeriodNumber", e."PeriodType", '
+    'e."SecondsIntoPeriod", e."XCoordinate", e."YCoordinate", e."ShotType"'
+)
+
+# Unblocked shot attempts (shots on goal, misses, goals) for the expected-goals model
+SHOT_ATTEMPTS_QUERY = f"""
+SELECT {_ATTEMPT_COLS}, e."ShootingTeamId" AS "TeamId", 0 AS "Goal" FROM "GameShotEvent" e
+UNION ALL
+SELECT {_ATTEMPT_COLS}, e."ShootingTeamId", 0 FROM "GameMissedShotEvent" e
+UNION ALL
+SELECT {_ATTEMPT_COLS}, e."ScoringPlayerTeamId", 1 FROM "GameGoalEvent" e
+"""
+
+ALL_GAMES_QUERY = """
+SELECT "Id" AS "GameId", "SeasonStartYear", "GameType", "GameDateUTC", "HomeTeamId", "AwayTeamId", "HasBeenPlayed"
+FROM "GameRaw"
 """

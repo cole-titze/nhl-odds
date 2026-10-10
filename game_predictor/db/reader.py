@@ -1,9 +1,14 @@
+from functools import lru_cache
+
 import pandas as pd
 
+from ..features.expected_goals import compute_xg_features
 from .queries import (
+    ALL_GAMES_QUERY,
     CONSENSUS_SPREAD_QUERY,
     CONSENSUS_TOTAL_QUERY,
     CURRENT_SEASON_GAMES_QUERY,
+    SHOT_ATTEMPTS_QUERY,
     TEAM_NAMES_QUERY,
     TRAINING_DATA_QUERY,
     UNPLAYED_GAMES_QUERY,
@@ -18,16 +23,30 @@ def _query_to_dataframe(conn, query: str) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=columns)
 
 
+@lru_cache(maxsize=1)
+def _load_xg_features(conn) -> pd.DataFrame:
+    """Expected-goals features for every game. Computed once per connection: it scores every shot attempt."""
+    attempts = _query_to_dataframe(conn, SHOT_ATTEMPTS_QUERY)
+    games = _query_to_dataframe(conn, ALL_GAMES_QUERY)
+    return compute_xg_features(attempts, games)
+
+
+def _load_games(conn, query: str) -> pd.DataFrame:
+    """Load games with their GameCleaned features plus the expected-goals features."""
+    df = _query_to_dataframe(conn, query)
+    return df.join(_load_xg_features(conn), on="GameId")
+
+
 def load_training_data(conn) -> pd.DataFrame:
-    return _query_to_dataframe(conn, TRAINING_DATA_QUERY)
+    return _load_games(conn, TRAINING_DATA_QUERY)
 
 
 def load_unplayed_games(conn) -> pd.DataFrame:
-    return _query_to_dataframe(conn, UNPLAYED_GAMES_QUERY)
+    return _load_games(conn, UNPLAYED_GAMES_QUERY)
 
 
 def load_current_season_games(conn) -> pd.DataFrame:
-    return _query_to_dataframe(conn, CURRENT_SEASON_GAMES_QUERY)
+    return _load_games(conn, CURRENT_SEASON_GAMES_QUERY)
 
 
 def load_consensus_lines(conn) -> dict[int, dict[str, float]]:
