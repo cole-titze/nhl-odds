@@ -11,6 +11,23 @@ export function Layout() {
   const { pathname } = useLocation();
   const mainRef = useRef<HTMLElement>(null);
   const firstRender = useRef(true);
+  const footerRef = useRef<HTMLElement>(null);
+
+  // The fixed footer covers the bottom of the viewport; publish its height so
+  // keyboard focus scrolls content clear of it (see index.css).
+  useEffect(() => {
+    const footer = footerRef.current;
+    if (!footer) return;
+    const root = document.documentElement;
+    const observer = new ResizeObserver(() =>
+      root.style.setProperty('--footer-height', `${footer.offsetHeight}px`),
+    );
+    observer.observe(footer);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty('--footer-height');
+    };
+  }, []);
 
   // Client-side navigation doesn't move focus like a page load does, so keyboard
   // and screen reader users would be left on the link they just activated.
@@ -42,12 +59,17 @@ export function Layout() {
           id="main"
           ref={mainRef}
           tabIndex={-1}
-          className="relative z-10 mx-auto w-full max-w-6xl flex-1 px-5 py-8"
+          className="relative z-10 mx-auto w-full max-w-6xl flex-1 px-5 pt-8 pb-20"
         >
           <Outlet />
         </main>
-        <footer className="relative z-10 border-t border-surface-200 dark:border-white/[0.05] py-5 text-center text-xs text-surface-500 dark:text-surface-400 font-mono">
-          This site is not affiliated with or endorsed by the NHL or any NHL team.
+        {/* Fixed so it's always on screen: the games page scrolls forever and would never reach a footer */}
+        <footer
+          ref={footerRef}
+          className="fixed inset-x-0 bottom-0 z-30 border-t border-surface-200 dark:border-white/[0.05] bg-surface-50/95 dark:bg-surface-950/95 backdrop-blur px-4 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] text-center text-[11px] leading-snug text-surface-500 dark:text-surface-400 font-mono"
+        >
+          Personal, non-commercial hobby project. Not affiliated with or endorsed by the NHL or any
+          NHL team.
         </footer>
       </div>
     </OddsFormatContext.Provider>

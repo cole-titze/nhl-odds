@@ -198,8 +198,8 @@ export function GamesPage() {
   // the "Jump to today" button only shows once the user has scrolled away.
   const isCurrentSeason = season === getCurrentSeason();
   const [homePosition, setHomePosition] = useState<HomePosition>('visible');
-  // Lift the button above the site footer once it scrolls into view, so neither
-  // covers the other. Set directly on the element to avoid re-rendering on scroll.
+  // Lift the button above the fixed site footer so neither covers the other.
+  // Set directly on the element to avoid re-rendering on scroll.
   const footerOverlapRef = useRef(0);
   const jumpButtonRef = useRef<HTMLButtonElement | null>(null);
   const setJumpButton = (el: HTMLButtonElement | null) => {
