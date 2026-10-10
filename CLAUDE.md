@@ -49,6 +49,7 @@ The app reads config in priority order:
    - `THROTTLE_TIME_MS` — delay between NHL API requests (ms)
    - `BACKFILL_GAME_IDS` — comma-separated game IDs to re-fetch (for `BackfillGame` mode)
    - `REFETCH_DAYS` — `NhlAdd` re-fetches games played in this many past days to pick up NHL stat corrections (default 7, `0` turns it off)
+   - `CLEAN_PARALLELISM` — how many seasons the data cleaner cleans at once (default 4; each holds two seasons of data in memory)
    - `ODDS_API_KEY` — The Odds API key (for `NextDayOdds` mode)
    - `API_BACKFILL_KEY` — The Odds API key for backfill (can be different quota)
 

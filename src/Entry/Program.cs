@@ -31,6 +31,7 @@ var settings = new ModeSettings()
         .Select(int.Parse)
         .ToList(),
     RefetchDays = int.Parse(Environment.GetEnvironmentVariable("REFETCH_DAYS") ?? "7"),
+    CleanParallelism = int.Parse(Environment.GetEnvironmentVariable("CLEAN_PARALLELISM") ?? "4"),
 };
 
 if (string.IsNullOrEmpty(settings.ConnectionString))

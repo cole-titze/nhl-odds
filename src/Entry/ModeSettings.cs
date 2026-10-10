@@ -12,4 +12,6 @@ public class ModeSettings
     public IEnumerable<int> BackfillGameIds { get; set; } = [];
     // NhlAdd re-fetches games played in this many past days to pick up NHL stat corrections; 0 turns it off
     public int RefetchDays { get; set; } = 7;
+    // How many seasons the cleaner works on at once
+    public int CleanParallelism { get; set; } = 4;
 }
