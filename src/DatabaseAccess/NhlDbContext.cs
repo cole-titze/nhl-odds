@@ -37,6 +37,11 @@ public partial class NhlDbContext : DbContext
     public virtual DbSet<DbPartnerOdds> PartnerOdds { get; set; } = null!;
     public virtual DbSet<DbNhlArticle> NhlArticle { get; set; } = null!;
     public virtual DbSet<DbNhlArticleTag> NhlArticleTag { get; set; } = null!;
+    public virtual DbSet<DbNhlArticleMention> NhlArticleMention { get; set; } = null!;
+    public virtual DbSet<DbNhlPropsPick> NhlPropsPick { get; set; } = null!;
+    public virtual DbSet<DbLineupGame> LineupGame { get; set; } = null!;
+    public virtual DbSet<DbLineupPlayer> LineupPlayer { get; set; } = null!;
+    public virtual DbSet<DbLineupArticleParse> LineupArticleParse { get; set; } = null!;
 
     // Game Event Tables
     public virtual DbSet<DbBlockedShot> GameBlockedShotEvent { get; set; } = null!;
@@ -85,6 +90,16 @@ public partial class NhlDbContext : DbContext
             .HasKey(c => new { c.EntityId, c.ContentHash });
         modelBuilder.Entity<DbNhlArticleTag>()
             .HasKey(c => new { c.EntityId, c.TagSlug });
+        modelBuilder.Entity<DbNhlArticleMention>()
+            .HasKey(c => new { c.EntityId, c.ContentHash, c.Code, c.NhlId });
+        modelBuilder.Entity<DbNhlPropsPick>()
+            .HasKey(c => new { c.EntityId, c.ContentHash, c.Category, c.PlayerId });
+        modelBuilder.Entity<DbLineupGame>()
+            .HasKey(c => c.SectionHash);
+        modelBuilder.Entity<DbLineupPlayer>()
+            .HasKey(c => new { c.SectionHash, c.Side, c.Group, c.LineNumber, c.Slot });
+        modelBuilder.Entity<DbLineupArticleParse>()
+            .HasKey(c => c.ArticleHash);
         modelBuilder.Entity<DbGameOdds>()
             .HasKey(c => new { c.GameId, c.ModelId, c.RunDateUTC });
         modelBuilder.Entity<DbGameSpreadTotalOdds>()

@@ -60,6 +60,8 @@ public class NhlPartnerOddsManagerTests
             TeamId = 17,
             Market = "PUCK_LINE",
             Qualifier = "+1.5",
+            Line = 1.5m,
+            Outcome = null,
             Price = -190m,
             IsHome = true,
             PartnerName = "DraftKings",
@@ -69,6 +71,16 @@ public class NhlPartnerOddsManagerTests
         });
         rows.Single(r => r.Market == "OVER_UNDER").Price.Should().Be(-110.5m);
         rows.Where(r => r.TeamId == 55).Should().OnlyContain(r => !r.IsHome);
+    }
+
+    [TestMethod]
+    public void ParseQualifier_SplitsLineAndOutcome()
+    {
+        NhlPartnerOddsManager.ParseQualifier("").Should().Be(((decimal?)null, (string?)null));
+        NhlPartnerOddsManager.ParseQualifier("-1.5").Should().Be(((decimal?)-1.5m, (string?)null));
+        NhlPartnerOddsManager.ParseQualifier("O6.5").Should().Be(((decimal?)6.5m, "Over"));
+        NhlPartnerOddsManager.ParseQualifier("U5.5").Should().Be(((decimal?)5.5m, "Under"));
+        NhlPartnerOddsManager.ParseQualifier("Draw").Should().Be(((decimal?)null, "Draw"));
     }
 
     [TestMethod]

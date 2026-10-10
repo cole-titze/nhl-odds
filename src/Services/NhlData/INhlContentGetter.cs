@@ -11,4 +11,6 @@ public interface INhlContentGetter
     Task<string> GetStoryBySlug(string slug);
     /// <summary>The betting-partner odds widget for a country ("US" or "CA").</summary>
     Task<string> GetPartnerOdds(string country);
+    /// <summary>A team's current NHL roster (forwards, defensemen, goalies with ids and positions).</summary>
+    Task<string> GetTeamRoster(string teamAbbreviation);
 }

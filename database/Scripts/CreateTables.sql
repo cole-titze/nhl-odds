@@ -845,6 +845,47 @@ CREATE TABLE "LineupArticle"
     CONSTRAINT "PK_LineupArticle" PRIMARY KEY("ContentHash")
 );
 
+-- Each game section of the lineup projections article, saved the first time its text is seen
+CREATE TABLE "LineupGame"
+(
+    "SectionHash" CHAR(64) NOT NULL,
+    "ArticleHash" CHAR(64) NOT NULL,
+    "FirstSeenUTC" TIMESTAMP NOT NULL,
+    "GameId" INTEGER NULL,
+    "AwayTeamId" INTEGER NULL,
+    "HomeTeamId" INTEGER NULL,
+    "Heading" TEXT NOT NULL,
+    "StatusReport" TEXT NULL,
+    CONSTRAINT "PK_LineupGame" PRIMARY KEY("SectionHash")
+);
+CREATE INDEX "IX_LineupGame_GameId" ON "LineupGame"("GameId");
+
+-- Players in each projected lineup: forward lines, defense pairs, goalies, and the scratched/injured/suspended lists
+CREATE TABLE "LineupPlayer"
+(
+    "SectionHash" CHAR(64) NOT NULL,
+    "Side" VARCHAR(4) NOT NULL,
+    "Group" VARCHAR(10) NOT NULL,
+    "LineNumber" INTEGER NOT NULL,
+    "Slot" INTEGER NOT NULL,
+    "TeamId" INTEGER NULL,
+    "Name" TEXT NOT NULL,
+    "PlayerId" INTEGER NULL,
+    "Note" TEXT NULL,
+    CONSTRAINT "PK_LineupPlayer" PRIMARY KEY("SectionHash", "Side", "Group", "LineNumber", "Slot")
+);
+CREATE INDEX "IX_LineupPlayer_PlayerId" ON "LineupPlayer"("PlayerId");
+
+-- Which LineupArticle versions have been parsed into LineupGame/LineupPlayer (Error set when parsing failed)
+CREATE TABLE "LineupArticleParse"
+(
+    "ArticleHash" CHAR(64) NOT NULL,
+    "ParsedUTC" TIMESTAMP NOT NULL,
+    "Sections" INTEGER NOT NULL,
+    "Error" TEXT NULL,
+    CONSTRAINT "PK_LineupArticleParse" PRIMARY KEY("ArticleHash")
+);
+
 -- Each version of NHL.com's betting-partner odds widget (one row per team per line), saved the first time it is seen
 CREATE TABLE "PartnerOdds"
 (
@@ -854,6 +895,8 @@ CREATE TABLE "PartnerOdds"
     "TeamId" INTEGER NOT NULL,
     "Market" VARCHAR(50) NOT NULL,
     "Qualifier" VARCHAR(50) NOT NULL,
+    "Line" NUMERIC(5, 1) NULL,
+    "Outcome" VARCHAR(10) NULL,
     "Price" NUMERIC(10, 1) NOT NULL,
     "IsHome" BOOLEAN NOT NULL,
     "PartnerName" VARCHAR(100) NOT NULL,
@@ -892,6 +935,34 @@ CREATE TABLE "NhlArticleTag"
     CONSTRAINT "PK_NhlArticleTag" PRIMARY KEY("EntityId", "TagSlug")
 );
 CREATE INDEX "IX_NhlArticleTag_NhlId" ON "NhlArticleTag"("IdType", "NhlId");
+
+-- Players (and other NHL entities) linked in the text of each NHL.com article version
+CREATE TABLE "NhlArticleMention"
+(
+    "EntityId" VARCHAR(64) NOT NULL,
+    "ContentHash" CHAR(64) NOT NULL,
+    "Code" VARCHAR(50) NOT NULL,
+    "NhlId" BIGINT NOT NULL,
+    "Title" TEXT NOT NULL,
+    "Count" INTEGER NOT NULL,
+    CONSTRAINT "PK_NhlArticleMention" PRIMARY KEY("EntityId", "ContentHash", "Code", "NhlId")
+);
+CREATE INDEX "IX_NhlArticleMention_NhlId" ON "NhlArticleMention"("Code", "NhlId");
+
+-- Player picks from each version of NHL.com's daily picks and props article
+CREATE TABLE "NhlPropsPick"
+(
+    "EntityId" VARCHAR(64) NOT NULL,
+    "ContentHash" CHAR(64) NOT NULL,
+    "Category" VARCHAR(200) NOT NULL,
+    "PlayerId" INTEGER NOT NULL,
+    "PickDate" TIMESTAMP NULL,
+    "Position" VARCHAR(2) NOT NULL,
+    "TeamAbbreviation" VARCHAR(3) NOT NULL,
+    "OpponentAbbreviation" VARCHAR(3) NOT NULL,
+    "IsHome" BOOLEAN NOT NULL,
+    CONSTRAINT "PK_NhlPropsPick" PRIMARY KEY("EntityId", "ContentHash", "Category", "PlayerId")
+);
 
 CREATE TABLE "ErrorLog"
 (

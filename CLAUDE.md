@@ -153,9 +153,10 @@ HTTP Request
 - `BackfillGoalieStats` — re-fetches only goalies' shorthanded shots/goals (one boxscore request per game) for games saved before the mapper read them; re-runnable, skips games that already have them
 - `CleanAll` — skips data collection and re-cleans every game in every season (run after changing how `GameCleaned` features are computed)
 - `LineupSnapshot` — saves NHL.com content that only shows its current state, each step independent (failures go to `ErrorLog` and fail the job at the end); runs every 30 min on game days:
-  - the lineup projections article → `LineupArticle` when its text has changed
-  - the betting-partner odds widget (DraftKings US, FanDuel CA) → `PartnerOdds`, one row per team per line, each new version (after puck drop it shows live odds: pre-game lines are `PartnerUpdatedUTC < StartTimeUTC`)
-  - the newest 100 NHL.com articles (league and team sites) plus the rewritten-in-place ones in `NhlArticleManager.RollingSlugs` → `NhlArticle` (a version per new text) and `NhlArticleTag` (team/player/game tags carry the NHL id)
+  - the lineup projections article → `LineupArticle` when its text has changed, then each new game section → `LineupGame` (game, teams, status report) and `LineupPlayer` (forward lines, defense pairs, goalie order, scratched/injured/suspended, matched to player ids through each team's current NHL roster, else a unique name in `Player`); `LineupArticleParse` marks versions parsed
+  - the betting-partner odds widget (DraftKings US, FanDuel CA) → `PartnerOdds`, one row per team per line (`Line`/`Outcome` split from the qualifier), each new version (after puck drop it shows live odds: pre-game lines are `PartnerUpdatedUTC < StartTimeUTC`)
+  - the newest 100 NHL.com articles (league and team sites) plus the rewritten-in-place ones in `NhlArticleManager.RollingSlugs` → `NhlArticle` (a version per new text), `NhlArticleTag` (team/player/game tags carry the NHL id), `NhlArticleMention` (players linked in the text) and, for the props article, `NhlPropsPick`
+  - api-web requests are spaced 600 ms apart (it answers 429 faster than that)
 
 **Game ID encoding** (`NhlApiDataGetter.GetGameId`):
 ```

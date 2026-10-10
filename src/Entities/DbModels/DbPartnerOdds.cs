@@ -15,8 +15,12 @@ public class DbPartnerOdds
     public int TeamId { get; set; }
     // MONEY_LINE_2_WAY, MONEY_LINE_2_WAY_TNB, MONEY_LINE_3_WAY, PUCK_LINE or OVER_UNDER
     public string Market { get; set; } = string.Empty;
-    // The line or outcome, e.g. "+1.5", "O6.5", "Draw"; empty for plain moneylines
+    // The line or outcome as the widget shows it, e.g. "+1.5", "O6.5", "Draw"; empty for plain moneylines
     public string Qualifier { get; set; } = string.Empty;
+    // The qualifier's number: the puck line (+1.5) or total (6.5); null for moneylines
+    public decimal? Line { get; set; }
+    // "Over" or "Under" for totals, "Draw" for the 3-way draw; null otherwise
+    public string? Outcome { get; set; }
     // American odds
     public decimal Price { get; set; }
     public bool IsHome { get; set; }

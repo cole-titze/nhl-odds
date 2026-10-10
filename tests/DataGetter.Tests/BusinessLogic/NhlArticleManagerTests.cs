@@ -91,7 +91,7 @@ public class NhlArticleManagerTests
 
         await manager.SaveLatestArticles(DateTime.UtcNow);
 
-        A.CallTo(() => repo.AddArticle(A<DbNhlArticle>.That.Matches(a => a.Body.StartsWith("Edited")))).MustHaveHappenedOnceExactly();
+        A.CallTo(() => repo.AddArticle(A<DbNhlArticle>.That.Matches(a => a.Body.StartsWith("Edited")), A<IEnumerable<DbNhlArticleMention>>._, A<IEnumerable<DbNhlPropsPick>>._)).MustHaveHappenedOnceExactly();
         A.CallTo(() => repo.AddArticleTags(A<IEnumerable<DbNhlArticleTag>>.That.Matches(t =>
             t.Count() == 3 && t.All(x => x.TagSlug != "2026-27")))).MustHaveHappenedOnceExactly();
     }
@@ -110,7 +110,7 @@ public class NhlArticleManagerTests
 
         await manager.SaveLatestArticles(DateTime.UtcNow);
 
-        A.CallTo(() => repo.AddArticle(A<DbNhlArticle>._)).MustNotHaveHappened();
+        A.CallTo(() => repo.AddArticle(A<DbNhlArticle>._, A<IEnumerable<DbNhlArticleMention>>._, A<IEnumerable<DbNhlPropsPick>>._)).MustNotHaveHappened();
         A.CallTo(() => repo.SetArticleLastUpdated("e1", current.ContentHash, new DateTime(2026, 10, 10, 12, 0, 0))).MustHaveHappenedOnceExactly();
     }
 
@@ -132,7 +132,7 @@ public class NhlArticleManagerTests
         var failures = await manager.SaveLatestArticles(DateTime.UtcNow);
 
         failures.Should().ContainSingle().Which.Url.Should().Be(URL + "-bad");
-        A.CallTo(() => repo.AddArticle(A<DbNhlArticle>.That.Matches(a => a.EntityId == "e1"))).MustHaveHappenedOnceExactly();
+        A.CallTo(() => repo.AddArticle(A<DbNhlArticle>.That.Matches(a => a.EntityId == "e1"), A<IEnumerable<DbNhlArticleMention>>._, A<IEnumerable<DbNhlPropsPick>>._)).MustHaveHappenedOnceExactly();
     }
 
     [TestMethod]
@@ -148,6 +148,6 @@ public class NhlArticleManagerTests
         var failures = await manager.SaveLatestArticles(DateTime.UtcNow);
 
         failures.Should().ContainSingle();
-        A.CallTo(() => repo.AddArticle(A<DbNhlArticle>._)).MustNotHaveHappened();
+        A.CallTo(() => repo.AddArticle(A<DbNhlArticle>._, A<IEnumerable<DbNhlArticleMention>>._, A<IEnumerable<DbNhlPropsPick>>._)).MustNotHaveHappened();
     }
 }

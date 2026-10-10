@@ -32,9 +32,11 @@ public class SnapshotRepository : ISnapshotRepository
             .ToListAsync();
     }
 
-    public async Task AddArticle(DbNhlArticle article)
+    public async Task AddArticle(DbNhlArticle article, IEnumerable<DbNhlArticleMention> mentions, IEnumerable<DbNhlPropsPick> picks)
     {
         _dbContext.NhlArticle.Add(article);
+        _dbContext.NhlArticleMention.AddRange(mentions);
+        _dbContext.NhlPropsPick.AddRange(picks);
         await Save();
     }
 

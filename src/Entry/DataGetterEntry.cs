@@ -185,8 +185,8 @@ public class DataGetterEntry
     }
 
     /// <summary>
-    /// Saves NHL.com content that only shows its current state: the lineup projections article, the betting-partner
-    /// odds widget and articles. Each step runs even if another fails; failures go to ErrorLog and fail the job at the end.
+    /// Saves NHL.com content that only shows its current state: the lineup projections article (and its parsed
+    /// lineups), the betting-partner odds widget and articles. Each step runs even if another fails; failures go to ErrorLog and fail the job at the end.
     /// </summary>
     private async Task SaveSnapshots(NhlDbContext nhlDbContext, ErrorRepository errorRepo)
     {
@@ -210,6 +210,9 @@ public class DataGetterEntry
         var lineupManager = new NhlLineupArticleManager(
             new LineupArticleRepository(nhlDbContext), new NhlLineupArticleGetter(_loggerFactory), _loggerFactory);
         await Step("LineupSnapshot", () => lineupManager.SaveLineupArticle(now));
+        var lineupParseManager = new NhlLineupParseManager(new LineupArticleRepository(nhlDbContext), contentGetter, _loggerFactory);
+        await Step("LineupParse", async () =>
+            failures.AddRange((await lineupParseManager.ParseNewVersions(now)).Select(f => ($"LineupParse {f.ArticleHash}", f.Error))));
 
         var oddsManager = new NhlPartnerOddsManager(snapshotRepo, contentGetter, _loggerFactory);
         foreach (var country in NhlPartnerOddsManager.Countries)

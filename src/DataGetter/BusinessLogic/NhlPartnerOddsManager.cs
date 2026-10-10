@@ -75,6 +75,8 @@ public class NhlPartnerOddsManager
                     // Suspended markets may come without a price
                     if (!line.TryGetProperty("value", out var price) || price.ValueKind != JsonValueKind.Number)
                         continue;
+                    var qualifier = line.TryGetProperty("qualifier", out var q) ? q.GetString() ?? string.Empty : string.Empty;
+                    var (lineValue, outcome) = ParseQualifier(qualifier);
                     rows.Add(new DbPartnerOdds
                     {
                         Country = country,
@@ -82,7 +84,9 @@ public class NhlPartnerOddsManager
                         GameId = gameId,
                         TeamId = teamId,
                         Market = line.GetProperty("description").GetString() ?? string.Empty,
-                        Qualifier = line.TryGetProperty("qualifier", out var q) ? q.GetString() ?? string.Empty : string.Empty,
+                        Qualifier = qualifier,
+                        Line = lineValue,
+                        Outcome = outcome,
                         Price = price.GetDecimal(),
                         IsHome = isHome,
                         PartnerName = partner,
@@ -94,6 +98,18 @@ public class NhlPartnerOddsManager
             }
         }
         return rows.DistinctBy(o => (o.GameId, o.TeamId, o.Market, o.Qualifier)).ToList();
+    }
+
+    /// <summary>Splits "+1.5" into (1.5, null), "O6.5" into (6.5, "Over"), "U6.5" into (6.5, "Under") and "Draw" into (null, "Draw").</summary>
+    public static (decimal? Line, string? Outcome) ParseQualifier(string qualifier)
+    {
+        if (qualifier == "Draw")
+            return (null, "Draw");
+        var outcome = qualifier.StartsWith('O') ? "Over" : qualifier.StartsWith('U') ? "Under" : null;
+        var number = outcome == null ? qualifier : qualifier[1..];
+        return decimal.TryParse(number, NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var value)
+            ? (value, outcome)
+            : (null, outcome);
     }
 
     private static DateTime? ReadDate(JsonElement element, string name)

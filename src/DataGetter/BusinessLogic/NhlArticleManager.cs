@@ -21,7 +21,7 @@ public partial class NhlArticleManager
     // Articles NHL.com rewrites in place; the lineup projections article is saved separately (LineupArticle)
     public static readonly string[] RollingSlugs =
     [
-        "nhl-picks-props-daily-fantasy-hockey-projections-for-2026-27-season",
+        NhlArticleTextParser.PROPS_SLUG,
         "nhl-emergency-backup-goalies-list",
         "2026-27-nhl-trades",
         "free-agency-signings-nhl-2026-27",
@@ -104,7 +104,11 @@ public partial class NhlArticleManager
         var added = false;
         if (known == null)
         {
-            await _snapshotRepo.AddArticle(article);
+            var mentions = NhlArticleTextParser.ParseMentions(article.EntityId, article.ContentHash, article.Body);
+            var picks = article.Slug == NhlArticleTextParser.PROPS_SLUG
+                ? NhlArticleTextParser.ParsePropsPicks(article.EntityId, article.ContentHash, article.Body, article.ContentDate)
+                : [];
+            await _snapshotRepo.AddArticle(article, mentions, picks);
             added = true;
         }
         else if (known.LastUpdated != article.LastUpdated)
