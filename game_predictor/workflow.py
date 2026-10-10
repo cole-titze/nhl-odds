@@ -8,9 +8,9 @@ import pandas as pd
 from .config import HOMEGROWN_MODEL_ID, SPREAD_MODEL_ID, TOTAL_MODEL_ID, get_db_config
 from .db.connection import get_connection
 from .db.queries import FEATURE_COLUMNS
-from .db.reader import load_consensus_lines, load_training_data, load_unplayed_games
+from .db.reader import load_consensus_lines, load_cover_history, load_training_data, load_unplayed_games
 from .db.writer import save_predictions, save_spread_total_predictions
-from .models.probability import line_cover_probability
+from .models.probability import covered, fit_cover_calibration, line_cover_probability
 from .models.regression_training import (
     compute_residual_std,
     train_regression_all,
@@ -183,6 +183,7 @@ def _save_unplayed_regression(conn, pipeline, model, residual_std, target, model
         return
 
     consensus = load_consensus_lines(conn)
+    calibration = _fit_calibration_from_history(conn, target, model_id)
     X = pipeline.transform(unplayed_df[FEATURE_COLUMNS].values)
     preds = model.predict(X)
 
@@ -193,7 +194,9 @@ def _save_unplayed_regression(conn, pipeline, model, residual_std, target, model
         line_key = "spread" if target == "spread" else "total"
         game_lines = consensus.get(game_id, {})
         line = game_lines.get(line_key)
-        cover_prob = line_cover_probability(target, predicted, residual_std, line) if line is not None else None
+        cover_prob = None
+        if line is not None:
+            cover_prob = calibration.apply(line_cover_probability(target, predicted, residual_std, line))
 
         predictions.append(
             {
@@ -212,6 +215,25 @@ def _save_unplayed_regression(conn, pipeline, model, residual_std, target, model
     save_spread_total_predictions(conn, predictions)
 
 
+def _fit_calibration_from_history(conn, target, model_id):
+    """Platt scaling fit on every played game with a line, from its stored out-of-sample prediction.
+
+    The raw probability is recomputed from the stored prediction, residual std and line, not read from
+    CoverProbability, which is already calibrated.
+    """
+    history = load_cover_history(conn, model_id)
+    raw = [
+        line_cover_probability(target, row.PredictedValue, row.ResidualStd, row.Line) for row in history.itertuples()
+    ]
+    outcomes = [covered(target, row.HomeGoals, row.AwayGoals, row.Line) for row in history.itertuples()]
+    calibration = fit_cover_calibration(raw, outcomes)
+    print(
+        f"  {target.title()} cover calibration from {len(history)} games: "
+        f"intercept {calibration.intercept:.3f}, slope {calibration.slope:.3f}"
+    )
+    return calibration
+
+
 def _run_regression_backfill(conn, train_df, target, model_id, exp_name):
     """Walk-forward backfill for regression: train once per season, update residual std per day."""
     train_df = train_df.sort_values("GameDateUTC").reset_index(drop=True)
@@ -225,6 +247,8 @@ def _run_regression_backfill(conn, train_df, target, model_id, exp_name):
     total_saved = 0
     total_ae = 0.0
     day_count = 0
+    # Raw cover probabilities and outcomes of earlier seasons' games with a line, for walk-forward calibration
+    past_raw, past_covered = [], []
 
     total_days = train_df["GameDate"].nunique()
     print(f"\n{target.title()} backfill: {len(seasons)} seasons, {total_days} game days")
@@ -240,6 +264,7 @@ def _run_regression_backfill(conn, train_df, target, model_id, exp_name):
 
         pipeline, base_model, name = result
         season_days = sorted(season_data["GameDate"].unique())
+        calibration = fit_cover_calibration(past_raw, past_covered)
 
         for day in season_days:
             day_count += 1
@@ -265,7 +290,12 @@ def _run_regression_backfill(conn, train_df, target, model_id, exp_name):
                 line_key = "spread" if target == "spread" else "total"
                 game_lines = consensus.get(game_id, {})
                 line = game_lines.get(line_key)
-                cover_prob = line_cover_probability(target, predicted, residual_std, line) if line is not None else None
+                cover_prob = None
+                if line is not None:
+                    raw = line_cover_probability(target, predicted, residual_std, line)
+                    cover_prob = calibration.apply(raw)
+                    past_raw.append(raw)
+                    past_covered.append(covered(target, row["HomeGoals"], row["AwayGoals"], line))
 
                 batch.append(
                     {

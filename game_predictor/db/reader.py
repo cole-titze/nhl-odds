@@ -8,6 +8,7 @@ from .queries import (
     ALL_GAMES_QUERY,
     CONSENSUS_SPREAD_QUERY,
     CONSENSUS_TOTAL_QUERY,
+    COVER_HISTORY_QUERY,
     CURRENT_SEASON_GAMES_QUERY,
     SHOT_ATTEMPTS_QUERY,
     TEAM_NAMES_QUERY,
@@ -16,9 +17,9 @@ from .queries import (
 )
 
 
-def _query_to_dataframe(conn, query: str) -> pd.DataFrame:
+def _query_to_dataframe(conn, query: str, params: tuple | None = None) -> pd.DataFrame:
     with conn.cursor() as cursor:
-        cursor.execute(query)
+        cursor.execute(query, params)
         columns = [desc[0] for desc in cursor.description]
         rows = cursor.fetchall()
     return pd.DataFrame(rows, columns=columns)
@@ -67,6 +68,11 @@ def load_consensus_lines(conn) -> dict[int, dict[str, float]]:
     for _, row in total_df.iterrows():
         lines.setdefault(int(row["GameId"]), {})["total"] = float(row["ConsensusTotal"])
     return lines
+
+
+def load_cover_history(conn, model_id: int) -> pd.DataFrame:
+    """Played games with a line and their newest out-of-sample prediction from the given spread or total model."""
+    return _query_to_dataframe(conn, COVER_HISTORY_QUERY, (model_id,))
 
 
 def load_team_names(conn) -> dict[int, str]:

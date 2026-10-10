@@ -210,6 +210,16 @@ GROUP BY "GameId", "OverUnderPoint"
 ORDER BY "GameId", COUNT(*) FILTER (WHERE "BookmakerKey" <> 'kalshi') DESC, COUNT(*) DESC, "OverUnderPoint"
 """
 
+# Played games with a line and the newest spread or total prediction made for them. Nightly runs only predict
+# unplayed games, so that is the walk-forward backfill or the last pre-game prediction: out-of-sample either way.
+COVER_HISTORY_QUERY = """
+SELECT DISTINCT ON (s."GameId") s."PredictedValue", s."ResidualStd", s."Line", g."HomeGoals", g."AwayGoals"
+FROM "GameSpreadTotalOdds" s
+JOIN "GameRaw" g ON g."Id" = s."GameId"
+WHERE s."ModelId" = %s AND s."Line" IS NOT NULL AND g."HasBeenPlayed"
+ORDER BY s."GameId", s."RunDateUTC" DESC
+"""
+
 UPSERT_SPREAD_TOTAL = """
 INSERT INTO "GameSpreadTotalOdds"
     ("GameId", "ModelId", "RunDateUTC", "PredictedValue", "ResidualStd", "Line", "CoverProbability", "Notes")
