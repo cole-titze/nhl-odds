@@ -31,12 +31,13 @@ public class GameBuilder
     private int _awayTakeaways = 4;
     private int _homeGiveaways = 7;
     private int _awayGiveaways = 6;
-    private readonly bool _hasBeenPlayed = true;
+    private bool _hasBeenPlayed = true;
     private GameType _gameType = GameType.Regular;
 
     public GameBuilder WithId(int id) { _id = id; return this; }
     public GameBuilder WithTeams(int home, int away) { _homeTeamId = home; _awayTeamId = away; return this; }
     public GameBuilder WithDate(DateTime date) { _gameDate = date; return this; }
+    public GameBuilder Unplayed() { _hasBeenPlayed = false; return this; }
     public GameBuilder WithScore(int homeGoals, int awayGoals)
     {
         _homeGoals = homeGoals;

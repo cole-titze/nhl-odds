@@ -470,6 +470,23 @@ public class MapGameToDbGameCleanedTests
     }
 
     [Fact]
+    public void Map_BackToBack_PreviousGameNotPlayedYet_IsBackToBack()
+    {
+        // Tomorrow's game, cleaned before tonight's game is played
+        var tonight = new GameBuilder()
+            .WithId(1).WithTeams(1, 2).WithDate(BaseDate).Unplayed().Build();
+        var tomorrow = new GameBuilder()
+            .WithId(2).WithTeams(1, 2).WithDate(BaseDate.AddHours(24)).Unplayed().Build();
+        var seasonGames = new SeasonGames(new[] { tonight, tomorrow });
+
+        var result = MapGameToDbGameCleaned.Map(tomorrow, seasonGames);
+
+        Assert.Equal(1.0, result.HomeIsBackToBack);
+        Assert.Equal(1.0, result.AwayIsBackToBack);
+        Assert.Equal(0, result.HomeWinRatio);
+    }
+
+    [Fact]
     public void Map_BackToBack_29Hours_NotBackToBack()
     {
         var priorGame = new GameBuilder()

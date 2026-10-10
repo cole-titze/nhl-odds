@@ -28,6 +28,10 @@ public static class MapGameToDbGameCleaned
         var homeTeamRecentHomeGames = homeTeamGames.HomeGames.PlayedBefore(game.GameDateUTC).Take(RECENT_GAMES);
         var awayTeamRecentAwayGames = awayTeamGames.AwayGames.PlayedBefore(game.GameDateUTC).Take(RECENT_GAMES);
 
+        // Rest comes from the schedule, so a back-to-back counts before its first game is played
+        var homeTeamPreviousGame = homeTeamGames.CurrentSeasonGames.GetGamesBeforeDate(game.GameDateUTC).FirstOrDefault();
+        var awayTeamPreviousGame = awayTeamGames.CurrentSeasonGames.GetGamesBeforeDate(game.GameDateUTC).FirstOrDefault();
+
         // Head-to-head games between these two teams this season
         var headToHeadGames = homeTeamSeasonGames.Where(g =>
             g.HomeTeamId == game.AwayTeamId || g.AwayTeamId == game.AwayTeamId);
@@ -56,7 +60,7 @@ public static class MapGameToDbGameCleaned
             HomeRecentConcededGoalsAvgAtHome = GetStatAvg(homeTeamHomeGames.Take(RECENT_GAMES), game.HomeTeamId, g => g.AwayGoals, g => g.HomeGoals),
             HomeGoalsAvgAtHome = GetStatAvg(homeTeamHomeGames, game.HomeTeamId, g => g.HomeGoals, g => g.AwayGoals),
             HomeRecentGoalsAvgAtHome = GetStatAvg(homeTeamRecentHomeGames, game.HomeTeamId, g => g.HomeGoals, g => g.AwayGoals),
-            HomeHoursSinceLastGame = game.GetHoursBetweenGames(homeTeamSeasonGames.FirstOrDefault()),
+            HomeHoursSinceLastGame = game.GetHoursBetweenGames(homeTeamPreviousGame),
             HomeRosterOffenseValue = homeRoster?.RosterOffenseValue ?? 0,
             HomeRosterDefenseValue = homeRoster?.RosterDefenseValue ?? 0,
             HomeRosterGoalieValue = homeRoster?.RosterGoalieValue ?? 0,
@@ -81,7 +85,7 @@ public static class MapGameToDbGameCleaned
             AwayRecentConcededGoalsAvgAtAway = GetStatAvg(awayTeamRecentAwayGames, game.AwayTeamId, g => g.AwayGoals, g => g.HomeGoals),
             AwayGoalsAvgAtAway = GetStatAvg(awayTeamAwayGames, game.AwayTeamId, g => g.HomeGoals, g => g.AwayGoals),
             AwayRecentGoalsAvgAtAway = GetStatAvg(awayTeamRecentAwayGames, game.AwayTeamId, g => g.HomeGoals, g => g.AwayGoals),
-            AwayHoursSinceLastGame = game.GetHoursBetweenGames(awayTeamSeasonGames.FirstOrDefault()),
+            AwayHoursSinceLastGame = game.GetHoursBetweenGames(awayTeamPreviousGame),
             AwayRosterOffenseValue = awayRoster?.RosterOffenseValue ?? 0,
             AwayRosterDefenseValue = awayRoster?.RosterDefenseValue ?? 0,
             AwayRosterGoalieValue = awayRoster?.RosterGoalieValue ?? 0,

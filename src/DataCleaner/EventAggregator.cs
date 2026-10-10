@@ -47,6 +47,7 @@ public class EventAggregator
     private readonly Dictionary<int, List<DbMissedShot>> _missedShotsByGame;
     // gameId -> (homeTeamId, awayTeamId, gameDate)
     private readonly Dictionary<int, (int HomeTeamId, int AwayTeamId, DateTime GameDate)> _gameTeams;
+    private readonly HashSet<int> _playedGameIds = new();
     // gameId -> (homePPG, awayPPG)
     private readonly Dictionary<int, (int HomePPG, int AwayPPG)> _ppgByGame;
     // gameId -> (homeSOG, awaySOG, homeBlocked, awayBlocked)
@@ -65,6 +66,8 @@ public class EventAggregator
         foreach (var game in games)
         {
             _gameTeams[game.Id] = (game.HomeTeamId, game.AwayTeamId, game.GameDateUTC);
+            if (game.HasBeenPlayed)
+                _playedGameIds.Add(game.Id);
             _ppgByGame[game.Id] = (game.HomePPG, game.AwayPPG);
             _shotStatsByGame[game.Id] = (game.HomeSOG, game.AwaySOG, game.HomeBlockedShots, game.AwayBlockedShots);
         }
@@ -141,11 +144,13 @@ public class EventAggregator
         );
     }
 
+    // Played games only: upcoming games are cleaned too, and unplayed games between now and then have no events
     private List<int> GetPriorGameIds(int gameId, int teamId, DateTime gameDate)
     {
         return _gameTeams
             .Where(kvp => kvp.Key != gameId
                 && kvp.Value.GameDate < gameDate
+                && _playedGameIds.Contains(kvp.Key)
                 && (kvp.Value.HomeTeamId == teamId || kvp.Value.AwayTeamId == teamId))
             .OrderBy(kvp => kvp.Value.GameDate)
             .Select(kvp => kvp.Key)

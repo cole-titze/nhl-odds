@@ -429,5 +429,34 @@ public class MapEventToDbGameCleanedTests
         Assert.Equal(1.0, cleanedGame.HomeRecentGoalsPerGamePeriod1, 5);
     }
 
+    [Fact]
+    public void Apply_UpcomingGame_IgnoresUnplayedGamesInBetween()
+    {
+        // 5 played games, then 5 scheduled ones before the target: recent values come from the played games
+        var games = new List<Game>();
+        var goals = new List<DbGoal>();
+        for (int i = 1; i <= 10; i++)
+        {
+            var builder = new GameBuilder().WithId(i).WithTeams(1, 2).WithDate(BaseDate.AddDays(i));
+            games.Add(i <= 5 ? builder.Build() : builder.Unplayed().Build());
+            if (i <= 5)
+                goals.Add(new DbGoal { GameId = i, ScoringPlayerTeamId = 1, PeriodNumber = 1 });
+        }
+
+        var targetGame = new GameBuilder()
+            .WithId(100).WithTeams(1, 2).WithDate(BaseDate.AddDays(20)).Unplayed().Build();
+        games.Add(targetGame);
+
+        var aggregator = new EventAggregator(
+            Array.Empty<DbPenalty>(), goals, Array.Empty<DbFaceoff>(),
+            Array.Empty<DbMissedShot>(), games);
+
+        var cleanedGame = new DbGameCleaned();
+        MapEventToDbGameCleaned.Apply(cleanedGame, aggregator, targetGame);
+
+        Assert.Equal(1.0, cleanedGame.HomeGoalsPerGamePeriod1, 5);
+        Assert.Equal(1.0, cleanedGame.HomeRecentGoalsPerGamePeriod1, 5);
+    }
+
     #endregion
 }
