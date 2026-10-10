@@ -10,7 +10,7 @@ from .db.connection import get_connection
 from .db.queries import FEATURE_COLUMNS
 from .db.reader import load_consensus_lines, load_training_data, load_unplayed_games
 from .db.writer import save_predictions, save_spread_total_predictions
-from .models.probability import cover_probability
+from .models.probability import line_cover_probability
 from .models.regression_training import (
     compute_residual_std,
     train_regression_all,
@@ -193,7 +193,7 @@ def _save_unplayed_regression(conn, pipeline, model, residual_std, target, model
         line_key = "spread" if target == "spread" else "total"
         game_lines = consensus.get(game_id, {})
         line = game_lines.get(line_key)
-        cover_prob = cover_probability(predicted, residual_std, line) if line is not None else None
+        cover_prob = line_cover_probability(target, predicted, residual_std, line) if line is not None else None
 
         predictions.append(
             {
@@ -265,7 +265,7 @@ def _run_regression_backfill(conn, train_df, target, model_id, exp_name):
                 line_key = "spread" if target == "spread" else "total"
                 game_lines = consensus.get(game_id, {})
                 line = game_lines.get(line_key)
-                cover_prob = cover_probability(predicted, residual_std, line) if line is not None else None
+                cover_prob = line_cover_probability(target, predicted, residual_std, line) if line is not None else None
 
                 batch.append(
                     {

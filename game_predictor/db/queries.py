@@ -193,16 +193,21 @@ INNER JOIN (
 ) latest ON st."TeamId" = latest."TeamId" AND st."SeasonStartYear" = latest."MaxSeason"
 """
 
+# Each game's most common line. Not the average: books list the puck line as either -1.5 or +1.5 for the home
+# team, and averaging those gives a line no one offers. Kalshi only has fixed markets (home -1.5, 5.5 goals), so
+# it decides only when no other book has the game.
 CONSENSUS_SPREAD_QUERY = """
-SELECT "GameId", AVG("HomePoint") AS "ConsensusSpread"
+SELECT DISTINCT ON ("GameId") "GameId", "HomePoint" AS "ConsensusSpread"
 FROM "BookmakerSpreads"
-GROUP BY "GameId"
+GROUP BY "GameId", "HomePoint"
+ORDER BY "GameId", COUNT(*) FILTER (WHERE "BookmakerKey" <> 'kalshi') DESC, COUNT(*) DESC, "HomePoint"
 """
 
 CONSENSUS_TOTAL_QUERY = """
-SELECT "GameId", AVG("OverUnderPoint") AS "ConsensusTotal"
+SELECT DISTINCT ON ("GameId") "GameId", "OverUnderPoint" AS "ConsensusTotal"
 FROM "BookmakerTotals"
-GROUP BY "GameId"
+GROUP BY "GameId", "OverUnderPoint"
+ORDER BY "GameId", COUNT(*) FILTER (WHERE "BookmakerKey" <> 'kalshi') DESC, COUNT(*) DESC, "OverUnderPoint"
 """
 
 UPSERT_SPREAD_TOTAL = """

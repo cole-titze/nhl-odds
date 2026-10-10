@@ -50,9 +50,9 @@ def load_current_season_games(conn) -> pd.DataFrame:
 
 
 def load_consensus_lines(conn) -> dict[int, dict[str, float]]:
-    """Load consensus spread and total lines keyed by GameId.
+    """Load each game's most common spread and total lines keyed by GameId.
 
-    Returns {GameId: {"spread": avg_home_spread, "total": avg_ou_point}}.
+    Returns {GameId: {"spread": home_handicap, "total": ou_point}}.
     """
     spread_df = _query_to_dataframe(conn, CONSENSUS_SPREAD_QUERY)
     total_df = _query_to_dataframe(conn, CONSENSUS_TOTAL_QUERY)
