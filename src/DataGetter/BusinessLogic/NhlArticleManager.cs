@@ -18,14 +18,8 @@ namespace DataGetter.BusinessLogic;
 public partial class NhlArticleManager
 {
     public const int LATEST_LIMIT = 100;
-    // Articles NHL.com rewrites in place; the lineup projections article is saved separately (LineupArticle)
-    public static readonly string[] RollingSlugs =
-    [
-        NhlArticleTextParser.PROPS_SLUG,
-        "nhl-emergency-backup-goalies-list",
-        "2026-27-nhl-trades",
-        "free-agency-signings-nhl-2026-27",
-    ];
+    // Rewritten in place every season; the per-season trackers and props article are found by NhlSeasonArticles
+    private const string BACKUP_GOALIES_SLUG = "nhl-emergency-backup-goalies-list";
     private readonly ISnapshotRepository _snapshotRepo;
     private readonly INhlContentGetter _contentGetter;
     private readonly ILogger<NhlArticleManager> _logger;
@@ -73,15 +67,24 @@ public partial class NhlArticleManager
         return failures;
     }
 
-    /// <summary>Fetches the articles NHL.com rewrites in place and saves any new text.</summary>
+    /// <summary>
+    /// Fetches the articles NHL.com rewrites in place and saves any new text: the backup goalies list, this season's
+    /// and last season's trade and signing trackers (a season with neither is a failure), and the daily props article.
+    /// </summary>
     public async Task<List<(string Url, Exception Error)>> SaveRollingArticles(DateTime nowUtc)
     {
         var failures = new List<(string, Exception)>();
-        foreach (var slug in RollingSlugs)
+        async Task Save(string slug, Func<Task<string?>> fetch)
         {
             try
             {
-                var saved = await SaveArticle(await _contentGetter.GetStoryBySlug(slug), nowUtc, null);
+                var json = await fetch();
+                if (json == null)
+                {
+                    _logger.LogInformation("Rolling article {Slug}: not published", slug);
+                    return;
+                }
+                var saved = await SaveArticle(json, nowUtc, null);
                 _logger.LogInformation("Rolling article {Slug}: {Result}", slug, saved ? "saved new version" : "unchanged");
             }
             catch (Exception ex)
@@ -89,6 +92,29 @@ public partial class NhlArticleManager
                 failures.Add((slug, ex));
             }
         }
+
+        await Save(BACKUP_GOALIES_SLUG, async () => await _contentGetter.GetStoryBySlug(BACKUP_GOALIES_SLUG));
+
+        var trackers = NhlSeasonArticles.TrackerSlugs(nowUtc);
+        var missing = new List<string>();
+        foreach (var slug in trackers)
+        {
+            await Save(slug, async () =>
+            {
+                var json = await NhlSeasonArticles.GetIfExists(_contentGetter, slug);
+                if (json == null)
+                    missing.Add(slug);
+                return json;
+            });
+        }
+        if (missing.Count == trackers.Count)
+            failures.Add((string.Join(", ", missing), new Exception("None of the trade and signing trackers were found")));
+
+        NhlSeasonArticles.SeasonArticle? props = null;
+        await Save("props", async () => (props = await NhlSeasonArticles.FindPropsArticle(_contentGetter, nowUtc))?.Json
+            ?? throw new Exception($"No props article for {NhlSeasonArticles.Season(nowUtc)} or the season before"));
+        if (props is { CurrentSeason: false } && NhlSeasonArticles.SeasonUnderway(nowUtc))
+            failures.Add((props.Slug, new Exception($"Still reading last season's props article: no {NhlSeasonArticles.Season(nowUtc)} article found")));
         return failures;
     }
 
@@ -105,7 +131,7 @@ public partial class NhlArticleManager
         if (known == null)
         {
             var mentions = NhlArticleTextParser.ParseMentions(article.EntityId, article.ContentHash, article.Body);
-            var picks = article.Slug == NhlArticleTextParser.PROPS_SLUG
+            var picks = NhlSeasonArticles.IsPropsSlug(article.Slug)
                 ? NhlArticleTextParser.ParsePropsPicks(article.EntityId, article.ContentHash, article.Body, article.ContentDate)
                 : [];
             await _snapshotRepo.AddArticle(article, mentions, picks);

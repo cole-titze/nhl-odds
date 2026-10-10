@@ -21,7 +21,11 @@ public class NhlLineupParseManager
     // Every player in the Player table by normalized name, for names not on the team's current roster
     private Dictionary<string, List<int>>? _allPlayers;
 
-    public record RosterPlayer(int Id, string Name, char Position);
+    /// <summary>A roster player; names are normalized (<see cref="NormalizeName"/>).</summary>
+    public record RosterPlayer(int Id, string FirstName, string LastName, char Position)
+    {
+        public string Name => FirstName + LastName;
+    }
 
     public NhlLineupParseManager(ILineupArticleRepository lineupArticleRepository, INhlContentGetter contentGetter, ILoggerFactory loggerFactory)
     {
@@ -155,24 +159,34 @@ public class NhlLineupParseManager
                 continue;
             players.AddRange(list.EnumerateArray().Select(p => new RosterPlayer(
                 p.GetProperty("id").GetInt32(),
-                NormalizeName($"{p.GetProperty("firstName").GetProperty("default").GetString()} {p.GetProperty("lastName").GetProperty("default").GetString()}"),
+                NormalizeName(p.GetProperty("firstName").GetProperty("default").GetString() ?? ""),
+                NormalizeName(p.GetProperty("lastName").GetProperty("default").GetString() ?? ""),
                 position)));
         }
         return players;
     }
 
     /// <summary>
-    /// The player with this exact name (accents, case and punctuation ignored). In a lineup group (F/D/G), a player of
-    /// that position wins; otherwise the name has to be unique on the roster. Null rather than a guess.
+    /// The player with this exact name (accents, case and punctuation ignored), else the one with this last name and
+    /// first initial: the article sometimes uses a short or differently spelled first name (Cal/Calum, Dmitri/Dmitry,
+    /// Maksim/Maxim). In a lineup group (F/D/G), a player of that position wins (and is required for the first-initial
+    /// match); otherwise the match has to be unique on the roster. Null rather than a guess.
     /// </summary>
     public static int? MatchPlayer(List<RosterPlayer> roster, string name, string group)
     {
-        var candidates = roster.Where(p => p.Name == NormalizeName(name)).ToList();
+        var normalized = NormalizeName(name);
+        return Unique(roster.Where(p => p.Name == normalized).ToList(), group, positionRequired: false)
+            ?? Unique(roster.Where(p => p.LastName.Length > 0 && p.FirstName.Length > 0 && normalized.Length > p.LastName.Length
+                && normalized.EndsWith(p.LastName) && normalized[0] == p.FirstName[0]).ToList(), group, positionRequired: true);
+    }
+
+    private static int? Unique(List<RosterPlayer> candidates, string group, bool positionRequired)
+    {
         if (group is "F" or "D" or "G")
         {
             var samePosition = candidates.Where(p => p.Position == group[0]).ToList();
-            if (samePosition.Count == 1)
-                return samePosition[0].Id;
+            if (samePosition.Count == 1 || positionRequired)
+                return samePosition.Count == 1 ? samePosition[0].Id : null;
         }
         return candidates.Count == 1 ? candidates[0].Id : null;
     }

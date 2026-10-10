@@ -7,6 +7,8 @@ public interface INhlContentGetter
     Task<string> GetLatestStories(int limit);
     /// <summary>One article with its body, by its selfUrl.</summary>
     Task<string> GetStoryByUrl(string selfUrl);
+    /// <summary>The newest articles carrying every one of these tags (list items have no body).</summary>
+    Task<string> GetStoriesByTags(IEnumerable<string> tags, int limit);
     /// <summary>One article with its body, by its slug.</summary>
     Task<string> GetStoryBySlug(string slug);
     /// <summary>The betting-partner odds widget for a country ("US" or "CA").</summary>

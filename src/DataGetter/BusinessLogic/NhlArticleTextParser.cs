@@ -7,8 +7,6 @@ namespace DataGetter.BusinessLogic;
 /// <summary>Pulls structured rows out of NHL.com article text: linked players and the daily props picks.</summary>
 public static partial class NhlArticleTextParser
 {
-    public const string PROPS_SLUG = "nhl-picks-props-daily-fantasy-hockey-projections-for-2026-27-season";
-
     /// <summary>Every linked entity (&lt;forge-entity slug="name-8482809" code="player"&gt;), once each with its count.</summary>
     public static List<DbNhlArticleMention> ParseMentions(string entityId, string contentHash, string body)
     {

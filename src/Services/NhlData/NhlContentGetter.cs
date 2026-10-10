@@ -14,6 +14,12 @@ public class NhlContentGetter : INhlContentGetter
         return _forge.GetString($"{STORIES_URL}?$limit={limit}");
     }
 
+    public Task<string> GetStoriesByTags(IEnumerable<string> tags, int limit)
+    {
+        var filter = string.Concat(tags.Select(t => $"tags.slug={Uri.EscapeDataString(t)}&"));
+        return _forge.GetString($"{STORIES_URL}?{filter}$limit={limit}");
+    }
+
     public Task<string> GetStoryByUrl(string selfUrl)
     {
         if (!selfUrl.StartsWith(STORIES_URL + "/"))

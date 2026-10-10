@@ -132,9 +132,9 @@ public class LineupArticleParserTests
     {
         List<NhlLineupParseManager.RosterPlayer> roster =
         [
-            new(8480012, NhlLineupParseManager.NormalizeName("Elias Pettersson"), 'F'),
-            new(8483678, NhlLineupParseManager.NormalizeName("Elias Pettersson"), 'D'),
-            new(8482809, NhlLineupParseManager.NormalizeName("Jackson Blake"), 'F'),
+            Player(8480012, "Elias", "Pettersson", 'F'),
+            Player(8483678, "Elias", "Pettersson", 'D'),
+            Player(8482809, "Jackson", "Blake", 'F'),
         ];
 
         NhlLineupParseManager.MatchPlayer(roster, "Elias Pettersson", "F").Should().Be(8480012);
@@ -143,6 +143,41 @@ public class LineupArticleParserTests
         NhlLineupParseManager.MatchPlayer(roster, "Elias Pettersson", "Scratched").Should().BeNull();
         NhlLineupParseManager.MatchPlayer(roster, "JACKSON  BLAKE", "Injured").Should().Be(8482809);
     }
+
+    [TestMethod]
+    public void MatchPlayer_FallsBackToLastNameAndFirstInitial()
+    {
+        // Names from the 2026-10-10 articles that didn't match the roster exactly
+        List<NhlLineupParseManager.RosterPlayer> roster =
+        [
+            Player(8484221, "Calum", "Ritchie", 'F'),
+            Player(8484958, "Maxim", "Tsyplakov", 'F'),
+            Player(8481656, "Aliaksei", "Protas", 'F'),
+            Player(8478970, "Jalen", "Chatfield", 'D'),
+            Player(8475200, "Dmitry", "Orlov", 'D'),
+            Player(8477015, "Connor", "Brown", 'F'),
+            Player(8481559, "Jack", "Hughes", 'F'),
+            Player(8480800, "Quinn", "Hughes", 'D'),
+            Player(8482000, "Jonas", "Hughes", 'F'),
+        ];
+
+        NhlLineupParseManager.MatchPlayer(roster, "Cal Ritchie", "F").Should().Be(8484221);
+        NhlLineupParseManager.MatchPlayer(roster, "Maksim Tsyplakov", "F").Should().Be(8484958);
+        NhlLineupParseManager.MatchPlayer(roster, "Alaiksei Protas", "Injured").Should().Be(8481656);
+        NhlLineupParseManager.MatchPlayer(roster, "Jacob Chatfield", "D").Should().Be(8478970);
+        NhlLineupParseManager.MatchPlayer(roster, "Dmitri Orlov", "D").Should().Be(8475200);
+        // Different first initial: a different player (not on this roster)
+        NhlLineupParseManager.MatchPlayer(roster, "Garrett Brown", "F").Should().BeNull();
+        // Listed at another position: likely someone else
+        NhlLineupParseManager.MatchPlayer(roster, "Cal Ritchie", "D").Should().BeNull();
+        // Same last name and initial twice: position decides, and no guess without one
+        NhlLineupParseManager.MatchPlayer(roster, "J. Hughes", "D").Should().BeNull();
+        NhlLineupParseManager.MatchPlayer(roster, "Jake Hughes", "Scratched").Should().BeNull();
+        NhlLineupParseManager.MatchPlayer(roster, "Q Hughes", "D").Should().Be(8480800);
+    }
+
+    private static NhlLineupParseManager.RosterPlayer Player(int id, string first, string last, char position) =>
+        new(id, NhlLineupParseManager.NormalizeName(first), NhlLineupParseManager.NormalizeName(last), position);
 
     [TestMethod]
     public void NormalizeName_IgnoresAccentsCaseAndPunctuation()

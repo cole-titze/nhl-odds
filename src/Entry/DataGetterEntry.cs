@@ -248,7 +248,7 @@ public class DataGetterEntry
         }
 
         var lineupManager = new NhlLineupArticleManager(
-            new LineupArticleRepository(nhlDbContext), new NhlLineupArticleGetter(_loggerFactory), _loggerFactory);
+            new LineupArticleRepository(nhlDbContext), contentGetter, _loggerFactory);
         await Step("LineupSnapshot", () => lineupManager.SaveLineupArticle(now));
         var lineupParseManager = new NhlLineupParseManager(new LineupArticleRepository(nhlDbContext), contentGetter, _loggerFactory);
         await Step("LineupParse", async () =>

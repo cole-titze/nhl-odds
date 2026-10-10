@@ -1,3 +1,4 @@
+using System.Net;
 using DatabaseAccess.LineupArticleRepository;
 using DataGetter.BusinessLogic;
 using Entities.DbModels;
@@ -52,8 +53,9 @@ public class NhlLineupArticleManagerTests
     public async Task SaveLineupArticle_SavesOnlyNewText()
     {
         var repo = A.Fake<ILineupArticleRepository>();
-        var getter = A.Fake<INhlLineupArticleGetter>();
-        A.CallTo(() => getter.GetLineupArticle()).Returns(Article("Lines"));
+        var getter = A.Fake<INhlContentGetter>();
+        A.CallTo(() => getter.GetStoriesByTags(A<IEnumerable<string>>._, A<int>._)).Returns(Search(SLUG));
+        A.CallTo(() => getter.GetStoryBySlug(SLUG)).Returns(Article("Lines"));
         var known = NhlLineupArticleManager.ParseArticle(Article("Lines"), DateTime.UtcNow).ContentHash;
         A.CallTo(() => repo.Exists(known)).Returns(true);
         var manager = new NhlLineupArticleManager(repo, getter, NullLoggerFactory.Instance);
@@ -61,7 +63,7 @@ public class NhlLineupArticleManagerTests
         await manager.SaveLineupArticle(DateTime.UtcNow);
         A.CallTo(() => repo.Add(A<DbLineupArticle>._)).MustNotHaveHappened();
 
-        A.CallTo(() => getter.GetLineupArticle()).Returns(Article("New lines"));
+        A.CallTo(() => getter.GetStoryBySlug(SLUG)).Returns(Article("New lines"));
         await manager.SaveLineupArticle(new DateTime(2026, 10, 10, 16, 30, 5, 250));
         A.CallTo(() => repo.Add(A<DbLineupArticle>.That.Matches(a =>
             a.ContentHash != known && a.FirstSeenUTC == new DateTime(2026, 10, 10, 16, 30, 5)))).MustHaveHappenedOnceExactly();
@@ -70,12 +72,36 @@ public class NhlLineupArticleManagerTests
     [TestMethod]
     public async Task SaveLineupArticle_ThrowsWhenFetchFails()
     {
-        var getter = A.Fake<INhlLineupArticleGetter>();
-        A.CallTo(() => getter.GetLineupArticle()).Returns((string?)null);
+        var getter = A.Fake<INhlContentGetter>();
+        A.CallTo(() => getter.GetStoriesByTags(A<IEnumerable<string>>._, A<int>._)).Returns(Search());
+        A.CallTo(() => getter.GetStoryBySlug(A<string>._)).ThrowsAsync(new HttpRequestException("503", null, HttpStatusCode.ServiceUnavailable));
         var manager = new NhlLineupArticleManager(A.Fake<ILineupArticleRepository>(), getter, NullLoggerFactory.Instance);
 
         var act = () => manager.SaveLineupArticle(DateTime.UtcNow);
 
         await act.Should().ThrowAsync<Exception>();
     }
+
+    [TestMethod]
+    public async Task SaveLineupArticle_LastSeasonsArticleIsSavedButFailsOnceTheSeasonStarts()
+    {
+        var repo = A.Fake<ILineupArticleRepository>();
+        var getter = A.Fake<INhlContentGetter>();
+        A.CallTo(() => getter.GetStoriesByTags(A<IEnumerable<string>>._, A<int>._)).Returns(Search());
+        A.CallTo(() => getter.GetStoryBySlug(A<string>._)).ThrowsAsync(new HttpRequestException("404", null, HttpStatusCode.NotFound));
+        A.CallTo(() => getter.GetStoryBySlug(SLUG)).Returns(Article("Lines"));
+        var manager = new NhlLineupArticleManager(repo, getter, NullLoggerFactory.Instance);
+
+        // September 2027: the 2027-28 article isn't up yet, so last season's is expected
+        await manager.SaveLineupArticle(new DateTime(2027, 9, 15));
+        A.CallTo(() => repo.Add(A<DbLineupArticle>._)).MustHaveHappenedOnceExactly();
+
+        var act = () => manager.SaveLineupArticle(new DateTime(2027, 10, 2));
+        await act.Should().ThrowAsync<Exception>().WithMessage("*last season's*");
+    }
+
+    private const string SLUG = "nhl-lineup-projections-2026-27-season";
+
+    private static string Search(params string[] slugs) =>
+        $$"""{ "items": [{{string.Join(",", slugs.Select(s => $$"""{ "slug": "{{s}}" }"""))}}] }""";
 }

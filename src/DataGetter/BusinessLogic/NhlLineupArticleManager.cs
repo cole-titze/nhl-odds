@@ -10,34 +10,40 @@ namespace DataGetter.BusinessLogic;
 
 /// <summary>
 /// Saves each new version of NHL.com's lineup projections article (projected lines, starting goalies, scratches).
-/// The article is overwritten daily, so these snapshots are the only history of what it said before games.
+/// The article is overwritten daily, so these snapshots are the only history of what it said before games. A new
+/// article starts each season (<see cref="NhlSeasonArticles"/>).
 /// </summary>
 public class NhlLineupArticleManager
 {
     private readonly ILineupArticleRepository _lineupArticleRepo;
-    private readonly INhlLineupArticleGetter _articleGetter;
+    private readonly INhlContentGetter _contentGetter;
     private readonly ILogger<NhlLineupArticleManager> _logger;
 
-    public NhlLineupArticleManager(ILineupArticleRepository lineupArticleRepository, INhlLineupArticleGetter articleGetter, ILoggerFactory loggerFactory)
+    public NhlLineupArticleManager(ILineupArticleRepository lineupArticleRepository, INhlContentGetter contentGetter, ILoggerFactory loggerFactory)
     {
         _lineupArticleRepo = lineupArticleRepository;
-        _articleGetter = articleGetter;
+        _contentGetter = contentGetter;
         _logger = loggerFactory.CreateLogger<NhlLineupArticleManager>();
     }
 
     public async Task SaveLineupArticle(DateTime nowUtc)
     {
-        var json = await _articleGetter.GetLineupArticle()
-            ?? throw new Exception("Lineup projections article couldn't be fetched");
-        var article = ParseArticle(json, nowUtc.AddTicks(-(nowUtc.Ticks % TimeSpan.TicksPerSecond)));
+        var found = await NhlSeasonArticles.FindLineupArticle(_contentGetter, nowUtc)
+            ?? throw new Exception($"No lineup projections article for {NhlSeasonArticles.Season(nowUtc)} or the season before");
+        var article = ParseArticle(found.Json, nowUtc.AddTicks(-(nowUtc.Ticks % TimeSpan.TicksPerSecond)));
 
         if (await _lineupArticleRepo.Exists(article.ContentHash))
         {
-            _logger.LogInformation("Lineup article unchanged (last updated {LastUpdated})", article.LastUpdated);
-            return;
+            _logger.LogInformation("Lineup article {Slug} unchanged (last updated {LastUpdated})", found.Slug, article.LastUpdated);
         }
-        await _lineupArticleRepo.Add(article);
-        _logger.LogInformation("Saved new lineup article version (last updated {LastUpdated})", article.LastUpdated);
+        else
+        {
+            await _lineupArticleRepo.Add(article);
+            _logger.LogInformation("Saved new lineup article version {Slug} (last updated {LastUpdated})", found.Slug, article.LastUpdated);
+        }
+
+        if (!found.CurrentSeason && NhlSeasonArticles.SeasonUnderway(nowUtc))
+            throw new Exception($"Still reading last season's lineup article {found.Slug}: no {NhlSeasonArticles.Season(nowUtc)} article found");
     }
 
     /// <summary>
