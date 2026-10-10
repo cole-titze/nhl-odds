@@ -1,5 +1,3 @@
-import inspect
-
 from joblib import Parallel, delayed
 from sklearn.metrics import accuracy_score, log_loss
 
@@ -10,13 +8,6 @@ from .experiment.folds import fit_model
 
 def build_models(model_configs: dict[str, ModelConfig]) -> dict:
     return {name: cfg.build() for name, cfg in model_configs.items()}
-
-
-def _fit(model, X, y, sample_weight=None):
-    if sample_weight is not None and "sample_weight" in inspect.signature(model.fit).parameters:
-        model.fit(X, y, sample_weight=sample_weight)
-    else:
-        model.fit(X, y)
 
 
 def fit_models(models: dict, X, y, sample_weight=None) -> dict:
