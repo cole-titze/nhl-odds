@@ -29,6 +29,8 @@ from ..models.experiment import (
     mlp_regressor,
     random_forest,
     random_forest_regressor,
+    raw_pipeline,
+    segment_router,
     standard_pipeline,
     tabm,
     xgboost,
@@ -48,6 +50,27 @@ EXPERIMENTS: dict[str, Experiment] = {
         calibration="none",
         decay=0.08,
         stack=True,
+        tune=False,
+    ),
+    # Mixture of experts (#55): Default's stack plus a copy trained only on back-to-back games, blended
+    # 1:3 with the global model on those games. Ties Default in walk-forward evals (+0.0001 ± 0.0002 on
+    # 2023-26); routing by early season, lopsided games or per-segment model picks did worse.
+    "MoE B2B": Experiment(
+        models={
+            "MoE": segment_router(
+                models={
+                    "KNN": knn(n_neighbors=152, weights="distance", metric="minkowski", p=2),
+                    "LR": logistic_regression(C=0.0768651, l1_ratio=1.0),
+                },
+                segment="b2b",
+                blend=0.25,
+                k_best=99,
+                pca_components=90,
+            ),
+        },
+        pipeline=raw_pipeline(),
+        calibration="none",
+        decay=0.08,
         tune=False,
     ),
     # Previous Default: six-model stack

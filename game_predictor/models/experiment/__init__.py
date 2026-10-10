@@ -5,6 +5,7 @@ from .logistic_regression import logistic_regression
 from .mlp import mlp, mlp_regressor
 from .pipeline import standard_pipeline
 from .random_forest import random_forest, random_forest_regressor
+from .segment_router import raw_pipeline, segment_router
 from .tabm import tabm
 from .types import Experiment, ModelConfig, RegressionExperiment
 from .xgboost import xgboost, xgboost_regressor
@@ -23,6 +24,8 @@ __all__ = [
     "mlp_regressor",
     "random_forest",
     "random_forest_regressor",
+    "raw_pipeline",
+    "segment_router",
     "standard_pipeline",
     "tabm",
     "xgboost",
