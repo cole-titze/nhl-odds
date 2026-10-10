@@ -40,9 +40,18 @@ class Ensemble(BaseEstimator, ClassifierMixin):
         return np.argmax(self.predict_proba(X), axis=1)
 
 
+def _single_threaded(estimator):
+    """Clone with one thread. joblib caps OpenMP threads in its workers, but LightGBM ignores that and
+    would start a thread per core in each of the workers."""
+    model = clone(estimator)
+    if "n_jobs" in model.get_params():
+        model.set_params(n_jobs=1)
+    return model
+
+
 def _fit_and_predict(estimator, X, y, sample_weight, train_idx, test_idx):
     w = sample_weight[train_idx] if sample_weight is not None else None
-    model = fit_model(clone(estimator), X[train_idx], y[train_idx], w)
+    model = fit_model(_single_threaded(estimator), X[train_idx], y[train_idx], w)
     return test_idx, model.predict_proba(X[test_idx])[:, 1]
 
 
@@ -72,7 +81,9 @@ class WeightedStackingClassifier(BaseEstimator, ClassifierMixin):
         self.classes_ = np.unique(y)
         folds = list(StratifiedKFold(n_splits=self.cv).split(X, y))
 
-        # Out-of-fold P(class 1) from each base model becomes the meta-model's features
+        # Out-of-fold P(class 1) from each base model becomes the meta-model's features. Every
+        # (model, fold) pair runs at once here, so each fit gets one thread; the final fits below are
+        # only one per model, so they keep their own thread settings.
         jobs = [(i, est, tr, te) for i, (_, est) in enumerate(self.estimators) for tr, te in folds]
         outputs = Parallel(n_jobs=-1)(
             delayed(_fit_and_predict)(est, X, y, sample_weight, tr, te) for _, est, tr, te in jobs
