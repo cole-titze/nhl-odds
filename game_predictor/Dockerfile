@@ -9,4 +9,6 @@ COPY . game_predictor/
 RUN useradd --uid 10001 --create-home app
 USER 10001
 ENV PREDICTOR_MODE=predict
+# Print progress as it happens, so log lines can be timed
+ENV PYTHONUNBUFFERED=1
 ENTRYPOINT ["sh", "-c", "python -m game_predictor --mode $PREDICTOR_MODE"]

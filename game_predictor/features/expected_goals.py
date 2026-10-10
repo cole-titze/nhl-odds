@@ -43,6 +43,8 @@ def _prepare_attempts(attempts: pd.DataFrame, games: pd.DataFrame) -> pd.DataFra
     prev_t = a.groupby(["GameId", "PeriodNumber"]).SecondsIntoPeriod.shift()
     prev_team = a.groupby(["GameId", "PeriodNumber"]).TeamId.shift()
     a["rebound"] = ((a.SecondsIntoPeriod - prev_t <= 3) & (prev_team == a.TeamId)).astype(int)
+    # Unknown shot type (-1) as missing, which LightGBM would otherwise convert with a warning per fit
+    a["ShotType"] = a.ShotType.where(a.ShotType >= 0)
     a["sk_diff"] = a.own_sk - a.opp_sk
     a["ot"] = (a.PeriodType == 1).astype(int)
     a["state"] = np.select(

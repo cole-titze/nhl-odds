@@ -1,3 +1,4 @@
+import time
 from functools import lru_cache
 
 import pandas as pd
@@ -26,9 +27,12 @@ def _query_to_dataframe(conn, query: str) -> pd.DataFrame:
 @lru_cache(maxsize=1)
 def _load_xg_features(conn) -> pd.DataFrame:
     """Expected-goals features for every game. Computed once per connection: it scores every shot attempt."""
+    start = time.time()
     attempts = _query_to_dataframe(conn, SHOT_ATTEMPTS_QUERY)
     games = _query_to_dataframe(conn, ALL_GAMES_QUERY)
-    return compute_xg_features(attempts, games)
+    features = compute_xg_features(attempts, games)
+    print(f"Expected-goals features: {len(attempts):,} attempts in {time.time() - start:.0f}s")
+    return features
 
 
 def _load_games(conn, query: str) -> pd.DataFrame:
