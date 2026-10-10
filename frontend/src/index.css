@@ -71,14 +71,15 @@ html.dark {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
-/* Keep focused content clear of the sticky navbar (and any other sticky or
-   fixed bars a page reports via these variables), so keyboard focus is never
+/* Keep focused content clear of the sticky navbar, the fixed footer (Layout
+   reports its height) and any other sticky or fixed bars a page reports via
+   these variables), so keyboard focus is never
    hidden behind them (WCAG 2.4.11). Set as scroll-margin on main's focusable
    elements rather than scroll-padding on <html>: with the latter, focusing a
    link inside the sticky header itself makes the browser scroll the page. */
 main :is(a, button, input, select, textarea, summary, [tabindex]) {
   scroll-margin-top: var(--sticky-top, 5rem);
-  scroll-margin-bottom: var(--sticky-bottom, 0px);
+  scroll-margin-bottom: calc(var(--sticky-bottom, 0px) + var(--footer-height, 0px));
 }
 /* ...except inside a sticky bar in main (the Games filter bar), whose controls
    are always on screen. With the margin, focusing one makes the browser scroll
