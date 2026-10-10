@@ -34,6 +34,19 @@ public partial class NhlDbContext : DbContext
     public virtual DbSet<DbErrorLog> ErrorLog { get; set; } = null!;
     public virtual DbSet<DbRosterStatus> RosterStatus { get; set; } = null!;
     public virtual DbSet<DbLineupArticle> LineupArticle { get; set; } = null!;
+    public virtual DbSet<DbPartnerOdds> PartnerOdds { get; set; } = null!;
+    public virtual DbSet<DbNhlArticle> NhlArticle { get; set; } = null!;
+    public virtual DbSet<DbNhlArticleTag> NhlArticleTag { get; set; } = null!;
+    public virtual DbSet<DbNhlArticleMention> NhlArticleMention { get; set; } = null!;
+    public virtual DbSet<DbNhlPropsPick> NhlPropsPick { get; set; } = null!;
+    public virtual DbSet<DbLineupGame> LineupGame { get; set; } = null!;
+    public virtual DbSet<DbLineupPlayer> LineupPlayer { get; set; } = null!;
+    public virtual DbSet<DbLineupArticleParse> LineupArticleParse { get; set; } = null!;
+    public virtual DbSet<DbGameRosterSpot> GameRosterSpot { get; set; } = null!;
+    public virtual DbSet<DbGameShift> GameShift { get; set; } = null!;
+    public virtual DbSet<DbGoalReplay> GoalReplay { get; set; } = null!;
+    public virtual DbSet<DbGoalReplayPosition> GoalReplayPosition { get; set; } = null!;
+    public virtual DbSet<DbGameDetailFetch> GameDetailFetch { get; set; } = null!;
 
     // Game Event Tables
     public virtual DbSet<DbBlockedShot> GameBlockedShotEvent { get; set; } = null!;
@@ -76,6 +89,34 @@ public partial class NhlDbContext : DbContext
             .HasKey(c => new { c.SnapshotUTC, c.PlayerId });
         modelBuilder.Entity<DbLineupArticle>()
             .HasKey(c => c.ContentHash);
+        modelBuilder.Entity<DbPartnerOdds>()
+            .HasKey(c => new { c.Country, c.PartnerUpdatedUTC, c.GameId, c.TeamId, c.Market, c.Qualifier });
+        modelBuilder.Entity<DbNhlArticle>()
+            .HasKey(c => new { c.EntityId, c.ContentHash });
+        modelBuilder.Entity<DbNhlArticleTag>()
+            .HasKey(c => new { c.EntityId, c.TagSlug });
+        modelBuilder.Entity<DbNhlArticleMention>()
+            .HasKey(c => new { c.EntityId, c.ContentHash, c.Code, c.NhlId });
+        modelBuilder.Entity<DbNhlPropsPick>()
+            .HasKey(c => new { c.EntityId, c.ContentHash, c.Category, c.PlayerId });
+        modelBuilder.Entity<DbLineupGame>()
+            .HasKey(c => c.SectionHash);
+        modelBuilder.Entity<DbLineupPlayer>()
+            .HasKey(c => new { c.SectionHash, c.Side, c.Group, c.LineNumber, c.Slot });
+        modelBuilder.Entity<DbLineupArticleParse>()
+            .HasKey(c => c.ArticleHash);
+        modelBuilder.Entity<DbGameRosterSpot>()
+            .HasKey(c => new { c.GameId, c.PlayerId });
+        modelBuilder.Entity<DbGameShift>()
+            .HasKey(c => c.Id);
+        modelBuilder.Entity<DbGameShift>()
+            .Property(c => c.Id).ValueGeneratedNever();
+        modelBuilder.Entity<DbGoalReplay>()
+            .HasKey(c => new { c.GameId, c.EventId });
+        modelBuilder.Entity<DbGoalReplayPosition>()
+            .HasKey(c => new { c.GameId, c.EventId, c.Frame, c.TrackId });
+        modelBuilder.Entity<DbGameDetailFetch>()
+            .HasKey(c => new { c.GameId, c.Kind });
         modelBuilder.Entity<DbGameOdds>()
             .HasKey(c => new { c.GameId, c.ModelId, c.RunDateUTC });
         modelBuilder.Entity<DbGameSpreadTotalOdds>()
