@@ -76,7 +76,9 @@ class WeightedStackingClassifier(BaseEstimator, ClassifierMixin):
             tags.classifier_tags = ClassifierTags()
         return tags
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, fitted_estimators=None):
+        """fitted_estimators: the base models already fit on all of X, in estimators order. Saves fitting
+        them again when the caller has them anyway."""
         X, y = np.asarray(X), np.asarray(y)
         self.classes_ = np.unique(y)
         folds = list(StratifiedKFold(n_splits=self.cv).split(X, y))
@@ -93,9 +95,12 @@ class WeightedStackingClassifier(BaseEstimator, ClassifierMixin):
             meta[test_idx, i] = proba
 
         self.final_estimator_ = LogisticRegression().fit(meta, y, sample_weight=sample_weight)
-        self.estimators_ = Parallel(n_jobs=-1)(
-            delayed(fit_model)(clone(est), X, y, sample_weight) for _, est in self.estimators
-        )
+        if fitted_estimators is not None:
+            self.estimators_ = list(fitted_estimators)
+        else:
+            self.estimators_ = Parallel(n_jobs=-1)(
+                delayed(fit_model)(clone(est), X, y, sample_weight) for _, est in self.estimators
+            )
         return self
 
     def _meta_features(self, X):
