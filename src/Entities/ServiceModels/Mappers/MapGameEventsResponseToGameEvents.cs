@@ -10,10 +10,12 @@ public static class MapGameEventsResponseToGameEvents
     public static GameEvents Map(JsonNode? response)
     {
         var gameEvents = new List<IGameEvent>();
+        var sourceEventIds = new HashSet<int>();
         foreach (var responseGameEvent in response!["plays"]!.AsArray())
         {
             try
             {
+                sourceEventIds.Add(responseGameEvent!["eventId"]!.GetValue<int>());
                 var gameEvent = GetGameEvent(responseGameEvent!);
                 if (gameEvent != null)
                     gameEvents.Add(gameEvent);
@@ -24,7 +26,7 @@ public static class MapGameEventsResponseToGameEvents
             }
         }
 
-        return new GameEvents(gameEvents);
+        return new GameEvents(gameEvents) { SourceEventIds = sourceEventIds };
     }
 
     private static IGameEvent? GetGameEvent(JsonNode responseGameEvent)

@@ -84,23 +84,30 @@ public class GameEventRepository : IGameEventRepository
 
         // Only called for played games, so the play-by-play is authoritative: drop events the NHL has since
         // removed or re-typed (a shot re-scored as a miss keeps its event id, so the old row would count it twice)
-        _dbContext.RemoveRange(GetStaleEvents(existingEvents, dbGameEvents));
+        _dbContext.RemoveRange(GetStaleEvents(existingEvents, dbGameEvents, game.GameEvents!.SourceEventIds));
     }
 
     /// <summary>
-    /// Gets the stored events that are no longer in the game's play-by-play. Returns none when the new play-by-play
-    /// has fewer than half the stored events, so a truncated API response can't wipe a game.
+    /// Gets the stored events the NHL has removed from the game's play-by-play or re-typed. An event that is still in
+    /// the play-by-play but failed to map is kept, since the mapper skips plays it can't read. Returns none when the
+    /// new play-by-play has fewer than half the stored events, so a truncated API response can't wipe a game.
     /// </summary>
     /// <param name="existingEvents">The game's stored events</param>
-    /// <param name="newEvents">The game's events from the latest play-by-play</param>
+    /// <param name="newEvents">The game's mapped events from the latest play-by-play</param>
+    /// <param name="sourceEventIds">Ids of every play in the latest play-by-play, mapped or not</param>
     /// <returns>Events to delete</returns>
-    public static IEnumerable<IDbGameEvent> GetStaleEvents(IEnumerable<IDbGameEvent> existingEvents, IEnumerable<IDbGameEvent> newEvents)
+    public static IEnumerable<IDbGameEvent> GetStaleEvents(IEnumerable<IDbGameEvent> existingEvents, IEnumerable<IDbGameEvent> newEvents, IReadOnlySet<int> sourceEventIds)
     {
         var existing = existingEvents.ToList();
-        var newKeys = newEvents.Select(e => (e.GetType(), e.Id)).ToHashSet();
-        if (newKeys.Count * 2 < existing.Count)
+        var newList = newEvents.ToList();
+        var newKeys = newList.Select(e => (e.GetType(), e.Id)).ToHashSet();
+        var newIds = newList.Select(e => e.Id).ToHashSet();
+        if (sourceEventIds.Count * 2 < existing.Count)
             return [];
-        return existing.Where(e => !newKeys.Contains((e.GetType(), e.Id))).ToList();
+        return existing
+            .Where(e => !newKeys.Contains((e.GetType(), e.Id)))
+            .Where(e => !sourceEventIds.Contains(e.Id) || newIds.Contains(e.Id))
+            .ToList();
     }
 
     /// <summary>
