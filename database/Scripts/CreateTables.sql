@@ -845,6 +845,54 @@ CREATE TABLE "LineupArticle"
     CONSTRAINT "PK_LineupArticle" PRIMARY KEY("ContentHash")
 );
 
+-- Each version of NHL.com's betting-partner odds widget (one row per team per line), saved the first time it is seen
+CREATE TABLE "PartnerOdds"
+(
+    "Country" VARCHAR(2) NOT NULL,
+    "PartnerUpdatedUTC" TIMESTAMP NOT NULL,
+    "GameId" INTEGER NOT NULL,
+    "TeamId" INTEGER NOT NULL,
+    "Market" VARCHAR(50) NOT NULL,
+    "Qualifier" VARCHAR(50) NOT NULL,
+    "Price" NUMERIC(10, 1) NOT NULL,
+    "IsHome" BOOLEAN NOT NULL,
+    "PartnerName" VARCHAR(100) NOT NULL,
+    "OddsDate" TIMESTAMP NULL,
+    "StartTimeUTC" TIMESTAMP NOT NULL,
+    "FirstSeenUTC" TIMESTAMP NOT NULL,
+    CONSTRAINT "PK_PartnerOdds" PRIMARY KEY("Country", "PartnerUpdatedUTC", "GameId", "TeamId", "Market", "Qualifier")
+);
+CREATE INDEX "IX_PartnerOdds_GameId" ON "PartnerOdds"("GameId");
+
+-- Each version of an NHL.com article (league and team sites), saved the first time its text is seen
+CREATE TABLE "NhlArticle"
+(
+    "EntityId" VARCHAR(64) NOT NULL,
+    "ContentHash" CHAR(64) NOT NULL,
+    "Slug" TEXT NOT NULL,
+    "Title" TEXT NOT NULL,
+    "Headline" TEXT NULL,
+    "Summary" TEXT NULL,
+    "ContentDate" TIMESTAMP NULL,
+    "LastUpdated" TIMESTAMP NULL,
+    "FirstSeenUTC" TIMESTAMP NOT NULL,
+    "Body" TEXT NOT NULL,
+    CONSTRAINT "PK_NhlArticle" PRIMARY KEY("EntityId", "ContentHash")
+);
+
+-- NHL.com article tags; team, player and game tags carry the NHL id
+CREATE TABLE "NhlArticleTag"
+(
+    "EntityId" VARCHAR(64) NOT NULL,
+    "TagSlug" VARCHAR(200) NOT NULL,
+    "Title" TEXT NOT NULL,
+    "SourceName" VARCHAR(100) NULL,
+    "IdType" VARCHAR(10) NULL,
+    "NhlId" BIGINT NULL,
+    CONSTRAINT "PK_NhlArticleTag" PRIMARY KEY("EntityId", "TagSlug")
+);
+CREATE INDEX "IX_NhlArticleTag_NhlId" ON "NhlArticleTag"("IdType", "NhlId");
+
 CREATE TABLE "ErrorLog"
 (
     "Id" SERIAL NOT NULL,

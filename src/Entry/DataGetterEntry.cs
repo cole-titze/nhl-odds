@@ -9,9 +9,11 @@ using DatabaseAccess.GameRepository;
 using DatabaseAccess.LineupArticleRepository;
 using DatabaseAccess.PlayerRepository;
 using DatabaseAccess.RosterStatusRepository;
+using DatabaseAccess.SnapshotRepository;
 using DatabaseAccess.TeamRepository;
 using DataCleaner;
 using DataGetter.BusinessLogic;
+using Entities.DbModels;
 using Entities.Types;
 using Entities.Types.Enums;
 using Microsoft.Extensions.Logging;
@@ -70,9 +72,7 @@ public class DataGetterEntry
 
         if (modeSettings.Mode == ModeType.LineupSnapshot)
         {
-            var lineupManager = new NhlLineupArticleManager(
-                new LineupArticleRepository(nhlDbContext), new NhlLineupArticleGetter(_loggerFactory), _loggerFactory);
-            await lineupManager.SaveLineupArticle(DateTime.UtcNow);
+            await SaveSnapshots(nhlDbContext, errorRepo);
         }
         else if (modeSettings.Mode == ModeType.KalshiFetch)
         {
@@ -182,5 +182,59 @@ public class DataGetterEntry
         var elapsedTime = watch.Elapsed;
         var minutes = elapsedTime.TotalMinutes.ToString();
         _logger.LogTrace("Completed Data Collection in " + minutes + " minutes");
+    }
+
+    /// <summary>
+    /// Saves NHL.com content that only shows its current state: the lineup projections article, the betting-partner
+    /// odds widget and articles. Each step runs even if another fails; failures go to ErrorLog and fail the job at the end.
+    /// </summary>
+    private async Task SaveSnapshots(NhlDbContext nhlDbContext, ErrorRepository errorRepo)
+    {
+        var now = DateTime.UtcNow;
+        var contentGetter = new NhlContentGetter();
+        var snapshotRepo = new SnapshotRepository(nhlDbContext);
+        var failures = new List<(string Source, Exception Error)>();
+
+        async Task Step(string source, Func<Task> step)
+        {
+            try
+            {
+                await step();
+            }
+            catch (Exception ex)
+            {
+                failures.Add((source, ex));
+            }
+        }
+
+        var lineupManager = new NhlLineupArticleManager(
+            new LineupArticleRepository(nhlDbContext), new NhlLineupArticleGetter(_loggerFactory), _loggerFactory);
+        await Step("LineupSnapshot", () => lineupManager.SaveLineupArticle(now));
+
+        var oddsManager = new NhlPartnerOddsManager(snapshotRepo, contentGetter, _loggerFactory);
+        foreach (var country in NhlPartnerOddsManager.Countries)
+            await Step($"PartnerOdds {country}", () => oddsManager.SavePartnerOdds(country, now));
+
+        var articleManager = new NhlArticleManager(snapshotRepo, contentGetter, _loggerFactory);
+        await Step("RollingArticles", async () =>
+            failures.AddRange((await articleManager.SaveRollingArticles(now)).Select(f => ($"RollingArticles {f.Url}", f.Error))));
+        await Step("LatestArticles", async () =>
+            failures.AddRange((await articleManager.SaveLatestArticles(now)).Select(f => ($"LatestArticles {f.Url}", f.Error))));
+
+        if (failures.Count == 0)
+            return;
+        foreach (var (source, error) in failures)
+        {
+            _logger.LogError(error, "Snapshot step {Source} failed", source);
+            await errorRepo.AddError(new DbErrorLog
+            {
+                TimestampUTC = DateTime.UtcNow,
+                ExceptionType = error.GetType().FullName ?? error.GetType().Name,
+                Message = error.Message,
+                StackTrace = error.StackTrace ?? string.Empty,
+                Source = source.Length > 250 ? source[..250] : source,
+            });
+        }
+        throw new Exception($"{failures.Count} snapshot step(s) failed: {string.Join(", ", failures.Select(f => f.Source))}");
     }
 }

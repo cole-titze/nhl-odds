@@ -34,6 +34,9 @@ public partial class NhlDbContext : DbContext
     public virtual DbSet<DbErrorLog> ErrorLog { get; set; } = null!;
     public virtual DbSet<DbRosterStatus> RosterStatus { get; set; } = null!;
     public virtual DbSet<DbLineupArticle> LineupArticle { get; set; } = null!;
+    public virtual DbSet<DbPartnerOdds> PartnerOdds { get; set; } = null!;
+    public virtual DbSet<DbNhlArticle> NhlArticle { get; set; } = null!;
+    public virtual DbSet<DbNhlArticleTag> NhlArticleTag { get; set; } = null!;
 
     // Game Event Tables
     public virtual DbSet<DbBlockedShot> GameBlockedShotEvent { get; set; } = null!;
@@ -76,6 +79,12 @@ public partial class NhlDbContext : DbContext
             .HasKey(c => new { c.SnapshotUTC, c.PlayerId });
         modelBuilder.Entity<DbLineupArticle>()
             .HasKey(c => c.ContentHash);
+        modelBuilder.Entity<DbPartnerOdds>()
+            .HasKey(c => new { c.Country, c.PartnerUpdatedUTC, c.GameId, c.TeamId, c.Market, c.Qualifier });
+        modelBuilder.Entity<DbNhlArticle>()
+            .HasKey(c => new { c.EntityId, c.ContentHash });
+        modelBuilder.Entity<DbNhlArticleTag>()
+            .HasKey(c => new { c.EntityId, c.TagSlug });
         modelBuilder.Entity<DbGameOdds>()
             .HasKey(c => new { c.GameId, c.ModelId, c.RunDateUTC });
         modelBuilder.Entity<DbGameSpreadTotalOdds>()
