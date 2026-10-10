@@ -22,6 +22,8 @@ public record TeamRosterValues(
 /// </summary>
 public class RosterScorer
 {
+    // "Recent" values use each player's last 5 games; unprefixed ones use all their games this season and last
+    // (team save % uses this season only). Last 10 or last 82 games did no better in walk-forward evals (2026-10-09).
     private const int RECENT_GAMES = 5;
     // Skaters with less total ice time than this get no rate (too little to measure)
     private const double MIN_SKATER_HOURS = 10 / 60.0;

@@ -166,4 +166,15 @@ The first 4 digits of a game ID are always the season start year.
 
 **Predictor features** — `game_predictor` reads the `GameCleaned` columns (`GAME_CLEANED_COLUMNS`) and adds 16 expected-goals features it computes itself from the shot events (`game_predictor/features/expected_goals.py`, `XG_FEATURE_COLUMNS`). `FEATURE_COLUMNS` is both lists and feeds the win, spread and total models alike.
 
+**Feature windows** — column names say which games a feature averages over. Each group uses the windows that did best in walk-forward evals (2026-10-09), so they differ on purpose:
+
+| Features | `Recent…` / short | unprefixed / long |
+|---|---|---|
+| Team box-score stats, save % (`MapGameToDbGameCleaned`, `RosterScorer`) | last 5 games | this season (`…AtHome`/`…AtAway`: home or away games this season and last) |
+| Event stats: Corsi, PP/PK, faceoffs, penalties (`EventAggregator`) | last 5 games | this season and last |
+| Roster values (`RosterScorer`) | each player's last 5 games | their games this season and last |
+| Predictor xG features (`Last10…`, `Last82…`) | last 10 games | last 82 games |
+
+A name without `Recent` or `Last{n}` means the group's long window. A new window size goes in the name (`Last{n}…`).
+
 **Data collection starts at 2009** (first season with modern play-by-play stats), defined as `START_YEAR` in `src/Entry/DataGetterEntry.cs`.

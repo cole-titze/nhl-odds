@@ -6,6 +6,9 @@ namespace DataCleaner.Mappers;
 
 public static class MapGameToDbGameCleaned
 {
+    // "Recent" columns use the last 5 games; unprefixed ones use this season (…AtHome/…AtAway: home or away games
+    // this season and last). These beat 10 games and the last 82 in walk-forward evals (2026-10-09), so they differ
+    // from the predictor's Last10/Last82 xG features on purpose.
     private const int RECENT_GAMES = 5;
 
     public static DbGameCleaned Map(Game game, SeasonGames seasonGames, RosterScorer? rosterScorer = null)

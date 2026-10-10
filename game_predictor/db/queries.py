@@ -129,7 +129,7 @@ GAME_CLEANED_COLUMNS = [
 ]
 
 # Expected-goals features computed by the predictor from play-by-play (issue #107). Each is the home team's value
-# minus the away team's over its last 10 or 82 games, like RestAdvantage.
+# minus the away team's over its last 10 or 82 games, like RestAdvantage. A last-5 window did clearly worse.
 XG_FEATURE_COLUMNS = [
     f"Last{n}{stat}Advantage"
     for n in (10, 82)

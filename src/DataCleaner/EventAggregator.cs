@@ -26,6 +26,8 @@ public record TeamEventValues(
 
 public class EventAggregator
 {
+    // "Recent" columns use the last 5 games; unprefixed ones use every prior game this season and last season.
+    // Neither changed for the better at 10 or the last 82 games in walk-forward evals (2026-10-09).
     private const int RECENT_GAMES = 5;
 
     private static readonly HashSet<PenaltySeverity> PpPkSeverities = new()
