@@ -87,6 +87,8 @@ public class NhlDataManager
                 // Re-saving them triggers FK violations via cascade-tracked entities from other games.
                 await SaveGame(game);
                 await _gameRepo.Commit();
+                // One context runs the whole job, so drop what this game tracked or every save gets slower
+                _gameRepo.ClearTracking();
                 _logger.LogInformation("Backfilled game {GameId} successfully.", gameId);
             }
             catch (Exception ex)
@@ -203,6 +205,7 @@ public class NhlDataManager
                 await SavePlayers(players);
                 await SaveGame(game);
                 await _gameRepo.Commit();
+                _gameRepo.ClearTracking();
             }
             catch (Exception ex)
             {
@@ -267,6 +270,7 @@ public class NhlDataManager
                 await SavePlayers(players);
                 await SaveGame(game);
                 await _gameRepo.Commit();
+                _gameRepo.ClearTracking();
             }
             catch (Exception ex)
             {
