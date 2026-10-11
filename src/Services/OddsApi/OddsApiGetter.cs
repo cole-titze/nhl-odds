@@ -21,38 +21,25 @@ public class OddsApiGetter : IOddsApiGetter
         _logger = loggerFactory.CreateLogger<OddsApiGetter>();
     }
 
+    /// <summary>Upcoming games' odds. Throws on any failure so the daily fetch fails and logs to ErrorLog.</summary>
     public async Task<OddsApiResult> GetUpcomingOdds()
     {
         var query = $"?apiKey={_apiKey}&regions=us&markets=h2h,spreads,totals&oddsFormat=american";
-        var url = BASE_URL + query;
+        var response = await _httpClient.GetAsync(BASE_URL + query);
+        ReadRemainingRequests(response);
 
-        try
+        if (response.StatusCode == HttpStatusCode.TooManyRequests)
+            throw new OddsApiRateLimitException("Odds API rate limit reached (429)");
+        if (!response.IsSuccessStatusCode)
+            throw new HttpRequestException($"Odds API request failed with status {(int)response.StatusCode}", null, response.StatusCode);
+
+        var json = await response.Content.ReadAsStringAsync();
+        var results = JsonSerializer.Deserialize<List<OddsApiResponse>>(json);
+        return new OddsApiResult
         {
-            var response = await _httpClient.GetAsync(url);
-            ReadRemainingRequests(response);
-
-            if (response.StatusCode == HttpStatusCode.TooManyRequests)
-                throw new OddsApiRateLimitException("Odds API rate limit reached (429)");
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogError("Odds API request failed with status {StatusCode}", response.StatusCode);
-                return new OddsApiResult();
-            }
-
-            var json = await response.Content.ReadAsStringAsync();
-            var results = JsonSerializer.Deserialize<List<OddsApiResponse>>(json);
-            return new OddsApiResult
-            {
-                Responses = results ?? new List<OddsApiResponse>(),
-                RawJson = json,
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to fetch odds from The Odds API");
-            return new OddsApiResult();
-        }
+            Responses = results ?? new List<OddsApiResponse>(),
+            RawJson = json,
+        };
     }
 
     public async Task<OddsApiResult> GetHistoricalOdds(DateTime date)

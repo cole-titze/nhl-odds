@@ -22,8 +22,8 @@ case "$REQUESTED" in
     odds-backfill)
         docker compose -f "$COMPOSE_FILE" run --rm -e RUN_MODE=BackfillOdds entry
         ;;
-    kalshi-fetch)
-        docker compose -f "$COMPOSE_FILE" run --rm -e RUN_MODE=KalshiFetch entry
+    next-day-kalshi)
+        docker compose -f "$COMPOSE_FILE" run --rm -e RUN_MODE=NextDayKalshi entry
         ;;
     kalshi-backfill)
         docker compose -f "$COMPOSE_FILE" run --rm -e RUN_MODE=BackfillKalshi entry

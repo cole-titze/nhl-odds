@@ -19,7 +19,7 @@ public class AdminController
     private const string OddsFetchJob = "odds-fetch";
     private const string OddsBackfillJob = "odds-backfill";
     private const string PredictionBackfillJob = "prediction-backfill";
-    private const string KalshiFetchJob = "kalshi-fetch";
+    private const string NextDayKalshiJob = "next-day-kalshi";
     private const string KalshiBackfillJob = "kalshi-backfill";
 
     public AdminController(IJobService jobService, IAdminService adminService)
@@ -123,7 +123,7 @@ public class AdminController
             prediction = JobInfoToJobInfoVmMapper.Map(_jobService.GetStatus(PredictionJob)),
             oddsBackfill = JobInfoToJobInfoVmMapper.Map(_jobService.GetStatus(OddsBackfillJob)),
             predictionBackfill = JobInfoToJobInfoVmMapper.Map(_jobService.GetStatus(PredictionBackfillJob)),
-            kalshiFetch = JobInfoToJobInfoVmMapper.Map(_jobService.GetStatus(KalshiFetchJob)),
+            nextDayKalshi = JobInfoToJobInfoVmMapper.Map(_jobService.GetStatus(NextDayKalshiJob)),
             kalshiBackfill = JobInfoToJobInfoVmMapper.Map(_jobService.GetStatus(KalshiBackfillJob)),
         };
         return Results.Ok(statuses);

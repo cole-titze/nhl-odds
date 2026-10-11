@@ -496,7 +496,7 @@ export function AdminPage() {
                 label="Kalshi Backfill"
                 onStart={() => handleStart(startKalshiBackfill)}
               />
-              <JobCard job={statuses.kalshiFetch} label="Kalshi Fetch" />
+              <JobCard job={statuses.nextDayKalshi} label="Kalshi Fetch" />
               <JobCard job={statuses.oddsFetch} label="Odds Fetch" />
               <JobCard
                 job={statuses.prediction}

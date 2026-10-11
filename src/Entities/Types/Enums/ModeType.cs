@@ -6,7 +6,7 @@ public enum ModeType
     NhlUpdate,
     NextDayOdds,
     BackfillOdds,
-    KalshiFetch,
+    NextDayKalshi,
     BackfillKalshi,
     CleanAll,
     LineupSnapshot,
@@ -26,8 +26,8 @@ public static class ModeTypeParser
                 return ModeType.NextDayOdds;
             case "BackfillOdds":
                 return ModeType.BackfillOdds;
-            case "KalshiFetch":
-                return ModeType.KalshiFetch;
+            case "NextDayKalshi":
+                return ModeType.NextDayKalshi;
             case "BackfillKalshi":
                 return ModeType.BackfillKalshi;
             case "CleanAll":

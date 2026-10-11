@@ -10,12 +10,12 @@ echo "$(date -u '+%Y-%m-%d %H:%M:%S') Picked up requested job: $REQUESTED"
 JOB_NAME="nhl-sched-$(echo "$REQUESTED" | tr '_' '-')-$(date +%s)"
 
 case "$REQUESTED" in
-    data-collection|odds-fetch|odds-backfill|kalshi-fetch|kalshi-backfill)
+    data-collection|odds-fetch|odds-backfill|next-day-kalshi|kalshi-backfill)
         case "$REQUESTED" in
             data-collection)  RUN_MODE=NhlAdd ;;
             odds-fetch)       RUN_MODE=NextDayOdds ;;
             odds-backfill)    RUN_MODE=BackfillOdds ;;
-            kalshi-fetch)     RUN_MODE=KalshiFetch ;;
+            next-day-kalshi)  RUN_MODE=NextDayKalshi ;;
             kalshi-backfill)  RUN_MODE=BackfillKalshi ;;
         esac
 

@@ -78,7 +78,7 @@ public class DataGetterEntry
         {
             await SaveSnapshots(nhlDbContext, errorRepo);
         }
-        else if (modeSettings.Mode == ModeType.KalshiFetch)
+        else if (modeSettings.Mode == ModeType.NextDayKalshi)
         {
             var kalshiDbContext = new NhlDbContext(modeSettings.ConnectionString);
             var kalshiOddsRepo = new BookmakerOddsRepository(kalshiDbContext);
@@ -86,7 +86,7 @@ public class DataGetterEntry
             var kalshiFetcher = new KalshiOddsFetcher(kalshiDbContext, kalshiOddsRepo, kalshiGetter, _loggerFactory);
 
             _logger.LogTrace("Starting Kalshi Odds Fetch");
-            await kalshiFetcher.FetchAndSaveKalshiOdds();
+            await LogFailure(errorRepo, "NextDayKalshi", kalshiFetcher.FetchAndSaveKalshiOdds);
             _logger.LogTrace("Completed Kalshi Odds Fetch");
         }
         else if (modeSettings.Mode == ModeType.BackfillKalshi)
@@ -123,11 +123,9 @@ public class DataGetterEntry
             }
             else
             {
-                var kalshiGetter = new KalshiGetter(_loggerFactory);
-
-                var bookmakerFetcher = new BookmakerOddsFetcher(oddsDbContext, bookmakerOddsRepo, oddsApiGetter, _loggerFactory, kalshiGetter);
+                var bookmakerFetcher = new BookmakerOddsFetcher(oddsDbContext, bookmakerOddsRepo, oddsApiGetter, _loggerFactory);
                 _logger.LogTrace("Starting Bookmaker Odds Getter");
-                await bookmakerFetcher.FetchAndSaveBookmakerOdds();
+                await LogFailure(errorRepo, "NextDayOdds", bookmakerFetcher.FetchAndSaveBookmakerOdds);
                 _logger.LogTrace("Completed Bookmaker Odds Getter");
             }
         }
@@ -199,6 +197,29 @@ public class DataGetterEntry
         var elapsedTime = watch.Elapsed;
         var minutes = elapsedTime.TotalMinutes.ToString();
         _logger.LogTrace("Completed Data Collection in " + minutes + " minutes");
+    }
+
+    /// <summary>
+    /// Runs a step and, if it throws, records the error in ErrorLog before rethrowing so the job still fails
+    /// </summary>
+    private static async Task LogFailure(ErrorRepository errorRepo, string source, Func<Task> step)
+    {
+        try
+        {
+            await step();
+        }
+        catch (Exception ex)
+        {
+            await errorRepo.AddError(new DbErrorLog
+            {
+                TimestampUTC = DateTime.UtcNow,
+                ExceptionType = ex.GetType().FullName ?? ex.GetType().Name,
+                Message = ex.Message,
+                StackTrace = ex.StackTrace ?? string.Empty,
+                Source = source,
+            });
+            throw;
+        }
     }
 
     private GameDetailManager CreateGameDetailManager(ModeSettings modeSettings, RawResponseCache rawResponses)

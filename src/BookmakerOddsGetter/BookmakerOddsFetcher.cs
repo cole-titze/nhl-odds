@@ -4,7 +4,6 @@ using DatabaseAccess.BookmakerOddsRepository;
 using Entities.ServiceModels.Mappers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Services.Kalshi;
 using Services.OddsApi;
 
 namespace BookmakerOddsGetter;
@@ -14,20 +13,17 @@ public class BookmakerOddsFetcher
     private readonly NhlDbContext _dbContext;
     private readonly IBookmakerOddsRepository _bookmakerOddsRepo;
     private readonly IOddsApiGetter _oddsApiGetter;
-    private readonly IKalshiGetter _kalshiGetter;
     private readonly ILogger<BookmakerOddsFetcher> _logger;
 
     public BookmakerOddsFetcher(
         NhlDbContext dbContext,
         IBookmakerOddsRepository bookmakerOddsRepo,
         IOddsApiGetter oddsApiGetter,
-        ILoggerFactory loggerFactory,
-        IKalshiGetter kalshiGetter)
+        ILoggerFactory loggerFactory)
     {
         _dbContext = dbContext;
         _bookmakerOddsRepo = bookmakerOddsRepo;
         _oddsApiGetter = oddsApiGetter;
-        _kalshiGetter = kalshiGetter;
         _logger = loggerFactory.CreateLogger<BookmakerOddsFetcher>();
     }
 
@@ -78,8 +74,6 @@ public class BookmakerOddsFetcher
                 _logger.LogInformation("Odds API requests remaining: {Remaining}", remaining.Value);
         }
 
-        // Fetch from Kalshi
-        await FetchAndSaveKalshiOdds(gameInfoList);
     }
 
     private async Task CacheResponseByGameDate(string rawJson, IEnumerable<DateTime> gameDatesUtc)
@@ -108,47 +102,5 @@ public class BookmakerOddsFetcher
         }
 
         await _bookmakerOddsRepo.Commit();
-    }
-
-    private async Task FetchAndSaveKalshiOdds(List<OddsApiResponseMapper.GameInfo> gameInfoList)
-    {
-        _logger.LogInformation("Fetching Kalshi odds...");
-
-        var gameMarkets = await _kalshiGetter.GetOpenMarkets("KXNHLGAME");
-        var spreadMarkets = await _kalshiGetter.GetOpenMarkets("KXNHLSPREAD");
-        var totalMarkets = await _kalshiGetter.GetOpenMarkets("KXNHLTOTAL");
-
-        var mapped = KalshiResponseMapper.Map(gameMarkets, spreadMarkets, totalMarkets, gameInfoList);
-
-        if (!mapped.H2H.Any() && !mapped.Spreads.Any() && !mapped.Totals.Any())
-        {
-            _logger.LogWarning("No Kalshi odds could be matched to games.");
-            return;
-        }
-
-        // Deduplicate by composite key
-        var h2h = mapped.H2H
-            .GroupBy(x => (x.GameId, x.BookmakerName))
-            .Select(g => g.First())
-            .ToList();
-        var spreads = mapped.Spreads
-            .GroupBy(x => (x.GameId, x.BookmakerName))
-            .Select(g => g.First())
-            .ToList();
-        var totals = mapped.Totals
-            .GroupBy(x => (x.GameId, x.BookmakerName))
-            .Select(g => g.First())
-            .ToList();
-
-        if (h2h.Any())
-            await _bookmakerOddsRepo.AddOrUpdateBookmakerOdds(h2h);
-        if (spreads.Any())
-            await _bookmakerOddsRepo.AddOrUpdateBookmakerSpreads(spreads);
-        if (totals.Any())
-            await _bookmakerOddsRepo.AddOrUpdateBookmakerTotals(totals);
-        await _bookmakerOddsRepo.Commit();
-
-        _logger.LogInformation("Saved Kalshi: {H2H} h2h, {Spreads} spreads, {Totals} totals",
-            h2h.Count, spreads.Count, totals.Count);
     }
 }

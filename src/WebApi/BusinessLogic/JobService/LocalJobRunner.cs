@@ -19,7 +19,7 @@ public class LocalJobRunner : BackgroundService
         ["data-collection"] = ("dotnet", "run --project Entry", new() { { "RUN_MODE", "NhlAdd" } }),
         ["odds-fetch"] = ("dotnet", "run --project Entry", new() { { "RUN_MODE", "NextDayOdds" } }),
         ["odds-backfill"] = ("dotnet", "run --project Entry", new() { { "RUN_MODE", "BackfillOdds" } }),
-        ["kalshi-fetch"] = ("dotnet", "run --project Entry", new() { { "RUN_MODE", "KalshiFetch" } }),
+        ["next-day-kalshi"] = ("dotnet", "run --project Entry", new() { { "RUN_MODE", "NextDayKalshi" } }),
         ["kalshi-backfill"] = ("dotnet", "run --project Entry", new() { { "RUN_MODE", "BackfillKalshi" } }),
         ["prediction"] = ("python3", "-m game_predictor --mode predict", null),
         ["prediction-backfill"] = ("python3", "-m game_predictor --mode backfill", null),

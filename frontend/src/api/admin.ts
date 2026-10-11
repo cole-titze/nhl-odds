@@ -52,7 +52,7 @@ export interface JobStatuses {
   prediction: JobInfo;
   oddsBackfill: JobInfo;
   predictionBackfill: JobInfo;
-  kalshiFetch: JobInfo;
+  nextDayKalshi: JobInfo;
   kalshiBackfill: JobInfo;
 }
 

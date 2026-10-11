@@ -20,7 +20,8 @@ public class KalshiGetter : IKalshiGetter
 
     public async Task<List<KalshiMarket>> GetOpenMarkets(string seriesTicker)
     {
-        return await FetchMarketsPaginated($"/markets?series_ticker={seriesTicker}&status=open&limit=1000", seriesTicker);
+        return await FetchMarketsPaginated($"/markets?series_ticker={seriesTicker}&status=open&limit=1000", seriesTicker,
+            throwOnFailure: true);
     }
 
     public async Task<KalshiCutoffResponse?> GetCutoff()
@@ -79,7 +80,9 @@ public class KalshiGetter : IKalshiGetter
         }
     }
 
-    private async Task<List<KalshiMarket>> FetchMarketsPaginated(string basePath, string seriesTicker)
+    /// <param name="throwOnFailure">Throw instead of returning what was fetched so far (the daily fetch fails the job
+    /// and logs to ErrorLog; backfills carry on)</param>
+    private async Task<List<KalshiMarket>> FetchMarketsPaginated(string basePath, string seriesTicker, bool throwOnFailure = false)
     {
         var allMarkets = new List<KalshiMarket>();
         var cursor = "";
@@ -98,6 +101,9 @@ public class KalshiGetter : IKalshiGetter
 
                 if (!response.IsSuccessStatusCode)
                 {
+                    if (throwOnFailure)
+                        throw new HttpRequestException(
+                            $"Kalshi API request failed with status {(int)response.StatusCode} for {seriesTicker}", null, response.StatusCode);
                     _logger.LogWarning("Kalshi API request failed with status {StatusCode} for {Ticker}",
                         response.StatusCode, seriesTicker);
                     break;
@@ -113,7 +119,7 @@ public class KalshiGetter : IKalshiGetter
                 cursor = result.Cursor;
             } while (!string.IsNullOrEmpty(cursor));
         }
-        catch (Exception ex)
+        catch (Exception ex) when (!throwOnFailure)
         {
             _logger.LogError(ex, "Failed to fetch Kalshi markets for {Ticker}", seriesTicker);
         }

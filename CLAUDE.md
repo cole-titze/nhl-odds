@@ -45,7 +45,7 @@ The app reads config in priority order:
 
 1. **Environment variables** (production):
    - `NHL_DATABASE` — full PostgreSQL connection string (e.g. `Host=localhost;Database=nhl;Username=postgres;Password=...`)
-   - `RUN_MODE` — `"NhlAdd"`, `"NhlUpdate"`, `"NextDayOdds"`, `"BackfillOdds"`, `"KalshiFetch"`, `"BackfillKalshi"`, `"CleanAll"` or `"LineupSnapshot"`
+   - `RUN_MODE` — `"NhlAdd"`, `"NhlUpdate"`, `"NextDayOdds"`, `"BackfillOdds"`, `"NextDayKalshi"`, `"BackfillKalshi"`, `"CleanAll"` or `"LineupSnapshot"`
    - `THROTTLE_TIME_MS` — delay between the game/player/schedule NHL API requests (ms). The NHL publishes no limit (api-web answers 429 at about one request per 500 ms), so every NHL client waits at least 600 ms between requests (`ThrottledHttpClient.NHL_MIN_GAP`; a smaller THROTTLE_TIME_MS is raised to it) and retries 429s with growing waits
    - `BACKFILL_GAME_IDS` — comma-separated game IDs to limit `NhlUpdate` to
    - `REFETCH_DAYS` — `NhlAdd` re-fetches games played in this many past days to pick up NHL stat corrections (default 7, `0` turns it off)
@@ -147,9 +147,9 @@ HTTP Request
 **Run modes** (`ModeType` enum; adding or renaming one also means updating the mode table on the [wiki](https://github.com/cole-titze/nhl-odds/wiki) Home page, repo `git@github.com:cole-titze/nhl-odds.wiki.git`):
 - `NhlAdd` — skips seasons/games that already exist in the DB (fast incremental). Re-fetches games played inside `REFETCH_DAYS`, then after cleaning fetches this season's missing rosters (`GameRosterSpot`), shift charts (`GameShift`) and goal replays (`GoalReplay`, `GoalReplayPosition`: player and puck x/y every 0.1 s); `GameDetailFetch` records what's done
 - `NhlUpdate` — re-fetches and overwrites games (`BACKFILL_GAME_IDS`, else every season from `BACKFILL_START_YEAR`) and their rosters, shift charts and goal replays, then re-cleans those seasons and the one after. `FROM_STORED=true` rebuilds from `NhlApiResponse` instead of the API (after a parser change); anything not stored keeps its rows
-- `NextDayOdds` — fetches upcoming game odds from The Odds API + Kalshi open markets
+- `NextDayOdds` — fetches upcoming game odds from The Odds API. A failed request goes to `ErrorLog` (`Source` `NextDayOdds`) and fails the job
 - `BackfillOdds` — backfills historical odds from The Odds API (rate-limited, uses caching)
-- `KalshiFetch` — fetches current Kalshi open market odds for upcoming games
+- `NextDayKalshi` — fetches Kalshi open market odds for upcoming games. A failed request goes to `ErrorLog` (`Source` `NextDayKalshi`) and fails the job
 - `BackfillKalshi` — backfills historical Kalshi odds using candlestick data at 6am CT on game day (no API key needed)
 - `CleanAll` — skips data collection and re-cleans every game in every season (run after changing how `GameCleaned` features are computed)
 - `LineupSnapshot` — saves NHL.com content that only shows its current state, each step independent (failures go to `ErrorLog` and fail the job at the end); runs every 30 min on game days:

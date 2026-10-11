@@ -126,7 +126,7 @@ const responses = {
     prediction: job('failed'),
     oddsBackfill: job('idle'),
     predictionBackfill: job('idle'),
-    kalshiFetch: job('requested'),
+    nextDayKalshi: job('requested'),
     kalshiBackfill: job('idle'),
   },
   GetHealthChecks: [
