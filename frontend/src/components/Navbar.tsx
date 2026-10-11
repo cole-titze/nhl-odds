@@ -29,69 +29,6 @@ export function Navbar() {
     return () => window.removeEventListener('keydown', onKey);
   }, [menuOpen]);
 
-  // On phones the header slides away while scrolling down and comes back on
-  // scroll up, to give the content more room. See
-  // .nav-hidden in index.css. Only scrolls the user makes count: the Games page
-  // jumps to today on load and restores its place after loading earlier days,
-  // and those jumps must not hide the header. A touch, wheel or key starts a
-  // user scroll, which lasts until scrolling stops (iOS momentum included).
-  useEffect(() => {
-    const root = document.documentElement;
-    if (menuOpen) {
-      root.classList.remove('nav-hidden');
-      return;
-    }
-    let lastY = window.scrollY;
-    let touching = false;
-    let userScroll = false;
-    let idleTimer: number | undefined;
-    const startUserScroll = () => {
-      userScroll = true;
-      window.clearTimeout(idleTimer);
-      idleTimer = window.setTimeout(endIfIdle, 200);
-    };
-    const endIfIdle = () => {
-      if (!touching) userScroll = false;
-    };
-    const onTouchStart = () => {
-      touching = true;
-      startUserScroll();
-    };
-    const onTouchEnd = () => {
-      touching = false;
-      startUserScroll();
-    };
-    const onScroll = () => {
-      const y = window.scrollY;
-      if (y < 56) root.classList.remove('nav-hidden');
-      else if (!userScroll) {
-        lastY = y;
-        return;
-      } else if (y > lastY + 4) root.classList.add('nav-hidden');
-      else if (y < lastY - 4) root.classList.remove('nav-hidden');
-      else return;
-      lastY = y;
-      window.clearTimeout(idleTimer);
-      idleTimer = window.setTimeout(endIfIdle, 200);
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('touchstart', onTouchStart, { passive: true });
-    window.addEventListener('touchend', onTouchEnd, { passive: true });
-    window.addEventListener('touchcancel', onTouchEnd, { passive: true });
-    window.addEventListener('wheel', startUserScroll, { passive: true });
-    window.addEventListener('keydown', startUserScroll);
-    return () => {
-      window.clearTimeout(idleTimer);
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('touchstart', onTouchStart);
-      window.removeEventListener('touchend', onTouchEnd);
-      window.removeEventListener('touchcancel', onTouchEnd);
-      window.removeEventListener('wheel', startUserScroll);
-      window.removeEventListener('keydown', startUserScroll);
-      root.classList.remove('nav-hidden');
-    };
-  }, [menuOpen]);
-
   const oddsLabel =
     format === 'pct'
       ? 'Odds shown as percentages. Switch to American odds'
