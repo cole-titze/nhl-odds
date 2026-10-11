@@ -22,6 +22,9 @@ jobs:
     steps:
       - name: Cache Trivy and its DB
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        # Only fetch the DB; scanning the empty workspace warns "Supported files not found"
+        env:
+          TRIVY_DOWNLOAD_DB_ONLY: true
         with:
           scan-type: fs
           scan-ref: .
