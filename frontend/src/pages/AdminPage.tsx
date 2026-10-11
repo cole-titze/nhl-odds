@@ -98,7 +98,9 @@ function JobCard({ job, label, onStart }: { job: JobInfo; label: string; onStart
           <>
             <div className="flex justify-between">
               <span className="text-surface-500 dark:text-surface-400">Started</span>
-              <span className="stat-number text-xs">{formatTime(job.startedAt)}</span>
+              <span className="stat-number text-xs">
+                {isRequested ? 'Waiting to start' : formatTime(job.startedAt)}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-surface-500 dark:text-surface-400">Finished</span>
