@@ -8,7 +8,7 @@ namespace Services.Kalshi;
 public class KalshiGetter : IKalshiGetter
 {
     private const string BASE_URL = "https://api.elections.kalshi.com/trade-api/v2";
-    private const int THROTTLE_MS = 100;
+    private const int THROTTLE_MS = 250;
     private const int MAX_RATE_LIMIT_RETRIES = 5;
     private readonly HttpClient _httpClient;
     private readonly ILogger<KalshiGetter> _logger;
