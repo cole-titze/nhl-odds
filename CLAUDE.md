@@ -45,7 +45,7 @@ The app reads config in priority order:
 
 1. **Environment variables** (production):
    - `NHL_DATABASE` — full PostgreSQL connection string (e.g. `Host=localhost;Database=nhl;Username=postgres;Password=...`)
-   - `RUN_MODE` — `"NhlAdd"`, `"NhlUpdate"`, `"NextDayOdds"`, `"BackfillOdds"`, `"KalshiFetch"`, `"BackfillKalshi"`, `"BackfillGame"`, `"BackfillGoalieStats"`, `"CleanAll"`, `"LineupSnapshot"`, `"BackfillGameDetails"`, `"BackfillRaw"` or `"Reparse"`
+   - `RUN_MODE` — `"NhlAdd"`, `"NhlUpdate"`, `"NextDayOdds"`, `"BackfillOdds"`, `"KalshiFetch"`, `"BackfillKalshi"`, `"BackfillGame"`, `"CleanAll"`, `"LineupSnapshot"`, `"BackfillGameDetails"`, `"BackfillRaw"` or `"Reparse"`
    - `THROTTLE_TIME_MS` — delay between the game/player/schedule NHL API requests (ms). The NHL publishes no limit (api-web answers 429 at about one request per 500 ms), so every NHL client waits at least 600 ms between requests (`ThrottledHttpClient.NHL_MIN_GAP`; a smaller THROTTLE_TIME_MS is raised to it) and retries 429s with growing waits
    - `BACKFILL_GAME_IDS` — comma-separated game IDs to re-fetch (`BackfillGame`), or to limit `BackfillRaw`/`Reparse` to
    - `REFETCH_DAYS` — `NhlAdd` re-fetches games played in this many past days to pick up NHL stat corrections (default 7, `0` turns it off)
@@ -151,7 +151,6 @@ HTTP Request
 - `KalshiFetch` — fetches current Kalshi open market odds for upcoming games
 - `BackfillKalshi` — backfills historical Kalshi odds using candlestick data at 6am CT on game day (no API key needed)
 - `BackfillGame` — force re-fetches the games in `BACKFILL_GAME_IDS` and overwrites them
-- `BackfillGoalieStats` — re-fetches only goalies' shorthanded shots/goals (one boxscore request per game) for games saved before the mapper read them; re-runnable, skips games that already have them
 - `CleanAll` — skips data collection and re-cleans every game in every season (run after changing how `GameCleaned` features are computed)
 - `BackfillGameDetails` — fetches every played game's roster (`GameRosterSpot`) and shift chart (`GameShift`) and every goal's tracking replay (`GoalReplay`, `GoalReplayPosition`: player and puck x/y every 0.1 s) not saved yet; re-runnable, games and replays run side by side. `NhlAdd` does the same for recent games after cleaning (re-fetching rosters/shifts inside `REFETCH_DAYS`); `GameDetailFetch` records what's done
 - `BackfillRaw` — stores the raw response of every played game's boxscore, right-rail, play-by-play and shift chart, every goal replay and every player page in `NhlApiResponse` (skips what's stored), then fills in missing game details from those copies
@@ -162,7 +161,7 @@ HTTP Request
   - the newest 100 NHL.com articles (league and team sites) plus the rewritten-in-place ones (backup goalies list; this and last season's trade and signing trackers and the daily props article, found by `NhlSeasonArticles` so no slug changes each season) → `NhlArticle` (a version per new text), `NhlArticleTag` (team/player/game tags carry the NHL id), `NhlArticleMention` (players linked in the text) and, for the props article, `NhlPropsPick`
   - NHL requests are spaced at least 600 ms apart per host (it answers 429 faster than that)
 
-**Raw NHL responses** — every request to a per-game endpoint (gamecenter boxscore/right-rail/play-by-play, shift charts, goal replays) or a player page goes through `RawResponseCache`, which stores the 200 responses gzipped in `NhlApiResponse` (a new row only when the text changes; `LastSeenUTC` moves otherwise). Its policy depends on the mode: `Fresh` (NhlAdd, NhlUpdate, BackfillGame: always the API), `PreferStored` (BackfillRaw, BackfillGameDetails, BackfillGoalieStats: the stored copy if there is one) or `StoredOnly` (Reparse). A game's copy is only served if it was fetched 8+ hours after the game started. Store errors are logged and ignored, so the store can never break a run.
+**Raw NHL responses** — every request to a per-game endpoint (gamecenter boxscore/right-rail/play-by-play, shift charts, goal replays) or a player page goes through `RawResponseCache`, which stores the 200 responses gzipped in `NhlApiResponse` (a new row only when the text changes; `LastSeenUTC` moves otherwise). Its policy depends on the mode: `Fresh` (NhlAdd, NhlUpdate, BackfillGame: always the API), `PreferStored` (BackfillRaw, BackfillGameDetails: the stored copy if there is one) or `StoredOnly` (Reparse). A game's copy is only served if it was fetched 8+ hours after the game started. Store errors are logged and ignored, so the store can never break a run.
 
 **Game ID encoding** (`NhlApiDataGetter.GetGameId`):
 ```

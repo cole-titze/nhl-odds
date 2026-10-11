@@ -172,12 +172,6 @@ public class DataGetterEntry
             await CreateGameDetailManager(modeSettings, rawResponses).Reparse(gameIds);
             _logger.LogTrace("Completed Reparse");
         }
-        else if (modeSettings.Mode == ModeType.BackfillGoalieStats)
-        {
-            _logger.LogTrace("Starting Goalie Stats Backfill");
-            await dataManager.BackfillGoalieShortHandedStats(yearRange);
-            _logger.LogTrace("Completed Goalie Stats Backfill");
-        }
         else
         {
             var cleanAll = modeSettings.Mode == ModeType.CleanAll;
@@ -259,7 +253,7 @@ public class DataGetterEntry
     /// </summary>
     private static RawResponsePolicy RawPolicy(ModeType mode) => mode switch
     {
-        ModeType.BackfillRaw or ModeType.BackfillGameDetails or ModeType.BackfillGoalieStats => RawResponsePolicy.PreferStored,
+        ModeType.BackfillRaw or ModeType.BackfillGameDetails => RawResponsePolicy.PreferStored,
         ModeType.Reparse => RawResponsePolicy.StoredOnly,
         _ => RawResponsePolicy.Fresh,
     };

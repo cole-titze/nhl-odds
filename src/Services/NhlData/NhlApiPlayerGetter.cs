@@ -100,25 +100,6 @@ public class NhlApiPlayerGetter : INhlPlayerGetter
     }
 
     /// <summary>
-    /// Gets only the goalie stats of a played game, from its boxscore (one request). Example call:
-    /// https://api-web.nhle.com/v1/gamecenter/2024020325/boxscore
-    /// </summary>
-    /// <param name="gameId">The game to get goalie stats for</param>
-    /// <returns>Both teams' goalie stats, or null if the request failed</returns>
-    public async Task<IEnumerable<GameGoalieStats>?> GetGameGoalieStats(int gameId)
-    {
-        var url = "https://api-web.nhle.com/v1/gamecenter/";
-        var response = await _requestMaker.MakeRequest(url, GetGameQuery(gameId, GameRequestType.GameSummary));
-        if (response?["playerByGameStats"] == null)
-        {
-            _logger.LogWarning("Failed to get boxscore for game with id: " + gameId.ToString());
-            return null;
-        }
-
-        return MapGamePlayerStatsResponseToGamePlayerStats.MapGoalies(response);
-    }
-
-    /// <summary>
     /// Gets the a player by their id. Example call:
     /// https://api-web.nhle.com/v1/player/8478402/landing
     /// </summary>
