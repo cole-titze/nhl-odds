@@ -32,6 +32,7 @@ var settings = new ModeSettings()
         .ToList(),
     RefetchDays = int.Parse(Environment.GetEnvironmentVariable("REFETCH_DAYS") ?? "7"),
     CleanParallelism = int.Parse(Environment.GetEnvironmentVariable("CLEAN_PARALLELISM") ?? "4"),
+    FromStored = bool.TryParse(Environment.GetEnvironmentVariable("FROM_STORED"), out var fromStored) && fromStored,
     BackfillStartYear = int.TryParse(Environment.GetEnvironmentVariable("BACKFILL_START_YEAR"), out var backfillStart) ? backfillStart : null,
 };
 
@@ -64,10 +65,8 @@ var jobName = settings.Mode switch
     ModeType.BackfillOdds => "odds-backfill",
     ModeType.KalshiFetch => "kalshi-fetch",
     ModeType.BackfillKalshi => "kalshi-backfill",
-    ModeType.BackfillGame => "game-backfill",
     ModeType.CleanAll => "clean-all",
     ModeType.LineupSnapshot => "lineup-snapshot",
-    ModeType.BackfillGameDetails => "game-details-backfill",
     _ => null,
 };
 

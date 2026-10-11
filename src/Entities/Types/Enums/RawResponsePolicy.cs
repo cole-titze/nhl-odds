@@ -5,8 +5,6 @@ public enum RawResponsePolicy
 {
     /// <summary>Always ask the API (new games, corrections) and store what comes back.</summary>
     Fresh,
-    /// <summary>Use a stored response when there is one, else ask the API and store it (backfills).</summary>
-    PreferStored,
     /// <summary>Only stored responses for the stored endpoints, never the API (rebuilding tables after a parser change).</summary>
     StoredOnly,
 }

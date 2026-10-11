@@ -110,5 +110,5 @@ public partial class RawResponseCache
     private static partial Regex GameIdRegex();
 }
 
-/// <summary>A stored endpoint had no stored copy while the run may only use stored copies (RUN_MODE=Reparse).</summary>
+/// <summary>A stored endpoint had no stored copy while the run may only use stored copies (NhlUpdate with FROM_STORED).</summary>
 public class StoredResponseMissingException(string url) : Exception($"No stored response for {url}");

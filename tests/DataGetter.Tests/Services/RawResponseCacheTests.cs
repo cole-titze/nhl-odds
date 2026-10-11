@@ -40,20 +40,6 @@ public class RawResponseCacheTests
     }
 
     [TestMethod]
-    public async Task PreferStored_UsesTheStoredCopyElseTheApi()
-    {
-        var calls = 0;
-        var (cache, _) = Cache(RawResponsePolicy.PreferStored, "stored");
-        (await cache.Get(URL, Api("api", () => calls++))).Body.Should().Be("stored");
-        calls.Should().Be(0);
-
-        var (empty, store) = Cache(RawResponsePolicy.PreferStored, null);
-        (await empty.Get(URL, Api("api", () => calls++))).Body.Should().Be("api");
-        calls.Should().Be(1);
-        A.CallTo(() => store.Save(URL, 2023020204, "api", A<DateTime>._)).MustHaveHappenedOnceExactly();
-    }
-
-    [TestMethod]
     public async Task StoredOnly_NeverAsksTheApiForAStoredEndpoint()
     {
         var (cache, _) = Cache(RawResponsePolicy.StoredOnly, null);
@@ -71,7 +57,7 @@ public class RawResponseCacheTests
         var store = A.Fake<IRawResponseStore>();
         A.CallTo(() => store.GetLatest(A<string>._, A<int?>._)).ThrowsAsync(new Exception("no table"));
         A.CallTo(() => store.Save(A<string>._, A<int?>._, A<string>._, A<DateTime>._)).ThrowsAsync(new Exception("no table"));
-        var cache = new RawResponseCache(store, RawResponsePolicy.PreferStored, NullLoggerFactory.Instance);
+        var cache = new RawResponseCache(store, RawResponsePolicy.Fresh, NullLoggerFactory.Instance);
 
         (await cache.Get(URL, Api("api"))).Body.Should().Be("api");
     }

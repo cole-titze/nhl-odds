@@ -917,7 +917,7 @@ CREATE TABLE "GameDetailFetch"
 );
 
 -- Raw NHL API responses (per-game endpoints, goal replays, player pages), gzipped, so tables can be rebuilt without
--- fetching again (RUN_MODE=Reparse). A new row only when the text changes; the same text again moves LastSeenUTC.
+-- fetching again (RUN_MODE=NhlUpdate with FROM_STORED=true). A new row only when the text changes; the same text again moves LastSeenUTC.
 CREATE TABLE "NhlApiResponse"
 (
     "Url" TEXT NOT NULL,

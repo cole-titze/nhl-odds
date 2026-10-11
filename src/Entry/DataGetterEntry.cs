@@ -57,7 +57,7 @@ public class DataGetterEntry
         var errorDbContext = new NhlDbContext(modeSettings.ConnectionString);
         var errorRepo = new ErrorRepository(errorDbContext);
         var rawResponses = new RawResponseCache(
-            new RawResponseRepository(() => new NhlDbContext(modeSettings.ConnectionString)), RawPolicy(modeSettings.Mode), _loggerFactory);
+            new RawResponseRepository(() => new NhlDbContext(modeSettings.ConnectionString)), RawPolicy(modeSettings), _loggerFactory);
         var requestMaker = new RequestMaker(new HttpClientWrapper(), _loggerFactory, modeSettings.ThrottleTimeMs, rawResponses);
 
         var seasonGameCountCache = await gameRepo.GetSeasonGameCounts();
@@ -131,46 +131,9 @@ public class DataGetterEntry
                 _logger.LogTrace("Completed Bookmaker Odds Getter");
             }
         }
-        else if (modeSettings.Mode == ModeType.BackfillGame)
+        else if (modeSettings.Mode == ModeType.NhlUpdate)
         {
-            if (!modeSettings.BackfillGameIds.Any())
-                throw new Exception("BACKFILL_GAME_IDS must be set for BackfillGame mode (comma-separated list of game IDs)");
-
-            _logger.LogTrace("Starting Game Backfill for {Count} game(s)", modeSettings.BackfillGameIds.Count());
-            await dataManager.BackfillGames(modeSettings.BackfillGameIds);
-            _logger.LogTrace("Completed Game Backfill");
-        }
-        else if (modeSettings.Mode == ModeType.BackfillGameDetails)
-        {
-            _logger.LogTrace("Starting Game Details Backfill");
-            await CreateGameDetailManager(modeSettings, rawResponses).Backfill(
-                new YearRange(modeSettings.BackfillStartYear ?? START_YEAR, DateTime.Now));
-            _logger.LogTrace("Completed Game Details Backfill");
-        }
-        else if (modeSettings.Mode == ModeType.BackfillRaw)
-        {
-            // Store everything first, then fill in game details from the stored copies (no second round of API calls)
-            var onlyGameIds = modeSettings.BackfillGameIds.Any() ? modeSettings.BackfillGameIds.ToList() : null;
-            var seasons = onlyGameIds?.Select(id => id / 1_000_000).Distinct().Order().ToList() ?? BackfillSeasons(modeSettings);
-            _logger.LogTrace("Starting Raw Response Backfill");
-            await new RawResponseBackfiller(
-                () => new GameDetailRepository(new NhlDbContext(modeSettings.ConnectionString)),
-                () => new ErrorRepository(new NhlDbContext(modeSettings.ConnectionString)),
-                rawResponses, _loggerFactory).Backfill(seasons, onlyGameIds);
-            if (onlyGameIds == null)
-                await CreateGameDetailManager(modeSettings, rawResponses).Backfill(new YearRange(seasons[0], DateTime.Now));
-            _logger.LogTrace("Completed Raw Response Backfill");
-        }
-        else if (modeSettings.Mode == ModeType.Reparse)
-        {
-            // Rebuild games and game details from stored responses only; run CleanAll afterwards for the features
-            var gameIds = modeSettings.BackfillGameIds.Any()
-                ? modeSettings.BackfillGameIds.ToList()
-                : await PlayedGames(modeSettings, BackfillSeasons(modeSettings));
-            _logger.LogTrace("Starting Reparse of {Count} game(s)", gameIds.Count);
-            await dataManager.BackfillGames(gameIds);
-            await CreateGameDetailManager(modeSettings, rawResponses).Reparse(gameIds);
-            _logger.LogTrace("Completed Reparse");
+            await UpdateGames(modeSettings, dataManager, rawResponses);
         }
         else
         {
@@ -181,8 +144,7 @@ public class DataGetterEntry
                 await dataManager.GetNhlData(yearRange, modeSettings.Mode);
                 _logger.LogTrace("Completed Data Getter");
 
-                // NhlUpdate already re-fetched everything
-                if (modeSettings.Mode == ModeType.NhlAdd && modeSettings.RefetchDays > 0)
+                if (modeSettings.RefetchDays > 0)
                     await dataManager.RefetchRecentGames(modeSettings.RefetchDays);
 
                 // Snapshot who is on injured reserve before cleaning, so today's projected lineups can use it
@@ -248,27 +210,48 @@ public class DataGetterEntry
     }
 
     /// <summary>
-    /// Backfills read stored responses before asking the API; Reparse only reads them; everything else (new games, the
-    /// re-fetch window for NHL corrections, BackfillGame) asks the API. All of them store what the API returns.
+    /// Re-fetches and overwrites games (the BACKFILL_GAME_IDS ones, else every season from BACKFILL_START_YEAR), their
+    /// rosters, shift charts and goal replays, then re-cleans the seasons they touch. With FROM_STORED it rebuilds
+    /// from the stored raw responses instead of asking the API.
     /// </summary>
-    private static RawResponsePolicy RawPolicy(ModeType mode) => mode switch
+    private async Task UpdateGames(ModeSettings modeSettings, NhlDataManager dataManager, RawResponseCache rawResponses)
     {
-        ModeType.BackfillRaw or ModeType.BackfillGameDetails => RawResponsePolicy.PreferStored,
-        ModeType.Reparse => RawResponsePolicy.StoredOnly,
-        _ => RawResponsePolicy.Fresh,
-    };
+        var onlyGameIds = modeSettings.BackfillGameIds.Distinct().Order().ToList();
+        var range = onlyGameIds.Any()
+            ? new YearRange(onlyGameIds[0] / 1_000_000, onlyGameIds[^1] / 1_000_000)
+            : new YearRange(modeSettings.BackfillStartYear ?? START_YEAR, DateTime.Now);
+        _logger.LogTrace("Starting Update of seasons {Start}-{End}{From}", range.StartYear, range.EndYear,
+            modeSettings.FromStored ? " from stored responses" : string.Empty);
 
-    private static List<int> BackfillSeasons(ModeSettings modeSettings)
-    {
-        var range = new YearRange(modeSettings.BackfillStartYear ?? START_YEAR, DateTime.Now);
-        return Enumerable.Range(range.StartYear, range.EndYear - range.StartYear + 1).ToList();
+        if (onlyGameIds.Any() || modeSettings.FromStored)
+            await dataManager.BackfillGames(onlyGameIds.Any() ? onlyGameIds : await PlayedGames(modeSettings, range));
+        else
+            await dataManager.GetNhlData(range, ModeType.NhlUpdate);
+
+        // A season's features read the previous season too, so the season after the last one changes as well
+        var currentSeason = new YearRange(START_YEAR, DateTime.Now).EndYear;
+        var gameCleaner = new GameCleaner(() => new NhlDbContext(modeSettings.ConnectionString), _loggerFactory,
+            modeSettings.CleanParallelism);
+        await gameCleaner.CleanGamesInSeasons(
+            new YearRange(range.StartYear, Math.Min(range.EndYear + 1, currentSeason)), cleanAll: true);
+
+        // Rosters, shift charts and goal replays aren't model inputs, so they come after cleaning
+        await CreateGameDetailManager(modeSettings, rawResponses).Refetch(
+            onlyGameIds.Any() ? onlyGameIds : await PlayedGames(modeSettings, range));
+        _logger.LogTrace("Completed Update");
     }
 
-    private static async Task<List<int>> PlayedGames(ModeSettings modeSettings, List<int> seasons)
+    /// <summary>
+    /// FROM_STORED runs only read stored responses; everything else asks the API. All of them store what the API returns.
+    /// </summary>
+    private static RawResponsePolicy RawPolicy(ModeSettings modeSettings) =>
+        modeSettings.FromStored ? RawResponsePolicy.StoredOnly : RawResponsePolicy.Fresh;
+
+    private static async Task<List<int>> PlayedGames(ModeSettings modeSettings, YearRange seasons)
     {
         var repo = new GameDetailRepository(new NhlDbContext(modeSettings.ConnectionString));
         var gameIds = new List<int>();
-        foreach (var season in seasons)
+        for (var season = seasons.StartYear; season <= seasons.EndYear; season++)
             gameIds.AddRange(await repo.GetPlayedGames(season));
         return gameIds;
     }
