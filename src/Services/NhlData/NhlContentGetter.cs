@@ -5,9 +5,8 @@ public class NhlContentGetter : INhlContentGetter
     private const string STORIES_URL = "https://forge-dapi.d3.nhle.com/v2/content/en-us/stories";
     private const string PARTNER_ODDS_URL = "https://api-web.nhle.com/v1/partner-game";
     private const string ROSTER_URL = "https://api-web.nhle.com/v1/roster";
-    // api-web answers 429 when requests come faster than about one every 500 ms
-    private readonly ThrottledHttpClient _apiWeb = new(TimeSpan.FromMilliseconds(600));
-    private readonly ThrottledHttpClient _forge = new(TimeSpan.FromMilliseconds(200));
+    private readonly ThrottledHttpClient _apiWeb = new(ThrottledHttpClient.NHL_MIN_GAP);
+    private readonly ThrottledHttpClient _forge = new(ThrottledHttpClient.NHL_MIN_GAP);
 
     public Task<string> GetLatestStories(int limit)
     {

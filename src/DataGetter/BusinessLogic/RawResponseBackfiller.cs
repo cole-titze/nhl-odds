@@ -21,10 +21,10 @@ public class RawResponseBackfiller
     private readonly Func<IErrorRepository> _errorRepoFactory;
     private readonly RawResponseCache _rawResponses;
     private readonly ILogger<RawResponseBackfiller> _logger;
-    // One client per host, same spacing as the regular getters
-    private readonly ThrottledHttpClient _apiWeb = new(TimeSpan.FromMilliseconds(600));
-    private readonly ThrottledHttpClient _stats = new(TimeSpan.FromMilliseconds(500));
-    private readonly ThrottledHttpClient _replays = new(TimeSpan.FromMilliseconds(250), new Dictionary<string, string>
+    // One client per host, each at the NHL gap
+    private readonly ThrottledHttpClient _apiWeb = new(ThrottledHttpClient.NHL_MIN_GAP);
+    private readonly ThrottledHttpClient _stats = new(ThrottledHttpClient.NHL_MIN_GAP);
+    private readonly ThrottledHttpClient _replays = new(ThrottledHttpClient.NHL_MIN_GAP, new Dictionary<string, string>
     {
         ["User-Agent"] = "Mozilla/5.0",
         ["Referer"] = "https://www.nhl.com/",

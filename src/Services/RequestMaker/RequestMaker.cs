@@ -24,7 +24,8 @@ public class RequestMaker : IRequestMaker
     {
         _client = client;
         _logger = loggerFactory.CreateLogger<RequestMaker>();
-        _throttleTimeMs = throttleTimeMs;
+        // Never faster than the NHL gap, whatever THROTTLE_TIME_MS says
+        _throttleTimeMs = Math.Max(throttleTimeMs, (int)ThrottledHttpClient.NHL_MIN_GAP.TotalMilliseconds);
         _rawResponses = rawResponses;
     }
     /// <summary>
@@ -123,7 +124,7 @@ public class RequestMaker : IRequestMaker
         if (throttleTimeMs.HasValue && _lastRequestCompleted != DateTime.MinValue)
         {
             var elapsed = DateTime.UtcNow - _lastRequestCompleted;
-            var waitMs = throttleTimeMs.Value - (int)elapsed.TotalMilliseconds;
+            var waitMs = Math.Max(throttleTimeMs.Value, (int)ThrottledHttpClient.NHL_MIN_GAP.TotalMilliseconds) - (int)elapsed.TotalMilliseconds;
             if (waitMs > 0)
             {
                 await Task.Delay(waitMs);

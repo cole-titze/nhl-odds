@@ -10,6 +10,9 @@ namespace Services.NhlData;
 public class ThrottledHttpClient
 {
     // Waits before each retry after a 429, about 2.5 minutes in total, unless the response asks for a specific wait
+    // The NHL publishes no rate limit; api-web starts answering 429 at about one request every 500 ms, so every NHL
+    // client stays at or below one request per 600 ms
+    public static readonly TimeSpan NHL_MIN_GAP = TimeSpan.FromMilliseconds(600);
     public static readonly TimeSpan[] RATE_LIMIT_WAITS =
         [TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(40), TimeSpan.FromSeconds(80)];
     private static readonly TimeSpan MAX_RETRY_AFTER = TimeSpan.FromMinutes(2);

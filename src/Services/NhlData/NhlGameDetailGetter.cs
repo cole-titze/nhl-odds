@@ -7,11 +7,11 @@ public class NhlGameDetailGetter : INhlGameDetailGetter
     private const string PLAY_BY_PLAY_URL = "https://api-web.nhle.com/v1/gamecenter";
     private const string SHIFT_CHART_URL = "https://api.nhle.com/stats/rest/en/shiftcharts";
     private const string REPLAY_URL = "https://wsr.nhle.com/sprites/";
-    // One client per host: each rate limits separately, so their requests can run side by side
-    private readonly ThrottledHttpClient _apiWeb = new(TimeSpan.FromMilliseconds(600));
-    private readonly ThrottledHttpClient _stats = new(TimeSpan.FromMilliseconds(500));
+    // One client per host, each at the NHL gap, so their requests can run side by side
+    private readonly ThrottledHttpClient _apiWeb = new(ThrottledHttpClient.NHL_MIN_GAP);
+    private readonly ThrottledHttpClient _stats = new(ThrottledHttpClient.NHL_MIN_GAP);
     // The replay files are refused (403) without a browser-like user agent and referer
-    private readonly ThrottledHttpClient _replays = new(TimeSpan.FromMilliseconds(250), new Dictionary<string, string>
+    private readonly ThrottledHttpClient _replays = new(ThrottledHttpClient.NHL_MIN_GAP, new Dictionary<string, string>
     {
         ["User-Agent"] = "Mozilla/5.0",
         ["Referer"] = "https://www.nhl.com/",
