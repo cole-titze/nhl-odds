@@ -231,7 +231,7 @@ public class DataGetterEntry
     }
 
     /// <summary>
-    /// Re-fetches and overwrites games (the BACKFILL_GAME_IDS ones, else every season from BACKFILL_START_YEAR), their
+    /// Re-fetches and overwrites games (the BACKFILL_GAME_IDS ones, else the SEASON_START-SEASON_END seasons), their
     /// rosters, shift charts and goal replays, then re-cleans the seasons they touch. With FROM_STORED it rebuilds
     /// from the stored raw responses instead of asking the API.
     /// </summary>
@@ -240,7 +240,8 @@ public class DataGetterEntry
         var onlyGameIds = modeSettings.BackfillGameIds.Distinct().Order().ToList();
         var range = onlyGameIds.Any()
             ? new YearRange(onlyGameIds[0] / 1_000_000, onlyGameIds[^1] / 1_000_000)
-            : new YearRange(modeSettings.BackfillStartYear ?? START_YEAR, DateTime.Now);
+            : new YearRange(modeSettings.SeasonStart ?? START_YEAR,
+                modeSettings.SeasonEnd ?? new YearRange(START_YEAR, DateTime.Now).EndYear);
         _logger.LogTrace("Starting Update of seasons {Start}-{End}{From}", range.StartYear, range.EndYear,
             modeSettings.FromStored ? " from stored responses" : string.Empty);
 

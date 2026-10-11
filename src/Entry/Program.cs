@@ -33,7 +33,8 @@ var settings = new ModeSettings()
     RefetchDays = int.Parse(Environment.GetEnvironmentVariable("REFETCH_DAYS") ?? "7"),
     CleanParallelism = int.Parse(Environment.GetEnvironmentVariable("CLEAN_PARALLELISM") ?? "4"),
     FromStored = bool.TryParse(Environment.GetEnvironmentVariable("FROM_STORED"), out var fromStored) && fromStored,
-    BackfillStartYear = int.TryParse(Environment.GetEnvironmentVariable("BACKFILL_START_YEAR"), out var backfillStart) ? backfillStart : null,
+    SeasonStart = int.TryParse(Environment.GetEnvironmentVariable("SEASON_START"), out var seasonStart) ? seasonStart : null,
+    SeasonEnd = int.TryParse(Environment.GetEnvironmentVariable("SEASON_END"), out var seasonEnd) ? seasonEnd : null,
 };
 
 if (string.IsNullOrEmpty(settings.ConnectionString))

@@ -14,8 +14,9 @@ public class ModeSettings
     public int RefetchDays { get; set; } = 7;
     // How many seasons the cleaner works on at once
     public int CleanParallelism { get; set; } = 4;
-    // NhlUpdate starts at this season (default: the first season collected)
-    public int? BackfillStartYear { get; set; }
+    // NhlUpdate's first and last season, as season start years (default: every season collected)
+    public int? SeasonStart { get; set; }
+    public int? SeasonEnd { get; set; }
     // NhlUpdate rebuilds from the stored raw responses instead of asking the API
     public bool FromStored { get; set; }
 }
