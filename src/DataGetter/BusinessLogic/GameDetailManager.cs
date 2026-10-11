@@ -77,6 +77,20 @@ public class GameDetailManager
             }));
     }
 
+    /// <summary>
+    /// Rebuilds these games' rosters, shifts and goal replays (the getter should only serve stored responses: RUN_MODE=Reparse).
+    /// Anything not stored is skipped and keeps its current rows.
+    /// </summary>
+    public async Task Reparse(IReadOnlyCollection<int> gameIds)
+    {
+        var ids = gameIds.Order().ToList();
+        var goals = new List<(int GameId, int EventId, string Url)>();
+        foreach (var season in ids.Select(id => id / 1_000_000).Distinct())
+            goals.AddRange((await _repoFactory().GetGoalsWithReplayUrl(season)).Where(g => gameIds.Contains(g.GameId)));
+        _logger.LogInformation("Reparsing game details: {Games} game(s), {Goals} goal replay(s)", ids.Count, goals.Count);
+        await Task.WhenAll(FetchGames(ids, "reparse"), FetchReplays(goals, "reparse"));
+    }
+
     private async Task FetchGames(List<int> gameIds, string label)
     {
         if (gameIds.Count == 0)
@@ -145,6 +159,12 @@ public class GameDetailManager
         {
             await work();
             return true;
+        }
+        catch (StoredResponseMissingException ex)
+        {
+            // Reparse: nothing stored to rebuild from, so the current rows stay
+            _logger.LogWarning("{Source} skipped for game {GameId}: {Message}", source, gameId, ex.Message);
+            return false;
         }
         catch (Exception ex)
         {

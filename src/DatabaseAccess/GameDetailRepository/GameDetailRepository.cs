@@ -29,6 +29,30 @@ public class GameDetailRepository : IGameDetailRepository
             .ToListAsync();
     }
 
+    public Task<List<int>> GetPlayedGames(int seasonStartYear)
+    {
+        return _dbContext.GameRaw.AsNoTracking()
+            .Where(g => g.SeasonStartYear == seasonStartYear && g.HasBeenPlayed)
+            .OrderBy(g => g.Id)
+            .Select(g => g.Id)
+            .ToListAsync();
+    }
+
+    public async Task<List<(int GameId, int EventId, string Url)>> GetGoalsWithReplayUrl(int seasonStartYear)
+    {
+        var goals = await _dbContext.GameGoalEvent.AsNoTracking()
+            .Where(g => g.Game!.SeasonStartYear == seasonStartYear && g.PptReplayUrl != "")
+            .OrderBy(g => g.GameId).ThenBy(g => g.Id)
+            .Select(g => new { g.GameId, g.Id, g.PptReplayUrl })
+            .ToListAsync();
+        return goals.Select(g => (g.GameId, g.Id, g.PptReplayUrl)).ToList();
+    }
+
+    public Task<List<int>> GetPlayerIds()
+    {
+        return _dbContext.Player.AsNoTracking().OrderBy(p => p.Id).Select(p => p.Id).ToListAsync();
+    }
+
     public async Task<List<(int GameId, int EventId, string Url)>> GetGoalsWithoutReplay(int seasonStartYear)
     {
         var goals = await _dbContext.GameGoalEvent.AsNoTracking()

@@ -10,7 +10,7 @@ namespace Services.NhlData;
 public class ThrottledHttpClient
 {
     // Waits before each retry after a 429, about 2.5 minutes in total, unless the response asks for a specific wait
-    private static readonly TimeSpan[] RATE_LIMIT_WAITS =
+    public static readonly TimeSpan[] RATE_LIMIT_WAITS =
         [TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(40), TimeSpan.FromSeconds(80)];
     private static readonly TimeSpan MAX_RETRY_AFTER = TimeSpan.FromMinutes(2);
     private readonly HttpClient _httpClient;
@@ -65,7 +65,7 @@ public class ThrottledHttpClient
     }
 
     // The server's Retry-After when it sends one (capped), otherwise the default wait
-    private static TimeSpan RetryWait(HttpResponseMessage response, TimeSpan defaultWait)
+    public static TimeSpan RetryWait(HttpResponseMessage response, TimeSpan defaultWait)
     {
         var retryAfter = response.Headers.RetryAfter;
         var wait = retryAfter?.Delta ?? (retryAfter?.Date - DateTimeOffset.UtcNow);

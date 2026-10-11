@@ -17,20 +17,46 @@ public class NhlGameDetailGetter : INhlGameDetailGetter
         ["Referer"] = "https://www.nhl.com/",
     });
 
+    private readonly RawResponseCache? _rawResponses;
+
+    /// <param name="rawResponses">Stores (and per its policy, serves) the raw responses</param>
+    public NhlGameDetailGetter(RawResponseCache? rawResponses = null)
+    {
+        _rawResponses = rawResponses;
+    }
+
+    /// <summary>A gamecenter endpoint's URL ("boxscore", "right-rail", "play-by-play"), as the game fetch builds it too.</summary>
+    public static string GameCenterUrl(int gameId, string endpoint) => $"{PLAY_BY_PLAY_URL}/{gameId}/{endpoint}";
+
+    public static string ShiftChartUrl(int gameId) => $"{SHIFT_CHART_URL}?cayenneExp=gameId={gameId}";
+
     public Task<string> GetPlayByPlay(int gameId)
     {
-        return _apiWeb.GetString($"{PLAY_BY_PLAY_URL}/{gameId}/play-by-play");
+        return GetString(_apiWeb, GameCenterUrl(gameId, "play-by-play"));
     }
 
     public Task<string> GetShiftChart(int gameId)
     {
-        return _stats.GetString($"{SHIFT_CHART_URL}?cayenneExp=gameId={gameId}");
+        return GetString(_stats, ShiftChartUrl(gameId));
     }
 
     public Task<(HttpStatusCode Status, string? Body)> GetGoalReplay(string url)
     {
         if (!url.StartsWith(REPLAY_URL))
             throw new ArgumentException($"Unexpected replay URL: {url}", nameof(url));
-        return _replays.Get(url);
+        return Get(_replays, url);
+    }
+
+    private Task<(HttpStatusCode Status, string? Body)> Get(ThrottledHttpClient client, string url)
+    {
+        return _rawResponses != null ? _rawResponses.Get(url, () => client.Get(url)) : client.Get(url);
+    }
+
+    private async Task<string> GetString(ThrottledHttpClient client, string url)
+    {
+        var (status, body) = await Get(client, url);
+        if (status != HttpStatusCode.OK)
+            throw new HttpRequestException($"{url} returned {(int)status} ({status})", null, status);
+        return body!;
     }
 }

@@ -916,6 +916,22 @@ CREATE TABLE "GameDetailFetch"
     CONSTRAINT "PK_GameDetailFetch" PRIMARY KEY("GameId", "Kind")
 );
 
+-- Raw NHL API responses (per-game endpoints, goal replays, player pages), gzipped, so tables can be rebuilt without
+-- fetching again (RUN_MODE=Reparse). A new row only when the text changes; the same text again moves LastSeenUTC.
+CREATE TABLE "NhlApiResponse"
+(
+    "Url" TEXT NOT NULL,
+    "ContentHash" CHAR(64) NOT NULL,
+    "GameId" INTEGER NULL,
+    "FirstSeenUTC" TIMESTAMP NOT NULL,
+    "LastSeenUTC" TIMESTAMP NOT NULL,
+    "Body" BYTEA NOT NULL,
+    CONSTRAINT "PK_NhlApiResponse" PRIMARY KEY("Url", "ContentHash")
+);
+-- Already gzipped: don't let Postgres try to compress it again
+ALTER TABLE "NhlApiResponse" ALTER COLUMN "Body" SET STORAGE EXTERNAL;
+CREATE INDEX "IX_NhlApiResponse_GameId" ON "NhlApiResponse"("GameId");
+
 -- Each game section of the lineup projections article, saved the first time its text is seen
 CREATE TABLE "LineupGame"
 (

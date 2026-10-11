@@ -9,6 +9,7 @@ using DatabaseAccess.GameEventRepository;
 using DatabaseAccess.GameRepository;
 using DatabaseAccess.LineupArticleRepository;
 using DatabaseAccess.PlayerRepository;
+using DatabaseAccess.RawResponseRepository;
 using DatabaseAccess.RosterStatusRepository;
 using DatabaseAccess.SnapshotRepository;
 using DatabaseAccess.TeamRepository;
@@ -55,7 +56,9 @@ public class DataGetterEntry
         var teamRepo = new TeamRepository(nhlDbContext);
         var errorDbContext = new NhlDbContext(modeSettings.ConnectionString);
         var errorRepo = new ErrorRepository(errorDbContext);
-        var requestMaker = new RequestMaker(new HttpClientWrapper(), _loggerFactory, modeSettings.ThrottleTimeMs);
+        var rawResponses = new RawResponseCache(
+            new RawResponseRepository(() => new NhlDbContext(modeSettings.ConnectionString)), RawPolicy(modeSettings.Mode), _loggerFactory);
+        var requestMaker = new RequestMaker(new HttpClientWrapper(), _loggerFactory, modeSettings.ThrottleTimeMs, rawResponses);
 
         var seasonGameCountCache = await gameRepo.GetSeasonGameCounts();
         INhlGameGetter gameDataGetter = new NhlApiGameGetter(requestMaker, _loggerFactory);
@@ -140,9 +143,34 @@ public class DataGetterEntry
         else if (modeSettings.Mode == ModeType.BackfillGameDetails)
         {
             _logger.LogTrace("Starting Game Details Backfill");
-            await CreateGameDetailManager(modeSettings).Backfill(
+            await CreateGameDetailManager(modeSettings, rawResponses).Backfill(
                 new YearRange(modeSettings.BackfillStartYear ?? START_YEAR, DateTime.Now));
             _logger.LogTrace("Completed Game Details Backfill");
+        }
+        else if (modeSettings.Mode == ModeType.BackfillRaw)
+        {
+            // Store everything first, then fill in game details from the stored copies (no second round of API calls)
+            var onlyGameIds = modeSettings.BackfillGameIds.Any() ? modeSettings.BackfillGameIds.ToList() : null;
+            var seasons = onlyGameIds?.Select(id => id / 1_000_000).Distinct().Order().ToList() ?? BackfillSeasons(modeSettings);
+            _logger.LogTrace("Starting Raw Response Backfill");
+            await new RawResponseBackfiller(
+                () => new GameDetailRepository(new NhlDbContext(modeSettings.ConnectionString)),
+                () => new ErrorRepository(new NhlDbContext(modeSettings.ConnectionString)),
+                rawResponses, _loggerFactory).Backfill(seasons, onlyGameIds);
+            if (onlyGameIds == null)
+                await CreateGameDetailManager(modeSettings, rawResponses).Backfill(new YearRange(seasons[0], DateTime.Now));
+            _logger.LogTrace("Completed Raw Response Backfill");
+        }
+        else if (modeSettings.Mode == ModeType.Reparse)
+        {
+            // Rebuild games and game details from stored responses only; run CleanAll afterwards for the features
+            var gameIds = modeSettings.BackfillGameIds.Any()
+                ? modeSettings.BackfillGameIds.ToList()
+                : await PlayedGames(modeSettings, BackfillSeasons(modeSettings));
+            _logger.LogTrace("Starting Reparse of {Count} game(s)", gameIds.Count);
+            await dataManager.BackfillGames(gameIds);
+            await CreateGameDetailManager(modeSettings, rawResponses).Reparse(gameIds);
+            _logger.LogTrace("Completed Reparse");
         }
         else if (modeSettings.Mode == ModeType.BackfillGoalieStats)
         {
@@ -193,7 +221,7 @@ public class DataGetterEntry
                     var recentGameIds = modeSettings.RefetchDays > 0
                         ? await gameRepo.GetPlayedGameIdsSince(DateTime.UtcNow.AddDays(-modeSettings.RefetchDays))
                         : [];
-                    await CreateGameDetailManager(modeSettings).FetchRecent(yearRange.EndYear, recentGameIds);
+                    await CreateGameDetailManager(modeSettings, rawResponses).FetchRecent(yearRange.EndYear, recentGameIds);
                 }
                 catch (Exception ex)
                 {
@@ -210,18 +238,45 @@ public class DataGetterEntry
             }
         }
 
+        rawResponses.LogTotals();
         watch.Stop();
         var elapsedTime = watch.Elapsed;
         var minutes = elapsedTime.TotalMinutes.ToString();
         _logger.LogTrace("Completed Data Collection in " + minutes + " minutes");
     }
 
-    private GameDetailManager CreateGameDetailManager(ModeSettings modeSettings)
+    private GameDetailManager CreateGameDetailManager(ModeSettings modeSettings, RawResponseCache rawResponses)
     {
         return new GameDetailManager(
             () => new GameDetailRepository(new NhlDbContext(modeSettings.ConnectionString)),
             () => new ErrorRepository(new NhlDbContext(modeSettings.ConnectionString)),
-            new NhlGameDetailGetter(), _loggerFactory);
+            new NhlGameDetailGetter(rawResponses), _loggerFactory);
+    }
+
+    /// <summary>
+    /// Backfills read stored responses before asking the API; Reparse only reads them; everything else (new games, the
+    /// re-fetch window for NHL corrections, BackfillGame) asks the API. All of them store what the API returns.
+    /// </summary>
+    private static RawResponsePolicy RawPolicy(ModeType mode) => mode switch
+    {
+        ModeType.BackfillRaw or ModeType.BackfillGameDetails or ModeType.BackfillGoalieStats => RawResponsePolicy.PreferStored,
+        ModeType.Reparse => RawResponsePolicy.StoredOnly,
+        _ => RawResponsePolicy.Fresh,
+    };
+
+    private static List<int> BackfillSeasons(ModeSettings modeSettings)
+    {
+        var range = new YearRange(modeSettings.BackfillStartYear ?? START_YEAR, DateTime.Now);
+        return Enumerable.Range(range.StartYear, range.EndYear - range.StartYear + 1).ToList();
+    }
+
+    private static async Task<List<int>> PlayedGames(ModeSettings modeSettings, List<int> seasons)
+    {
+        var repo = new GameDetailRepository(new NhlDbContext(modeSettings.ConnectionString));
+        var gameIds = new List<int>();
+        foreach (var season in seasons)
+            gameIds.AddRange(await repo.GetPlayedGames(season));
+        return gameIds;
     }
 
     /// <summary>

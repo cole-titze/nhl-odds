@@ -12,7 +12,9 @@ public enum ModeType
     BackfillGoalieStats,
     CleanAll,
     LineupSnapshot,
-    BackfillGameDetails
+    BackfillGameDetails,
+    BackfillRaw,
+    Reparse
 }
 public static class ModeTypeParser
 {
@@ -43,6 +45,10 @@ public static class ModeTypeParser
                 return ModeType.LineupSnapshot;
             case "BackfillGameDetails":
                 return ModeType.BackfillGameDetails;
+            case "BackfillRaw":
+                return ModeType.BackfillRaw;
+            case "Reparse":
+                return ModeType.Reparse;
             default:
                 throw new ArgumentException($"Invalid ModeType value: {modeType}", nameof(modeType));
         }

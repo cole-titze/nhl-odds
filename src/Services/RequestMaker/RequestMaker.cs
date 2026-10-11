@@ -1,8 +1,10 @@
-﻿using System.Net.Http.Headers;
+﻿using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.Extensions.Logging;
+using Services.NhlData;
 
 namespace Services.RequestMaker;
 
@@ -15,12 +17,15 @@ public class RequestMaker : IRequestMaker
     private const int _cacheByteSizeLimit = 1000000000; // 1 GB cache size limit
     private DateTime _lastRequestCompleted = DateTime.MinValue;
     private readonly int _throttleTimeMs;
+    private readonly RawResponseCache? _rawResponses;
 
-    public RequestMaker(IHttpClient client, ILoggerFactory loggerFactory, int throttleTimeMs)
+    /// <param name="rawResponses">Stores (and per its policy, serves) the raw text of the endpoints worth keeping</param>
+    public RequestMaker(IHttpClient client, ILoggerFactory loggerFactory, int throttleTimeMs, RawResponseCache? rawResponses = null)
     {
         _client = client;
         _logger = loggerFactory.CreateLogger<RequestMaker>();
         _throttleTimeMs = throttleTimeMs;
+        _rawResponses = rawResponses;
     }
     /// <summary>
     /// Given a url and query makes a request and returns the response converted to a dynamic object
@@ -48,24 +53,64 @@ public class RequestMaker : IRequestMaker
             return _cachedResponses[key];
         }
 
-        await ThrottleRequest(throttleTimeMs);
-
-        HttpResponseMessage response;
-        HttpRequestMessage msg = new HttpRequestMessage
+        string? data;
+        try
         {
-            Method = HttpMethod.Get,
-            RequestUri = new Uri(url + query),
-        };
-        msg.Headers.Accept.Clear();
-        msg.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            var fullUrl = url + query;
+            (_, data) = _rawResponses != null
+                ? await _rawResponses.Get(fullUrl, () => Send(fullUrl, throttleTimeMs))
+                : await Send(fullUrl, throttleTimeMs);
+        }
+        catch (StoredResponseMissingException ex)
+        {
+            _logger.LogWarning("{Message}", ex.Message);
+            return null;
+        }
 
-        response = await _client.SendAsync(msg);
-        _lastRequestCompleted = DateTime.UtcNow;
-
-        var serviceResponse = await ParseResponse(response, url + query);
+        var serviceResponse = data == null ? null : JsonNode.Parse(data);
         AddToCache(key, serviceResponse);
 
         return serviceResponse;
+    }
+
+    /// <summary>
+    /// Sends the request (throttled) and returns the status and body (null unless it succeeded). A 429 is retried with
+    /// growing waits, like <see cref="ThrottledHttpClient"/>.
+    /// </summary>
+    private async Task<(HttpStatusCode Status, string? Body)> Send(string requestUrl, int throttleTimeMs)
+    {
+        for (var attempt = 1; ; attempt++)
+        {
+            await ThrottleRequest(throttleTimeMs);
+
+            HttpRequestMessage msg = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(requestUrl),
+            };
+            msg.Headers.Accept.Clear();
+            msg.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            using var response = await _client.SendAsync(msg);
+            _lastRequestCompleted = DateTime.UtcNow;
+
+            if (response.StatusCode == HttpStatusCode.TooManyRequests && attempt <= ThrottledHttpClient.RATE_LIMIT_WAITS.Length)
+            {
+                var wait = ThrottledHttpClient.RetryWait(response, ThrottledHttpClient.RATE_LIMIT_WAITS[attempt - 1]);
+                _logger.LogWarning("Rate limited (429) on {Url}; retrying in {Wait}", requestUrl, wait);
+                await Task.Delay(wait);
+                continue;
+            }
+
+            var body = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Request failed with {StatusCode} for {Url}: {Body}",
+                    (int)response.StatusCode, requestUrl, body.Length > 300 ? body[..300] : body);
+                return (response.StatusCode, null);
+            }
+            return (response.StatusCode, body);
+        }
     }
 
     /// <summary>
@@ -105,28 +150,5 @@ public class RequestMaker : IRequestMaker
                 _cacheSize = 0;
             }
         }
-    }
-
-    /// <summary>
-    /// Converts the raw http response into a dynamic object.
-    /// </summary>
-    /// <param name="response">The raw http response message</param>
-    /// <returns>Dynamic object</returns>
-    private async Task<JsonNode?> ParseResponse(HttpResponseMessage response, string requestUrl)
-    {
-        if (!response.IsSuccessStatusCode)
-        {
-            var body = await response.Content.ReadAsStringAsync();
-            _logger.LogWarning("Request failed with {StatusCode} for {Url}: {Body}",
-                (int)response.StatusCode, requestUrl, body.Length > 300 ? body[..300] : body);
-            return null;
-        }
-
-        // Get data as Json string 
-        string data = await response.Content.ReadAsStringAsync();
-        // Add Json string conversion to hard object
-        var message = JsonNode.Parse(data);
-
-        return message;
     }
 }

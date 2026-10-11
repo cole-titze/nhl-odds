@@ -47,6 +47,7 @@ public partial class NhlDbContext : DbContext
     public virtual DbSet<DbGoalReplay> GoalReplay { get; set; } = null!;
     public virtual DbSet<DbGoalReplayPosition> GoalReplayPosition { get; set; } = null!;
     public virtual DbSet<DbGameDetailFetch> GameDetailFetch { get; set; } = null!;
+    public virtual DbSet<DbNhlApiResponse> NhlApiResponse { get; set; } = null!;
 
     // Game Event Tables
     public virtual DbSet<DbBlockedShot> GameBlockedShotEvent { get; set; } = null!;
@@ -117,6 +118,8 @@ public partial class NhlDbContext : DbContext
             .HasKey(c => new { c.GameId, c.EventId, c.Frame, c.TrackId });
         modelBuilder.Entity<DbGameDetailFetch>()
             .HasKey(c => new { c.GameId, c.Kind });
+        modelBuilder.Entity<DbNhlApiResponse>()
+            .HasKey(c => new { c.Url, c.ContentHash });
         modelBuilder.Entity<DbGameOdds>()
             .HasKey(c => new { c.GameId, c.ModelId, c.RunDateUTC });
         modelBuilder.Entity<DbGameSpreadTotalOdds>()
