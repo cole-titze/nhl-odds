@@ -3,12 +3,16 @@ using System.Net;
 namespace Services.NhlData;
 
 /// <summary>
-/// An HttpClient that spaces requests at least <c>minGap</c> apart and retries once after a 429. Use one per host for
-/// the whole run: the NHL's hosts rate limit separately.
+/// An HttpClient that spaces requests at least <c>minGap</c> apart and retries a 429 with growing waits. Use one per host
+/// for the whole run. The NHL also rate limits per IP across its hosts, so another job running at the same time (e.g.
+/// the lineup snapshot during a backfill) can still push it over; the retries ride that out.
 /// </summary>
 public class ThrottledHttpClient
 {
-    private static readonly TimeSpan RATE_LIMIT_WAIT = TimeSpan.FromSeconds(10);
+    // Waits before each retry after a 429, about 2.5 minutes in total, unless the response asks for a specific wait
+    private static readonly TimeSpan[] RATE_LIMIT_WAITS =
+        [TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(40), TimeSpan.FromSeconds(80)];
+    private static readonly TimeSpan MAX_RETRY_AFTER = TimeSpan.FromMinutes(2);
     private readonly HttpClient _httpClient;
     private readonly TimeSpan _minGap;
     private readonly SemaphoreSlim _gate = new(1, 1);
@@ -49,14 +53,24 @@ public class ThrottledHttpClient
             }
 
             using var response = await _httpClient.GetAsync(url);
-            if (response.StatusCode == HttpStatusCode.TooManyRequests && attempt == 1)
+            if (response.StatusCode == HttpStatusCode.TooManyRequests && attempt <= RATE_LIMIT_WAITS.Length)
             {
-                await Task.Delay(RATE_LIMIT_WAIT);
+                await Task.Delay(RetryWait(response, RATE_LIMIT_WAITS[attempt - 1]));
                 continue;
             }
             return response.IsSuccessStatusCode
                 ? (response.StatusCode, await response.Content.ReadAsStringAsync())
                 : (response.StatusCode, null);
         }
+    }
+
+    // The server's Retry-After when it sends one (capped), otherwise the default wait
+    private static TimeSpan RetryWait(HttpResponseMessage response, TimeSpan defaultWait)
+    {
+        var retryAfter = response.Headers.RetryAfter;
+        var wait = retryAfter?.Delta ?? (retryAfter?.Date - DateTimeOffset.UtcNow);
+        if (wait is not { } w || w <= TimeSpan.Zero)
+            return defaultWait;
+        return w < MAX_RETRY_AFTER ? w : MAX_RETRY_AFTER;
     }
 }
