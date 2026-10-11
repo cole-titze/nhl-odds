@@ -143,7 +143,7 @@ HTTP Request
 - `src/DatabaseAccess/Web*Repository/Mappers/` — web DB model → web domain model
 - `src/WebApi/Mappers/` — web domain model → view model
 
-**Run modes** (`ModeType` enum):
+**Run modes** (`ModeType` enum; adding or renaming one also means updating the mode table on the [wiki](https://github.com/cole-titze/nhl-odds/wiki) Home page, repo `git@github.com:cole-titze/nhl-odds.wiki.git`):
 - `NhlAdd` — skips seasons/games that already exist in the DB (fast incremental)
 - `NhlUpdate` — re-fetches and overwrites existing records
 - `NextDayOdds` — fetches upcoming game odds from The Odds API + Kalshi open markets
