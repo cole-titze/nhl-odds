@@ -30,6 +30,8 @@ public class DataGetterEntry
 {
     // 2009 was the first year with modern play-by-play statistics
     private const int START_YEAR = 2009;
+    // NextDayKalshi saves closing odds for games played in this many past days (a missed morning is caught up)
+    private const int CLOSING_ODDS_DAYS = 3;
     private readonly ILogger<DataGetterEntry> _logger;
     private readonly ILoggerFactory _loggerFactory;
 
@@ -85,8 +87,13 @@ public class DataGetterEntry
             var kalshiGetter = new KalshiGetter(_loggerFactory);
             var kalshiFetcher = new KalshiOddsFetcher(kalshiDbContext, kalshiOddsRepo, kalshiGetter, _loggerFactory);
 
+            var closingFetcher = new KalshiClosingOddsFetcher(kalshiDbContext, kalshiOddsRepo, kalshiGetter, _loggerFactory);
+
             _logger.LogTrace("Starting Kalshi Odds Fetch");
             await LogFailure(errorRepo, "NextDayKalshi", kalshiFetcher.FetchAndSaveKalshiOdds);
+            // Separate step so a closing-line hiccup never costs the morning odds the predictor needs
+            await LogFailure(errorRepo, "NextDayKalshiClosing",
+                () => closingFetcher.FetchAndSaveClosingOdds(DateTime.UtcNow.AddDays(-CLOSING_ODDS_DAYS)));
             _logger.LogTrace("Completed Kalshi Odds Fetch");
         }
         else if (modeSettings.Mode == ModeType.BackfillKalshi)
@@ -98,6 +105,8 @@ public class DataGetterEntry
 
             _logger.LogTrace("Starting Kalshi Odds Backfill");
             await kalshiBackfiller.BackfillKalshiOdds();
+            await new KalshiClosingOddsFetcher(kalshiDbContext, kalshiOddsRepo, kalshiGetter, _loggerFactory)
+                .FetchAndSaveClosingOdds();
             _logger.LogTrace("Completed Kalshi Odds Backfill");
         }
         else if (modeSettings.Mode == ModeType.NextDayOdds || modeSettings.Mode == ModeType.BackfillOdds)

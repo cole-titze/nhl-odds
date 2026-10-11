@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using Entities.ServiceModels.Kalshi;
 using Microsoft.Extensions.Logging;
@@ -8,6 +9,7 @@ public class KalshiGetter : IKalshiGetter
 {
     private const string BASE_URL = "https://api.elections.kalshi.com/trade-api/v2";
     private const int THROTTLE_MS = 100;
+    private const int MAX_RATE_LIMIT_RETRIES = 5;
     private readonly HttpClient _httpClient;
     private readonly ILogger<KalshiGetter> _logger;
     private DateTime _lastRequestCompleted = DateTime.MinValue;
@@ -58,14 +60,27 @@ public class KalshiGetter : IKalshiGetter
         return await FetchMarketsPaginated($"/historical/markets?series_ticker={seriesTicker}&limit=1000", seriesTicker);
     }
 
+    public async Task<List<KalshiMarket>> GetEventMarkets(string eventTicker)
+    {
+        var markets = await FetchMarketsPaginated($"/markets?event_ticker={eventTicker}&limit=1000", eventTicker);
+        return markets.Count > 0
+            ? markets
+            : await FetchMarketsPaginated($"/historical/markets?event_ticker={eventTicker}&limit=1000", eventTicker);
+    }
+
     public async Task<KalshiCandlestickResponse?> GetCandlesticks(string seriesTicker, string ticker, long startTs, long endTs, int periodInterval)
+    {
+        var query = $"candlesticks?start_ts={startTs}&end_ts={endTs}&period_interval={periodInterval}";
+        // Markets settled before Kalshi's historical cutoff only answer on the historical endpoint
+        return await FetchCandlesticks($"{BASE_URL}/series/{seriesTicker}/markets/{ticker}/{query}", ticker)
+            ?? await FetchCandlesticks($"{BASE_URL}/historical/markets/{ticker}/{query}", ticker);
+    }
+
+    private async Task<KalshiCandlestickResponse?> FetchCandlesticks(string url, string ticker)
     {
         try
         {
-            await Throttle();
-            var url = $"{BASE_URL}/series/{seriesTicker}/markets/{ticker}/candlesticks?start_ts={startTs}&end_ts={endTs}&period_interval={periodInterval}";
-            var response = await _httpClient.GetAsync(url);
-            _lastRequestCompleted = DateTime.UtcNow;
+            var response = await GetWithRetry(url);
 
             if (!response.IsSuccessStatusCode)
                 return null;
@@ -91,13 +106,11 @@ public class KalshiGetter : IKalshiGetter
         {
             do
             {
-                await Throttle();
                 var url = BASE_URL + basePath;
                 if (!string.IsNullOrEmpty(cursor))
                     url += $"&cursor={cursor}";
 
-                var response = await _httpClient.GetAsync(url);
-                _lastRequestCompleted = DateTime.UtcNow;
+                var response = await GetWithRetry(url);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -126,6 +139,23 @@ public class KalshiGetter : IKalshiGetter
 
         _logger.LogInformation("Fetched {Count} Kalshi markets for {Ticker}", allMarkets.Count, seriesTicker);
         return allMarkets;
+    }
+
+    /// <summary>GET, waiting 1, 2, 4, 8 then 16 s on each 429 (long backfills run into Kalshi's rate limit)</summary>
+    private async Task<HttpResponseMessage> GetWithRetry(string url)
+    {
+        for (var attempt = 0; ; attempt++)
+        {
+            await Throttle();
+            var response = await _httpClient.GetAsync(url);
+            _lastRequestCompleted = DateTime.UtcNow;
+            if (response.StatusCode != HttpStatusCode.TooManyRequests || attempt >= MAX_RATE_LIMIT_RETRIES)
+                return response;
+
+            var wait = TimeSpan.FromSeconds(Math.Pow(2, attempt));
+            _logger.LogInformation("Kalshi rate limit hit; retrying in {Seconds} s", wait.TotalSeconds);
+            await Task.Delay(wait);
+        }
     }
 
     private async Task Throttle()

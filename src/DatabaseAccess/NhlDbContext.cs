@@ -30,6 +30,7 @@ public partial class NhlDbContext : DbContext
     public virtual DbSet<DbBookmakerOdds> BookmakerOdds { get; set; } = null!;
     public virtual DbSet<DbBookmakerSpreads> BookmakerSpreads { get; set; } = null!;
     public virtual DbSet<DbBookmakerTotals> BookmakerTotals { get; set; } = null!;
+    public virtual DbSet<DbBookmakerClosingOdds> BookmakerClosingOdds { get; set; } = null!;
     public virtual DbSet<DbBookmakerOddsResponse> BookmakerOddsResponse { get; set; } = null!;
     public virtual DbSet<DbErrorLog> ErrorLog { get; set; } = null!;
     public virtual DbSet<DbRosterStatus> RosterStatus { get; set; } = null!;
@@ -81,6 +82,8 @@ public partial class NhlDbContext : DbContext
         modelBuilder.Entity<DbGameGoalieStats>()
             .HasKey(c => new { c.GameId, c.PlayerId });
         modelBuilder.Entity<DbBookmakerOdds>()
+            .HasKey(c => new { c.GameId, c.BookmakerName });
+        modelBuilder.Entity<DbBookmakerClosingOdds>()
             .HasKey(c => new { c.GameId, c.BookmakerName });
         modelBuilder.Entity<DbBookmakerSpreads>()
             .HasKey(c => new { c.GameId, c.BookmakerName });

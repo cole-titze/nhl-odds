@@ -64,6 +64,32 @@ public class BookmakerOddsRepository : IBookmakerOddsRepository
         }
     }
 
+    public async Task AddOrUpdateClosingOdds(List<DbBookmakerClosingOdds> odds)
+    {
+        var gameIds = odds.Select(o => o.GameId).Distinct().ToHashSet();
+        var existingByKey = await _dbContext.BookmakerClosingOdds
+            .Where(o => gameIds.Contains(o.GameId))
+            .ToDictionaryAsync(o => (o.GameId, o.BookmakerName));
+
+        foreach (var record in odds)
+        {
+            if (existingByKey.TryGetValue((record.GameId, record.BookmakerName), out var db))
+            {
+                db.BookmakerKey = record.BookmakerKey;
+                db.HomeOdds = record.HomeOdds;
+                db.AwayOdds = record.AwayOdds;
+                db.PriceTimeUTC = record.PriceTimeUTC;
+                db.FetchedDateUTC = record.FetchedDateUTC;
+                db.OddsApiGameId = record.OddsApiGameId;
+            }
+            else
+            {
+                await _dbContext.BookmakerClosingOdds.AddAsync(record);
+                existingByKey[(record.GameId, record.BookmakerName)] = record;
+            }
+        }
+    }
+
     public async Task AddOrUpdateBookmakerSpreads(List<DbBookmakerSpreads> spreads)
     {
         var gameIds = spreads.Select(o => o.GameId).Distinct().ToHashSet();

@@ -777,6 +777,20 @@ CREATE TABLE "BookmakerOdds"
     FOREIGN KEY ("GameId") REFERENCES "GameRaw"("Id")
 );
 
+CREATE TABLE "BookmakerClosingOdds"
+(
+    "GameId" INTEGER NOT NULL,
+    "BookmakerName" VARCHAR(100) NOT NULL,
+    "BookmakerKey" VARCHAR(100) NOT NULL DEFAULT '',
+    "HomeOdds" DOUBLE PRECISION NOT NULL,
+    "AwayOdds" DOUBLE PRECISION NOT NULL,
+    "PriceTimeUTC" TIMESTAMP NOT NULL,
+    "FetchedDateUTC" TIMESTAMP NOT NULL,
+    "OddsApiGameId" VARCHAR(100) NOT NULL DEFAULT '',
+    CONSTRAINT "PK_BookmakerClosingOdds" PRIMARY KEY("GameId", "BookmakerName"),
+    FOREIGN KEY ("GameId") REFERENCES "GameRaw"("Id")
+);
+
 CREATE TABLE "BookmakerSpreads"
 (
     "GameId" INTEGER NOT NULL,

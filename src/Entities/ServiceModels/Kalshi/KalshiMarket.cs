@@ -65,8 +65,12 @@ public class KalshiOhlc
     public string LowDollars { get; set; } = "0";
     [JsonPropertyName("close_dollars")]
     public string CloseDollars { get; set; } = "0";
+    // The historical endpoints name the same dollar string "close" and send null when nobody quoted
+    [JsonPropertyName("close")]
+    public string? HistoricalClose { get; set; }
 
-    public double Close => double.TryParse(CloseDollars, out var v) ? v : 0;
+    public double Close => double.TryParse(CloseDollars, out var v) && v > 0 ? v
+        : double.TryParse(HistoricalClose, out var h) ? h : 0;
 }
 
 public class KalshiCandlestick
