@@ -80,7 +80,7 @@ public class NhlPlayerManagerTests
     [TestMethod]
     public async Task GetPlayers_InUpdateMode_ShouldFetchEachPlayerOncePerRun()
     {
-        Game GameFor(int id, int homeTeamId) => new()
+        static Game GameFor(int id, int homeTeamId) => new()
         {
             Id = id,
             HomeTeamId = homeTeamId,
