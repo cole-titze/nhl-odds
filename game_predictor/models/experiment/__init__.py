@@ -1,12 +1,13 @@
 from .catboost import catboost, catboost_regressor
-from .knn import knn
+from .elastic_net import elastic_net_regressor
+from .knn import knn, knn_regressor
 from .lgbm import lgbm, lgbm_regressor
 from .logistic_regression import logistic_regression
 from .mlp import mlp, mlp_regressor
 from .pipeline import standard_pipeline
 from .random_forest import random_forest, random_forest_regressor
 from .segment_router import raw_pipeline, segment_router
-from .tabm import tabm
+from .tabm import tabm, tabm_regressor
 from .types import Experiment, ModelConfig, RegressionExperiment
 from .xgboost import xgboost, xgboost_regressor
 
@@ -16,7 +17,9 @@ __all__ = [
     "RegressionExperiment",
     "catboost",
     "catboost_regressor",
+    "elastic_net_regressor",
     "knn",
+    "knn_regressor",
     "lgbm",
     "lgbm_regressor",
     "logistic_regression",
@@ -28,6 +31,7 @@ __all__ = [
     "segment_router",
     "standard_pipeline",
     "tabm",
+    "tabm_regressor",
     "xgboost",
     "xgboost_regressor",
 ]

@@ -1,0 +1,258 @@
+# ============================================================================
+# EDIT THIS FILE to configure moneyline (win-probability) models.
+#
+# Each Experiment has:
+#   models       — dict of name -> ModelConfig  (use mlp() / lgbm() / etc.)
+#   pipeline     — sklearn Pipeline              (use standard_pipeline())
+#   ensemble     — list of model names to average, or None for single model
+#   calibration  — "sigmoid", "isotonic", or "none" (default: "sigmoid")
+#   tune         — True to run Optuna tuning during backfill (default: False)
+#   tune_trials  — number of Optuna trials (default: 100)
+#
+# SAVE_EXPERIMENT controls which experiment is used for predictions saved to DB.
+# Spread and over/under models live in spread.py and total.py.
+# ============================================================================
+
+import importlib.util
+
+from ...models.experiment import (
+    Experiment,
+    catboost,
+    knn,
+    lgbm,
+    logistic_regression,
+    mlp,
+    random_forest,
+    raw_pipeline,
+    segment_router,
+    standard_pipeline,
+    tabm,
+    xgboost,
+)
+
+EXPERIMENTS: dict[str, Experiment] = {
+    # LR + KNN stack: ties Stack6 in walk-forward evals (log loss +0.0002 on 2019-22, +0.0003 on 2023-26,
+    # both within noise) for about a tenth of the training compute. LR carries the stack.
+    "Default": Experiment(
+        models={
+            "KNN": knn(n_neighbors=152, weights="distance", metric="minkowski", p=2),
+            "LR": logistic_regression(C=0.0768651, l1_ratio=1.0),
+        },
+        pipeline=standard_pipeline(k_best=99, pca_components=90),
+        ensemble=["KNN", "LR"],
+        calibration="none",
+        decay=0.08,
+        stack=True,
+        tune=False,
+    ),
+    # Mixture of experts (#55): Default's stack plus a copy trained only on back-to-back games, blended
+    # 1:3 with the global model on those games. Ties Default in walk-forward evals (+0.0001 ± 0.0002 on
+    # 2023-26); routing by early season, lopsided games or per-segment model picks did worse.
+    "MoE B2B": Experiment(
+        models={
+            "MoE": segment_router(
+                models={
+                    "KNN": knn(n_neighbors=152, weights="distance", metric="minkowski", p=2),
+                    "LR": logistic_regression(C=0.0768651, l1_ratio=1.0),
+                },
+                segment="b2b",
+                blend=0.25,
+                k_best=99,
+                pca_components=90,
+            ),
+        },
+        pipeline=raw_pipeline(),
+        calibration="none",
+        decay=0.08,
+        tune=False,
+    ),
+    # Previous Default: six-model stack
+    "Stack6": Experiment(
+        models={
+            "MLP": mlp(hidden_layer_sizes=(212,), learning_rate_init=0.00112711, alpha=0.0367419, activation="relu"),
+            "LightGBM": lgbm(
+                n_estimators=260,
+                learning_rate=0.0133063,
+                max_depth=7,
+                num_leaves=240,
+                min_child_samples=5,
+                subsample=0.788132,
+                colsample_bytree=0.644878,
+                reg_alpha=8.03915e-06,
+                reg_lambda=0.0487625,
+            ),
+            "RF": random_forest(
+                n_estimators=184, max_depth=26, min_samples_split=11, min_samples_leaf=3, max_features="sqrt"
+            ),
+            "KNN": knn(n_neighbors=152, weights="distance", metric="minkowski", p=2),
+            "XGB": xgboost(
+                n_estimators=830,
+                learning_rate=0.0147956,
+                max_depth=4,
+                min_child_weight=1,
+                subsample=0.901271,
+                colsample_bytree=0.799057,
+                reg_alpha=3.51218e-06,
+                reg_lambda=0.0333008,
+                gamma=2.56812e-07,
+            ),
+            "LR": logistic_regression(C=0.0768651, l1_ratio=1.0),
+        },
+        pipeline=standard_pipeline(k_best=99, pca_components=90),
+        ensemble=["MLP", "LightGBM", "RF", "KNN", "XGB", "LR"],
+        calibration="none",
+        decay=0.08,
+        stack=True,
+        tune=False,
+    ),
+    "LightGBM": Experiment(
+        models={
+            "LightGBM": lgbm(
+                n_estimators=260,
+                learning_rate=0.0133063,
+                max_depth=7,
+                num_leaves=240,
+                min_child_samples=5,
+                subsample=0.788132,
+                colsample_bytree=0.644878,
+                reg_alpha=8.03915e-06,
+                reg_lambda=0.0487625,
+            ),
+        },
+        pipeline=standard_pipeline(k_best=99, pca_components=90),
+        calibration="none",
+        decay=0.1055,
+        tune=False,
+    ),
+    "Compressed MLP": Experiment(
+        models={
+            "MLP": mlp(hidden_layer_sizes=(212,), learning_rate_init=0.00112711, alpha=0.0367419, activation="relu"),
+        },
+        pipeline=standard_pipeline(k_best=20, pca_components=6),
+        calibration="none",
+        decay=0.07648,
+        tune=False,
+    ),
+    "RF": Experiment(
+        models={
+            "RF": random_forest(
+                n_estimators=184, max_depth=26, min_samples_split=11, min_samples_leaf=3, max_features="sqrt"
+            ),
+        },
+        pipeline=standard_pipeline(k_best=31, pca_components=21),
+        calibration="none",
+        decay=0.1507,
+        tune=False,
+    ),
+    "Deep KNN": Experiment(
+        models={
+            "KNN": knn(n_neighbors=152, weights="distance", metric="minkowski", p=2),
+        },
+        pipeline=standard_pipeline(k_best=62, pca_components=20),
+        calibration="none",
+        decay=0.4337,
+        tune=False,
+    ),
+    "XGBoost": Experiment(
+        models={
+            "XGB": xgboost(
+                n_estimators=830,
+                learning_rate=0.0147956,
+                max_depth=4,
+                min_child_weight=1,
+                subsample=0.901271,
+                colsample_bytree=0.799057,
+                reg_alpha=3.51218e-06,
+                reg_lambda=0.0333008,
+                gamma=2.56812e-07,
+            ),
+        },
+        pipeline=standard_pipeline(k_best=88, pca_components=71),
+        calibration="sigmoid",
+        decay=0.02728,
+        tune=False,
+    ),
+    "Logistic": Experiment(
+        models={
+            "LR": logistic_regression(C=0.0768651, l1_ratio=1.0),
+        },
+        pipeline=standard_pipeline(k_best=124, pca_components=98),
+        calibration="none",
+        decay=0.0,
+        tune=False,
+    ),
+    "Tuned Boosters": Experiment(
+        models={
+            "LightGBM": lgbm(
+                n_estimators=970,
+                learning_rate=0.0201986,
+                max_depth=5,
+                num_leaves=156,
+                min_child_samples=83,
+                subsample=0.804052,
+                colsample_bytree=0.843525,
+                reg_alpha=1.71649e-06,
+                reg_lambda=2.14657e-06,
+            ),
+            "XGB": xgboost(
+                n_estimators=252,
+                learning_rate=0.0188796,
+                max_depth=7,
+                min_child_weight=7,
+                subsample=0.724605,
+                colsample_bytree=0.873154,
+                reg_alpha=0.00101763,
+                reg_lambda=0.0569719,
+                gamma=0.0032077,
+            ),
+            "MLP": mlp(
+                hidden_layer_sizes=(47, 60, 174),
+                max_iter=905,
+                learning_rate_init=0.00246339,
+                alpha=4.73291e-06,
+                activation="tanh",
+            ),
+        },
+        pipeline=standard_pipeline(k_best=83, pca_components=56),
+        ensemble=["LightGBM", "XGB", "MLP"],
+        stack=True,
+        calibration="none",
+        decay=0.01789,
+        tune=False,
+    ),
+}
+
+# Local-only models: their deps are in requirements-experimental.txt, not in the predictor
+# image, so they only register when installed.
+if importlib.util.find_spec("catboost"):
+    EXPERIMENTS["CatBoost"] = Experiment(
+        models={
+            "CatBoost": catboost(
+                iterations=386,
+                learning_rate=0.0250923,
+                depth=5,
+                l2_leaf_reg=0.949754,
+                random_strength=0.483826,
+                bagging_temperature=3.83555,
+                border_count=64,
+            ),
+        },
+        pipeline=standard_pipeline(k_best=63, pca_components=45),
+        calibration="sigmoid",
+        decay=0.006325,
+        tune=False,
+    )
+
+if importlib.util.find_spec("pytabkit"):
+    # Untuned pytabkit defaults: 30 Optuna trials scored no better (they overfit the tuning seasons)
+    EXPERIMENTS["TabM"] = Experiment(
+        models={
+            "TabM": tabm(),
+        },
+        pipeline=standard_pipeline(k_best=99, pca_components=None),
+        calibration="none",
+        decay=0.0,
+        tune=False,
+    )
+
+SAVE_EXPERIMENT = "Default"

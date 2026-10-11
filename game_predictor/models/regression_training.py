@@ -14,6 +14,9 @@ _REGRESSOR_TO_FACTORY = {
     "MLPRegressor": "mlp_regressor",
     "RandomForestRegressor": "random_forest_regressor",
     "CatBoostRegressor": "catboost_regressor",
+    "KNeighborsRegressor": "knn_regressor",
+    "ElasticNet": "elastic_net_regressor",
+    "TabM_D_Regressor": "tabm_regressor",
 }
 
 _INTERNAL_PARAMS = {

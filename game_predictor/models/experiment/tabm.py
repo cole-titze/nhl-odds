@@ -83,3 +83,49 @@ def tune_tabm(folds, n_trials, progress_callback):
     study = optuna.create_study(direction="minimize", study_name="tabm-tuning")
     study.optimize(objective, n_trials=n_trials, n_jobs=1, callbacks=[progress_callback])
     return study
+
+
+def tabm_regressor(
+    arch_type: str | None = None,
+    tabm_k: int | None = None,
+    n_blocks: int | None = None,
+    d_block: int | None = None,
+    dropout: float | None = None,
+    lr: float | None = None,
+    weight_decay: float | None = None,
+    num_emb_type: str | None = None,
+    d_embedding: int | None = None,
+    num_emb_n_bins: int | None = None,
+    patience: int | None = None,
+    batch_size: int | None = None,
+) -> ModelConfig:
+    """Create a TabM regressor config. Same args and caveats as tabm() (local-only, decay ignored)."""
+    from ...libomp import FIX_COMMAND, needs_link
+
+    if needs_link():
+        raise RuntimeError(f"torch isn't using Homebrew's libomp on this Mac — run `{FIX_COMMAND}` first")
+    from pytabkit import TabM_D_Regressor
+
+    overrides = {
+        "arch_type": arch_type,
+        "tabm_k": tabm_k,
+        "n_blocks": n_blocks,
+        "d_block": d_block,
+        "dropout": dropout,
+        "lr": lr,
+        "weight_decay": weight_decay,
+        "num_emb_type": num_emb_type,
+        "d_embedding": d_embedding,
+        "num_emb_n_bins": num_emb_n_bins,
+        "patience": patience,
+        "batch_size": batch_size,
+    }
+    return ModelConfig(
+        cls=TabM_D_Regressor,
+        params={
+            **{k: v for k, v in overrides.items() if v is not None},
+            "device": "cpu",
+            "random_state": 42,
+            "verbosity": 0,
+        },
+    )

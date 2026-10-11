@@ -1,0 +1,16 @@
+# Experiments are split by bet type: moneyline.py, spread.py, total.py (over/under).
+from .moneyline import EXPERIMENTS, SAVE_EXPERIMENT
+from .spread import SAVE_SPREAD_EXPERIMENT, SPREAD_EXPERIMENTS
+from .total import SAVE_TOTAL_EXPERIMENT, TOTAL_EXPERIMENTS
+
+REGRESSION_EXPERIMENTS = {**SPREAD_EXPERIMENTS, **TOTAL_EXPERIMENTS}
+
+__all__ = [
+    "EXPERIMENTS",
+    "REGRESSION_EXPERIMENTS",
+    "SAVE_EXPERIMENT",
+    "SAVE_SPREAD_EXPERIMENT",
+    "SAVE_TOTAL_EXPERIMENT",
+    "SPREAD_EXPERIMENTS",
+    "TOTAL_EXPERIMENTS",
+]
