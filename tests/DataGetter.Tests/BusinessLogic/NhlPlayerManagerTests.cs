@@ -78,6 +78,29 @@ public class NhlPlayerManagerTests
     }
 
     [TestMethod]
+    public async Task GetPlayers_InUpdateMode_ShouldFetchEachPlayerOncePerRun()
+    {
+        Game GameFor(int id, int homeTeamId) => new()
+        {
+            Id = id,
+            HomeTeamId = homeTeamId,
+            AwayTeamId = 9,
+            RosterStats = new GameRosterStats
+            {
+                HomeTeamForwards = new List<GameSkaterStats> { new GameSkaterStats { PlayerId = 101 } },
+            },
+        };
+
+        A.CallTo(() => _playerGetter.GetPlayer(101, A<int>.Ignored)).ReturnsLazily((int id, int teamId) => new Player { Id = id, CurrentTeamId = teamId });
+
+        await _sut.GetPlayers(GameFor(2024020001, 1), ModeType.NhlUpdate);
+        var result = (await _sut.GetPlayers(GameFor(2024020002, 3), ModeType.NhlUpdate)).ToList();
+
+        A.CallTo(() => _playerGetter.GetPlayer(101, A<int>.Ignored)).MustHaveHappenedOnceExactly();
+        result.Should().ContainSingle().Which.CurrentTeamId.Should().Be(3);
+    }
+
+    [TestMethod]
     public async Task GetPlayers_WhenPlayerDoesNotExist_InAddMode_ShouldFetchPlayer()
     {
         var game = new Game

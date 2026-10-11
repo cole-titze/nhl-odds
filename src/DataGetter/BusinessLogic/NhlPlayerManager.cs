@@ -12,6 +12,9 @@ public class NhlPlayerManager
     private readonly IPlayerRepository _playerRepo;
     private readonly NhlApiDataGetter _nhlDataGetter;
     private readonly ILogger<NhlPlayerManager> _logger;
+    // Players fetched this run. Player data is bio data that doesn't change from game to game,
+    // so NhlUpdate fetches each player once instead of once per game played
+    private readonly Dictionary<int, Player> _fetchedPlayers = new();
     public NhlPlayerManager(IPlayerRepository playerRepository, NhlApiDataGetter nhlDataGetter, ILoggerFactory loggerFactory)
     {
         _playerRepo = playerRepository;
@@ -55,6 +58,12 @@ public class NhlPlayerManager
                 _logger.LogInformation("Player: " + playerStats.PlayerId + " already exists Skipping...");
                 continue;
             }
+            if (_fetchedPlayers.TryGetValue(playerStats.PlayerId, out var fetchedPlayer))
+            {
+                fetchedPlayer.CurrentTeamId = teamId;
+                players.Add(fetchedPlayer);
+                continue;
+            }
             var player = await _nhlDataGetter.PlayerDataGetter.GetPlayer(playerStats.PlayerId, teamId);
             if (player == null)
             {
@@ -62,6 +71,7 @@ public class NhlPlayerManager
                 // and will violate the Player foreign key if they're never upserted.
                 throw new Exception("Failed to get player data for player: " + playerStats.PlayerId);
             }
+            _fetchedPlayers[player.Id] = player;
             players.Add(player);
         }
 
