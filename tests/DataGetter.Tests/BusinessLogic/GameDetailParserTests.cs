@@ -47,6 +47,24 @@ public class GameDetailParserTests
     }
 
     [TestMethod]
+    public void ParseShifts_SkipsGoalMarkerWithoutPlayer()
+    {
+        var json = """
+            { "data": [
+              { "id": 10348353, "detailCode": 0, "duration": null, "endTime": "10:42", "eventDescription": "EVG",
+                "eventDetails": null, "eventNumber": 120, "period": 1, "playerId": null, "shiftNumber": 0,
+                "startTime": "10:42", "teamId": 22, "typeCode": 505 },
+              { "id": 10348354, "detailCode": 0, "duration": "00:40", "endTime": "01:25", "eventDescription": null,
+                "eventDetails": null, "eventNumber": 65, "period": 1, "playerId": 8474586, "shiftNumber": 1,
+                "startTime": "00:45", "teamId": 22, "typeCode": 517 } ], "total": 2 }
+            """;
+
+        var shifts = GameDetailParser.ParseShifts(2020020056, json);
+
+        shifts.Should().ContainSingle().Which.Id.Should().Be(10348354);
+    }
+
+    [TestMethod]
     public void ParseReplay_OneRowPerObjectPerFrame()
     {
         var json = """

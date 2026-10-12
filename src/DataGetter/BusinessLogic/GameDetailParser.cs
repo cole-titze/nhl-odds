@@ -28,6 +28,8 @@ public static class GameDetailParser
     {
         using var doc = JsonDocument.Parse(shiftChartJson);
         return doc.RootElement.GetProperty("data").EnumerateArray()
+            // Some old goal markers (typeCode 505) have no player; there's no shift to store
+            .Where(s => s.GetProperty("playerId").ValueKind == JsonValueKind.Number)
             .Select(s => new DbGameShift
             {
                 Id = s.GetProperty("id").GetInt64(),

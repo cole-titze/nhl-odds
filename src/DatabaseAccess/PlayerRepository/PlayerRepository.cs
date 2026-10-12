@@ -114,16 +114,11 @@ public class PlayerRepository : IPlayerRepository
     /// <returns>Desired player</returns>
     private async Task<IDbGamePlayerStats?> GetDbGamePlayerStats(IDbGamePlayerStats gamePlayerStats)
     {
-        var dbGoalieStats = await _dbContext.GameGoalieStats.FirstOrDefaultAsync(x => x.GameId == gamePlayerStats.GameId && x.PlayerId == gamePlayerStats.PlayerId);
-        var dbSkaterStats = await _dbContext.GameSkaterStats.FirstOrDefaultAsync(x => x.GameId == gamePlayerStats.GameId && x.PlayerId == gamePlayerStats.PlayerId);
-
-        if (dbGoalieStats != null)
-            return dbGoalieStats;
-
-        if (dbSkaterStats != null)
-            return dbSkaterStats;
-
-        return null;
+        // Look in the table that matches the incoming row: the box score can list one player as both a
+        // skater and a goalie (Vladar in 2019030001), and those are separate rows
+        if (gamePlayerStats is DbGameGoalieStats)
+            return await _dbContext.GameGoalieStats.FirstOrDefaultAsync(x => x.GameId == gamePlayerStats.GameId && x.PlayerId == gamePlayerStats.PlayerId);
+        return await _dbContext.GameSkaterStats.FirstOrDefaultAsync(x => x.GameId == gamePlayerStats.GameId && x.PlayerId == gamePlayerStats.PlayerId);
     }
     /// <summary>
     /// Gets the number of players in the database for a given season.
