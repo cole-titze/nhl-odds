@@ -144,6 +144,7 @@ public class GameCleaner
             {
                 var cleanedGame = MapGameToDbGameCleaned.Map(game, gameMap, rosterScorer);
                 MapEventToDbGameCleaned.Apply(cleanedGame, eventAggregator, game);
+                MapScheduleToDbGameCleaned.Apply(cleanedGame, game, gameMap);
                 cleanedGames.Add(cleanedGame);
 
                 if (cleanedGames.Count >= batchSize)

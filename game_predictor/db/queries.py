@@ -1,3 +1,5 @@
+from ..prediction.experiments import features as feature_config
+
 # Features the C# cleaner stores in GameCleaned
 GAME_CLEANED_COLUMNS = [
     "HomeWinRatio",
@@ -126,45 +128,36 @@ GAME_CLEANED_COLUMNS = [
     "AwayStrengthOfSchedule",
     "HomeRecentStrengthOfSchedule",
     "AwayRecentStrengthOfSchedule",
-]
-
-# Expected-goals features computed by the predictor from play-by-play (issue #107). Each is the home team's value
-# minus the away team's over its last 10 or 82 games, like RestAdvantage. A last-5 window did clearly worse.
-XG_FEATURE_COLUMNS = [
-    f"Last{n}{stat}Advantage"
-    for n in (10, 82)
-    for stat in (
-        "FenwickPct5v5",
-        "XgPct5v5",
-        "XgAvg",
-        "ConcededXgAvg",
-        "GoalsSavedAboveXgAvg",
-        "GoalsAboveXgAvg",
-        "PpXgAvg",
-        "PkConcededXgAvg",
-    )
-]
-
-# Schedule features computed by the predictor from GameRaw: travel and time zones, and an early-season carry-over of
-# last season's strength. Home minus away unless named for one team. Distances are great-circle km between venues.
-SCHEDULE_FEATURE_COLUMNS = [
-    "TravelKmAdvantage",  # km each team travelled since its last game (away minus home, like RestAdvantage)
-    "Km7dAdvantage",  # km travelled over the last 7 days, away minus home
-    "Games7dAdvantage",  # games played in the last 7 days, away minus home
+    # Schedule (MapScheduleToDbGameCleaned). Advantages favor the home team when positive, like RestAdvantage:
+    # travel and games are away minus home, strength is home minus away.
+    "TravelKmAdvantage",  # great-circle km travelled since the last game
+    "Km7dAdvantage",  # km travelled over the last 7 days
+    "Games7dAdvantage",  # games played in the last 7 days
     "HomeTripLength",  # consecutive home games, this one included
     "AwayTripLength",  # consecutive road games, this one included
     "AwayTimeZoneShift",  # venue time zone minus the away team's home time zone (positive = playing east)
     "AwayBodyClockStartHour",  # puck drop in the away team's home time zone
-    "HomeElo",
-    "AwayElo",
-    "EloAdvantage",  # margin-of-victory Elo, a third regressed to the mean between seasons
     "PrevGoalDiffAdvantage",  # last regular season's goal difference per game
     "PrevPointsPctAdvantage",  # last regular season's points percentage
     "BlendGoalDiffAdvantage",  # this season's goal difference per game shrunk toward last season's
     "MinGamesPlayed",  # fewer of the two teams' games played this season
 ]
 
-FEATURE_COLUMNS = GAME_CLEANED_COLUMNS + XG_FEATURE_COLUMNS + SCHEDULE_FEATURE_COLUMNS
+# Expected-goals features computed by the predictor from play-by-play (issue #107). Each is the home team's value
+# minus the away team's over its last n games, like RestAdvantage. Windows and stats are set in
+# prediction/experiments/features.py.
+XG_FEATURE_COLUMNS = [f"Last{n}{stat}Advantage" for n in feature_config.XG_WINDOWS for stat in feature_config.XG_STATS]
+
+# Margin-of-victory Elo computed by the predictor from every season's results (features/elo.py), carried between
+# seasons. Settings: prediction/experiments/features.py.
+ELO_FEATURE_COLUMNS = ["HomeElo", "AwayElo", "EloAdvantage"]
+
+# Every model's features, minus any excluded in prediction/experiments/features.py
+FEATURE_COLUMNS = [
+    col
+    for col in GAME_CLEANED_COLUMNS + XG_FEATURE_COLUMNS + ELO_FEATURE_COLUMNS
+    if col not in feature_config.EXCLUDED_FEATURES
+]
 
 _feature_cols_sql = ", ".join(f'gc."{col}"' for col in GAME_CLEANED_COLUMNS)
 
@@ -278,6 +271,6 @@ SELECT {_ATTEMPT_COLS}, e."ScoringPlayerTeamId", 1 FROM "GameGoalEvent" e
 
 ALL_GAMES_QUERY = """
 SELECT "Id" AS "GameId", "SeasonStartYear", "GameType", "GameDateUTC", "HomeTeamId", "AwayTeamId", "HasBeenPlayed",
-       "HomeGoals", "AwayGoals", "EndPeriod", "VenueLocation"
+       "HomeGoals", "AwayGoals", "EndPeriod"
 FROM "GameRaw"
 """

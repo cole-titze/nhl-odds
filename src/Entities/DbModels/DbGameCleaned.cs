@@ -140,6 +140,17 @@ public class DbGameCleaned
     public double AwayStrengthOfSchedule { get; set; }
     public double HomeRecentStrengthOfSchedule { get; set; }
     public double AwayRecentStrengthOfSchedule { get; set; }
+    public double TravelKmAdvantage { get; set; }
+    public double Km7dAdvantage { get; set; }
+    public double Games7dAdvantage { get; set; }
+    public double HomeTripLength { get; set; }
+    public double AwayTripLength { get; set; }
+    public double AwayTimeZoneShift { get; set; }
+    public double AwayBodyClockStartHour { get; set; }
+    public double PrevGoalDiffAdvantage { get; set; }
+    public double PrevPointsPctAdvantage { get; set; }
+    public double BlendGoalDiffAdvantage { get; set; }
+    public double MinGamesPlayed { get; set; }
 
     [ForeignKey(nameof(GameId))]
     public DbGameRaw? Game { get; set; }
@@ -283,6 +294,17 @@ public class DbGameCleaned
         AwayStrengthOfSchedule = gameCleaned.AwayStrengthOfSchedule;
         HomeRecentStrengthOfSchedule = gameCleaned.HomeRecentStrengthOfSchedule;
         AwayRecentStrengthOfSchedule = gameCleaned.AwayRecentStrengthOfSchedule;
+        TravelKmAdvantage = gameCleaned.TravelKmAdvantage;
+        Km7dAdvantage = gameCleaned.Km7dAdvantage;
+        Games7dAdvantage = gameCleaned.Games7dAdvantage;
+        HomeTripLength = gameCleaned.HomeTripLength;
+        AwayTripLength = gameCleaned.AwayTripLength;
+        AwayTimeZoneShift = gameCleaned.AwayTimeZoneShift;
+        AwayBodyClockStartHour = gameCleaned.AwayBodyClockStartHour;
+        PrevGoalDiffAdvantage = gameCleaned.PrevGoalDiffAdvantage;
+        PrevPointsPctAdvantage = gameCleaned.PrevPointsPctAdvantage;
+        BlendGoalDiffAdvantage = gameCleaned.BlendGoalDiffAdvantage;
+        MinGamesPlayed = gameCleaned.MinGamesPlayed;
     }
 
     public bool IsEquivalentTo(DbGameCleaned? other)
@@ -420,6 +442,17 @@ public class DbGameCleaned
             && HomeStrengthOfSchedule == other.HomeStrengthOfSchedule
             && AwayStrengthOfSchedule == other.AwayStrengthOfSchedule
             && HomeRecentStrengthOfSchedule == other.HomeRecentStrengthOfSchedule
-            && AwayRecentStrengthOfSchedule == other.AwayRecentStrengthOfSchedule;
+            && AwayRecentStrengthOfSchedule == other.AwayRecentStrengthOfSchedule
+            && TravelKmAdvantage == other.TravelKmAdvantage
+            && Km7dAdvantage == other.Km7dAdvantage
+            && Games7dAdvantage == other.Games7dAdvantage
+            && HomeTripLength == other.HomeTripLength
+            && AwayTripLength == other.AwayTripLength
+            && AwayTimeZoneShift == other.AwayTimeZoneShift
+            && AwayBodyClockStartHour == other.AwayBodyClockStartHour
+            && PrevGoalDiffAdvantage == other.PrevGoalDiffAdvantage
+            && PrevPointsPctAdvantage == other.PrevPointsPctAdvantage
+            && BlendGoalDiffAdvantage == other.BlendGoalDiffAdvantage
+            && MinGamesPlayed == other.MinGamesPlayed;
     }
 }

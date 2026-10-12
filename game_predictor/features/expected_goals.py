@@ -1,7 +1,8 @@
 """Expected-goals team features (issue #107), computed from play-by-play shot attempts.
 
 An xG model scores every unblocked attempt walk-forward (season s is scored by a model trained on earlier seasons),
-then each team's attempts are rolled up over its last 10 and 82 games before puck drop. The features are home minus
+then each team's attempts are rolled up over its last n games before puck drop (XG_WINDOWS in
+prediction/experiments/features.py, which also picks the stats). The features are home minus
 away, named as in XG_FEATURE_COLUMNS.
 """
 
@@ -10,10 +11,10 @@ import numpy as np
 import pandas as pd
 
 from ..db.queries import XG_FEATURE_COLUMNS
+from ..prediction.experiments.features import XG_WINDOWS
 
 _XG_FEATS = ["dist", "angle", "behind_net", "ShotType", "rebound", "sk_diff", "own_sk", "opp_sk", "ot"]
 _SUMS = ["cf5", "ca5", "xgf5", "xga5", "xgf", "xga", "gf", "ga", "xgf_pp", "xga_pk"]
-_WINDOWS = (10, 82)
 
 
 def _prepare_attempts(attempts: pd.DataFrame, games: pd.DataFrame) -> pd.DataFrame:
@@ -109,7 +110,7 @@ def _team_game_totals(a: pd.DataFrame, games: pd.DataFrame) -> pd.DataFrame:
 def _team_form(pairs: pd.DataFrame) -> pd.DataFrame:
     """Each team's rates over its last n games up to and including each played game."""
     form = pairs[["TeamId", "GameDateUTC"]].copy()
-    for n in _WINDOWS:
+    for n in XG_WINDOWS:
         r = pairs.groupby("TeamId")[_SUMS].transform(lambda s: s.rolling(n, min_periods=1).sum())
         games_played = pairs.groupby("TeamId").cf5.transform(lambda s: s.rolling(n, min_periods=1).count())
         window = {

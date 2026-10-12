@@ -230,6 +230,17 @@ CREATE TABLE "GameCleaned"
     "AwayStrengthOfSchedule" DOUBLE PRECISION NOT NULL,
     "HomeRecentStrengthOfSchedule" DOUBLE PRECISION NOT NULL,
     "AwayRecentStrengthOfSchedule" DOUBLE PRECISION NOT NULL,
+    "TravelKmAdvantage" DOUBLE PRECISION NOT NULL,
+    "Km7dAdvantage" DOUBLE PRECISION NOT NULL,
+    "Games7dAdvantage" DOUBLE PRECISION NOT NULL,
+    "HomeTripLength" DOUBLE PRECISION NOT NULL,
+    "AwayTripLength" DOUBLE PRECISION NOT NULL,
+    "AwayTimeZoneShift" DOUBLE PRECISION NOT NULL,
+    "AwayBodyClockStartHour" DOUBLE PRECISION NOT NULL,
+    "PrevGoalDiffAdvantage" DOUBLE PRECISION NOT NULL,
+    "PrevPointsPctAdvantage" DOUBLE PRECISION NOT NULL,
+    "BlendGoalDiffAdvantage" DOUBLE PRECISION NOT NULL,
+    "MinGamesPlayed" DOUBLE PRECISION NOT NULL,
     CONSTRAINT "PK_GameCleaned" PRIMARY KEY("GameId"),
     FOREIGN KEY ("GameId") REFERENCES "GameRaw"("Id")
 );
