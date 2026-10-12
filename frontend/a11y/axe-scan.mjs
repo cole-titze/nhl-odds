@@ -98,6 +98,9 @@ async function newContext(browser, theme, viewport) {
 
 async function load(page, path) {
   await page.goto(BASE + path, { waitUntil: 'networkidle' });
+  // The server can't reach the mocked API, so the games feed loads in the
+  // browser after hydration; slow runners can still be on the skeleton here
+  if (path === '/') await page.waitForSelector('#games-feed a[href]');
   await page.waitForTimeout(500);
 }
 
