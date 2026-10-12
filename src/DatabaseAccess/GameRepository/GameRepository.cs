@@ -90,6 +90,10 @@ public class GameRepository : IGameRepository
         }
         else if (!dbGame.IsEquivalentTo(dbGameToStore))
         {
+            // The season cache outlives ClearTracking, so its game can be detached: write through the tracked row
+            // (no query if it's already tracked) and keep the cached copy current
+            var trackedGame = await _dbContext.GameRaw.FindAsync(game.Id);
+            trackedGame!.Clone(dbGameToStore);
             dbGame.Clone(dbGameToStore);
         }
     }
@@ -209,13 +213,12 @@ public class GameRepository : IGameRepository
 
     /// <summary>
     /// Stops tracking everything: after a failed save, so the failed entities aren't retried (and fail again) on the
-    /// next game's commit, and after each game, so the tracker doesn't grow for the whole run. The cached season games
-    /// go too: they'd be detached, and changes to a detached game are never saved.
+    /// next game's commit, and after each game, so the tracker doesn't grow for the whole run. The season cache stays
+    /// for reads; writes go through tracked rows (see AddUpdateGame and DeleteGame).
     /// </summary>
     public void ClearTracking()
     {
         _dbContext.ChangeTracker.Clear();
-        _cachedSeasonsGames.Clear();
     }
 
     /// <summary>
@@ -267,7 +270,7 @@ public class GameRepository : IGameRepository
         _dbContext.BookmakerOdds.RemoveRange(await _dbContext.BookmakerOdds.Where(x => x.GameId == gameId).ToListAsync());
         _dbContext.BookmakerSpreads.RemoveRange(await _dbContext.BookmakerSpreads.Where(x => x.GameId == gameId).ToListAsync());
         _dbContext.BookmakerTotals.RemoveRange(await _dbContext.BookmakerTotals.Where(x => x.GameId == gameId).ToListAsync());
-        _dbContext.GameRaw.Remove(dbGame);
+        _dbContext.GameRaw.Remove((await _dbContext.GameRaw.FindAsync(gameId))!);
         _cachedSeasonsGames[gameId / 1_000_000].Remove(dbGame);
     }
 
