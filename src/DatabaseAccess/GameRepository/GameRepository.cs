@@ -208,12 +208,14 @@ public class GameRepository : IGameRepository
     }
 
     /// <summary>
-    /// Drops all unsaved changes. Call after a failed save so the failed entities aren't retried (and fail again)
-    /// on the next game's commit; the repositories share one context.
+    /// Stops tracking everything: after a failed save, so the failed entities aren't retried (and fail again) on the
+    /// next game's commit, and after each game, so the tracker doesn't grow for the whole run. The cached season games
+    /// go too: they'd be detached, and changes to a detached game are never saved.
     /// </summary>
     public void ClearTracking()
     {
         _dbContext.ChangeTracker.Clear();
+        _cachedSeasonsGames.Clear();
     }
 
     /// <summary>
