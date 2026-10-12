@@ -138,6 +138,25 @@ public class DataGetterEntry
                 _logger.LogTrace("Completed Bookmaker Odds Getter");
             }
         }
+        else if (modeSettings.Mode == ModeType.ClosingOdds || modeSettings.Mode == ModeType.BackfillClosingOdds)
+        {
+            var isBackfill = modeSettings.Mode == ModeType.BackfillClosingOdds;
+            var apiKey = isBackfill ? modeSettings.OddsApiBackfillKey : modeSettings.OddsApiKey;
+
+            if (string.IsNullOrEmpty(apiKey))
+                throw new Exception(isBackfill
+                    ? "API_BACKFILL_KEY must be set for BackfillClosingOdds mode"
+                    : "ODDS_API_KEY must be set for ClosingOdds mode");
+
+            var oddsDbContext = new NhlDbContext(modeSettings.ConnectionString);
+            var closingFetcher = new OddsApiClosingOddsFetcher(oddsDbContext, new BookmakerOddsRepository(oddsDbContext),
+                new OddsApiGetter(apiKey, _loggerFactory), _loggerFactory);
+
+            if (isBackfill)
+                await closingFetcher.BackfillClosingOdds();
+            else
+                await LogFailure(errorRepo, "ClosingOdds", closingFetcher.FetchAndSaveDueClosingOdds);
+        }
         else if (modeSettings.Mode == ModeType.NhlUpdate)
         {
             await UpdateGames(modeSettings, dataManager, rawResponses);

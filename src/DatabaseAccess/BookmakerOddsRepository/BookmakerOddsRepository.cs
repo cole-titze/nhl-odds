@@ -90,6 +90,61 @@ public class BookmakerOddsRepository : IBookmakerOddsRepository
         }
     }
 
+    public async Task AddOrUpdateClosingSpreads(List<DbBookmakerClosingSpreads> spreads)
+    {
+        var gameIds = spreads.Select(o => o.GameId).Distinct().ToHashSet();
+        var existingByKey = await _dbContext.BookmakerClosingSpreads
+            .Where(o => gameIds.Contains(o.GameId))
+            .ToDictionaryAsync(o => (o.GameId, o.BookmakerName));
+
+        foreach (var record in spreads)
+        {
+            if (existingByKey.TryGetValue((record.GameId, record.BookmakerName), out var db))
+            {
+                db.BookmakerKey = record.BookmakerKey;
+                db.HomePoint = record.HomePoint;
+                db.HomePrice = record.HomePrice;
+                db.AwayPoint = record.AwayPoint;
+                db.AwayPrice = record.AwayPrice;
+                db.PriceTimeUTC = record.PriceTimeUTC;
+                db.FetchedDateUTC = record.FetchedDateUTC;
+                db.OddsApiGameId = record.OddsApiGameId;
+            }
+            else
+            {
+                await _dbContext.BookmakerClosingSpreads.AddAsync(record);
+                existingByKey[(record.GameId, record.BookmakerName)] = record;
+            }
+        }
+    }
+
+    public async Task AddOrUpdateClosingTotals(List<DbBookmakerClosingTotals> totals)
+    {
+        var gameIds = totals.Select(o => o.GameId).Distinct().ToHashSet();
+        var existingByKey = await _dbContext.BookmakerClosingTotals
+            .Where(o => gameIds.Contains(o.GameId))
+            .ToDictionaryAsync(o => (o.GameId, o.BookmakerName));
+
+        foreach (var record in totals)
+        {
+            if (existingByKey.TryGetValue((record.GameId, record.BookmakerName), out var db))
+            {
+                db.BookmakerKey = record.BookmakerKey;
+                db.OverUnderPoint = record.OverUnderPoint;
+                db.OverPrice = record.OverPrice;
+                db.UnderPrice = record.UnderPrice;
+                db.PriceTimeUTC = record.PriceTimeUTC;
+                db.FetchedDateUTC = record.FetchedDateUTC;
+                db.OddsApiGameId = record.OddsApiGameId;
+            }
+            else
+            {
+                await _dbContext.BookmakerClosingTotals.AddAsync(record);
+                existingByKey[(record.GameId, record.BookmakerName)] = record;
+            }
+        }
+    }
+
     public async Task AddOrUpdateBookmakerSpreads(List<DbBookmakerSpreads> spreads)
     {
         var gameIds = spreads.Select(o => o.GameId).Distinct().ToHashSet();

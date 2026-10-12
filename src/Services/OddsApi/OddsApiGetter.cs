@@ -8,6 +8,7 @@ namespace Services.OddsApi;
 public class OddsApiGetter : IOddsApiGetter
 {
     private const string BASE_URL = "https://api.the-odds-api.com/v4/sports/icehockey_nhl/odds";
+    private const string SPORTS_URL = "https://api.the-odds-api.com/v4/sports";
     private const string HISTORICAL_BASE_URL = "https://api.the-odds-api.com/v4/historical/sports/icehockey_nhl/odds";
     private readonly string _apiKey;
     private readonly HttpClient _httpClient;
@@ -40,6 +41,38 @@ public class OddsApiGetter : IOddsApiGetter
             Responses = results ?? new List<OddsApiResponse>(),
             RawJson = json,
         };
+    }
+
+    /// <summary>Odds for games starting in the window (cost: one credit per market, nothing if no games come back).
+    /// Throws on any failure, like GetUpcomingOdds.</summary>
+    public async Task<OddsApiResult> GetOddsStartingBetween(string markets, DateTime fromUtc, DateTime toUtc)
+    {
+        var query = $"?apiKey={_apiKey}&regions=us&markets={markets}&oddsFormat=american"
+            + $"&commenceTimeFrom={fromUtc:yyyy-MM-ddTHH:mm:ssZ}&commenceTimeTo={toUtc:yyyy-MM-ddTHH:mm:ssZ}";
+        var response = await _httpClient.GetAsync(BASE_URL + query);
+        ReadRemainingRequests(response);
+
+        if (response.StatusCode == HttpStatusCode.TooManyRequests)
+            throw new OddsApiRateLimitException("Odds API rate limit reached (429)");
+        if (!response.IsSuccessStatusCode)
+            throw new HttpRequestException($"Odds API request failed with status {(int)response.StatusCode}", null, response.StatusCode);
+
+        var json = await response.Content.ReadAsStringAsync();
+        return new OddsApiResult
+        {
+            Responses = JsonSerializer.Deserialize<List<OddsApiResponse>>(json) ?? new List<OddsApiResponse>(),
+            RawJson = json,
+        };
+    }
+
+    /// <summary>Credits left this month, read from the /sports endpoint, which costs nothing</summary>
+    public async Task<int?> GetRemainingCredits()
+    {
+        var response = await _httpClient.GetAsync($"{SPORTS_URL}?apiKey={_apiKey}");
+        if (!response.IsSuccessStatusCode)
+            throw new HttpRequestException($"Odds API sports request failed with status {(int)response.StatusCode}", null, response.StatusCode);
+        ReadRemainingRequests(response);
+        return _remainingRequests;
     }
 
     public async Task<OddsApiResult> GetHistoricalOdds(DateTime date)

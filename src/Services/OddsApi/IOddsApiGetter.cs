@@ -6,6 +6,8 @@ public interface IOddsApiGetter
 {
     Task<OddsApiResult> GetUpcomingOdds();
     Task<OddsApiResult> GetHistoricalOdds(DateTime date);
+    Task<OddsApiResult> GetOddsStartingBetween(string markets, DateTime fromUtc, DateTime toUtc);
+    Task<int?> GetRemainingCredits();
     int? GetRemainingRequests();
 }
 

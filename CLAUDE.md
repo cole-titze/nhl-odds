@@ -45,14 +45,14 @@ The app reads config in priority order:
 
 1. **Environment variables** (production):
    - `NHL_DATABASE` — full PostgreSQL connection string (e.g. `Host=localhost;Database=nhl;Username=postgres;Password=...`)
-   - `RUN_MODE` — `"NhlAdd"`, `"NhlUpdate"`, `"NextDayOdds"`, `"BackfillOdds"`, `"NextDayKalshi"`, `"BackfillKalshi"`, `"CleanAll"` or `"LineupSnapshot"`
+   - `RUN_MODE` — `"NhlAdd"`, `"NhlUpdate"`, `"NextDayOdds"`, `"BackfillOdds"`, `"ClosingOdds"`, `"BackfillClosingOdds"`, `"NextDayKalshi"`, `"BackfillKalshi"`, `"CleanAll"` or `"LineupSnapshot"`
    - `THROTTLE_TIME_MS` — delay between the game/player/schedule NHL API requests (ms). The NHL publishes no limit (api-web answers 429 at about one request per 500 ms), so every NHL client waits at least 600 ms between requests (`ThrottledHttpClient.NHL_MIN_GAP`; a smaller THROTTLE_TIME_MS is raised to it) and retries 429s with growing waits
    - `BACKFILL_GAME_IDS` — comma-separated game IDs to limit `NhlUpdate` to
    - `REFETCH_DAYS` — `NhlAdd` re-fetches games played in this many past days to pick up NHL stat corrections (default 7, `0` turns it off)
    - `SEASON_START` / `SEASON_END` — first and last season for `NhlUpdate`, as season start years (`2009` is 2009-10; default: every season, 2009 to the current one). Same value in both does one season
    - `FROM_STORED` — `true` makes `NhlUpdate` rebuild from the stored raw responses, never the API
    - `CLEAN_PARALLELISM` — how many seasons the data cleaner cleans at once (default 4; each holds two seasons of data in memory)
-   - `ODDS_API_KEY` — The Odds API key (for `NextDayOdds` mode)
+   - `ODDS_API_KEY` — The Odds API key (for `NextDayOdds` and `ClosingOdds`; the free key's 500 credits a month reset on the 1st at 00:00 UTC)
    - `API_BACKFILL_KEY` — The Odds API key for backfill (can be different quota)
 
 2. **`src/Entry/appsettings.Local.json`** (local dev, gitignored):
@@ -149,6 +149,8 @@ HTTP Request
 - `NhlUpdate` — re-fetches and overwrites games (`BACKFILL_GAME_IDS`, else the `SEASON_START`–`SEASON_END` seasons) and their rosters, shift charts and goal replays, then re-cleans those seasons and the one after. `FROM_STORED=true` rebuilds from `NhlApiResponse` instead of the API (after a parser change); anything not stored keeps its rows
 - `NextDayOdds` — fetches upcoming game odds from The Odds API. A failed request goes to `ErrorLog` (`Source` `NextDayOdds`) and fails the job
 - `BackfillOdds` — backfills historical odds from The Odds API (rate-limited, uses caching)
+- `ClosingOdds` — runs every 5 minutes and saves every Odds API bookmaker's price for games starting in the next 6 minutes to `BookmakerClosingOdds`, `BookmakerClosingSpreads` and `BookmakerClosingTotals` (the live endpoint drops finished games, so closes can't be fetched later on the free key). It reads the credits left (free `/sports` call), holds back 3 per 6 AM `NextDayOdds` run left this month, and fetches all three markets only if every later start time this month could get them too, else drops spread, then total. Failures, including no credits left, go to `ErrorLog` (`Source` `ClosingOdds`) and fail the job
+- `BackfillClosingOdds` — same tables from paid historical snapshots (`API_BACKFILL_KEY`, 30 credits per start time): one request 1 minute before each start time since 2020-06-06 with played games and no Odds API close. Snapshots are cached in `BookmakerOddsResponse` by query time, so a stopped run resumes; it stops at the first failed request
 - `NextDayKalshi` — fetches Kalshi open market odds for upcoming games. A failed request goes to `ErrorLog` (`Source` `NextDayKalshi`) and fails the job. Then saves the closing moneyline (last one-minute candle before puck drop) for games played in the last 3 days to `BookmakerClosingOdds` (failures: `Source` `NextDayKalshiClosing`)
 - `BackfillKalshi` — backfills historical Kalshi odds using candlestick data at 6am CT on game day (no API key needed), then the closing moneyline for every played game missing one. Markets settled before Kalshi's historical cutoff are read from its `/historical` endpoints
 - `CleanAll` — skips data collection and re-cleans every game in every season (run after changing how `GameCleaned` features are computed)

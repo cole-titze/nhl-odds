@@ -791,6 +791,37 @@ CREATE TABLE "BookmakerClosingOdds"
     FOREIGN KEY ("GameId") REFERENCES "GameRaw"("Id")
 );
 
+CREATE TABLE "BookmakerClosingSpreads"
+(
+    "GameId" INTEGER NOT NULL,
+    "BookmakerName" VARCHAR(100) NOT NULL,
+    "BookmakerKey" VARCHAR(100) NOT NULL DEFAULT '',
+    "HomePoint" DOUBLE PRECISION NOT NULL,
+    "HomePrice" INTEGER NOT NULL,
+    "AwayPoint" DOUBLE PRECISION NOT NULL,
+    "AwayPrice" INTEGER NOT NULL,
+    "PriceTimeUTC" TIMESTAMP NOT NULL,
+    "FetchedDateUTC" TIMESTAMP NOT NULL,
+    "OddsApiGameId" VARCHAR(100) NOT NULL DEFAULT '',
+    CONSTRAINT "PK_BookmakerClosingSpreads" PRIMARY KEY("GameId", "BookmakerName"),
+    FOREIGN KEY ("GameId") REFERENCES "GameRaw"("Id")
+);
+
+CREATE TABLE "BookmakerClosingTotals"
+(
+    "GameId" INTEGER NOT NULL,
+    "BookmakerName" VARCHAR(100) NOT NULL,
+    "BookmakerKey" VARCHAR(100) NOT NULL DEFAULT '',
+    "OverUnderPoint" DOUBLE PRECISION NOT NULL,
+    "OverPrice" INTEGER NOT NULL,
+    "UnderPrice" INTEGER NOT NULL,
+    "PriceTimeUTC" TIMESTAMP NOT NULL,
+    "FetchedDateUTC" TIMESTAMP NOT NULL,
+    "OddsApiGameId" VARCHAR(100) NOT NULL DEFAULT '',
+    CONSTRAINT "PK_BookmakerClosingTotals" PRIMARY KEY("GameId", "BookmakerName"),
+    FOREIGN KEY ("GameId") REFERENCES "GameRaw"("Id")
+);
+
 CREATE TABLE "BookmakerSpreads"
 (
     "GameId" INTEGER NOT NULL,

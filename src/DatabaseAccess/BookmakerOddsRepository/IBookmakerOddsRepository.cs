@@ -9,6 +9,8 @@ public interface IBookmakerOddsRepository
     Task<int> GetGamesWithOddsCountForSeason(int seasonStartYear);
     Task AddOrUpdateBookmakerOdds(List<DbBookmakerOdds> odds);
     Task AddOrUpdateClosingOdds(List<DbBookmakerClosingOdds> odds);
+    Task AddOrUpdateClosingSpreads(List<DbBookmakerClosingSpreads> spreads);
+    Task AddOrUpdateClosingTotals(List<DbBookmakerClosingTotals> totals);
     Task AddOrUpdateBookmakerSpreads(List<DbBookmakerSpreads> spreads);
     Task AddOrUpdateBookmakerTotals(List<DbBookmakerTotals> totals);
     Task SaveRawResponse(string rawJson);
