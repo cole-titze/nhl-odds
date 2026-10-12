@@ -8,8 +8,14 @@ export function formatDisplayDate(date: Date): string {
   return format(date, 'EEEE, MMMM d, yyyy');
 }
 
-export function formatShortDate(dateStr: string): string {
+// timeZone formats in that zone instead of the local one (see useDisplayTimeZone)
+export function formatShortDate(dateStr: string, timeZone?: string): string {
   const iso = dateStr.length === 10 ? dateStr + 'T12:00:00' : dateStr;
+  if (timeZone) {
+    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone }).format(
+      parseISO(iso),
+    );
+  }
   return format(parseISO(iso), 'MMM d');
 }
 

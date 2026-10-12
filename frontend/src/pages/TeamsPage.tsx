@@ -11,7 +11,7 @@ import { forwardClientIp } from '../api/client';
 import { getCurrentSeason } from '../utils/season';
 import { calculateLogLoss } from '../utils/predictions';
 import { Winner } from '../types';
-import type { TeamVM } from '../types';
+import type { BookmakerOddsVM, GameOddsVM, TeamsVM, TeamVM } from '../types';
 
 type SortKey =
   | 'name'
@@ -55,10 +55,67 @@ function computeKalshiStats(team: TeamVM): KalshiTeamStats {
   };
 }
 
+// The fields of each game this page reads (season chart, Kalshi stats)
+type TeamsPageGame = Pick<
+  GameOddsVM,
+  'id' | 'gameDate' | 'hasBeenPlayed' | 'logLoss' | 'winner'
+> & {
+  bookmakerOdds: Pick<BookmakerOddsVM, 'bookmakerName' | 'homeOdds' | 'awayOdds'>[];
+};
+
+interface CompactTeams {
+  seasonTotals: TeamsVM['seasonTotals'];
+  teams: (Omit<TeamVM, 'gameOddsVM'> & { gameIds: number[] })[];
+  games: TeamsPageGame[];
+}
+
+// The full response lists every game twice (once per team) with every field,
+// which made the server's HTML ~8 MB late in a season. The page gets each game
+// once with only the fields it reads (~1.6 MB).
+function compactTeams({ teams, seasonTotals }: TeamsVM): CompactTeams {
+  const games = new Map<number, TeamsPageGame>();
+  for (const t of teams) {
+    for (const g of t.gameOddsVM) {
+      games.set(g.id, {
+        id: g.id,
+        gameDate: g.gameDate,
+        hasBeenPlayed: g.hasBeenPlayed,
+        logLoss: g.logLoss,
+        winner: g.winner,
+        bookmakerOdds: (g.bookmakerOdds ?? []).map(({ bookmakerName, homeOdds, awayOdds }) => ({
+          bookmakerName,
+          homeOdds,
+          awayOdds,
+        })),
+      });
+    }
+  }
+  return {
+    seasonTotals,
+    teams: teams.map(({ gameOddsVM, ...team }) => ({
+      ...team,
+      gameIds: gameOddsVM.map((g) => g.id),
+    })),
+    games: [...games.values()],
+  };
+}
+
+function expandTeams({ teams, seasonTotals, games }: CompactTeams): TeamsVM {
+  const byId = new Map(games.map((g) => [g.id, g]));
+  return {
+    seasonTotals,
+    teams: teams.map(({ gameIds, ...team }) => ({
+      ...team,
+      // Only the TeamsPageGame fields are read on this page
+      gameOddsVM: gameIds.map((id) => byId.get(id)!) as unknown as GameOddsVM[],
+    })),
+  };
+}
+
 // First load renders on the server with this season's data. Client-side
 // navigation skips it (clientLoader) and the page fetches as before.
 export async function loader({ request }: LoaderFunctionArgs) {
-  return getAllTeams(getCurrentSeason(), forwardClientIp(request)).catch(() => null);
+  return getAllTeams(getCurrentSeason(), forwardClientIp(request)).then(compactTeams, () => null);
 }
 
 export async function clientLoader() {
@@ -66,7 +123,8 @@ export async function clientLoader() {
 }
 
 export function TeamsPage() {
-  const initial = useLoaderData<typeof loader>();
+  const loaded = useLoaderData<typeof loader>();
+  const [initial] = useState(() => (loaded ? expandTeams(loaded) : null));
   const [season, setSeason] = useState(getCurrentSeason);
   const [sortKey, setSortKey] = useState<SortKey>('points');
   const [sortDir, setSortDir] = useState<SortDir>('desc');

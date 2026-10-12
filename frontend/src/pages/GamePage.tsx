@@ -1,4 +1,11 @@
-import { useParams, useLocation, Link, useLoaderData, type LoaderFunctionArgs } from 'react-router';
+import {
+  data,
+  useParams,
+  useLocation,
+  Link,
+  useLoaderData,
+  type LoaderFunctionArgs,
+} from 'react-router';
 import { useState, useEffect } from 'react';
 import type { GameOddsVM, BookmakerOddsVM } from '../types';
 import { Winner } from '../types';
@@ -39,11 +46,14 @@ async function fetchGame(gameId: string, init?: RequestInit): Promise<GameOddsVM
 // First load renders on the server; client-side navigation fetches in the page
 // as before (usually not even that: game cards pass the game in location.state)
 export async function loader({ params, request }: LoaderFunctionArgs) {
+  let game: GameOddsVM | undefined;
   try {
-    return { game: (await fetchGame(params.gameId!, forwardClientIp(request))) ?? null };
+    game = await fetchGame(params.gameId!, forwardClientIp(request));
   } catch {
     return null;
   }
+  // The page still renders its "Game not found" message, with a real 404 status for crawlers
+  return game ? { game } : data({ game: null }, { status: 404 });
 }
 
 export async function clientLoader() {

@@ -16,6 +16,7 @@ import {
 } from '../utils/bettingStrategies';
 import { useStrategy } from '../contexts/StrategyContext';
 import { TeamLogo } from './TeamLogo';
+import { useDisplayTimeZone } from '../hooks/useDisplayTimeZone';
 
 type BetOutcome = 'won' | 'lost' | 'push';
 
@@ -219,6 +220,7 @@ function setRippleOrigin(e: PointerEvent<HTMLElement>) {
 export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
   const { format } = useOddsFormatContext();
   const { strategy } = useStrategy();
+  const { locales, timeZone } = useDisplayTimeZone();
   const valueBet = getBestBetFlag(game, strategy);
 
   const badgeState: BetOutcome | 'upcoming' | null = !valueBet
@@ -319,9 +321,10 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
           ) : (
             game.gameDate && (
               <div className="text-[11px] font-mono text-surface-500 dark:text-surface-400">
-                {new Date(game.gameDate).toLocaleTimeString([], {
+                {new Date(game.gameDate).toLocaleTimeString(locales, {
                   hour: 'numeric',
                   minute: '2-digit',
+                  timeZone,
                 })}
               </div>
             )

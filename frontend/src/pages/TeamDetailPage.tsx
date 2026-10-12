@@ -12,6 +12,7 @@ import { getTeam } from '../api/teams';
 import { forwardClientIp } from '../api/client';
 import { getCurrentSeason } from '../utils/season';
 import { formatShortDate } from '../utils/dates';
+import { useDisplayTimeZone } from '../hooks/useDisplayTimeZone';
 import { wasCorrectlyPredicted, calculateLogLoss } from '../utils/predictions';
 import { Skeleton } from '../components/Skeleton';
 import { SeasonSelector } from '../components/SeasonSelector';
@@ -63,6 +64,7 @@ export function TeamDetailPage() {
   const initial = useLoaderData<typeof loader>();
   const { format } = useOddsFormatContext();
   const { teamId } = useParams();
+  const { timeZone } = useDisplayTimeZone();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const season = seasonFrom(searchParams);
@@ -278,7 +280,7 @@ export function TeamDetailPage() {
                           state={{ game }}
                           className="hover:text-accent-600 dark:hover:text-accent-400 hover:underline"
                         >
-                          {formatShortDate(game.gameDate)}
+                          {formatShortDate(game.gameDate, timeZone)}
                         </Link>
                       </td>
                       <td className="py-3 px-4">

@@ -63,6 +63,35 @@ type Action =
   | { type: 'LOAD_NEWER_ERROR'; error: string }
   | { type: 'ACK_PREPEND' };
 
+/** The first chunk, loaded by the server for the first render (see GamesPage's loader). */
+export interface InitialChunk {
+  seasonStartYear: number;
+  anchorDate: string;
+  lower: string;
+  upper: string;
+  games: GameOddsVM[];
+}
+
+/** The dates the first chunk covers around an anchor date. */
+export function initialChunkRange(anchor: string): { lower: string; upper: string } {
+  return { lower: addDaysIso(anchor, -HALF_CHUNK), upper: addDaysIso(anchor, HALF_CHUNK) };
+}
+
+function groupByDate(games: GameOddsVM[]): Map<string, GameOddsVM[]> {
+  return mergeGames(new Map(), games);
+}
+
+function initialState(seasonStartYear: number, initial?: InitialChunk | null): BidiState {
+  if (!initial || initial.seasonStartYear !== seasonStartYear) return emptyState(seasonStartYear);
+  return {
+    ...emptyState(seasonStartYear, initial.anchorDate, initial.anchorDate),
+    gamesByDate: groupByDate(initial.games),
+    earliestLoaded: initial.lower,
+    latestLoaded: initial.upper,
+    initialStatus: 'idle',
+  };
+}
+
 function emptyState(
   seasonStartYear: number,
   explicitAnchor: string | null = null,
@@ -187,8 +216,12 @@ export function gameDateBucket(isoGameDate: string): string {
   }).format(new Date(isoGameDate));
 }
 
-export function useBidirectionalGames(seasonStartYear: number) {
-  const [state, dispatch] = useReducer(reducer, seasonStartYear, (year) => emptyState(year));
+export function useBidirectionalGames(seasonStartYear: number, initial?: InitialChunk | null) {
+  const [state, dispatch] = useReducer(reducer, seasonStartYear, (year) =>
+    initialState(year, initial),
+  );
+  // The server already loaded the first chunk, so the first load is skipped
+  const skipFirstLoad = useRef(state.initialStatus === 'idle');
 
   // Epoch lets us cancel in-flight fetches when the user resets via jumpToDate / jumpToSeason.
   const epochRef = useRef(0);
@@ -199,18 +232,11 @@ export function useBidirectionalGames(seasonStartYear: number) {
   });
 
   const loadInitialChunk = useCallback(async (anchor: string, season: number, myEpoch: number) => {
-    const lower = addDaysIso(anchor, -HALF_CHUNK);
-    const upper = addDaysIso(anchor, HALF_CHUNK);
+    const { lower, upper } = initialChunkRange(anchor);
     try {
       const games = await getGameOddsInDateRange(lower, upper, season);
       if (epochRef.current !== myEpoch) return;
-      const map = new Map<string, GameOddsVM[]>();
-      for (const g of games) {
-        const k = gameDateBucket(g.gameDate);
-        const prev = map.get(k);
-        map.set(k, prev ? [...prev, g] : [g]);
-      }
-      dispatch({ type: 'INIT_CHUNK_SUCCESS', gamesByDate: map, lower, upper });
+      dispatch({ type: 'INIT_CHUNK_SUCCESS', gamesByDate: groupByDate(games), lower, upper });
     } catch (err) {
       if (epochRef.current !== myEpoch) return;
       dispatch({ type: 'INIT_CHUNK_ERROR', error: (err as Error).message });
@@ -237,6 +263,10 @@ export function useBidirectionalGames(seasonStartYear: number) {
 
   // Re-anchor whenever season changes.
   useEffect(() => {
+    if (skipFirstLoad.current) {
+      skipFirstLoad.current = false;
+      return;
+    }
     void loadFromHomeAnchor();
   }, [loadFromHomeAnchor]);
 

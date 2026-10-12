@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useHydrated } from '../hooks/useHydrated';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { formatShortDate } from '../utils/dates';
+import { useDisplayTimeZone } from '../hooks/useDisplayTimeZone';
 import { calculateLogLoss } from '../utils/predictions';
 import type { GameOddsVM } from '../types';
 import { getChipClasses } from '../utils/colorClass';
@@ -53,6 +54,7 @@ interface Props {
 
 export function LogLossChart({ games, deduplicateById }: Props) {
   const hydrated = useHydrated();
+  const { timeZone } = useDisplayTimeZone();
   const playedGames = useMemo(() => {
     const filtered = games.filter((g) => g.hasBeenPlayed && g.logLoss != null && g.logLoss > 0);
     if (!deduplicateById) return filtered;
@@ -107,7 +109,7 @@ export function LogLossChart({ games, deduplicateById }: Props) {
       count++;
 
       const point: Record<string, string | number | undefined> = {
-        date: formatShortDate(g.gameDate),
+        date: formatShortDate(g.gameDate, timeZone),
         [HOMEGROWN]: +(cumLogLoss / count).toFixed(4),
         games: count,
       };
@@ -128,7 +130,7 @@ export function LogLossChart({ games, deduplicateById }: Props) {
       points.push(point);
     }
     return points;
-  }, [playedGames, bookmakerNames]);
+  }, [playedGames, bookmakerNames, timeZone]);
 
   // One row per day (the chart plots every game; a season has ~1,300)
   const shown = allChips.filter((name) => enabled.has(name));

@@ -1,12 +1,19 @@
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useLoaderData, type LoaderFunctionArgs } from 'react-router';
 import { GamesFeed } from '../components/GamesFeed';
 import { SeasonSelector } from '../components/SeasonSelector';
 import { CardSkeleton } from '../components/Skeleton';
 import { StrategyPicker } from '../components/StrategyPicker';
 import { useStrategy } from '../contexts/StrategyContext';
 import { LoadingStatus, PageTitle } from '../components/A11y';
-import { useBidirectionalGames } from '../hooks/useBidirectionalGames';
-import { toDateInputValue } from '../utils/dates';
+import {
+  initialChunkRange,
+  useBidirectionalGames,
+  type InitialChunk,
+} from '../hooks/useBidirectionalGames';
+import { getAnchorDate, getGameOddsInDateRange } from '../api/gameOdds';
+import { forwardClientIp } from '../api/client';
+import { formatDate, toDateInputValue } from '../utils/dates';
 import { getCurrentSeason } from '../utils/season';
 
 export type OddsType = 'moneyline' | 'spread' | 'overUnder';
@@ -81,9 +88,31 @@ function scrollToDate(date: string, behavior: ScrollBehavior): boolean {
 
 type HomePosition = 'visible' | 'above' | 'below' | 'unloaded';
 
+// First load renders on the server with the first chunk of games (two weeks
+// around today or the nearest game day). Client-side navigation skips it
+// (clientLoader) and the feed loads in the browser as before.
+export async function loader({ request }: LoaderFunctionArgs): Promise<InitialChunk | null> {
+  const seasonStartYear = getCurrentSeason();
+  const init = forwardClientIp(request);
+  try {
+    const { anchorDate } = await getAnchorDate(seasonStartYear, init);
+    const anchor = anchorDate ?? formatDate(new Date());
+    const { lower, upper } = initialChunkRange(anchor);
+    const games = await getGameOddsInDateRange(lower, upper, seasonStartYear, init);
+    return { seasonStartYear, anchorDate: anchor, lower, upper, games };
+  } catch {
+    return null;
+  }
+}
+
+export async function clientLoader() {
+  return null;
+}
+
 export function GamesPage() {
+  const initial = useLoaderData<typeof loader>();
   const [oddsType, setOddsType] = useState<OddsType>('moneyline');
-  const [season, setSeason] = useState(getCurrentSeason());
+  const [season, setSeason] = useState(() => initial?.seasonStartYear ?? getCurrentSeason());
   const {
     anchorDate,
     homeAnchor,
@@ -103,7 +132,7 @@ export function GamesPage() {
     jumpToHome,
     acknowledgePrepend,
     seasonStartYear,
-  } = useBidirectionalGames(season);
+  } = useBidirectionalGames(season, initial);
 
   const topSentinelRef = useRef<HTMLDivElement | null>(null);
   const bottomSentinelRef = useRef<HTMLDivElement | null>(null);

@@ -19,12 +19,16 @@ export function getGameOddsInDateRange(
   return apiFetch<GameOddsVM[]>(`/api/GameOdds/GetGameOddsInDateRange?${params}`, init);
 }
 
-export async function getAnchorDate(seasonStartYear: number): Promise<AnchorDateVM> {
+export async function getAnchorDate(
+  seasonStartYear: number,
+  init?: RequestInit,
+): Promise<AnchorDateVM> {
   const params = new URLSearchParams({
     seasonStartYear: String(seasonStartYear),
   });
   const raw = await apiFetch<{ anchorDate: string | null }>(
     `/api/GameOdds/GetAnchorDate?${params}`,
+    init,
   );
   return {
     anchorDate: raw.anchorDate ? raw.anchorDate.slice(0, 10) : null,
