@@ -174,7 +174,7 @@ The first 4 digits of a game ID are always the season start year.
 
 **Commits are explicit** — repositories accumulate EF change tracking; callers must invoke `repo.Commit()` (which calls `SaveChangesAsync()`). `NhlDataManager` commits after each logical save step.
 
-**Predictor features** — `game_predictor` reads the `GameCleaned` columns (`GAME_CLEANED_COLUMNS`) and adds 16 expected-goals features it computes itself from the shot events (`game_predictor/features/expected_goals.py`, `XG_FEATURE_COLUMNS`). `FEATURE_COLUMNS` is both lists and feeds the win, spread and total models alike.
+**Predictor features** — `game_predictor` reads the `GameCleaned` columns (`GAME_CLEANED_COLUMNS`) and adds features it computes itself: 16 expected-goals features from the shot events (`game_predictor/features/expected_goals.py`, `XG_FEATURE_COLUMNS`) and 14 schedule features from `GameRaw` (`game_predictor/features/schedule.py`, `SCHEDULE_FEATURE_COLUMNS`): travel km, games in the last 7 days, home stand/road trip length, time-zone shift, puck drop on the away team's body clock, a margin-of-victory Elo carried between seasons, and last season's goal difference and points percentage. Venue coordinates are a city table in `schedule.py`; a venue city missing from it counts as the home team's city. `FEATURE_COLUMNS` is all three lists and feeds the win, spread and total models alike.
 
 **Feature windows** — column names say which games a feature averages over. Each group uses the windows that did best in walk-forward evals (2026-10-09), so they differ on purpose:
 

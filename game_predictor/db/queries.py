@@ -145,7 +145,26 @@ XG_FEATURE_COLUMNS = [
     )
 ]
 
-FEATURE_COLUMNS = GAME_CLEANED_COLUMNS + XG_FEATURE_COLUMNS
+# Schedule features computed by the predictor from GameRaw: travel and time zones, and an early-season carry-over of
+# last season's strength. Home minus away unless named for one team. Distances are great-circle km between venues.
+SCHEDULE_FEATURE_COLUMNS = [
+    "TravelKmAdvantage",  # km each team travelled since its last game (away minus home, like RestAdvantage)
+    "Km7dAdvantage",  # km travelled over the last 7 days, away minus home
+    "Games7dAdvantage",  # games played in the last 7 days, away minus home
+    "HomeTripLength",  # consecutive home games, this one included
+    "AwayTripLength",  # consecutive road games, this one included
+    "AwayTimeZoneShift",  # venue time zone minus the away team's home time zone (positive = playing east)
+    "AwayBodyClockStartHour",  # puck drop in the away team's home time zone
+    "HomeElo",
+    "AwayElo",
+    "EloAdvantage",  # margin-of-victory Elo, a third regressed to the mean between seasons
+    "PrevGoalDiffAdvantage",  # last regular season's goal difference per game
+    "PrevPointsPctAdvantage",  # last regular season's points percentage
+    "BlendGoalDiffAdvantage",  # this season's goal difference per game shrunk toward last season's
+    "MinGamesPlayed",  # fewer of the two teams' games played this season
+]
+
+FEATURE_COLUMNS = GAME_CLEANED_COLUMNS + XG_FEATURE_COLUMNS + SCHEDULE_FEATURE_COLUMNS
 
 _feature_cols_sql = ", ".join(f'gc."{col}"' for col in GAME_CLEANED_COLUMNS)
 
@@ -258,6 +277,7 @@ SELECT {_ATTEMPT_COLS}, e."ScoringPlayerTeamId", 1 FROM "GameGoalEvent" e
 """
 
 ALL_GAMES_QUERY = """
-SELECT "Id" AS "GameId", "SeasonStartYear", "GameType", "GameDateUTC", "HomeTeamId", "AwayTeamId", "HasBeenPlayed"
+SELECT "Id" AS "GameId", "SeasonStartYear", "GameType", "GameDateUTC", "HomeTeamId", "AwayTeamId", "HasBeenPlayed",
+       "HomeGoals", "AwayGoals", "EndPeriod", "VenueLocation"
 FROM "GameRaw"
 """

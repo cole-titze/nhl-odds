@@ -4,6 +4,7 @@ from functools import lru_cache
 import pandas as pd
 
 from ..features.expected_goals import compute_xg_features
+from ..features.schedule import compute_schedule_features
 from .queries import (
     ALL_GAMES_QUERY,
     CONSENSUS_SPREAD_QUERY,
@@ -36,10 +37,19 @@ def _load_xg_features(conn) -> pd.DataFrame:
     return features
 
 
+@lru_cache(maxsize=1)
+def _load_schedule_features(conn) -> pd.DataFrame:
+    """Travel and carry-over features for every game. Computed once per connection."""
+    start = time.time()
+    features = compute_schedule_features(_query_to_dataframe(conn, ALL_GAMES_QUERY))
+    print(f"Schedule features: {len(features):,} games in {time.time() - start:.0f}s")
+    return features
+
+
 def _load_games(conn, query: str) -> pd.DataFrame:
-    """Load games with their GameCleaned features plus the expected-goals features."""
+    """Load games with their GameCleaned features plus the expected-goals and schedule features."""
     df = _query_to_dataframe(conn, query)
-    return df.join(_load_xg_features(conn), on="GameId")
+    return df.join(_load_xg_features(conn), on="GameId").join(_load_schedule_features(conn), on="GameId")
 
 
 def load_training_data(conn) -> pd.DataFrame:
