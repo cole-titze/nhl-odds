@@ -29,7 +29,9 @@ export function Layout({ children }: { children: ReactNode }) {
         <meta name="theme-color" content="#fafafa" />
         <script src="/theme-init.js"></script>
         <Meta />
-        <Links />
+        {/* Styles need no nonce (the CSP allows 'self'), and the request's one
+            can't match on hydration, so Links mustn't pick it up from context */}
+        <Links nonce="" />
       </head>
       <body>
         {children}
