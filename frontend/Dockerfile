@@ -15,6 +15,7 @@ COPY --from=build /app/package.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/build ./build
 COPY server.mjs ./
-USER node
+# Numeric (the node user) so Kubernetes runAsNonRoot can verify it
+USER 1000
 EXPOSE 8080
 CMD ["node", "server.mjs"]
