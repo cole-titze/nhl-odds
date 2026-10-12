@@ -361,3 +361,5 @@ export function GamesPage() {
     </div>
   );
 }
+
+export default GamesPage;

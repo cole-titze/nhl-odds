@@ -1,20 +1,23 @@
 import { useState } from 'react';
+import { useHydrated } from './useHydrated';
 
 export type OddsFormat = 'pct' | 'vegas';
 
-function getInitialFormat(): OddsFormat {
+function getStoredFormat(): OddsFormat {
   return (localStorage.getItem('oddsFormat') as OddsFormat) || 'pct';
 }
 
 export function useOddsFormat() {
-  const [format, setFormat] = useState<OddsFormat>(getInitialFormat);
+  const hydrated = useHydrated();
+  // null until the user toggles; until then the stored choice applies
+  const [chosen, setChosen] = useState<OddsFormat | null>(null);
+  const format = chosen ?? (hydrated ? getStoredFormat() : 'pct');
 
-  const toggle = () =>
-    setFormat((f) => {
-      const next = f === 'pct' ? 'vegas' : 'pct';
-      localStorage.setItem('oddsFormat', next);
-      return next;
-    });
+  const toggle = () => {
+    const next = format === 'pct' ? 'vegas' : 'pct';
+    localStorage.setItem('oddsFormat', next);
+    setChosen(next);
+  };
 
   return { format, toggle };
 }

@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useHydrated } from '../hooks/useHydrated';
 import {
   LineChart,
   Line,
@@ -34,6 +35,7 @@ interface Props {
 }
 
 export function StrategyChart({ results }: Props) {
+  const hydrated = useHydrated();
   const strategyNames = useMemo(() => results.map((r) => r.name), [results]);
 
   const [enabled, setEnabled] = useState<Set<string>>(() => new Set(strategyNames));
@@ -113,74 +115,80 @@ export function StrategyChart({ results }: Props) {
       </div>
       <p className="sr-only">{summary}</p>
       <div className="text-surface-600 dark:text-surface-400">
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={chartData}>
-            <XAxis
-              dataKey="date"
-              tick={{ fontSize: 11, fontFamily: 'JetBrains Mono', fill: 'currentColor' }}
-              interval="preserveStartEnd"
-              stroke="#525252"
-              tickLine={false}
-              axisLine={false}
-            />
-            <YAxis
-              tick={{ fontSize: 11, fontFamily: 'JetBrains Mono', fill: 'currentColor' }}
-              domain={['auto', 'auto']}
-              stroke="#525252"
-              tickLine={false}
-              axisLine={false}
-            />
-            <ReferenceLine y={0} stroke="currentColor" strokeDasharray="4 4" />
-            <Tooltip
-              content={({ active, payload, label }) => {
-                if (!active || !payload?.length) return null;
-                const d = payload[0].payload as Record<string, unknown>;
-                return (
-                  <div className="bg-[rgba(10,10,10,0.9)] border border-white/8 rounded-lg font-mono text-xs text-white backdrop-blur-md py-2 px-3">
-                    <div>{label}</div>
-                    {strategyNames
-                      .filter((name) => enabled.has(name) && d[name] != null)
-                      .map((name) => (
-                        <div key={name} className="flex items-center gap-1.5">
-                          <LineKey
-                            color={readableLineColor(baseColor(name), true)}
-                            dash={lineDash(name)}
-                          />
-                          {name}: {(d[name] as number).toFixed(2)}u
-                        </div>
-                      ))}
-                  </div>
-                );
-              }}
-            />
-            {strategyNames
-              .filter((name) => enabled.has(name))
-              .map((name) => {
-                const color = lineColor(name);
-                return (
-                  <Line
-                    key={name}
-                    type="monotone"
-                    dataKey={name}
-                    stroke={color}
-                    strokeDasharray={lineDash(name) || undefined}
-                    // Recharts' draw-in animation overwrites strokeDasharray (and
-                    // blanks it under prefers-reduced-motion), erasing the patterns
-                    isAnimationActive={false}
-                    strokeWidth={2.5}
-                    dot={false}
-                    activeDot={{
-                      r: 4,
-                      fill: color,
-                      stroke: '#141418',
-                      strokeWidth: 2,
-                    }}
-                    connectNulls
-                  />
-                );
-              })}
-          </LineChart>
-        </ResponsiveContainer>
+        {/* Recharts sizes itself with inline style attributes, which the CSP blocks
+            in server HTML, so the chart waits for the browser */}
+        {!hydrated ? (
+          <div className="h-[300px]" />
+        ) : (
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={chartData}>
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 11, fontFamily: 'JetBrains Mono', fill: 'currentColor' }}
+                interval="preserveStartEnd"
+                stroke="#525252"
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fontFamily: 'JetBrains Mono', fill: 'currentColor' }}
+                domain={['auto', 'auto']}
+                stroke="#525252"
+                tickLine={false}
+                axisLine={false}
+              />
+              <ReferenceLine y={0} stroke="currentColor" strokeDasharray="4 4" />
+              <Tooltip
+                content={({ active, payload, label }) => {
+                  if (!active || !payload?.length) return null;
+                  const d = payload[0].payload as Record<string, unknown>;
+                  return (
+                    <div className="bg-[rgba(10,10,10,0.9)] border border-white/8 rounded-lg font-mono text-xs text-white backdrop-blur-md py-2 px-3">
+                      <div>{label}</div>
+                      {strategyNames
+                        .filter((name) => enabled.has(name) && d[name] != null)
+                        .map((name) => (
+                          <div key={name} className="flex items-center gap-1.5">
+                            <LineKey
+                              color={readableLineColor(baseColor(name), true)}
+                              dash={lineDash(name)}
+                            />
+                            {name}: {(d[name] as number).toFixed(2)}u
+                          </div>
+                        ))}
+                    </div>
+                  );
+                }}
+              />
+              {strategyNames
+                .filter((name) => enabled.has(name))
+                .map((name) => {
+                  const color = lineColor(name);
+                  return (
+                    <Line
+                      key={name}
+                      type="monotone"
+                      dataKey={name}
+                      stroke={color}
+                      strokeDasharray={lineDash(name) || undefined}
+                      // Recharts' draw-in animation overwrites strokeDasharray (and
+                      // blanks it under prefers-reduced-motion), erasing the patterns
+                      isAnimationActive={false}
+                      strokeWidth={2.5}
+                      dot={false}
+                      activeDot={{
+                        r: 4,
+                        fill: color,
+                        stroke: '#141418',
+                        strokeWidth: 2,
+                      }}
+                      connectNulls
+                    />
+                  );
+                })}
+            </LineChart>
+          </ResponsiveContainer>
+        )}
       </div>
       <ChartDataTable
         caption="Cumulative profit/loss in units by date"

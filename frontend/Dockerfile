@@ -3,13 +3,18 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
-RUN npm run build
+RUN npm run build && npm prune --omit=dev
 
-# Runs nginx as uid 101; unprivileged users can't bind ports below 1024, so it listens on 8080
-FROM nginxinc/nginx-unprivileged:alpine
-USER root
+# Node renders the pages (server.mjs), serves the assets and proxies /api and /mcp
+FROM node:24-alpine
 RUN apk upgrade --no-cache
-USER 101
-COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+WORKDIR /app
+# The server renders game times in Central time until the browser takes over
+ENV NODE_ENV=production PORT=8080 TZ=America/Chicago
+COPY --from=build /app/package.json ./
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/build ./build
+COPY server.mjs ./
+USER node
 EXPOSE 8080
+CMD ["node", "server.mjs"]

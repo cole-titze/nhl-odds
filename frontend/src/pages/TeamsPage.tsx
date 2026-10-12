@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useLoaderData, type LoaderFunctionArgs } from 'react-router';
 import { SeasonSelector } from '../components/SeasonSelector';
 import { TeamRow } from '../components/TeamRow';
 import { LogLossChart } from '../components/LogLossChart';
@@ -6,6 +7,7 @@ import { Skeleton, StatCardSkeleton } from '../components/Skeleton';
 import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
 import { useFetch } from '../hooks/useFetch';
 import { getAllTeams } from '../api/teams';
+import { forwardClientIp } from '../api/client';
 import { getCurrentSeason } from '../utils/season';
 import { calculateLogLoss } from '../utils/predictions';
 import { Winner } from '../types';
@@ -53,12 +55,23 @@ function computeKalshiStats(team: TeamVM): KalshiTeamStats {
   };
 }
 
+// First load renders on the server with this season's data. Client-side
+// navigation skips it (clientLoader) and the page fetches as before.
+export async function loader({ request }: LoaderFunctionArgs) {
+  return getAllTeams(getCurrentSeason(), forwardClientIp(request)).catch(() => null);
+}
+
+export async function clientLoader() {
+  return null;
+}
+
 export function TeamsPage() {
+  const initial = useLoaderData<typeof loader>();
   const [season, setSeason] = useState(getCurrentSeason);
   const [sortKey, setSortKey] = useState<SortKey>('points');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
-  const { data, loading, error } = useFetch(() => getAllTeams(season), [season]);
+  const { data, loading, error } = useFetch(() => getAllTeams(season), [season], initial);
 
   const allGames = useMemo(() => {
     if (!data) return [];
@@ -373,3 +386,5 @@ function dkAccuracy(t: TeamVM): number {
 function points(t: TeamVM): number {
   return t.seasonWins * 2 + t.seasonOvertimeLosses;
 }
+
+export default TeamsPage;

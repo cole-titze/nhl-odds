@@ -621,3 +621,5 @@ export function CrossBookStrategyPage() {
     </div>
   );
 }
+
+export default CrossBookStrategyPage;

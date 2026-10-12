@@ -1,5 +1,5 @@
 import type { PointerEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import type { GameOddsVM, BookmakerOddsVM } from '../types';
 import { Winner } from '../types';
 import { wasCorrectlyPredicted } from '../utils/predictions';

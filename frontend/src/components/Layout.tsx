@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router';
 import { Navbar } from './Navbar';
 import { ThemeBackdrop } from './ThemeBackdrop';
 import { PHOTO_CREDITS } from '../themes';
@@ -89,3 +89,5 @@ export function Layout() {
     </OddsFormatContext.Provider>
   );
 }
+
+export default Layout;

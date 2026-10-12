@@ -1,7 +1,15 @@
 import { useMemo } from 'react';
-import { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import {
+  Link,
+  useLoaderData,
+  useParams,
+  useSearchParams,
+  useNavigate,
+  type LoaderFunctionArgs,
+} from 'react-router';
 import { useFetch } from '../hooks/useFetch';
 import { getTeam } from '../api/teams';
+import { forwardClientIp } from '../api/client';
 import { getCurrentSeason } from '../utils/season';
 import { formatShortDate } from '../utils/dates';
 import { wasCorrectlyPredicted, calculateLogLoss } from '../utils/predictions';
@@ -37,18 +45,33 @@ function StatCard({
   );
 }
 
+function seasonFrom(searchParams: URLSearchParams) {
+  return Number(searchParams.get('season')) || getCurrentSeason();
+}
+
+// First load renders on the server; client-side navigation fetches in the page as before
+export async function loader({ params, request }: LoaderFunctionArgs) {
+  const season = seasonFrom(new URL(request.url).searchParams);
+  return getTeam(Number(params.teamId), season, forwardClientIp(request)).catch(() => null);
+}
+
+export async function clientLoader() {
+  return null;
+}
+
 export function TeamDetailPage() {
+  const initial = useLoaderData<typeof loader>();
   const { format } = useOddsFormatContext();
   const { teamId } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const season = Number(searchParams.get('season')) || getCurrentSeason();
+  const season = seasonFrom(searchParams);
 
   const {
     data: team,
     loading,
     error,
-  } = useFetch(() => getTeam(Number(teamId), season), [teamId, season]);
+  } = useFetch(() => getTeam(Number(teamId), season), [teamId, season], initial);
 
   const kalshiStats = useMemo(() => {
     if (!team) return null;
@@ -359,3 +382,5 @@ export function TeamDetailPage() {
     </div>
   );
 }
+
+export default TeamDetailPage;

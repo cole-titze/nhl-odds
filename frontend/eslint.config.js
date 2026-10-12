@@ -7,7 +7,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'build', '.react-router']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -31,6 +31,11 @@ export default defineConfig([
     rules: {
       'react/forbid-dom-props': ['error', { forbid: ['style'] }],
       'react/forbid-component-props': ['error', { forbid: ['style'] }],
+      // Route modules export these next to the page; React Router's HMR handles them
+      'react-refresh/only-export-components': [
+        'error',
+        { allowExportNames: ['loader', 'clientLoader', 'links', 'meta'] },
+      ],
     },
   },
 ])

@@ -24,13 +24,11 @@
 import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { dirname, join } from 'node:path';
 import { chromium, firefox, webkit } from 'playwright';
 import { ANCHOR_DATE, THEMES, pagesFor, mockApi } from './fixtures.mjs';
 
 const require = createRequire(import.meta.url);
 const axeSource = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
-const VITE_BIN = join(dirname(require.resolve('vite/package.json')), 'bin/vite.js');
 const PORT = 4179;
 const BASE = `http://localhost:${PORT}`;
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'];
@@ -61,13 +59,12 @@ async function startPreview() {
     () => false,
   );
   if (inUse) throw new Error(`port ${PORT} is already in use; stop whatever is serving ${BASE}`);
-  // Run vite's own entry point rather than through npx, so killing this
-  // process stops the server instead of orphaning it
-  const server = spawn(
-    process.execPath,
-    [VITE_BIN, 'preview', '--port', String(PORT), '--strictPort'],
-    { stdio: 'ignore' },
-  );
+  // The production server, with an API address nothing answers on: the
+  // loaders fail, so pages fetch in the browser, where the mocks answer
+  const server = spawn(process.execPath, ['server.mjs'], {
+    stdio: 'ignore',
+    env: { ...process.env, PORT: String(PORT), API_URL: 'http://127.0.0.1:9' },
+  });
   for (let i = 0; i < 60; i++) {
     try {
       if ((await fetch(BASE)).ok) return server;
@@ -77,13 +74,14 @@ async function startPreview() {
     await new Promise((r) => setTimeout(r, 500));
   }
   server.kill();
-  throw new Error('vite preview did not start; did you run `npm run build`?');
+  throw new Error('server.mjs did not start; did you run `npm run build`?');
 }
 
 async function newContext(browser, theme, viewport) {
   // Reduced motion zeroes out the site's color transitions (see index.css), so
-  // axe never samples a color halfway through one
-  const ctx = await browser.newContext({ viewport, reducedMotion: 'reduce' });
+  // axe never samples a color halfway through one. The server's CSP would block
+  // axe's injected script, so it's bypassed.
+  const ctx = await browser.newContext({ viewport, reducedMotion: 'reduce', bypassCSP: true });
   await ctx.addInitScript((t) => {
     localStorage.setItem('theme', t);
     localStorage.removeItem('themeState');

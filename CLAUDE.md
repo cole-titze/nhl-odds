@@ -26,8 +26,9 @@ dotnet build src/DataGetter/DataGetter.csproj
 
 # Frontend (from frontend/ directory)
 cd frontend && npm install    # install dependencies
-cd frontend && npm run dev    # Vite dev server on http://localhost:5173
-cd frontend && npm run build  # production build to frontend/dist/
+cd frontend && npm run dev    # React Router dev server (Vite, with SSR) on http://localhost:5173
+cd frontend && npm run build  # production build to frontend/build/ (client assets + server bundle)
+cd frontend && npm start      # production server (server.mjs) on :8080: renders pages, serves assets, proxies /api and /mcp to API_URL
 cd frontend && npm run a11y   # WCAG 2.2 AA checks: axe (Chromium) + reflow/focus/scroll checks in Chromium, Firefox, WebKit (mocked API; run build first; A11Y_BROWSERS=chromium to limit)
 
 # Python game predictor (from repo root)
@@ -96,7 +97,7 @@ psql -h localhost -U postgres -d nhl -f database/Scripts/CreateTables.sql
 | `src/WebApi` | ASP.NET Core Web API — controllers, view model mappers, Swagger |
 | `src/BookmakerOddsGetter` | Fetches and backfills odds from The Odds API and Kalshi (no API key needed for Kalshi) |
 | `tests/` | xUnit/MSTest projects mirroring the `src/` projects under test |
-| `frontend` | React 19 + TypeScript + Vite + Tailwind CSS v4 frontend — game odds, team stats, team detail pages |
+| `frontend` | React 19 + TypeScript + Vite + Tailwind CSS v4 frontend — game odds, team stats, team detail pages. Server-rendered with React Router framework mode (`src/routes.ts`, `src/root.tsx`); Teams, Team and Game pages have route `loader`s for the first load, client navigation fetches in the page |
 
 ### Data Flow
 

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useHydrated } from '../hooks/useHydrated';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { formatShortDate } from '../utils/dates';
 import { calculateLogLoss } from '../utils/predictions';
@@ -51,6 +52,7 @@ interface Props {
 }
 
 export function LogLossChart({ games, deduplicateById }: Props) {
+  const hydrated = useHydrated();
   const playedGames = useMemo(() => {
     const filtered = games.filter((g) => g.hasBeenPlayed && g.logLoss != null && g.logLoss > 0);
     if (!deduplicateById) return filtered;
@@ -177,69 +179,78 @@ export function LogLossChart({ games, deduplicateById }: Props) {
       </div>
       <p className="sr-only">{summary}</p>
       <div className="text-surface-600 dark:text-surface-400">
-        <ResponsiveContainer width="100%" height={250}>
-          <LineChart data={chartData}>
-            <XAxis
-              dataKey="date"
-              tick={{ fontSize: 11, fontFamily: 'JetBrains Mono', fill: 'currentColor' }}
-              interval="preserveStartEnd"
-              stroke="#525252"
-              tickLine={false}
-              axisLine={false}
-            />
-            <YAxis
-              tick={{ fontSize: 11, fontFamily: 'JetBrains Mono', fill: 'currentColor' }}
-              domain={['auto', 'auto']}
-              stroke="#525252"
-              tickLine={false}
-              axisLine={false}
-            />
-            <Tooltip
-              content={({ active, payload, label }) => {
-                if (!active || !payload?.length) return null;
-                const d = payload[0].payload as Record<string, unknown>;
-                return (
-                  <div className="bg-[rgba(10,10,10,0.9)] border border-white/8 rounded-lg font-mono text-xs text-white backdrop-blur-md py-2 px-3">
-                    <div>{label}</div>
-                    {allChips
-                      .filter((name) => enabled.has(name) && d[name] != null)
-                      .map((name) => (
-                        <div key={name} className="flex items-center gap-1.5">
-                          <LineKey
-                            color={readableLineColor(getColor(name, allChips.indexOf(name)), true)}
-                            dash={lineDash(name)}
-                          />
-                          {name}: {d[name] as number}
-                        </div>
-                      ))}
-                    <div>games: {d.games as number}</div>
-                  </div>
-                );
-              }}
-            />
-            {allChips
-              .filter((name) => enabled.has(name))
-              .map((name) => {
-                const color = lineColor(name);
-                return (
-                  <Line
-                    key={name}
-                    type="monotone"
-                    dataKey={name}
-                    stroke={color}
-                    strokeDasharray={lineDash(name) || undefined}
-                    // Recharts' draw-in animation overwrites strokeDasharray (and
-                    // blanks it under prefers-reduced-motion), erasing the patterns
-                    isAnimationActive={false}
-                    strokeWidth={2.5}
-                    dot={false}
-                    activeDot={{ r: 4, fill: color, stroke: '#141418', strokeWidth: 2 }}
-                    connectNulls
-                  />
-                );
-              })}
-          </LineChart>
-        </ResponsiveContainer>
+        {/* Recharts sizes itself with inline style attributes, which the CSP blocks
+            in server HTML, so the chart waits for the browser */}
+        {!hydrated ? (
+          <div className="h-[250px]" />
+        ) : (
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={chartData}>
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 11, fontFamily: 'JetBrains Mono', fill: 'currentColor' }}
+                interval="preserveStartEnd"
+                stroke="#525252"
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fontFamily: 'JetBrains Mono', fill: 'currentColor' }}
+                domain={['auto', 'auto']}
+                stroke="#525252"
+                tickLine={false}
+                axisLine={false}
+              />
+              <Tooltip
+                content={({ active, payload, label }) => {
+                  if (!active || !payload?.length) return null;
+                  const d = payload[0].payload as Record<string, unknown>;
+                  return (
+                    <div className="bg-[rgba(10,10,10,0.9)] border border-white/8 rounded-lg font-mono text-xs text-white backdrop-blur-md py-2 px-3">
+                      <div>{label}</div>
+                      {allChips
+                        .filter((name) => enabled.has(name) && d[name] != null)
+                        .map((name) => (
+                          <div key={name} className="flex items-center gap-1.5">
+                            <LineKey
+                              color={readableLineColor(
+                                getColor(name, allChips.indexOf(name)),
+                                true,
+                              )}
+                              dash={lineDash(name)}
+                            />
+                            {name}: {d[name] as number}
+                          </div>
+                        ))}
+                      <div>games: {d.games as number}</div>
+                    </div>
+                  );
+                }}
+              />
+              {allChips
+                .filter((name) => enabled.has(name))
+                .map((name) => {
+                  const color = lineColor(name);
+                  return (
+                    <Line
+                      key={name}
+                      type="monotone"
+                      dataKey={name}
+                      stroke={color}
+                      strokeDasharray={lineDash(name) || undefined}
+                      // Recharts' draw-in animation overwrites strokeDasharray (and
+                      // blanks it under prefers-reduced-motion), erasing the patterns
+                      isAnimationActive={false}
+                      strokeWidth={2.5}
+                      dot={false}
+                      activeDot={{ r: 4, fill: color, stroke: '#141418', strokeWidth: 2 }}
+                      connectNulls
+                    />
+                  );
+                })}
+            </LineChart>
+          </ResponsiveContainer>
+        )}
       </div>
       <ChartDataTable
         caption="Cumulative average log loss by date (lower is better)"

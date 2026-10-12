@@ -11,8 +11,9 @@ function subscribe(onChange: () => void) {
 
 const rootClassName = () => document.documentElement.className;
 
+// The server can't see the classes theme-init.js adds, so it renders as if no theme were set
 function useRootClassName(): string {
-  return useSyncExternalStore(subscribe, rootClassName);
+  return useSyncExternalStore(subscribe, rootClassName, () => '');
 }
 
 export function useIsDarkTheme(): boolean {

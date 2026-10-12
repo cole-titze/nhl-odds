@@ -1,8 +1,10 @@
-import { useParams, useLocation, Link } from 'react-router-dom';
+import { useParams, useLocation, Link, useLoaderData, type LoaderFunctionArgs } from 'react-router';
 import { useState, useEffect } from 'react';
 import type { GameOddsVM, BookmakerOddsVM } from '../types';
 import { Winner } from '../types';
 import { getGameOddsInDateRange } from '../api/gameOdds';
+import { forwardClientIp } from '../api/client';
+import { useDisplayTimeZone } from '../hooks/useDisplayTimeZone';
 import { useOddsFormatContext } from '../contexts/OddsFormatContext';
 import { formatOdds, formatAmericanOdds } from '../utils/oddsFormat';
 import { getModelName } from '../utils/modelNames';
@@ -22,29 +24,53 @@ function formatPoint(point: number): string {
   return point > 0 ? `+${point}` : `${point}`;
 }
 
+// There's no single-game endpoint, so fetch the game's whole season and find it
+async function fetchGame(gameId: string, init?: RequestInit): Promise<GameOddsVM | undefined> {
+  const seasonStartYear = Number(gameId.slice(0, 4));
+  const games = await getGameOddsInDateRange(
+    `${seasonStartYear}-09-01`,
+    `${seasonStartYear + 1}-07-31`,
+    seasonStartYear,
+    init,
+  );
+  return games.find((g) => g.id === Number(gameId));
+}
+
+// First load renders on the server; client-side navigation fetches in the page
+// as before (usually not even that: game cards pass the game in location.state)
+export async function loader({ params, request }: LoaderFunctionArgs) {
+  try {
+    return { game: (await fetchGame(params.gameId!, forwardClientIp(request))) ?? null };
+  } catch {
+    return null;
+  }
+}
+
+export async function clientLoader() {
+  return null;
+}
+
 export function GamePage() {
+  const loaded = useLoaderData<typeof loader>();
   const { gameId } = useParams();
   const location = useLocation();
   const { format } = useOddsFormatContext();
   const { strategy } = useStrategy();
+  const { locales, timeZone } = useDisplayTimeZone();
   const [game, setGame] = useState<GameOddsVM | null>(
-    (location.state as { game?: GameOddsVM } | null)?.game ?? null,
+    (location.state as { game?: GameOddsVM } | null)?.game ?? loaded?.game ?? null,
   );
-  const [loading, setLoading] = useState(!game);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(!game && !loaded);
+  const [error, setError] = useState<string | null>(
+    loaded && !loaded.game ? 'Game not found.' : null,
+  );
 
   useEffect(() => {
-    if (game) return;
+    if (game || error) return;
     if (!gameId) return;
 
-    const seasonStartYear = Number(gameId.toString().slice(0, 4));
-    // Fetch entire season date range to find this game
-    const startDate = `${seasonStartYear}-09-01`;
-    const endDate = `${seasonStartYear + 1}-07-31`;
-
-    getGameOddsInDateRange(startDate, endDate, seasonStartYear)
-      .then((games) => {
-        const found = games.find((g) => g.id === Number(gameId));
+    fetchGame(gameId)
+      .then((found) => {
         if (found) {
           setGame(found);
         } else {
@@ -53,7 +79,7 @@ export function GamePage() {
       })
       .catch(() => setError('Failed to load game data.'))
       .finally(() => setLoading(false));
-  }, [gameId, game]);
+  }, [gameId, game, error]);
 
   if (loading) {
     return (
@@ -119,20 +145,22 @@ export function GamePage() {
             ) : (
               game.gameDate && (
                 <div className="text-xs font-mono text-surface-500 dark:text-surface-400">
-                  {new Date(game.gameDate).toLocaleTimeString([], {
+                  {new Date(game.gameDate).toLocaleTimeString(locales, {
                     hour: 'numeric',
                     minute: '2-digit',
+                    timeZone,
                   })}
                 </div>
               )
             )}
             {game.gameDate && (
               <div className="text-xs text-surface-500 dark:text-surface-400 mt-1">
-                {new Date(game.gameDate).toLocaleDateString([], {
+                {new Date(game.gameDate).toLocaleDateString(locales, {
                   weekday: 'short',
                   month: 'short',
                   day: 'numeric',
                   year: 'numeric',
+                  timeZone,
                 })}
               </div>
             )}
@@ -409,3 +437,5 @@ function BookmakerRow({
     </tr>
   );
 }
+
+export default GamePage;

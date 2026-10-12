@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink } from 'react-router';
 import { ThemePicker } from './ThemePicker';
 import { useOddsFormatContext } from '../contexts/OddsFormatContext';
 import { useAdminKey } from '../hooks/useAdminKey';
