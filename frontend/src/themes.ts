@@ -10,7 +10,7 @@ export const THEMES = [
   { id: 'dark', label: 'Dark', dark: true, scenic: false, metaColor: '#141418' },
   { id: 'ice', label: 'Fresh Ice', dark: false, scenic: true, metaColor: '#eaf2f7' },
   { id: 'stars', label: 'Stars', dark: true, scenic: true, metaColor: '#05070c' },
-  { id: 'aurora', label: 'Northern Lights', dark: true, scenic: true, metaColor: '#03070a' },
+  { id: 'nebula', label: 'Nebula', dark: true, scenic: true, metaColor: '#071423' },
   {
     id: 'contrast-light',
     label: 'High Contrast Light',
@@ -27,6 +27,15 @@ export const THEMES = [
   },
   { id: 'team', label: 'Team Colors', dark: true, scenic: true, metaColor: '#07090d' },
 ] as const;
+
+// Webb photo behind the nebula theme (CC BY 4.0: the credit
+// line must be shown unaltered, with an active link; Layout's footer shows it).
+export const PHOTO_CREDITS: Record<string, { credit: string; url: string }> = {
+  nebula: {
+    credit: 'NASA, ESA, CSA, and STScI',
+    url: 'https://esawebb.org/images/weic2205a/',
+  },
+};
 
 export type ThemeId = (typeof THEMES)[number]['id'];
 export type ThemeDef = (typeof THEMES)[number];

@@ -22,16 +22,7 @@ const SCENES: Record<string, ReactNode> = {
       <Starfield />
     </>
   ),
-  aurora: (
-    <>
-      <Starfield />
-      <div className="aurora-band aurora-top" />
-      <div className="aurora-band aurora-1" />
-      <div className="aurora-band aurora-2" />
-      <div className="aurora-band aurora-fringe" />
-      <div className="aurora-band aurora-3" />
-    </>
-  ),
+  nebula: <div className="webb-photo" />,
   team: (
     <>
       <div className="team-glow" />

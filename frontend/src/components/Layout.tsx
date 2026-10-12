@@ -2,12 +2,16 @@ import { useEffect, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Navbar } from './Navbar';
 import { ThemeBackdrop } from './ThemeBackdrop';
+import { PHOTO_CREDITS } from '../themes';
 import { StatusBarTint } from './StatusBarTint';
 import { useOddsFormat } from '../hooks/useOddsFormat';
+import { useActiveThemeId } from '../hooks/useRootTheme';
 import { OddsFormatContext } from '../contexts/OddsFormatContext';
 
 export function Layout() {
   const oddsFormat = useOddsFormat();
+  const themeId = useActiveThemeId();
+  const photo = themeId ? PHOTO_CREDITS[themeId] : undefined;
   const { pathname } = useLocation();
   const mainRef = useRef<HTMLElement>(null);
   const firstRender = useRef(true);
@@ -70,6 +74,16 @@ export function Layout() {
         >
           Personal, non-commercial hobby project. Not affiliated with or endorsed by the NHL or any
           NHL team.
+          {photo && (
+            <>
+              {' '}
+              Background:{' '}
+              <a href={photo.url} target="_blank" rel="noreferrer" className="underline">
+                {photo.credit}
+              </a>{' '}
+              (CC BY 4.0).
+            </>
+          )}
         </footer>
       </div>
     </OddsFormatContext.Provider>

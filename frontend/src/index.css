@@ -261,8 +261,8 @@ main .app-subbar :is(a, button, input, select, textarea, summary, [tabindex]) {
 .theme-stars {
   --status-bar: #070a12;
 }
-.theme-aurora {
-  --status-bar: #0b1017;
+.theme-nebula {
+  --status-bar: #0a0d18;
 }
 .theme-team {
   --status-bar: #0a0a10;
@@ -378,7 +378,7 @@ html.scenic {
 
 .theme-ice .scene-ice,
 .theme-stars .scene-stars,
-.theme-aurora .scene-aurora,
+.theme-nebula .scene-nebula,
 .theme-team .scene-team {
   display: block;
 }
@@ -390,7 +390,7 @@ html.scenic {
   }
 }
 
-/* ---- Shared star layers (stars, aurora) ---- */
+/* ---- Shared star layers (stars) ---- */
 .starfield {
   position: absolute;
   inset: 0;
@@ -533,108 +533,50 @@ html.scenic {
     radial-gradient(30% 20% at 60% 10%, rgba(80, 120, 200, 0.08), transparent 70%);
 }
 
-/* ---- Northern Lights: muted aurora bands over faint stars ---- */
-.theme-aurora {
-  --scene-base: #03070a;
-  --glass-filter: blur(4px) saturate(160%);
+/* ---- Nebula: Webb's Cosmic Cliffs photo (credit in Layout's footer) ---- */
+.theme-nebula {
+  --scene-base: #0a0d18;
+  /* Darker glass than Stars so text stays readable over the bright photo */
+  --glass-bg: rgba(6, 8, 16, 0.55);
+  --glass-filter: blur(8px) saturate(130%);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --bar-bg: rgba(6, 8, 16, 0.65);
 }
 
-.scene-aurora {
-  background-image: linear-gradient(to bottom, #04100f 0%, #03070a 70%);
-}
-
-.scene-aurora .starfield {
-  opacity: 0.5;
-}
-
-.aurora-band {
+.webb-photo {
   position: absolute;
-  left: -20%;
-  width: 140%;
-  height: 38%;
-  border-radius: 50%;
-  filter: blur(40px);
-  animation: aurora-drift ease-in-out infinite alternate;
+  inset: 0;
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 
-/* Mostly green, with violet high up and a pink-magenta fringe low down,
-   like a real aurora. */
-.aurora-top {
-  top: -6%;
-  height: 26%;
-  background: linear-gradient(
-    90deg,
-    transparent 5%,
-    rgba(150, 90, 220, 0.26),
-    rgba(200, 70, 130, 0.2),
-    transparent 95%
+.scene-nebula .webb-photo {
+  background-image: url('/themes/cosmic-cliffs.jpg');
+  background-image: image-set(
+    url('/themes/cosmic-cliffs.webp') type('image/webp'),
+    url('/themes/cosmic-cliffs.jpg') type('image/jpeg')
   );
-  animation-duration: 67s;
-  animation-delay: -12s;
+  background-position: center 40%;
 }
 
-.aurora-1 {
-  top: 2%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(60, 210, 140, 0.28),
-    rgba(40, 190, 170, 0.2),
-    transparent
-  );
-  animation-duration: 38s;
-}
-
-.aurora-2 {
-  top: 16%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(30, 170, 160, 0.18),
-    rgba(90, 220, 150, 0.24),
-    transparent
-  );
-  animation-duration: 52s;
-  animation-delay: -20s;
-}
-
-.aurora-fringe {
-  top: 34%;
-  height: 18%;
-  background: linear-gradient(
-    90deg,
-    transparent 10%,
-    rgba(225, 80, 165, 0.24),
-    rgba(160, 90, 215, 0.17),
-    transparent 90%
-  );
-  animation-duration: 44s;
-  animation-delay: -28s;
-}
-
-.aurora-3 {
-  top: 48%;
-  height: 28%;
-  background: linear-gradient(
-    90deg,
-    transparent 10%,
-    rgba(70, 150, 200, 0.12),
-    rgba(60, 200, 150, 0.1),
-    transparent 90%
-  );
-  animation-duration: 61s;
-  animation-delay: -35s;
-}
-
-@keyframes aurora-drift {
-  from {
-    transform: translateX(-8%) skewX(-12deg) scaleY(0.9);
-    opacity: 0.7;
+/* Portrait screens only show the middle of the wide photo, so they get a
+   full-height 3:4 crop that stays sharp on phones and iPads */
+@media (orientation: portrait) {
+  .scene-nebula .webb-photo {
+    background-image: url('/themes/cosmic-cliffs-portrait.jpg');
+    background-image: image-set(
+      url('/themes/cosmic-cliffs-portrait.webp') type('image/webp'),
+      url('/themes/cosmic-cliffs-portrait.jpg') type('image/jpeg')
+    );
+    background-position: center 30%;
   }
-  to {
-    transform: translateX(8%) skewX(10deg) scaleY(1.25);
-    opacity: 1;
-  }
+}
+
+/* Size to the largest viewport so the photo doesn't rescale when Safari's
+   toolbar collapses on scroll */
+.scene-nebula {
+  bottom: auto;
+  height: 100lvh;
 }
 
 /* ---- Team Colors: --team-* are set on <html> by useTheme ---- */

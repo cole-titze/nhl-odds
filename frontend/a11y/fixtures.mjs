@@ -6,7 +6,7 @@ export const THEMES = [
   'dark',
   'ice',
   'stars',
-  'aurora',
+  'nebula',
   'contrast-light',
   'contrast-dark',
   'team',

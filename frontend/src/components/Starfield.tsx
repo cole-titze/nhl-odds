@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-// Drifting star layers, used inside the stars and aurora theme backdrops.
+// Drifting star layers, used inside the stars theme backdrop.
 // Each layer is a single tiny element whose box-shadows are the stars, so the
 // whole field is a handful of DOM nodes regardless of star count. The shadows
 // are random, so they're applied via CSSOM (CSP blocks inline style attributes).

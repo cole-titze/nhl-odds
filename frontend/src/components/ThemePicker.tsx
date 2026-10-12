@@ -44,9 +44,10 @@ const ICONS: Record<Theme, ReactNode> = {
       <path d="M10 2v16M3.1 6l13.8 8M3.1 14l13.8-8M10 2l-2 2m2-2l2 2m-2 14l-2-2m2 2l2-2" />
     </svg>
   ),
-  aurora: (
+  nebula: (
     <svg {...strokeProps}>
-      <path d="M2 13c3-6 5-6 8 0s5 6 8 0M2 8c3-4 5-4 8 0s5 4 8 0" />
+      <path d="M10 10c0-1.5 1.5-2.5 3-2 2 .7 2.5 3.5 1 5.5-2 2.5-6.5 2.5-8.5-.5-2.5-3.5-.5-8.5 4-9 3-.3 6 1.5 7 4" />
+      <circle cx="10" cy="10" r="0.8" fill="currentColor" />
     </svg>
   ),
   'contrast-light': (
