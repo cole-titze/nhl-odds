@@ -46,6 +46,7 @@ public class GameSeasonRepository : IGameSeasonRepository
             HomeGiveaways = g.HomeGiveaways,
             AwayGiveaways = g.AwayGiveaways,
             HasBeenPlayed = g.HasBeenPlayed,
+            GameType = g.GameType,
             ExtendedInfo = new GameExtendedInfo { VenueName = g.VenueName, VenueLocation = g.VenueLocation },
         }).ToList();
     }
