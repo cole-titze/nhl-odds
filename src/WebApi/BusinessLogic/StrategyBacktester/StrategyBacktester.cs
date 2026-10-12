@@ -54,7 +54,7 @@ public class StrategyBacktester : IStrategyBacktester
                 Threshold = r.Threshold,
                 Bets = r.Bets,
                 Wins = r.Wins,
-                Roi = Math.Round(r.Profit / r.Bets * 100, 2),
+                Roi = Math.Round(r.Profit / r.Staked * 100, 2),
                 FirstSeason = firstSeason,
                 LastSeason = lastSeason,
             });
@@ -75,12 +75,13 @@ public class StrategyBacktester : IStrategyBacktester
         int Bets,
         int Wins,
         double Profit,
+        double Staked,
         Dictionary<int, double> ProfitBySeason);
 
     private static BacktestResult Backtest(List<GameOddsVM> games, StrategyOption opt, double threshold)
     {
         int bets = 0, wins = 0;
-        double profit = 0;
+        double profit = 0, staked = 0;
         var profitBySeason = new Dictionary<int, double>();
         foreach (var game in games)
         {
@@ -90,15 +91,17 @@ public class StrategyBacktester : IStrategyBacktester
             var payout = StrategyRules.Payout(game, flag, opt.BetType);
             if (payout == null)
                 continue;
+            var stake = StrategyRules.Stake(game, flag, opt.Type, threshold);
             bets++;
             if (payout > 0)
                 wins++;
-            profit += payout.Value;
+            profit += stake * payout.Value;
+            staked += stake;
             // The first 4 digits of a game ID are the season start year
             var season = game.Id / 1_000_000;
-            profitBySeason[season] = profitBySeason.GetValueOrDefault(season) + payout.Value;
+            profitBySeason[season] = profitBySeason.GetValueOrDefault(season) + stake * payout.Value;
         }
 
-        return new BacktestResult(opt, threshold, bets, wins, profit, profitBySeason);
+        return new BacktestResult(opt, threshold, bets, wins, profit, staked, profitBySeason);
     }
 }

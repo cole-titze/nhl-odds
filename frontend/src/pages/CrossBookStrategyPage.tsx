@@ -516,6 +516,16 @@ export function CrossBookStrategyPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-surface-800 dark:text-surface-200 mb-1">
+                    Kelly Value
+                  </h3>
+                  <p>
+                    Bets every game where the model sees any edge, but sizes each bet by the Kelly
+                    criterion: a share of a 100-unit bankroll that grows with the edge. The
+                    threshold is the Kelly fraction; smaller fractions bet less and swing less.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-surface-800 dark:text-surface-200 mb-1">
                     In-House Winner
                   </h3>
                   <p>
@@ -600,8 +610,9 @@ export function CrossBookStrategyPage() {
             <div className="border-t border-surface-200 dark:border-white/[0.06] pt-4 text-xs text-surface-500 dark:text-surface-400">
               <p>
                 <strong>Win Rate</strong> = wins / total bets. <strong>P/L</strong> = total units
-                won minus total units lost. <strong>ROI</strong> = P/L / total bets as a percentage.
-                The chart shows cumulative P/L over the season; above the dashed line is profit.
+                won minus total units lost. <strong>ROI</strong> = P/L / total units staked as a
+                percentage (1 unit per bet, except Kelly Value). The chart shows cumulative P/L over
+                the season; above the dashed line is profit.
               </p>
             </div>
           </div>

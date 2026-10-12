@@ -4,6 +4,8 @@ import {
   americanToDecimalPayout,
   computeStrategyResult,
   getBestBetFlag,
+  kellyStake,
+  minValueEdge,
   PINNED_BOOKMAKERS,
   spreadCovered,
 } from './bettingStrategies';
@@ -91,11 +93,13 @@ function getRefProbs(
 
 // --- Moneyline strategies ---
 
+// With kellyFraction set, bets every positive edge sized by fractional Kelly
 export function crossBookMoneyline(
   games: GameOddsVM[],
   refBookmaker: string,
   betBookmaker: string,
   edgeThreshold: number,
+  kellyFraction?: number,
 ): StrategyResult {
   const bets: BetResult[] = [];
   for (const g of games) {
@@ -122,19 +126,22 @@ export function crossBookMoneyline(
 
     const isHome = side === 'home';
     const betProb = isHome ? bet.homeOdds : bet.awayOdds;
+    const refProb = isHome ? trueRef.home : trueRef.away;
+    const stake = kellyFraction != null ? kellyStake(refProb, betProb, kellyFraction) : 1;
     const won = g.winner === (isHome ? Winner.HOME : Winner.AWAY);
     bets.push({
       gameId: g.id,
       gameDate: g.gameDate,
       betSide: side,
-      modelProb: isHome ? trueRef.home : trueRef.away,
+      modelProb: refProb,
       bookmakerProb: betProb,
-      payout: +(won ? 1 / betProb - 1 : -1).toFixed(4),
+      payout: +(stake * (won ? 1 / betProb - 1 : -1)).toFixed(4),
       won,
       cumulativePL: 0,
+      stake: kellyFraction != null ? +stake.toFixed(4) : undefined,
     });
   }
-  return computeStrategyResult('Value Bets', bets);
+  return computeStrategyResult(kellyFraction != null ? 'Kelly Value' : 'Value Bets', bets);
 }
 
 export function crossBookWinner(
@@ -415,6 +422,14 @@ export function runStrategy(
   switch (strategyType) {
     case 'value':
       return crossBookMoneyline(games, refBookmaker, betBookmaker, threshold);
+    case 'kelly':
+      return crossBookMoneyline(
+        games,
+        refBookmaker,
+        betBookmaker,
+        minValueEdge('kelly', threshold),
+        threshold,
+      );
     case 'modelWinner':
       return crossBookWinner(games, refBookmaker, betBookmaker);
     case 'underdog':
@@ -478,15 +493,16 @@ export function crossBookLog(
       let refValue = 0;
       let betValue = 0;
 
-      if (strategyType === 'value') {
+      if (strategyType === 'value' || strategyType === 'kelly') {
+        const minEdge = minValueEdge(strategyType, threshold);
         const homeEdge = trueRef.home - bet.homeOdds;
         const awayEdge = trueRef.away - bet.awayOdds;
-        if (homeEdge >= threshold && homeEdge >= awayEdge) {
+        if (homeEdge >= minEdge && homeEdge >= awayEdge) {
           side = 'home';
           edge = homeEdge;
           refValue = trueRef.home;
           betValue = bet.homeOdds;
-        } else if (awayEdge >= threshold) {
+        } else if (awayEdge >= minEdge) {
           side = 'away';
           edge = awayEdge;
           refValue = trueRef.away;
@@ -527,7 +543,8 @@ export function crossBookLog(
 
       if (g.hasBeenPlayed) {
         const won = g.winner === (side === 'home' ? Winner.HOME : Winner.AWAY);
-        const payout = won ? 1 / betValue - 1 : -1;
+        const stake = strategyType === 'kelly' ? kellyStake(refValue, betValue, threshold) : 1;
+        const payout = stake * (won ? 1 / betValue - 1 : -1);
         entries.push({
           gameId: g.id,
           gameDate: g.gameDate,

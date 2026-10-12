@@ -58,7 +58,11 @@ export function StrategyPicker({ betType, renameLabel }: Props) {
         ))}
       </select>
       {current?.thresholds && (
-        <div className="flex gap-1" role="group" aria-label="Edge threshold">
+        <div
+          className="flex gap-1"
+          role="group"
+          aria-label={current.type === 'kelly' ? 'Kelly fraction' : 'Edge threshold'}
+        >
           {current.thresholds.map((t) => (
             <button
               key={t}

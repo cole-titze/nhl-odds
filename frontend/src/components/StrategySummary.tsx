@@ -5,6 +5,7 @@ import { getSwatchClasses } from '../utils/colorClass';
 const STRATEGY_COLORS: Record<string, string> = {
   'In-House Winner': '#3b82f6',
   'Value Bets': '#22c55e',
+  'Kelly Value': '#14b8a6',
   'In-House Underdog': '#f97316',
   'Underdog Value': '#e44d2e',
   Confidence: '#a855f7',

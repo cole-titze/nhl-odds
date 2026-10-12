@@ -171,4 +171,53 @@ public class StrategyRulesTests
             .Should().NotContain(b => b.BetType == "moneyline");
     }
 
+    [TestMethod]
+    public void Kelly_ShouldBetAnyPositiveEdge_RegardlessOfFraction()
+    {
+        // 1-point edge on home: below every Value Bets threshold
+        var game = Game(0.51, 3, 2, Book("DraftKings", 0.50, 0.53));
+
+        var flag = StrategyRules.GetBestBetFlag(game, "kelly", 0.5);
+
+        flag.Should().NotBeNull();
+        flag!.BetHome.Should().BeTrue();
+    }
+
+    [TestMethod]
+    public void Kelly_ShouldSkip_WhenNoSideHasAnEdge()
+    {
+        var game = Game(0.5, 3, 2, Book("DraftKings", 0.52, 0.52));
+
+        StrategyRules.GetBestBetFlag(game, "kelly", 0.25).Should().BeNull();
+    }
+
+    [TestMethod]
+    public void Stake_ShouldBeFractionalKellyOfBankroll()
+    {
+        // Full Kelly at price 0.5 with p = 0.6 is (0.6 - 0.5) / 0.5 = 20% of the bankroll
+        var game = Game(0.6, 3, 2, Book("DraftKings", 0.5, 0.52));
+        var flag = StrategyRules.GetBestBetFlag(game, "kelly", 0.25)!;
+
+        StrategyRules.Stake(game, flag, "kelly", 0.25).Should().BeApproximately(5, 1e-9);
+        StrategyRules.Stake(game, flag, "value", 0.05).Should().Be(1);
+    }
+
+    [TestMethod]
+    public void PickBest_ShouldComputeKellyRoi_OnUnitsStaked()
+    {
+        // Same 10-point edge every game, so every Kelly stake is equal and ROI matches flat betting
+        var games = Enumerable.Range(0, 150)
+            .Select(i =>
+            {
+                var g = Game(0.6, i % 3 == 0 ? 1 : 3, 2, Book("DraftKings", 0.5, 0.52));
+                g.Id = (2022 + i % 4) * 1_000_000 + 20_000 + i;
+                return g;
+            })
+            .ToList();
+
+        var best = StrategyBacktester.PickBest(games, 2022, 2025).Single(b => b.BetType == "moneyline");
+
+        // Wins 2 of 3 at even money: ROI 33.33% whichever moneyline strategy wins
+        best.Roi.Should().BeApproximately(33.33, 0.01);
+    }
 }

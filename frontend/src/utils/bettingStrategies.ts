@@ -10,6 +10,8 @@ export interface BetResult {
   payout: number;
   won: boolean;
   cumulativePL: number;
+  // Units staked; flat-stake strategies leave it unset (1 unit). payout is already scaled by it.
+  stake?: number;
 }
 
 export interface StrategyResult {
@@ -71,8 +73,10 @@ function makeBet(gwo: GameWithOdds, side: 'home' | 'away'): BetResult {
 
 export function computeStrategyResult(name: string, bets: BetResult[]): StrategyResult {
   let cumPL = 0;
+  let staked = 0;
   for (const bet of bets) {
     cumPL += bet.payout;
+    staked += bet.stake ?? 1;
     bet.cumulativePL = +cumPL.toFixed(4);
   }
   const wins = bets.filter((b) => b.won).length;
@@ -83,8 +87,18 @@ export function computeStrategyResult(name: string, bets: BetResult[]): Strategy
     wins,
     winRate: bets.length > 0 ? +(wins / bets.length).toFixed(4) : 0,
     totalPL: +cumPL.toFixed(4),
-    roi: bets.length > 0 ? +((cumPL / bets.length) * 100).toFixed(2) : 0,
+    roi: staked > 0 ? +((cumPL / staked) * 100).toFixed(2) : 0,
   };
+}
+
+// Kelly stakes are a share of a fixed bankroll (no compounding) so P/L stays in units
+export const KELLY_BANKROLL = 100;
+
+// Fractional Kelly stake in units for a moneyline bet priced at the implied probability `price`.
+// Mirrors StrategyRules.KellyStake in the API.
+export function kellyStake(prob: number, price: number, fraction: number): number {
+  if (price <= 0 || price >= 1 || prob <= price) return 0;
+  return (fraction * KELLY_BANKROLL * (prob - price)) / (1 - price);
 }
 
 export interface BetFlag {
@@ -94,6 +108,7 @@ export interface BetFlag {
 
 export type StrategyType =
   | 'value'
+  | 'kelly'
   | 'modelWinner'
   | 'underdog'
   | 'underdogValue'
@@ -126,6 +141,14 @@ export const STRATEGY_OPTIONS: StrategyOption[] = [
     label: 'Value Bets',
     betType: 'moneyline',
     thresholds: [0.03, 0.05, 0.07, 0.1, 0.15],
+    thresholdFormat: 'pct',
+  },
+  {
+    // Thresholds are the Kelly fraction; it bets every positive edge
+    type: 'kelly',
+    label: 'Kelly Value',
+    betType: 'moneyline',
+    thresholds: [0.1, 0.25, 0.5],
     thresholdFormat: 'pct',
   },
   { type: 'modelWinner', label: 'In-House Winner', betType: 'moneyline' },
@@ -162,6 +185,11 @@ export const STRATEGY_OPTIONS: StrategyOption[] = [
   },
 ];
 
+// Kelly's threshold is its fraction, so it takes every bet with a positive edge
+export function minValueEdge(type: StrategyType, threshold: number): number {
+  return type === 'kelly' ? Number.MIN_VALUE : threshold;
+}
+
 /**
  * Check if a game qualifies as a bet for a given bookmaker under the selected strategy.
  */
@@ -173,16 +201,17 @@ export function checkStrategy(
   if (!game.homeTeam || !game.awayTeam) return null;
 
   switch (strategy.type) {
-    case 'value': {
+    case 'value':
+    case 'kelly': {
       if (bm.homeOdds <= 0 || bm.awayOdds <= 0) return null;
       const homeModel = game.homeTeam.modelOdds;
       const awayModel = game.awayTeam.modelOdds;
       if (homeModel == null || awayModel == null) return null;
       const homeEdge = homeModel - bm.homeOdds;
       const awayEdge = awayModel - bm.awayOdds;
-      if (homeEdge >= strategy.threshold && homeEdge >= awayEdge)
-        return { side: 'home', edge: homeEdge };
-      if (awayEdge >= strategy.threshold) return { side: 'away', edge: awayEdge };
+      const minEdge = minValueEdge(strategy.type, strategy.threshold);
+      if (homeEdge >= minEdge && homeEdge >= awayEdge) return { side: 'home', edge: homeEdge };
+      if (awayEdge >= minEdge) return { side: 'away', edge: awayEdge };
       return null;
     }
     case 'modelWinner': {

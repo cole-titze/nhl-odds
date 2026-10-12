@@ -15,6 +15,9 @@ public record BetFlag(bool BetHome, double Edge, BookmakerOddsVM Bookmaker);
 /// </summary>
 public static class StrategyRules
 {
+    // Kelly stakes are a share of a fixed bankroll (no compounding) so profit stays in units
+    public const double KellyBankroll = 100;
+
     // Only these books are shown on the game card, so only they can back a bet.
     public static readonly string[] PinnedBookmakers = { "DraftKings", "Kalshi" };
 
@@ -22,6 +25,8 @@ public static class StrategyRules
     public static readonly StrategyOption[] Options =
     {
         new("value", "moneyline", new[] { 0.03, 0.05, 0.07, 0.1, 0.15 }),
+        // Thresholds are the Kelly fraction; it bets every positive edge
+        new("kelly", "moneyline", new[] { 0.1, 0.25, 0.5 }),
         new("modelWinner", "moneyline", new[] { 0.0 }),
         new("underdog", "moneyline", new[] { 0.0 }),
         new("underdogValue", "moneyline", new[] { 0.02, 0.04, 0.06, 0.08, 0.1 }),
@@ -40,6 +45,7 @@ public static class StrategyRules
         switch (type)
         {
             case "value":
+            case "kelly":
             case "modelWinner":
             case "underdog":
             case "underdogValue":
@@ -88,11 +94,15 @@ public static class StrategyRules
         switch (type)
         {
             case "value":
-                if (homeEdge >= threshold && homeEdge >= awayEdge)
+            case "kelly":
+            {
+                var minEdge = MinValueEdge(type, threshold);
+                if (homeEdge >= minEdge && homeEdge >= awayEdge)
                     return new BetFlag(true, homeEdge, bm);
-                if (awayEdge >= threshold)
+                if (awayEdge >= minEdge)
                     return new BetFlag(false, awayEdge, bm);
                 return null;
+            }
             case "modelWinner":
             {
                 var betHome = homeModel.Value >= 0.5;
@@ -126,6 +136,30 @@ public static class StrategyRules
             default:
                 return null;
         }
+    }
+
+    // Kelly's threshold is its fraction, so it takes every bet with a positive edge
+    private static double MinValueEdge(string type, double threshold) =>
+        type == "kelly" ? double.Epsilon : threshold;
+
+    /// <summary>
+    /// Units staked on the bet: 1 for flat strategies, fractional Kelly of KellyBankroll for
+    /// "kelly" (threshold = fraction). Mirrors kellyStake in bettingStrategies.ts.
+    /// </summary>
+    public static double Stake(GameOddsVM game, BetFlag bet, string type, double threshold)
+    {
+        if (type != "kelly")
+            return 1;
+        var prob = bet.BetHome ? game.HomeTeam!.ModelOdds : game.AwayTeam!.ModelOdds;
+        var price = bet.BetHome ? bet.Bookmaker.HomeOdds : bet.Bookmaker.AwayOdds;
+        return KellyStake(prob ?? 0, price, threshold);
+    }
+
+    public static double KellyStake(double prob, double price, double fraction)
+    {
+        if (price <= 0 || price >= 1 || prob <= price)
+            return 0;
+        return fraction * KellyBankroll * (prob - price) / (1 - price);
     }
 
     // The bet the card shows: the pinned bookmaker with the largest edge.
