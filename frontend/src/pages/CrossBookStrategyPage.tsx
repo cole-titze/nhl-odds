@@ -235,7 +235,6 @@ export function CrossBookStrategyPage() {
                       <th className="pb-2 pr-4">Type</th>
                       <th className="pb-2 pr-4 text-right">Bets</th>
                       <th className="pb-2 pr-4 text-right">Win%</th>
-                      <th className="pb-2 pr-4 text-right">P/L</th>
                       <th className="pb-2 text-right">ROI</th>
                     </tr>
                   </thead>
@@ -284,12 +283,6 @@ export function CrossBookStrategyPage() {
                           </td>
                           <td className="py-2 pr-4 text-right text-surface-500 dark:text-surface-400">
                             {(result.winRate * 100).toFixed(1)}%
-                          </td>
-                          <td
-                            className={`py-2 pr-4 text-right font-semibold ${result.totalPL >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'}`}
-                          >
-                            {result.totalPL >= 0 ? '+' : ''}
-                            {result.totalPL.toFixed(2)}u
                           </td>
                           <td
                             className={`py-2 text-right font-semibold ${result.roi >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'}`}
@@ -424,7 +417,7 @@ export function CrossBookStrategyPage() {
                       <th className="pb-2 pr-3 text-right">Market</th>
                       <th className="pb-2 pr-3 text-right">Edge</th>
                       <th className="pb-2 pr-3 text-right">Result</th>
-                      <th className="pb-2 text-right">P/L</th>
+                      <th className="pb-2 text-right">ROI</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -469,7 +462,7 @@ export function CrossBookStrategyPage() {
                           className={`py-1.5 text-right font-semibold ${e.payout! >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'}`}
                         >
                           {e.payout! >= 0 ? '+' : ''}
-                          {e.payout!.toFixed(2)}u
+                          {((e.payout! / (e.stake ?? 1)) * 100).toFixed(0)}%
                         </td>
                       </tr>
                     ))}
@@ -612,10 +605,10 @@ export function CrossBookStrategyPage() {
             )}
             <div className="border-t border-surface-200 dark:border-white/[0.06] pt-4 text-xs text-surface-500 dark:text-surface-400">
               <p>
-                <strong>Win Rate</strong> = wins / total bets. <strong>P/L</strong> = total units
-                won minus total units lost. <strong>ROI</strong> = P/L / total units staked as a
-                percentage (1 unit per bet, except Kelly Value). The chart shows cumulative P/L over
-                the season; above the dashed line is profit.
+                <strong>Win Rate</strong> = wins / total bets. <strong>ROI</strong> = units won
+                minus units lost, divided by total units staked (1 unit per bet, except Kelly
+                Value). The chart shows ROI to date over the season; above the dashed line is
+                profit.
               </p>
             </div>
           </div>

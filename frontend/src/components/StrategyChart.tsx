@@ -71,7 +71,7 @@ export function StrategyChart({ results }: Props) {
             sortKey: dateKey,
           });
         }
-        allDates.get(dateKey)![result.name] = bet.cumulativePL;
+        allDates.get(dateKey)![result.name] = bet.cumulativeRoi ?? 0;
       }
     }
 
@@ -82,17 +82,17 @@ export function StrategyChart({ results }: Props) {
 
   if (chartData.length <= 1) return null;
 
-  // The SVG chart isn't readable by screen readers, so summarize the final P/L
-  const summary = `Final cumulative profit/loss: ${results
+  // The SVG chart isn't readable by screen readers, so summarize the final ROI
+  const summary = `Final ROI: ${results
     .filter((r) => enabled.has(r.name) && r.bets.length > 0)
-    .map((r) => `${r.name} ${r.bets[r.bets.length - 1].cumulativePL.toFixed(2)} units`)
+    .map((r) => `${r.name} ${(r.bets[r.bets.length - 1].cumulativeRoi ?? 0).toFixed(1)}%`)
     .join(', ')}.`;
 
   return (
     <div className="glass rounded-xl p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
-          Cumulative P/L (units)
+          ROI to Date
         </h2>
       </div>
       <div className="flex flex-wrap gap-2 mb-4" role="group" aria-label="Lines shown">
@@ -153,7 +153,7 @@ export function StrategyChart({ results }: Props) {
                               color={readableLineColor(baseColor(name), true)}
                               dash={lineDash(name)}
                             />
-                            {name}: {(d[name] as number).toFixed(2)}u
+                            {name}: {(d[name] as number).toFixed(1)}%
                           </div>
                         ))}
                     </div>
@@ -191,7 +191,7 @@ export function StrategyChart({ results }: Props) {
         )}
       </div>
       <ChartDataTable
-        caption="Cumulative profit/loss in units by date"
+        caption="ROI to date by date"
         rowHeader="Date"
         columns={strategyNames.filter((name) => enabled.has(name))}
         rows={chartData.map((point) => ({
@@ -201,7 +201,7 @@ export function StrategyChart({ results }: Props) {
             strategyNames.map((name) => [name, point[name] as number | undefined]),
           ),
         }))}
-        format={(v) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}u`}
+        format={(v) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`}
       />
     </div>
   );

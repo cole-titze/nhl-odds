@@ -10,6 +10,8 @@ export interface BetResult {
   payout: number;
   won: boolean;
   cumulativePL: number;
+  // ROI (%) of every bet up to and including this one; set by computeStrategyResult
+  cumulativeRoi?: number;
   // Units staked; flat-stake strategies leave it unset (1 unit). payout is already scaled by it.
   stake?: number;
 }
@@ -78,6 +80,7 @@ export function computeStrategyResult(name: string, bets: BetResult[]): Strategy
     cumPL += bet.payout;
     staked += bet.stake ?? 1;
     bet.cumulativePL = +cumPL.toFixed(4);
+    bet.cumulativeRoi = +((cumPL / staked) * 100).toFixed(2);
   }
   const wins = bets.filter((b) => b.won).length;
   return {

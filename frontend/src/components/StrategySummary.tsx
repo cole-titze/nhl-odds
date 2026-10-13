@@ -22,7 +22,6 @@ interface Props {
 
 export function StrategyCard({ result: r, children }: Props) {
   const color = STRATEGY_COLORS[r.name] ?? '#737373';
-  const plPositive = r.totalPL >= 0;
   return (
     <div className="glass rounded-xl p-5">
       <div className="flex items-center justify-between mb-3">
@@ -32,7 +31,7 @@ export function StrategyCard({ result: r, children }: Props) {
         </div>
         {children && <div className="flex flex-wrap gap-1">{children}</div>}
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div className="text-center">
           <div className="stat-number text-2xl text-surface-900 dark:text-white">{r.totalBets}</div>
           <div className="text-xs font-medium text-surface-500 dark:text-surface-400 mt-1 uppercase tracking-wider">
@@ -45,17 +44,6 @@ export function StrategyCard({ result: r, children }: Props) {
           </div>
           <div className="text-xs font-medium text-surface-500 dark:text-surface-400 mt-1 uppercase tracking-wider">
             Win Rate
-          </div>
-        </div>
-        <div className="text-center">
-          <div
-            className={`stat-number text-2xl ${plPositive ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'}`}
-          >
-            {plPositive ? '+' : ''}
-            {r.totalPL.toFixed(2)}u
-          </div>
-          <div className="text-xs font-medium text-surface-500 dark:text-surface-400 mt-1 uppercase tracking-wider">
-            P/L
           </div>
         </div>
         <div className="text-center">

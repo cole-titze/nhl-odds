@@ -44,6 +44,8 @@ export interface CrossBookEntry {
   betValue: number;
   edge: number;
   payout: number | null;
+  // Units staked; flat-stake strategies leave it unset (1 unit). payout is already scaled by it.
+  stake?: number;
   won: boolean | null;
   upcoming: boolean;
   // Book the bet was placed at
@@ -555,6 +557,7 @@ export function crossBookLog(
           betValue,
           edge,
           payout: +payout.toFixed(4),
+          stake: strategyType === 'kelly' ? +stake.toFixed(4) : undefined,
           won,
           upcoming: false,
           book,
