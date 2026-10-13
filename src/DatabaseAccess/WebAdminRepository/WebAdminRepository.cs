@@ -29,6 +29,16 @@ public class WebAdminRepository : IWebAdminRepository
         return dbErrors.Select(DbErrorLogToErrorLogMapper.Map).ToList();
     }
 
+    public async Task<List<LoadTestRun>> GetLoadTestRuns()
+    {
+        var dbRuns = await _db.LoadTestRun
+            .OrderByDescending(r => r.StartedUTC)
+            .Take(20)
+            .ToListAsync();
+
+        return dbRuns.Select(DbLoadTestRunToLoadTestRunMapper.Map).ToList();
+    }
+
     public async Task<List<SeasonHealthCheck>> GetHealthChecks()
     {
         var games = await _db.GameRaw

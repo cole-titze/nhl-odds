@@ -3,16 +3,19 @@ import {
   getErrorLogs,
   getHealthChecks,
   getJobStatuses,
+  getLoadTestRuns,
   startDataCollection,
   startOddsBackfill,
   startPrediction,
   startPredictionBackfill,
   startKalshiBackfill,
+  startLoadTest,
   verifyAdminKey,
   AdminAuthError,
   type ErrorLog,
   type JobInfo,
   type JobStatuses,
+  type LoadTestRun,
   type SeasonHealthCheck,
 } from '../api/admin';
 import { formatSeasonLabel } from '../utils/season';
@@ -149,6 +152,93 @@ function JobCard({ job, label, onStart }: { job: JobInfo; label: string; onStart
         </button>
       )}
     </div>
+  );
+}
+
+function seconds(s: number) {
+  return s >= 60 && s % 60 === 0 ? `${s / 60}m` : `${s}s`;
+}
+
+function ms(value: number) {
+  return value >= 1000 ? `${(value / 1000).toFixed(2)}s` : `${Math.round(value)}ms`;
+}
+
+function LoadTestTable({ runs }: { runs: LoadTestRun[] }) {
+  if (runs.length === 0) {
+    return (
+      <div className="glass rounded-xl p-6 text-sm text-surface-500 dark:text-surface-400 text-center">
+        No load tests yet.
+      </div>
+    );
+  }
+
+  return (
+    <ScrollRegion label="Load test runs" className="glass rounded-xl overflow-x-auto">
+      <table className="w-full text-sm min-w-[1100px]">
+        <thead>
+          <tr className="border-b border-surface-200 dark:border-white/[0.06] text-left text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">
+            <th className="px-4 py-3">Started</th>
+            <th className="px-4 py-3">Preset</th>
+            <th className="px-4 py-3 text-center">Max Users</th>
+            <th className="px-4 py-3 text-center">Ramp / Hold / Down</th>
+            <th className="px-4 py-3 text-center">Think Time</th>
+            <th className="px-4 py-3">Pages</th>
+            <th className="px-4 py-3 text-center">Requests</th>
+            <th className="px-4 py-3 text-center">Req/s</th>
+            <th className="px-4 py-3 text-center">p50</th>
+            <th className="px-4 py-3 text-center">p95</th>
+            <th className="px-4 py-3 text-center">p99</th>
+            <th className="px-4 py-3 text-center">Max</th>
+            <th className="px-4 py-3 text-center">5xx</th>
+            <th className="px-4 py-3 text-center">429</th>
+            <th className="px-4 py-3 text-center">Other Errors</th>
+          </tr>
+        </thead>
+        <tbody>
+          {runs.map((run) => (
+            <tr
+              key={run.id}
+              className="border-b border-surface-200 dark:border-white/[0.04] last:border-0"
+            >
+              <td className="px-4 py-3 stat-number text-xs whitespace-nowrap">
+                {formatTime(run.startedUTC)}
+              </td>
+              <td className="px-4 py-3 font-mono text-xs" title={run.target}>
+                {run.preset}
+              </td>
+              <td className="px-4 py-3 stat-number text-center">{run.maxVus}</td>
+              <td className="px-4 py-3 stat-number text-xs text-center whitespace-nowrap">
+                {seconds(run.rampUpSeconds)} / {seconds(run.holdSeconds)} /{' '}
+                {seconds(run.rampDownSeconds)}
+              </td>
+              <td className="px-4 py-3 stat-number text-xs text-center whitespace-nowrap">
+                {run.thinkTimeMinSeconds}–{run.thinkTimeMaxSeconds}s
+              </td>
+              <td className="px-4 py-3 text-xs text-surface-600 dark:text-surface-300">
+                {run.pageMix}
+              </td>
+              <td className="px-4 py-3 stat-number text-center">{run.requests}</td>
+              <td className="px-4 py-3 stat-number text-center">
+                {run.requestsPerSecond.toFixed(1)}
+              </td>
+              <td className="px-4 py-3 stat-number text-center">{ms(run.p50Ms)}</td>
+              <td className="px-4 py-3 stat-number text-center">{ms(run.p95Ms)}</td>
+              <td className="px-4 py-3 stat-number text-center">{ms(run.p99Ms)}</td>
+              <td className="px-4 py-3 stat-number text-center">{ms(run.maxMs)}</td>
+              <td className={`px-4 py-3 stat-number text-center ${countClass(run.http5xx)}`}>
+                {run.http5xx}
+              </td>
+              <td className={`px-4 py-3 stat-number text-center ${countClass(run.http429)}`}>
+                {run.http429}
+              </td>
+              <td className={`px-4 py-3 stat-number text-center ${countClass(run.otherErrors)}`}>
+                {run.otherErrors}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </ScrollRegion>
   );
 }
 
@@ -384,14 +474,20 @@ export function AdminPage() {
   const needsKey = adminKey == null && (!import.meta.env.DEV || authError != null);
   const [statuses, setStatuses] = useState<JobStatuses | null>(null);
   const [healthChecks, setHealthChecks] = useState<SeasonHealthCheck[]>([]);
+  const [loadTestRuns, setLoadTestRuns] = useState<LoadTestRun[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     try {
-      const [statusData, checksData] = await Promise.all([getJobStatuses(), getHealthChecks()]);
+      const [statusData, checksData, runsData] = await Promise.all([
+        getJobStatuses(),
+        getHealthChecks(),
+        getLoadTestRuns(),
+      ]);
       setStatuses(statusData);
       setHealthChecks(checksData);
+      setLoadTestRuns(runsData);
       setError(null);
     } catch (e) {
       if (e instanceof AdminAuthError) setAuthError(e.message);
@@ -507,6 +603,29 @@ export function AdminPage() {
               />
             </div>
           ) : null}
+
+          <div className="mt-10">
+            <h2 className="font-display text-xl font-semibold mb-1">Load Tests</h2>
+            <p className="text-sm text-surface-500 dark:text-surface-400 mb-4">
+              Simulated visitors browse the live site from node01 (k6). Light: 25 users for 3
+              minutes. Heavy: 150 users for about 4.5 minutes. Waits until no other job is running.
+            </p>
+            {statuses && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                <JobCard
+                  job={statuses.loadTestLight}
+                  label="Light Load Test"
+                  onStart={() => handleStart(() => startLoadTest('light'))}
+                />
+                <JobCard
+                  job={statuses.loadTestHeavy}
+                  label="Heavy Load Test"
+                  onStart={() => handleStart(() => startLoadTest('heavy'))}
+                />
+              </div>
+            )}
+            {!loading && <LoadTestTable runs={loadTestRuns} />}
+          </div>
 
           <div className="mt-10">
             <h2 className="font-display text-xl font-semibold mb-4">Health Checks</h2>

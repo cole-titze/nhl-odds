@@ -117,4 +117,47 @@ public class AdminServiceUnitTests
         result[0].MissingPredictions.Should().Be(5);
         result[0].ErrorCount.Should().Be(7);
     }
+
+    [TestMethod]
+    public async Task GetLoadTestRuns_WithRuns_ShouldReturnInputsAndResults()
+    {
+        var runs = new List<LoadTestRun>
+        {
+            new LoadTestRun
+            {
+                Id = 3,
+                Preset = "light",
+                Target = "http://nhl-odds-frontend",
+                MaxVus = 25,
+                RampUpSeconds = 30,
+                HoldSeconds = 120,
+                RampDownSeconds = 30,
+                ThinkTimeMinSeconds = 1,
+                ThinkTimeMaxSeconds = 3,
+                PageMix = "/ 35%",
+                StartedUTC = new DateTime(2026, 10, 13, 15, 0, 0),
+                FinishedUTC = new DateTime(2026, 10, 13, 15, 3, 0),
+                Requests = 2400,
+                RequestsPerSecond = 13.3,
+                P50Ms = 45,
+                P95Ms = 180,
+                P99Ms = 420,
+                MaxMs = 900,
+                Http5xx = 1,
+                Http429 = 2,
+                OtherErrors = 0,
+            },
+        };
+        var repo = new FakeAdminRepository(loadTestRuns: runs);
+        var service = new AdminService(repo);
+
+        var result = await service.GetLoadTestRuns();
+
+        result.Should().ContainSingle();
+        result[0].Preset.Should().Be("light");
+        result[0].MaxVus.Should().Be(25);
+        result[0].HoldSeconds.Should().Be(120);
+        result[0].P95Ms.Should().Be(180);
+        result[0].Http429.Should().Be(2);
+    }
 }

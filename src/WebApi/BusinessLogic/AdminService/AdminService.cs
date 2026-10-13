@@ -24,4 +24,10 @@ public class AdminService : IAdminService
         var healthChecks = await _adminRepository.GetHealthChecks();
         return healthChecks.Select(SeasonHealthCheckToVmMapper.Map).ToList();
     }
+
+    public async Task<List<LoadTestRunVM>> GetLoadTestRuns()
+    {
+        var runs = await _adminRepository.GetLoadTestRuns();
+        return runs.Select(LoadTestRunToLoadTestRunVmMapper.Map).ToList();
+    }
 }

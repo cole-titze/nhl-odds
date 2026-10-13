@@ -54,18 +54,25 @@ public class LocalJobRunner : BackgroundService
     private async Task PollAndRun(CancellationToken stoppingToken)
     {
         string? jobName;
+        (string command, string args, Dictionary<string, string>? env) cmd;
         using (var scope = _scopeFactory.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<GameDbContext>();
             var row = await db.JobStatus.FirstOrDefaultAsync(j => j.Status == "requested", stoppingToken);
             if (row == null) return;
             jobName = row.JobName;
-        }
 
-        if (!JobCommands.TryGetValue(jobName, out var cmd))
-        {
-            _logger.LogWarning("Unknown job requested: {JobName}", jobName);
-            return;
+            // Fail jobs with no local command (load tests run only on the cluster) so they don't
+            // stay requested and block the jobs behind them
+            if (!JobCommands.TryGetValue(jobName, out cmd))
+            {
+                _logger.LogWarning("Unknown job requested: {JobName}", jobName);
+                row.Status = "failed";
+                row.FinishedAt = DateTime.UtcNow;
+                row.Error = "This job doesn't run locally.";
+                await db.SaveChangesAsync(stoppingToken);
+                return;
+            }
         }
 
         var repoRoot = GetRepoRoot();

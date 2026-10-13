@@ -54,6 +54,35 @@ export interface JobStatuses {
   predictionBackfill: JobInfo;
   nextDayKalshi: JobInfo;
   kalshiBackfill: JobInfo;
+  loadTestLight: JobInfo;
+  loadTestHeavy: JobInfo;
+}
+
+export type LoadTestPreset = 'light' | 'heavy';
+
+/** One load test: the preset's inputs, then what k6 measured. */
+export interface LoadTestRun {
+  id: number;
+  preset: string;
+  target: string;
+  maxVus: number;
+  rampUpSeconds: number;
+  holdSeconds: number;
+  rampDownSeconds: number;
+  thinkTimeMinSeconds: number;
+  thinkTimeMaxSeconds: number;
+  pageMix: string;
+  startedUTC: string;
+  finishedUTC: string;
+  requests: number;
+  requestsPerSecond: number;
+  p50Ms: number;
+  p95Ms: number;
+  p99Ms: number;
+  maxMs: number;
+  http5xx: number;
+  http429: number;
+  otherErrors: number;
 }
 
 /** Checks a key against the API before it's stored, so a wrong key never unlocks the page. */
@@ -110,6 +139,21 @@ export async function startKalshiBackfill(): Promise<{ message: string }> {
     const body = await res.json().catch(() => null);
     throw new Error(body?.message || `API error: ${res.status}`);
   }
+  return res.json();
+}
+
+export async function startLoadTest(preset: LoadTestPreset): Promise<{ message: string }> {
+  const res = await adminFetch(`StartLoadTest?preset=${preset}`, { method: 'POST' });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message || `API error: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function getLoadTestRuns(): Promise<LoadTestRun[]> {
+  const res = await adminFetch('GetLoadTestRuns');
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
 

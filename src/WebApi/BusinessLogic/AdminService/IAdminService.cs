@@ -6,4 +6,5 @@ public interface IAdminService
 {
     Task<List<ErrorLogVM>> GetErrorLogs(int? seasonStartYear);
     Task<List<SeasonHealthCheckVM>> GetHealthChecks();
+    Task<List<LoadTestRunVM>> GetLoadTestRuns();
 }

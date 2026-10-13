@@ -6,4 +6,5 @@ public interface IWebAdminRepository
 {
     Task<List<ErrorLog>> GetErrorLogs(int? seasonStartYear);
     Task<List<SeasonHealthCheck>> GetHealthChecks();
+    Task<List<LoadTestRun>> GetLoadTestRuns();
 }

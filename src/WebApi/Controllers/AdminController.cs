@@ -1,3 +1,4 @@
+using Entities.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.BusinessLogic.AdminService;
 using WebApi.BusinessLogic.JobService;
@@ -21,6 +22,9 @@ public class AdminController
     private const string PredictionBackfillJob = "prediction-backfill";
     private const string NextDayKalshiJob = "next-day-kalshi";
     private const string KalshiBackfillJob = "kalshi-backfill";
+    // Load tests are one job per preset; scheduler/k8s/load-test.js defines what each preset runs
+    private const string LoadTestJobPrefix = "load-test-";
+    private static readonly string[] LoadTestPresets = ["light", "heavy"];
 
     public AdminController(IJobService jobService, IAdminService adminService)
     {
@@ -88,6 +92,23 @@ public class AdminController
         return Results.Ok(new { message = "Kalshi backfill requested." });
     }
 
+    [HttpPost]
+    public IResult StartLoadTest(string preset)
+    {
+        if (!LoadTestPresets.Contains(preset))
+            return Results.BadRequest(new { message = $"Unknown load test preset '{preset}'." });
+
+        // A load test next to another job would slow that job and skew the results
+        var busyJob = _jobService.GetAllStatuses().FirstOrDefault(j => j.Status is "running" or "requested");
+        if (busyJob != null)
+            return Results.Conflict(new { message = $"Wait for {busyJob.Name} to finish before starting a load test." });
+
+        if (!_jobService.RequestJob(LoadTestJobPrefix + preset))
+            return Results.Conflict(new { message = "That load test is already running or requested." });
+
+        return Results.Ok(new { message = "Load test requested." });
+    }
+
     private static readonly TimeZoneInfo CentralTime = TimeZoneInfo.FindSystemTimeZoneById("America/Chicago");
 
     private bool CompletedToday(string jobName)
@@ -114,6 +135,13 @@ public class AdminController
     }
 
     [HttpGet]
+    public async Task<IResult> GetLoadTestRuns()
+    {
+        var runs = await _adminService.GetLoadTestRuns();
+        return Results.Ok(runs);
+    }
+
+    [HttpGet]
     public IResult GetJobStatuses()
     {
         var statuses = new
@@ -125,7 +153,17 @@ public class AdminController
             predictionBackfill = JobInfoToJobInfoVmMapper.Map(_jobService.GetStatus(PredictionBackfillJob)),
             nextDayKalshi = JobInfoToJobInfoVmMapper.Map(_jobService.GetStatus(NextDayKalshiJob)),
             kalshiBackfill = JobInfoToJobInfoVmMapper.Map(_jobService.GetStatus(KalshiBackfillJob)),
+            loadTestLight = LoadTestStatus("light"),
+            loadTestHeavy = LoadTestStatus("heavy"),
         };
         return Results.Ok(statuses);
+    }
+
+    // Load tests can run any number of times a day, so they never show "Completed Today"
+    private JobInfoVM LoadTestStatus(string preset)
+    {
+        var vm = JobInfoToJobInfoVmMapper.Map(_jobService.GetStatus(LoadTestJobPrefix + preset));
+        vm.CompletedToday = false;
+        return vm;
     }
 }

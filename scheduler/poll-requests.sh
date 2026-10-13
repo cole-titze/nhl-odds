@@ -34,6 +34,10 @@ case "$REQUESTED" in
     prediction-backfill)
         docker compose -f "$COMPOSE_FILE" run --rm -e PREDICTOR_MODE=backfill predictor
         ;;
+    load-test-*)
+        # Load tests need the K8s cluster (scheduler/k8s); fail the row so it doesn't block the page
+        psql "$NHL_DATABASE_URL" -qAtc "UPDATE \"JobStatus\" SET \"Status\" = 'failed', \"FinishedAt\" = now() AT TIME ZONE 'UTC', \"Error\" = 'Load tests only run on the Kubernetes cluster.' WHERE \"JobName\" = '$REQUESTED'"
+        ;;
     *)
         echo "Unknown job: $REQUESTED"
         ;;

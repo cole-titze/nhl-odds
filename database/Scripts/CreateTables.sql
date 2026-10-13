@@ -876,6 +876,33 @@ CREATE TABLE "JobStatus"
     CONSTRAINT "PK_JobStatus" PRIMARY KEY("JobName")
 );
 
+-- One row per admin-page load test (scheduler/k8s/load-test.js): the preset's inputs, then k6's results
+CREATE TABLE "LoadTestRun"
+(
+    "Id" SERIAL NOT NULL,
+    "Preset" VARCHAR(50) NOT NULL,
+    "Target" VARCHAR(200) NOT NULL,
+    "MaxVus" INTEGER NOT NULL,
+    "RampUpSeconds" INTEGER NOT NULL,
+    "HoldSeconds" INTEGER NOT NULL,
+    "RampDownSeconds" INTEGER NOT NULL,
+    "ThinkTimeMinSeconds" DOUBLE PRECISION NOT NULL,
+    "ThinkTimeMaxSeconds" DOUBLE PRECISION NOT NULL,
+    "PageMix" VARCHAR(500) NOT NULL,
+    "StartedUTC" TIMESTAMP NOT NULL,
+    "FinishedUTC" TIMESTAMP NOT NULL,
+    "Requests" INTEGER NOT NULL,
+    "RequestsPerSecond" DOUBLE PRECISION NOT NULL,
+    "P50Ms" DOUBLE PRECISION NOT NULL,
+    "P95Ms" DOUBLE PRECISION NOT NULL,
+    "P99Ms" DOUBLE PRECISION NOT NULL,
+    "MaxMs" DOUBLE PRECISION NOT NULL,
+    "Http5xx" INTEGER NOT NULL,
+    "Http429" INTEGER NOT NULL,
+    "OtherErrors" INTEGER NOT NULL,
+    CONSTRAINT "PK_LoadTestRun" PRIMARY KEY("Id")
+);
+
 -- Snapshots of the NHL's public roster report (Active / Injured Reserve lists), one row per matched player
 CREATE TABLE "RosterStatus"
 (
