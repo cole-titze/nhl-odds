@@ -7,6 +7,8 @@ export default defineConfig({
   environments: {
     client: {
       build: {
+        // Fonts stay files: the CSP's font-src doesn't allow data: URLs
+        assetsInlineLimit: (file) => (/\.woff2?$/.test(file) ? false : undefined),
         rollupOptions: {
           output: {
             // A group also takes the modules it imports, so React goes in
