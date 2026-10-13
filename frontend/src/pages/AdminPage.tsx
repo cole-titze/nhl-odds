@@ -483,7 +483,8 @@ export function AdminPage() {
       const [statusData, checksData, runsData] = await Promise.all([
         getJobStatuses(),
         getHealthChecks(),
-        getLoadTestRuns(),
+        // A failed run list shouldn't take the job statuses down with it
+        getLoadTestRuns().catch(() => []),
       ]);
       setStatuses(statusData);
       setHealthChecks(checksData);
@@ -608,7 +609,8 @@ export function AdminPage() {
             <h2 className="font-display text-xl font-semibold mb-1">Load Tests</h2>
             <p className="text-sm text-surface-500 dark:text-surface-400 mb-4">
               Simulated visitors browse the live site from node01 (k6). Light: 25 users for 3
-              minutes. Heavy: 150 users for about 4.5 minutes. Waits until no other job is running.
+              minutes. Heavy: 150 users for about 4.5 minutes. Won't start while another job is
+              running.
             </p>
             {statuses && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
