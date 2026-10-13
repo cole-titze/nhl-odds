@@ -10,4 +10,5 @@ export default [
     route('about', 'pages/AboutPage.tsx'),
     route('admin', 'pages/AdminPage.tsx'),
   ]),
+  route('sitemap.xml', 'routes/sitemap.ts'),
 ] satisfies RouteConfig;

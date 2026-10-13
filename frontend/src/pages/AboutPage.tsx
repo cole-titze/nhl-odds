@@ -3,7 +3,10 @@ import { PageTitle } from '../components/A11y';
 export function AboutPage() {
   return (
     <div className="max-w-2xl mx-auto">
-      <PageTitle title="About" />
+      <PageTitle
+        title="About"
+        description="How NHL Odds predicts NHL games with a machine learning model trained on play-by-play data since 2009."
+      />
       <h1 className="font-display text-3xl font-bold tracking-tight mb-8">About NHL Odds</h1>
 
       <div className="space-y-6">

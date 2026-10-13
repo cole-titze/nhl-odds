@@ -126,7 +126,10 @@ export function GamePage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <PageTitle title={matchup} />
+      <PageTitle
+        title={matchup}
+        description={`${matchup}: the NHL Odds model's win probability compared with sportsbook and Kalshi odds.`}
+      />
       <h1 className="sr-only">{matchup}</h1>
       {/* Matchup Header */}
       <div className={`glass rounded-xl px-6 py-6 ${borderClass}`}>

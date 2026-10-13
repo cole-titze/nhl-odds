@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /api/
+Disallow: /mcp
+
+Sitemap: https://nhl.half-built.com/sitemap.xml

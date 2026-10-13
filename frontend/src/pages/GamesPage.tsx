@@ -283,7 +283,10 @@ export function GamesPage() {
 
   return (
     <div>
-      <PageTitle title="Games" />
+      <PageTitle
+        title="Games"
+        description="Today's NHL games with machine learning win probabilities, sportsbook and Kalshi odds, and the model's betting picks."
+      />
       <h1 className="sr-only">Games</h1>
       <div
         id={FILTER_BAR_ID}

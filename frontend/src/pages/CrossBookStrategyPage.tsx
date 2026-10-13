@@ -151,7 +151,10 @@ export function CrossBookStrategyPage() {
 
   return (
     <div>
-      <PageTitle title="Strategies" />
+      <PageTitle
+        title="Strategies"
+        description="Backtested NHL betting strategies using the model's win probabilities against sportsbook and Kalshi odds."
+      />
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
         <h1 className="font-display text-2xl font-bold tracking-tight">Strategies</h1>

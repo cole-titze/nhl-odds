@@ -435,7 +435,7 @@ export function AdminPage() {
 
   return (
     <div>
-      <PageTitle title="Admin" />
+      <PageTitle title="Admin" noindex />
       <div className="mb-8">
         <h1 className="font-display text-3xl font-bold tracking-tight">Admin</h1>
         <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">
