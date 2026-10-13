@@ -7,7 +7,7 @@ import { StrategyPicker } from '../components/StrategyPicker';
 import { useStrategy } from '../contexts/StrategyContext';
 import { LoadingStatus, PageTitle } from '../components/A11y';
 import {
-  initialChunkRange,
+  serverChunkRange,
   useBidirectionalGames,
   type InitialChunk,
 } from '../hooks/useBidirectionalGames';
@@ -88,8 +88,8 @@ function scrollToDate(date: string, behavior: ScrollBehavior): boolean {
 
 type HomePosition = 'visible' | 'above' | 'below' | 'unloaded';
 
-// First load renders on the server with the first chunk of games (two weeks
-// around today or the nearest game day). Client-side navigation skips it
+// First load renders on the server with the games from the day before to the
+// day after today (or the nearest game day). Client-side navigation skips it
 // (clientLoader) and the feed loads in the browser as before.
 export async function loader({ request }: LoaderFunctionArgs): Promise<InitialChunk | null> {
   const seasonStartYear = getCurrentSeason();
@@ -97,7 +97,7 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<InitialCh
   try {
     const { anchorDate } = await getAnchorDate(seasonStartYear, init);
     const anchor = anchorDate ?? formatDate(new Date());
-    const { lower, upper } = initialChunkRange(anchor);
+    const { lower, upper } = serverChunkRange(anchor);
     const games = await getGameOddsInDateRange(lower, upper, seasonStartYear, init);
     return { seasonStartYear, anchorDate: anchor, lower, upper, games };
   } catch {

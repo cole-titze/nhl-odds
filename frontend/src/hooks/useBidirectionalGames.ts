@@ -77,6 +77,14 @@ export function initialChunkRange(anchor: string): { lower: string; upper: strin
   return { lower: addDaysIso(anchor, -HALF_CHUNK), upper: addDaysIso(anchor, HALF_CHUNK) };
 }
 
+/**
+ * The server renders only the day before through the day after (~30 games) to
+ * keep the first response small; the feed loads the rest around it as usual.
+ */
+export function serverChunkRange(anchor: string): { lower: string; upper: string } {
+  return { lower: addDaysIso(anchor, -1), upper: addDaysIso(anchor, 1) };
+}
+
 function groupByDate(games: GameOddsVM[]): Map<string, GameOddsVM[]> {
   return mergeGames(new Map(), games);
 }

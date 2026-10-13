@@ -41,9 +41,17 @@ export function Layout({ children }: { children: ReactNode }) {
   );
 }
 
+// Only on client-side navigation: on the first load this effect runs after the
+// page's own (parents' effects run after children's), and would undo the games
+// feed scrolling to today
 function ScrollToTop() {
   const { pathname } = useLocation();
+  const firstRender = useRef(true);
   useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [pathname]);
   return null;
