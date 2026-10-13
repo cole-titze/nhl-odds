@@ -16,7 +16,8 @@ jobs:
   # Downloads Trivy and its vulnerability DB once and caches them, so the scan
   # jobs below all restore the cache instead of racing to save it
   prime-cache:
-    runs-on: ubuntu-latest
+    # The images are arm64-only, and Trivy scans the host's platform
+    runs-on: ubuntu-24.04-arm
     permissions:
       contents: read
     steps:
@@ -32,7 +33,8 @@ jobs:
 
   scan:
     needs: prime-cache
-    runs-on: ubuntu-latest
+    # The images are arm64-only, and Trivy scans the host's platform
+    runs-on: ubuntu-24.04-arm
     permissions:
       contents: read
       packages: read

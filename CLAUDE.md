@@ -29,7 +29,7 @@ cd frontend && npm install    # install dependencies
 cd frontend && npm run dev    # React Router dev server (Vite, with SSR) on http://localhost:5173
 cd frontend && npm run build  # production build to frontend/build/ (client assets + server bundle)
 cd frontend && npm start      # production server (server.mjs) on :8080: renders pages, serves assets, proxies /api and /mcp to API_URL
-cd frontend && npm run a11y   # WCAG 2.2 AA checks: axe (Chromium) + reflow/focus/scroll checks in Chromium, Firefox, WebKit (mocked API; run build first; A11Y_BROWSERS=chromium to limit)
+cd frontend && npm run a11y   # WCAG 2.2 AA checks: axe (Chromium) + reflow/focus/scroll checks in Chromium, Firefox, WebKit (mocked API; run build first; A11Y_BROWSERS=chromium to limit; A11Y_PARTS=axe|checks and A11Y_AXE_SHARD=2/4 split it like CI does)
 
 # Python game predictor (from repo root)
 python3 -m venv .venv

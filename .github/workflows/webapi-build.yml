@@ -28,7 +28,10 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Native arm64: the cluster is all Raspberry Pis, so there's no amd64 image to build
+    runs-on: ubuntu-24.04-arm
+    # A hung build fails here instead of after the 6 h default
+    timeout-minutes: 20
     permissions:
       contents: read
       packages: write
@@ -54,9 +57,6 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,prefix=,format=short
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
@@ -65,7 +65,12 @@ jobs:
         with:
           context: .
           file: src/WebApi/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
+          # Reuse unchanged layers (dependency installs) between runs; the weekly
+          # scheduled build starts clean so base images and OS packages update
+          cache-from: type=gha,scope=webapi
+          cache-to: type=gha,mode=max,scope=webapi
+          no-cache: ${{ github.event_name == 'schedule' }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

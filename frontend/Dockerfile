@@ -1,6 +1,6 @@
-# Built on the runner's own architecture: QEMU-emulated npm runs are slow and
-# can hang. The output is plain JavaScript and the pruned runtime packages have
-# no native modules, so the same files work on amd64 and arm64.
+# CI builds arm64 natively. If the image is ever built for another platform,
+# this stage still runs natively (emulated npm runs are slow and can hang): the
+# output is plain JavaScript and the pruned runtime packages have no native modules.
 FROM --platform=$BUILDPLATFORM node:24-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./

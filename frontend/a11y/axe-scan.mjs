@@ -21,6 +21,8 @@
 // each. WebKit is driven with Option+Tab, as Safari's plain Tab skips links
 // and buttons. Set CHROMIUM_PATH to use an existing Chromium instead of
 // Playwright's.
+// A11Y_PARTS (axe,checks) and A11Y_AXE_SHARD (e.g. 2/4) split the scan across
+// CI jobs; by default one run does everything.
 import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -44,6 +46,12 @@ const BROWSERS = (process.env.A11Y_BROWSERS || Object.keys(ENGINES).join(','))
 for (const b of BROWSERS) {
   if (!ENGINES[b]) throw new Error(`unknown browser "${b}" in A11Y_BROWSERS`);
 }
+// CI splits the scan across jobs: A11Y_PARTS picks the axe pass and/or the
+// other checks; A11Y_AXE_SHARD ("2/4") runs axe for every 4th theme from the 2nd
+const PARTS = (process.env.A11Y_PARTS || 'axe,checks').split(',').map((p) => p.trim());
+const [shard, shards] = (process.env.A11Y_AXE_SHARD || '1/1').split('/').map(Number);
+if (!(shard >= 1 && shard <= shards)) throw new Error('A11Y_AXE_SHARD must look like "2/4"');
+const AXE_THEMES = THEMES.filter((_, i) => i % shards === shard - 1);
 // Set per browser below
 let engine = BROWSERS[0];
 let TAB = 'Tab';
@@ -230,9 +238,9 @@ try {
     );
 
     // 1. axe
-    if (engine === 'chromium') {
+    if (engine === 'chromium' && PARTS.includes('axe')) {
       for (const [viewportName, viewport] of Object.entries(VIEWPORTS)) {
-        for (const theme of THEMES) {
+        for (const theme of AXE_THEMES) {
           const ctx = await newContext(browser, theme, viewport);
           const page = await ctx.newPage();
           for (const path of pagesFor()) {
@@ -252,6 +260,12 @@ try {
           await ctx.close();
         }
       }
+    }
+
+    if (!PARTS.includes('checks')) {
+      await browser.close();
+      browser = undefined;
+      continue;
     }
 
     // 2. Reflow at 320px

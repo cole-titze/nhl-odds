@@ -18,14 +18,23 @@ env:
 
 jobs:
   axe:
-    # axe's WCAG rules run in the Chromium job; the focus, scroll and reflow
-    # checks run in all three, since those behave differently per engine
-    name: a11y scan (${{ matrix.browser }})
+    # axe's WCAG rules run in Chromium only, split over four jobs by theme (it's
+    # ~112 page scans); the focus, scroll and reflow checks run in all three
+    # browsers, since those behave differently per engine
+    name: a11y scan (${{ matrix.name }})
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        browser: [chromium, firefox, webkit]
+        include:
+          - { name: 'axe 1/4', browser: chromium, parts: axe, shard: 1/4 }
+          - { name: 'axe 2/4', browser: chromium, parts: axe, shard: 2/4 }
+          - { name: 'axe 3/4', browser: chromium, parts: axe, shard: 3/4 }
+          - { name: 'axe 4/4', browser: chromium, parts: axe, shard: 4/4 }
+          - { name: chromium, browser: chromium, parts: checks, shard: 1/1 }
+          - { name: firefox, browser: firefox, parts: checks, shard: 1/1 }
+          - { name: webkit, browser: webkit, parts: checks, shard: 1/1 }
     permissions:
       contents: read
     defaults:
@@ -38,15 +47,33 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
+      # The browser download is cached per Playwright version; its system
+      # libraries still install every run (they live outside the cache)
+      - name: Get Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache ${{ matrix.browser }}
+        id: browser-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ steps.playwright.outputs.version }}-${{ matrix.browser }}
+
       - name: Install ${{ matrix.browser }}
+        if: steps.browser-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps ${{ matrix.browser }}
+
+      - name: Install ${{ matrix.browser }} system libraries
+        if: steps.browser-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps ${{ matrix.browser }}
 
       - name: Build
         run: npm run build
@@ -55,3 +82,5 @@ jobs:
         run: npm run a11y
         env:
           A11Y_BROWSERS: ${{ matrix.browser }}
+          A11Y_PARTS: ${{ matrix.parts }}
+          A11Y_AXE_SHARD: ${{ matrix.shard }}
