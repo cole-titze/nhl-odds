@@ -1,20 +1,23 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Links, Meta, Outlet, Scripts, useLocation } from 'react-router';
 import './index.css';
+import outfitLatin from '@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2?url';
+import monoLatin from '@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url';
 import { useNonce } from './contexts/NonceContext';
 import { StrategyContext } from './contexts/StrategyContext';
 import { DEFAULT_STRATEGY, type StrategyConfig } from './utils/bettingStrategies';
 import { getBestStrategies, type BestStrategyVM } from './api/strategy';
 import { getCurrentSeason } from './utils/season';
 
+// The Latin fonts every page shows, fetched with the stylesheet instead of
+// after it, so the text doesn't first paint in the fallback font
+const fontPreload = (href: string) =>
+  ({ rel: 'preload', as: 'font', type: 'font/woff2', href, crossOrigin: 'anonymous' }) as const;
+
 export const links = () => [
   { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
-  { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-  { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' as const },
-  {
-    rel: 'stylesheet',
-    href: 'https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap',
-  },
+  fontPreload(outfitLatin),
+  fontPreload(monoLatin),
 ];
 
 // The document shell. public/theme-init.js adds the saved theme's classes to

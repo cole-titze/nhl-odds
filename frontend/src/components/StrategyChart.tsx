@@ -124,14 +124,14 @@ export function StrategyChart({ results }: Props) {
             <LineChart data={chartData}>
               <XAxis
                 dataKey="date"
-                tick={{ fontSize: 11, fontFamily: 'JetBrains Mono', fill: 'currentColor' }}
+                tick={{ fontSize: 11, fontFamily: 'JetBrains Mono Variable', fill: 'currentColor' }}
                 interval="preserveStartEnd"
                 stroke="#525252"
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
-                tick={{ fontSize: 11, fontFamily: 'JetBrains Mono', fill: 'currentColor' }}
+                tick={{ fontSize: 11, fontFamily: 'JetBrains Mono Variable', fill: 'currentColor' }}
                 domain={['auto', 'auto']}
                 stroke="#525252"
                 tickLine={false}

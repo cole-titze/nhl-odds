@@ -9,10 +9,14 @@ export default defineConfig({
       build: {
         rollupOptions: {
           output: {
-            // Vite 8 (Rolldown) takes only the function form of manualChunks
-            manualChunks: (id) => {
-              if (/node_modules\/(react|react-dom|react-router|scheduler)\//.test(id)) return 'vendor';
-              if (/node_modules\/recharts\//.test(id)) return 'recharts';
+            // A group also takes the modules it imports, so React goes in
+            // vendor first (higher priority) or recharts would pull it in, and
+            // every page would then load the chart library
+            codeSplitting: {
+              groups: [
+                { name: 'vendor', test: /node_modules\/(react|react-dom|react-router|scheduler)\//, priority: 2 },
+                { name: 'recharts', test: /node_modules\/recharts\//, priority: 1 },
+              ],
             },
           },
         },

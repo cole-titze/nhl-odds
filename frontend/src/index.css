@@ -1,11 +1,15 @@
 @import 'tailwindcss';
+/* Self-hosted (same variable fonts Google Fonts serves): no render-blocking
+   stylesheet from another origin before the first paint */
+@import '@fontsource-variable/outfit';
+@import '@fontsource-variable/jetbrains-mono';
 
 @custom-variant dark (&:where(.dark, .dark *));
 @custom-variant hover (&:hover);
 
 @theme {
-  --font-display: 'Outfit', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-display: 'Outfit Variable', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', monospace;
   --color-surface-50: #fafafa;
   --color-surface-100: #f0f0f0;
   --color-surface-200: #e4e4e4;
@@ -28,7 +32,7 @@
 }
 
 :root {
-  font-family: 'Outfit', system-ui, sans-serif;
+  font-family: 'Outfit Variable', system-ui, sans-serif;
 }
 
 body {
@@ -40,6 +44,11 @@ body {
    page background rather than the theme-color meta. */
 html {
   background-color: var(--color-surface-50);
+  /* Trims full-bleed bars (100vw counts the scrollbar) without a sideways
+     scroll. On the page, not the app shell: Chrome scores a box with
+     overflow: clip as shifting whenever the feed prepends older days and
+     scrolls to keep the view still (CLS ~0.9 on the home page). */
+  overflow-x: clip;
 }
 
 html.dark {

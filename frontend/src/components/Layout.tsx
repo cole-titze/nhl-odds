@@ -45,7 +45,7 @@ export function Layout() {
 
   return (
     <OddsFormatContext.Provider value={oddsFormat}>
-      <div className="app-shell relative flex min-h-screen flex-col overflow-x-clip bg-surface-50 dark:bg-surface-950">
+      <div className="app-shell relative flex min-h-screen flex-col bg-surface-50 dark:bg-surface-950">
         <a
           href="#main"
           onClick={(e) => {
