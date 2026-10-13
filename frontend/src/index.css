@@ -40,6 +40,11 @@ body {
    page background rather than the theme-color meta. */
 html {
   background-color: var(--color-surface-50);
+  /* Trims full-bleed bars (100vw counts the scrollbar) without a sideways
+     scroll. On the page, not the app shell: Chrome scores a box with
+     overflow: clip as shifting whenever the feed prepends older days and
+     scrolls to keep the view still (CLS ~0.9 on the home page). */
+  overflow-x: clip;
 }
 
 html.dark {

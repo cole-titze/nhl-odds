@@ -15,6 +15,8 @@ interface GamesFeedProps {
   topSentinelRef: RefObject<HTMLDivElement | null>;
   bottomSentinelRef: RefObject<HTMLDivElement | null>;
   olderStatus: LoadStatus;
+  /** Whether to show the band while older days load (only when it'd be on screen) */
+  showOlderBand: boolean;
   newerStatus: LoadStatus;
   hasMoreOlder: boolean;
   hasMoreNewer: boolean;
@@ -31,6 +33,7 @@ export function GamesFeed({
   topSentinelRef,
   bottomSentinelRef,
   olderStatus,
+  showOlderBand,
   newerStatus,
   hasMoreOlder,
   hasMoreNewer,
@@ -56,7 +59,7 @@ export function GamesFeed({
         />
       )}
 
-      {olderStatus === 'loading' && <FeedLoaderBand />}
+      {olderStatus === 'loading' && showOlderBand && <FeedLoaderBand />}
 
       <div className="space-y-8">
         {dates.map((date) => {

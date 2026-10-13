@@ -148,6 +148,15 @@ export function GamesPage() {
   // chunk load. Re-creating on every chunk load caused the IO to re-fire
   // immediately for visible sentinels, cascading into repeated loads and
   // content shifts in both directions.
+  //
+  // Older days go in above the view. The scroll is put back so nothing moves on
+  // screen, but Chrome still scores it as layout shift when it lands while the
+  // page loads (CLS ~0.9), so they wait for the user's first scroll, tap or key.
+  const userActed = useRef(false);
+  // The older-days loading band only shows when the top of the feed is on
+  // screen: added and removed off screen above the view, it counts as layout
+  // shift too though nothing visibly moves
+  const [olderBandOnScreen, setOlderBandOnScreen] = useState(false);
   useEffect(() => {
     if (!ready) return;
     const top = topSentinelRef.current;
@@ -158,15 +167,28 @@ export function GamesPage() {
       (entries) => {
         for (const e of entries) {
           if (!e.isIntersecting) continue;
-          if (e.target === top) loadOlder();
-          else if (e.target === bot) loadNewer();
+          if (e.target === top) {
+            setOlderBandOnScreen(e.boundingClientRect.bottom >= 0);
+            loadOlder();
+          } else if (e.target === bot) loadNewer();
         }
       },
       { rootMargin: '600px 0px 600px 0px', threshold: 0 },
     );
-    io.observe(top);
     io.observe(bot);
-    return () => io.disconnect();
+
+    const inputs = ['wheel', 'touchstart', 'keydown', 'pointerdown'] as const;
+    const armOlder = () => {
+      for (const type of inputs) window.removeEventListener(type, armOlder);
+      userActed.current = true;
+      io.observe(top);
+    };
+    if (userActed.current) armOlder();
+    else for (const type of inputs) window.addEventListener(type, armOlder, { passive: true });
+    return () => {
+      for (const type of inputs) window.removeEventListener(type, armOlder);
+      io.disconnect();
+    };
   }, [ready, loadNewer, loadOlder]);
 
   // Tell the browser how much of the viewport the sticky navbar + filter bar
@@ -290,7 +312,7 @@ export function GamesPage() {
         onKeyDown={handleFilterBarTab}
         onClickCapture={noteViewAnchor}
         onChangeCapture={noteViewAnchor}
-        // Spans the full window like the navbar (the shell's overflow-x-clip
+        // Spans the full window like the navbar (<html>'s overflow-x: clip
         // trims the scrollbar's width off 100vw); controls stay in the column
         className="app-subbar sticky top-14 md:top-16 z-40 mx-[calc(50%-50vw)] py-3 mb-6 backdrop-blur bg-white/70 dark:bg-surface-950/70 border-b border-surface-200/60 dark:border-white/[0.06]"
       >
@@ -365,6 +387,7 @@ export function GamesPage() {
             topSentinelRef={topSentinelRef}
             bottomSentinelRef={bottomSentinelRef}
             olderStatus={olderStatus}
+            showOlderBand={olderBandOnScreen}
             newerStatus={newerStatus}
             hasMoreOlder={hasMoreOlder}
             hasMoreNewer={hasMoreNewer}
