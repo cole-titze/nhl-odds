@@ -62,7 +62,8 @@ async function startPreview() {
   // The production server, with an API address nothing answers on: the
   // loaders fail, so pages fetch in the browser, where the mocks answer
   const server = spawn(process.execPath, ['server.mjs'], {
-    stdio: 'ignore',
+    // stderr shows server-side render errors in the scan's output
+    stdio: ['ignore', 'ignore', 'inherit'],
     env: { ...process.env, PORT: String(PORT), API_URL: 'http://127.0.0.1:9' },
   });
   for (let i = 0; i < 60; i++) {
@@ -97,10 +98,31 @@ async function newContext(browser, theme, viewport) {
 }
 
 async function load(page, path) {
+  const log = [];
+  const onConsole = (m) => log.push(`${m.type()}: ${m.text().slice(0, 300)}`);
+  const onError = (e) => log.push(`pageerror: ${e.message.slice(0, 300)}`);
+  const onRequest = (r) => r.url().includes('/api/') && log.push(`request ${r.url()}`);
+  page.on('console', onConsole);
+  page.on('pageerror', onError);
+  page.on('request', onRequest);
   await page.goto(BASE + path, { waitUntil: 'networkidle' });
   // The server can't reach the mocked API, so the games feed loads in the
   // browser after hydration; slow runners can still be on the skeleton here
-  if (path === '/') await page.waitForSelector('#games-feed a[href]');
+  if (path === '/') {
+    await page.waitForSelector('#games-feed a[href]').catch(async (err) => {
+      // Rare in CI WebKit only: say what the page was doing
+      const main = await page.evaluate(() => ({
+        hydrated: !!window.__reactRouterRouteModules,
+        text: document.querySelector('main')?.innerText.slice(0, 300),
+      }));
+      console.log(`games feed never showed: ${JSON.stringify(main)}`);
+      log.forEach((l) => console.log(`    ${l}`));
+      throw err;
+    });
+  }
+  page.off('console', onConsole);
+  page.off('pageerror', onError);
+  page.off('request', onRequest);
   await page.waitForTimeout(500);
 }
 
