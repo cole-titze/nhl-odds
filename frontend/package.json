@@ -15,7 +15,6 @@
   "dependencies": {
     "@react-router/express": "7.18.4",
     "@react-router/node": "7.18.4",
-    "@tailwindcss/vite": "^4.3.3",
     "compression": "^1.8.2",
     "date-fns": "^4.4.0",
     "express": "5.3.0",
@@ -24,12 +23,12 @@
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-router": "7.18.4",
-    "recharts": "^3.10.1",
-    "tailwindcss": "^4.2.1"
+    "recharts": "^3.10.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "@react-router/dev": "7.18.4",
+    "@tailwindcss/vite": "^4.3.3",
     "@types/express": "5.0.6",
     "@types/node": "^24.19.1",
     "@types/react": "^19.3.0",
@@ -44,6 +43,7 @@
     "globals": "^17.13.0",
     "playwright": "^1.63.0",
     "prettier": "^3.9.9",
+    "tailwindcss": "^4.2.1",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.71.1",
     "vite": "^8.3.4"

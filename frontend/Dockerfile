@@ -1,4 +1,7 @@
-FROM node:24-alpine AS build
+# Built on the runner's own architecture: QEMU-emulated npm runs are slow and
+# can hang. The output is plain JavaScript and the pruned runtime packages have
+# no native modules, so the same files work on amd64 and arm64.
+FROM --platform=$BUILDPLATFORM node:24-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
