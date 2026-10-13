@@ -42,6 +42,12 @@ public class GameOddsGetter : IGameOddsGetter
         return team;
     }
 
+    public async Task<GameOddsVM?> GetGameOdds(int gameId)
+    {
+        var gameOdds = await _gameOddsRepository.GetGameOdds(gameId);
+        return gameOdds is null ? null : GameOddsToViewModelsMapper.Map([gameOdds]).Single();
+    }
+
     public async Task<AnchorDateVM> GetAnchorDate(int seasonStartYear)
     {
         var anchor = await _gameOddsRepository.GetAnchorDate(seasonStartYear);

@@ -10,4 +10,5 @@ public interface IGameOddsGetter
     Task<IEnumerable<TeamStats>> BuildAllTeamsGameOdds(IEnumerable<TeamStats> teams, int seasonStartYear);
     Task<TeamStats> BuildTeamGameOdds(TeamStats team, int seasonStartYear);
     Task<AnchorDateVM> GetAnchorDate(int seasonStartYear);
+    Task<GameOddsVM?> GetGameOdds(int gameId);
 }

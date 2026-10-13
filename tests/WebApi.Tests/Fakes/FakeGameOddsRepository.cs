@@ -31,6 +31,11 @@ public class FakeGameOddsRepository : IGameOddsRepository
         return Task.FromResult<IEnumerable<GameOdds>>(result);
     }
 
+    public Task<GameOdds?> GetGameOdds(int gameId)
+    {
+        return Task.FromResult(_gameOdds.FirstOrDefault(x => x.Game.Id == gameId));
+    }
+
     public Task<List<GameOdds>> GetAllGameOddsForSeason(int seasonStartYear)
     {
         return Task.FromResult(_gameOdds.ToList());

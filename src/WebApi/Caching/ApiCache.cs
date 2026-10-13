@@ -37,6 +37,7 @@ public static class ApiCache
     public static string GameOddsKey(DateRange dateRange, int seasonStartYear) =>
         $"GameOdds_{dateRange.StartDate:yyyy-MM-dd}_{dateRange.EndDate:yyyy-MM-dd}_{seasonStartYear}";
     public static string AnchorDateKey(int seasonStartYear) => $"AnchorDate_{seasonStartYear}";
+    public static string GameKey(int gameId) => $"Game_{gameId}";
 
     public static async Task<T> GetOrSetAsync<T>(this IMemoryCache cache, string key, Func<Task<T>> create,
         Func<T, long> sizeOf, TimeSpan? lifetime = null)

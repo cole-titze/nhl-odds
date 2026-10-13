@@ -9,7 +9,7 @@ import {
 import { useState, useEffect } from 'react';
 import type { GameOddsVM, BookmakerOddsVM } from '../types';
 import { Winner } from '../types';
-import { getGameOddsInDateRange } from '../api/gameOdds';
+import { getGame } from '../api/gameOdds';
 import { forwardClientIp } from '../api/client';
 import { useDisplayTimeZone } from '../hooks/useDisplayTimeZone';
 import { useOddsFormatContext } from '../contexts/OddsFormatContext';
@@ -31,24 +31,12 @@ function formatPoint(point: number): string {
   return point > 0 ? `+${point}` : `${point}`;
 }
 
-// There's no single-game endpoint, so fetch the game's whole season and find it
-async function fetchGame(gameId: string, init?: RequestInit): Promise<GameOddsVM | undefined> {
-  const seasonStartYear = Number(gameId.slice(0, 4));
-  const games = await getGameOddsInDateRange(
-    `${seasonStartYear}-09-01`,
-    `${seasonStartYear + 1}-07-31`,
-    seasonStartYear,
-    init,
-  );
-  return games.find((g) => g.id === Number(gameId));
-}
-
 // First load renders on the server; client-side navigation fetches in the page
 // as before (usually not even that: game cards pass the game in location.state)
 export async function loader({ params, request }: LoaderFunctionArgs) {
   let game: GameOddsVM | undefined;
   try {
-    game = await fetchGame(params.gameId!, forwardClientIp(request));
+    game = await getGame(params.gameId!, forwardClientIp(request));
   } catch {
     return null;
   }
@@ -79,7 +67,7 @@ export function GamePage() {
     if (game || error) return;
     if (!gameId) return;
 
-    fetchGame(gameId)
+    getGame(gameId)
       .then((found) => {
         if (found) {
           setGame(found);

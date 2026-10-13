@@ -4,10 +4,18 @@ const BASE_URL = import.meta.env.SSR
   ? process.env.API_URL || 'http://localhost:32616'
   : import.meta.env.VITE_API_URL || '';
 
+export class ApiError extends Error {
+  readonly status: number;
+  constructor(status: number, statusText: string) {
+    super(`API error: ${status} ${statusText}`);
+    this.status = status;
+  }
+}
+
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, init);
   if (!res.ok) {
-    throw new Error(`API error: ${res.status} ${res.statusText}`);
+    throw new ApiError(res.status, res.statusText);
   }
   return res.json();
 }

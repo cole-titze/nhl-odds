@@ -33,6 +33,15 @@ public class GameOddsController
         return Results.Ok(result);
     }
 
+    // One game, for the Game page; 404 if there's no such game
+    [HttpGet]
+    public async Task<IResult> GetGame(int gameId)
+    {
+        var result = await _cache.GetOrSetAsync(ApiCache.GameKey(gameId),
+            () => _gameOddsGetter.GetGameOdds(gameId), _ => 1, ApiCache.DateRangeLifetime);
+        return result is null ? Results.NotFound() : Results.Ok(result);
+    }
+
     [HttpGet]
     public async Task<IResult> GetAnchorDate(int seasonStartYear)
     {

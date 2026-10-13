@@ -63,6 +63,24 @@ public class GameOddsRepository : IGameOddsRepository
         return gameOdds;
     }
 
+    public async Task<GameOdds?> GetGameOdds(int gameId)
+    {
+        var games = await _dbContext.GameRaw
+            .AsNoTracking()
+            .Where(g => g.Id == gameId)
+            .ToListAsync();
+        if (games.Count == 0)
+            return null;
+
+        var seasonTeams = await GetSeasonTeams(games[0].SeasonStartYear);
+        var latestByGame = await GetLatestOddsForGames(games);
+        var gameOdds = DbGameOddsToGameOddsMapper.Map(games, latestByGame, seasonTeams);
+
+        await AttachBookmakerOdds(gameOdds);
+        await AttachSpreadTotalPredictions(gameOdds);
+        return gameOdds[0];
+    }
+
     private async Task<Dictionary<int, DbGameOdds>> GetLatestOddsForGames(IEnumerable<DbGameRaw> games)
     {
         var gameIds = games.Select(g => g.Id).ToList();
