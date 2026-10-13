@@ -16,9 +16,9 @@ function contentSecurityPolicy(nonce: string) {
   return [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}'`,
-    "style-src 'self' https://fonts.googleapis.com",
+    "style-src 'self'",
     "img-src 'self' data: https://assets.nhle.com",
-    "font-src 'self' https://fonts.gstatic.com",
+    "font-src 'self'",
     "connect-src 'self' https://assets.nhle.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",
