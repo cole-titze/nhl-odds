@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useLoaderData, type LoaderFunctionArgs } from 'react-router';
 import { SeasonSelector } from '../components/SeasonSelector';
 import { TeamRow } from '../components/TeamRow';
@@ -6,12 +6,12 @@ import { LogLossChart } from '../components/LogLossChart';
 import { Skeleton, StatCardSkeleton } from '../components/Skeleton';
 import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
 import { useFetch } from '../hooks/useFetch';
-import { getSeasonTeams } from '../api/teams';
+import { getSeasonBookmakerOdds, getSeasonTeams } from '../api/teams';
 import { forwardClientIp } from '../api/client';
 import { getCurrentSeason } from '../utils/season';
 import { calculateLogLoss } from '../utils/predictions';
 import { Winner } from '../types';
-import type { SeasonTeamGameVM, TeamSummaryVM } from '../types';
+import type { SeasonBookmakerOddsVM, SeasonTeamGameVM, TeamSummaryVM } from '../types';
 
 type SortKey =
   | 'name'
@@ -100,6 +100,50 @@ export function TeamsPage() {
   const { data, loading, error } = useFetch(() => getSeasonTeams(season), [season], initial);
 
   const kalshi = useMemo(() => computeKalshiStats(data?.games ?? []), [data]);
+
+  // Books other than DraftKings and Kalshi are fetched when picked on the chart, per season
+  const [extraOdds, setExtraOdds] = useState<{
+    season: number;
+    books: Record<string, SeasonBookmakerOddsVM[]>;
+  }>({ season, books: {} });
+  const loadedBooks = useMemo(
+    () => (extraOdds.season === season ? extraOdds.books : {}),
+    [extraOdds, season],
+  );
+  const loadBookmaker = useCallback(
+    async (name: string) => {
+      const odds = await getSeasonBookmakerOdds(season, name);
+      setExtraOdds((prev) => ({
+        season,
+        books: { ...(prev.season === season ? prev.books : {}), [name]: odds },
+      }));
+    },
+    [season],
+  );
+  const unloadedBookmakers = useMemo(
+    () => (data?.otherBookmakers ?? []).filter((name) => !(name in loadedBooks)),
+    [data, loadedBooks],
+  );
+  const chartGames = useMemo(() => {
+    const games = data?.games ?? NO_GAMES;
+    const books = Object.entries(loadedBooks);
+    if (books.length === 0) return games;
+    const byGame = new Map<
+      number,
+      { bookmakerName: string; homeOdds: number; awayOdds: number }[]
+    >();
+    for (const [bookmakerName, odds] of books) {
+      for (const { gameId, homeOdds, awayOdds } of odds) {
+        if (!byGame.has(gameId)) byGame.set(gameId, []);
+        byGame.get(gameId)!.push({ bookmakerName, homeOdds, awayOdds });
+      }
+    }
+    return games.map((g) =>
+      byGame.has(g.id)
+        ? { ...g, bookmakerOdds: [...(g.bookmakerOdds ?? []), ...byGame.get(g.id)!] }
+        : g,
+    );
+  }, [data, loadedBooks]);
   const kalshiByTeamId = kalshi.byTeamId;
   const kalshiSeasonTotals = kalshi.season;
 
@@ -224,7 +268,11 @@ export function TeamsPage() {
         </>
       )}
 
-      <LogLossChart games={data?.games ?? NO_GAMES} />
+      <LogLossChart
+        games={chartGames}
+        unloadedBookmakers={unloadedBookmakers}
+        onLoadBookmaker={loadBookmaker}
+      />
 
       {data && (
         <>

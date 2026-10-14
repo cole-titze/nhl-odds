@@ -11,17 +11,36 @@ public static class TeamsVmToSeasonTeamsVmMapper
     public static SeasonTeamsVM Map(TeamsVM teamsVm)
     {
         var summary = TeamsVmToTeamsSummaryVmMapper.Map(teamsVm);
+        var games = SeasonGames(teamsVm).ToList();
         return new SeasonTeamsVM
         {
             Teams = summary.Teams,
             SeasonTotals = summary.SeasonTotals,
-            Games = teamsVm.Teams
-                .SelectMany(t => t.GameOddsVM)
-                .DistinctBy(g => g.Id)
-                .Select(Map)
+            Games = games.Select(Map).ToList(),
+            OtherBookmakers = games
+                .SelectMany(g => g.BookmakerOdds)
+                .Select(b => b.BookmakerName)
+                .Where(name => !Bookmakers.Contains(name))
+                .Distinct()
+                .Order()
                 .ToList(),
         };
     }
+
+    // One book's odds for every game that has them
+    public static List<SeasonBookmakerOddsVM> MapBookmakerOdds(TeamsVM teamsVm, string bookmakerName)
+    {
+        return SeasonGames(teamsVm)
+            .SelectMany(g => g.BookmakerOdds
+                .Where(b => b.BookmakerName == bookmakerName)
+                .Take(1)
+                .Select(b => new SeasonBookmakerOddsVM { GameId = g.Id, HomeOdds = b.HomeOdds, AwayOdds = b.AwayOdds }))
+            .ToList();
+    }
+
+    // Each team lists its own games, so a game shows up once per team
+    private static IEnumerable<GameOddsVM> SeasonGames(TeamsVM teamsVm) =>
+        teamsVm.Teams.SelectMany(t => t.GameOddsVM).DistinctBy(g => g.Id);
 
     private static SeasonTeamGameVM Map(GameOddsVM game)
     {

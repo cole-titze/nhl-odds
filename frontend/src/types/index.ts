@@ -96,5 +96,14 @@ export type SeasonTeamGameVM = ChartGame & {
 export interface SeasonTeamsVM {
   teams: TeamSummaryVM[];
   seasonTotals: SeasonTotalsVM;
+  /** With DraftKings' and Kalshi's odds only */
   games: SeasonTeamGameVM[];
+  /** Other books with odds this season, loaded with getSeasonBookmakerOdds when picked */
+  otherBookmakers: string[];
+}
+
+export interface SeasonBookmakerOddsVM {
+  gameId: number;
+  homeOdds: number;
+  awayOdds: number;
 }

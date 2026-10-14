@@ -24,11 +24,10 @@ public class TeamsVmToSeasonTeamsVmMapperTests
         ],
     };
 
-    [TestMethod]
-    public void Map_ShouldListEachGameOnceWithTeamIdsAndOnlyDraftKingsAndKalshi()
+    private static TeamsVM TeamsVm()
     {
         var shared = Game(1);
-        var teamsVm = new TeamsVM
+        return new TeamsVM
         {
             Teams =
             [
@@ -37,8 +36,12 @@ public class TeamsVmToSeasonTeamsVmMapperTests
             ],
             SeasonTotals = new SeasonTotalsVM { TotalGameCount = 2 },
         };
+    }
 
-        var result = TeamsVmToSeasonTeamsVmMapper.Map(teamsVm);
+    [TestMethod]
+    public void Map_ShouldListEachGameOnceWithTeamIdsAndOnlyDraftKingsAndKalshi()
+    {
+        var result = TeamsVmToSeasonTeamsVmMapper.Map(TeamsVm());
 
         result.Teams.Select(t => t.Id).Should().Equal(1, 2);
         result.SeasonTotals.TotalGameCount.Should().Be(2);
@@ -49,5 +52,15 @@ public class TeamsVmToSeasonTeamsVmMapperTests
         game.LogLoss.Should().Be(0.6);
         game.BookmakerOdds.Should().ContainSingle().Which.Should().BeEquivalentTo(
             new SeasonTeamGameOddsVM { BookmakerName = "Kalshi", HomeOdds = 0.55, AwayOdds = 0.45 });
+        result.OtherBookmakers.Should().Equal("FanDuel");
+    }
+
+    [TestMethod]
+    public void MapBookmakerOdds_ShouldListThatBooksOddsForEachGameOnce()
+    {
+        var result = TeamsVmToSeasonTeamsVmMapper.MapBookmakerOdds(TeamsVm(), "FanDuel");
+
+        result.Select(o => o.GameId).Should().Equal(1, 2);
+        result[0].Should().BeEquivalentTo(new SeasonBookmakerOddsVM { GameId = 1, HomeOdds = 0.56, AwayOdds = 0.44 });
     }
 }

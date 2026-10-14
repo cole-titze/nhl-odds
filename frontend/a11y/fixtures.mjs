@@ -134,7 +134,11 @@ const responses = {
         awayOdds,
       })),
     })),
+    otherBookmakers: ['FanDuel'],
   },
+  GetSeasonBookmakerOdds: games
+    .slice(29, 41)
+    .map((g) => ({ gameId: g.id, homeOdds: 0.52, awayOdds: 0.48 })),
   GetTeam: team(10, 'Toronto', 'Maple Leafs', 'TOR'),
   GetBestStrategies: [
     {

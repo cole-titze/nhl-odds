@@ -49,9 +49,14 @@ const DEFAULT_ENABLED = new Set([HOMEGROWN, 'DraftKings', 'Kalshi']);
 
 interface Props {
   games: ChartGame[];
+  /** Books to offer as chips whose odds aren't in games yet; picking one calls onLoadBookmaker */
+  unloadedBookmakers?: string[];
+  onLoadBookmaker?: (name: string) => Promise<void>;
 }
 
-export function LogLossChart({ games }: Props) {
+const NONE: string[] = [];
+
+export function LogLossChart({ games, unloadedBookmakers = NONE, onLoadBookmaker }: Props) {
   const hydrated = useHydrated();
   const { timeZone } = useDisplayTimeZone();
   const playedGames = useMemo(
@@ -66,8 +71,9 @@ export function LogLossChart({ games }: Props) {
         if (b.homeOdds > 0 && b.awayOdds > 0) names.add(b.bookmakerName);
       }
     }
+    for (const name of unloadedBookmakers) names.add(name);
     return Array.from(names).sort();
-  }, [playedGames]);
+  }, [playedGames, unloadedBookmakers]);
 
   const allChips = useMemo(() => [HOMEGROWN, ...bookmakerNames], [bookmakerNames]);
 
@@ -78,7 +84,21 @@ export function LogLossChart({ games }: Props) {
     readableLineColor(getColor(name, allChips.indexOf(name)), dark);
   const lineDash = (name: string) => dashFor(allChips.indexOf(name));
 
-  const toggle = (name: string) => {
+  const [loading, setLoading] = useState<string | null>(null);
+
+  const toggle = async (name: string) => {
+    if (loading) return;
+    if (!enabled.has(name) && unloadedBookmakers.includes(name) && onLoadBookmaker) {
+      setLoading(name);
+      try {
+        await onLoadBookmaker(name);
+      } catch {
+        // Left off; picking it again retries
+        return;
+      } finally {
+        setLoading(null);
+      }
+    }
     setEnabled((prev) => {
       const next = new Set(prev);
       if (next.has(name)) next.delete(name);
@@ -163,6 +183,7 @@ export function LogLossChart({ games }: Props) {
               key={name}
               type="button"
               aria-pressed={active}
+              aria-busy={loading === name}
               onClick={() => toggle(name)}
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-medium transition-all ${getChipClasses(color, active)}`}
             >

@@ -40,6 +40,15 @@ public class TeamController
         return Results.Ok(seasonTeams);
     }
 
+    // One of GetSeasonTeams' OtherBookmakers, for when it's picked on the Teams page's chart
+    [HttpGet]
+    public async Task<IResult> GetSeasonBookmakerOdds(int seasonStartYear, string bookmaker)
+    {
+        var teamsVm = await _cache.GetOrSetAsync(ApiCache.AllTeamsKey(seasonStartYear),
+            () => _teamGetter.GetAllTeamsStats(seasonStartYear), ApiCache.SizeOf);
+        return Results.Ok(TeamsVmToSeasonTeamsVmMapper.MapBookmakerOdds(teamsVm, bookmaker));
+    }
+
     [HttpGet]
     public async Task<IResult> GetTeam(int teamId, int seasonStartYear)
     {
