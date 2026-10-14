@@ -67,7 +67,17 @@ function ElapsedTime({ startedAt }: { startedAt: string | null }) {
   return <span className="stat-number text-xs">{elapsed}</span>;
 }
 
-function JobCard({ job, label, onStart }: { job: JobInfo; label: string; onStart?: () => void }) {
+function JobCard({
+  job,
+  label,
+  note,
+  onStart,
+}: {
+  job: JobInfo;
+  label: string;
+  note?: string;
+  onStart?: () => void;
+}) {
   const isRunning = job.status === 'running';
   const isRequested = job.status === 'requested';
   const ranToday = job.completedToday;
@@ -85,7 +95,10 @@ function JobCard({ job, label, onStart }: { job: JobInfo; label: string; onStart
       )}
 
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display text-lg font-semibold">{label}</h2>
+        <div>
+          <h2 className="font-display text-lg font-semibold">{label}</h2>
+          {note && <p className="text-xs text-surface-500 dark:text-surface-400">{note}</p>}
+        </div>
         <span
           className={`px-2.5 py-1 rounded-lg text-xs font-mono font-semibold uppercase ${STATUS_STYLES[job.status] || STATUS_STYLES.idle}`}
         >
@@ -674,22 +687,19 @@ export function AdminPage() {
           ) : null}
 
           <div className="mt-10">
-            <h2 className="font-display text-xl font-semibold mb-1">Load Tests</h2>
-            <p className="text-sm text-surface-500 dark:text-surface-400 mb-4">
-              Simulated visitors browse the live site from node01 (k6). Light: 25 users for 3
-              minutes. Heavy: 150 users for about 4.5 minutes. Won't start while another job is
-              running.
-            </p>
+            <h2 className="font-display text-xl font-semibold mb-4">Load Tests</h2>
             {statuses && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
                 <JobCard
                   job={statuses.loadTestLight}
                   label="Light Load Test"
+                  note="25 users, 3 minutes"
                   onStart={() => handleStart(() => startLoadTest('light'))}
                 />
                 <JobCard
                   job={statuses.loadTestHeavy}
                   label="Heavy Load Test"
+                  note="150 users, 4.5 minutes"
                   onStart={() => handleStart(() => startLoadTest('heavy'))}
                 />
               </div>
