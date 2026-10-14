@@ -1,12 +1,13 @@
 #!/bin/sh
-# Runs after k6 in a load test Job (see poll-requests.sh): saves the run to "LoadTestRun" and
-# marks the job completed, or failed with k6's exit code if it didn't finish.
+# Runs after k6 in a load test Job (see poll-requests.sh): saves the run to "LoadTestRun" and its
+# per-page results to "LoadTestRunPage", and marks the job completed, or failed with k6's exit
+# code if it didn't finish.
 JOB_NAME="$1"
 
 RC=$(cat /out/rc 2>/dev/null || echo "missing")
 
 # k6 exits 99 when a threshold fails; the script sets none, so anything but 0 means it broke
-if [ "$RC" != 0 ] || [ ! -f /out/result.env ]; then
+if [ "$RC" != 0 ] || [ ! -f /out/result.env ] || [ ! -f /out/pages.sql ]; then
     echo "k6 exited with code $RC"
     psql "$NHL_DATABASE_URL" -q -v ON_ERROR_STOP=1 -v job="$JOB_NAME" -v error="k6 exited with code $RC; see the Job's pod logs." <<'SQL'
 UPDATE "JobStatus" SET "Status" = 'failed', "FinishedAt" = now() AT TIME ZONE 'UTC', "Error" = :'error'
@@ -33,7 +34,9 @@ INSERT INTO "LoadTestRun" ("Preset", "Target", "MaxVus", "RampUpSeconds", "HoldS
 VALUES (:'preset', :'target', :'max_vus', :'ramp_up', :'hold', :'ramp_down',
     :'think_min', :'think_max', :'page_mix',
     (:'started'::timestamptz AT TIME ZONE 'UTC'), (:'finished'::timestamptz AT TIME ZONE 'UTC'), :'requests',
-    :'rps', :'p50', :'p95', :'p99', :'max_ms', :'http_5xx', :'http_429', :'other_errors');
+    :'rps', :'p50', :'p95', :'p99', :'max_ms', :'http_5xx', :'http_429', :'other_errors')
+RETURNING "Id" AS run_id \gset
+\i /out/pages.sql
 UPDATE "JobStatus" SET "Status" = 'completed', "FinishedAt" = now() AT TIME ZONE 'UTC', "Error" = NULL
 WHERE "JobName" = :'job';
 COMMIT;

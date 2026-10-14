@@ -60,7 +60,21 @@ export interface JobStatuses {
 
 export type LoadTestPreset = 'light' | 'heavy';
 
-/** One load test: the preset's inputs, then what k6 measured. */
+/** A load test's results for one page. */
+export interface LoadTestRunPage {
+  page: string;
+  requests: number;
+  requestsPerSecond: number;
+  p50Ms: number;
+  p95Ms: number;
+  p99Ms: number;
+  maxMs: number;
+  http5xx: number;
+  http429: number;
+  otherErrors: number;
+}
+
+/** One load test: the preset's inputs, what k6 measured over all pages, and each page's results. */
 export interface LoadTestRun {
   id: number;
   preset: string;
@@ -83,6 +97,7 @@ export interface LoadTestRun {
   http5xx: number;
   http429: number;
   otherErrors: number;
+  pages: LoadTestRunPage[];
 }
 
 /** Checks a key against the API before it's stored, so a wrong key never unlocks the page. */

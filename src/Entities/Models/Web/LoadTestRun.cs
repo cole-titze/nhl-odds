@@ -23,4 +23,5 @@ public class LoadTestRun
     public int Http5xx { get; set; }
     public int Http429 { get; set; }
     public int OtherErrors { get; set; }
+    public List<LoadTestRunPage> Pages { get; set; } = new();
 }

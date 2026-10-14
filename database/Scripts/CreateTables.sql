@@ -903,6 +903,24 @@ CREATE TABLE "LoadTestRun"
     CONSTRAINT "PK_LoadTestRun" PRIMARY KEY("Id")
 );
 
+-- A load test's results for each page it loaded (the run's own row has them for all pages)
+CREATE TABLE "LoadTestRunPage"
+(
+    "LoadTestRunId" INTEGER NOT NULL,
+    "Page" VARCHAR(50) NOT NULL,
+    "Requests" INTEGER NOT NULL,
+    "RequestsPerSecond" DOUBLE PRECISION NOT NULL,
+    "P50Ms" DOUBLE PRECISION NOT NULL,
+    "P95Ms" DOUBLE PRECISION NOT NULL,
+    "P99Ms" DOUBLE PRECISION NOT NULL,
+    "MaxMs" DOUBLE PRECISION NOT NULL,
+    "Http5xx" INTEGER NOT NULL,
+    "Http429" INTEGER NOT NULL,
+    "OtherErrors" INTEGER NOT NULL,
+    CONSTRAINT "PK_LoadTestRunPage" PRIMARY KEY("LoadTestRunId", "Page"),
+    FOREIGN KEY ("LoadTestRunId") REFERENCES "LoadTestRun"("Id") ON DELETE CASCADE
+);
+
 -- Snapshots of the NHL's public roster report (Active / Injured Reserve lists), one row per matched player
 CREATE TABLE "RosterStatus"
 (

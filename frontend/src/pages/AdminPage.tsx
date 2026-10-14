@@ -15,7 +15,9 @@ import {
   type ErrorLog,
   type JobInfo,
   type JobStatuses,
+  type LoadTestPreset,
   type LoadTestRun,
+  type LoadTestRunPage,
   type SeasonHealthCheck,
 } from '../api/admin';
 import { formatSeasonLabel } from '../utils/season';
@@ -163,82 +165,148 @@ function ms(value: number) {
   return value >= 1000 ? `${(value / 1000).toFixed(2)}s` : `${Math.round(value)}ms`;
 }
 
-function LoadTestTable({ runs }: { runs: LoadTestRun[] }) {
-  if (runs.length === 0) {
-    return (
-      <div className="glass rounded-xl p-6 text-sm text-surface-500 dark:text-surface-400 text-center">
-        No load tests yet.
-      </div>
-    );
-  }
+const SELECT_CLASS =
+  "pl-3 pr-8 py-2 rounded-lg glass text-sm font-mono font-medium cursor-pointer appearance-none bg-[url('/chevron-down.svg')] bg-[length:16px] bg-[right_8px_center] bg-no-repeat";
+
+type LoadTestStats = Omit<LoadTestRunPage, 'page'>;
+
+function LoadTestStatsCells({ stats }: { stats: LoadTestStats }) {
+  return (
+    <>
+      <td className="px-4 py-3 stat-number text-center">{stats.requests}</td>
+      <td className="px-4 py-3 stat-number text-center">{stats.requestsPerSecond.toFixed(1)}</td>
+      <td className="px-4 py-3 stat-number text-center">{ms(stats.p50Ms)}</td>
+      <td className="px-4 py-3 stat-number text-center">{ms(stats.p95Ms)}</td>
+      <td className="px-4 py-3 stat-number text-center">{ms(stats.p99Ms)}</td>
+      <td className="px-4 py-3 stat-number text-center">{ms(stats.maxMs)}</td>
+      <td className={`px-4 py-3 stat-number text-center ${countClass(stats.http5xx)}`}>
+        {stats.http5xx}
+      </td>
+      <td className={`px-4 py-3 stat-number text-center ${countClass(stats.http429)}`}>
+        {stats.http429}
+      </td>
+      <td className={`px-4 py-3 stat-number text-center ${countClass(stats.otherErrors)}`}>
+        {stats.otherErrors}
+      </td>
+    </>
+  );
+}
+
+function LoadTestResults({ runs }: { runs: LoadTestRun[] }) {
+  const [preset, setPreset] = useState<LoadTestPreset>('light');
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  // Newest first, from the API
+  const presetRuns = runs.filter((r) => r.preset === preset);
+  const run = presetRuns.find((r) => r.id === selectedId) ?? presetRuns[0];
 
   return (
-    <ScrollRegion label="Load test runs" className="glass rounded-xl overflow-x-auto">
-      <table className="w-full text-sm min-w-[1100px]">
-        <thead>
-          <tr className="border-b border-surface-200 dark:border-white/[0.06] text-left text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">
-            <th className="px-4 py-3">Started</th>
-            <th className="px-4 py-3">Preset</th>
-            <th className="px-4 py-3 text-center">Max Users</th>
-            <th className="px-4 py-3 text-center">Ramp / Hold / Down</th>
-            <th className="px-4 py-3 text-center">Think Time</th>
-            <th className="px-4 py-3">Pages</th>
-            <th className="px-4 py-3 text-center">Requests</th>
-            <th className="px-4 py-3 text-center">Req/s</th>
-            <th className="px-4 py-3 text-center">p50</th>
-            <th className="px-4 py-3 text-center">p95</th>
-            <th className="px-4 py-3 text-center">p99</th>
-            <th className="px-4 py-3 text-center">Max</th>
-            <th className="px-4 py-3 text-center">5xx</th>
-            <th className="px-4 py-3 text-center">429</th>
-            <th className="px-4 py-3 text-center">Other Errors</th>
-          </tr>
-        </thead>
-        <tbody>
-          {runs.map((run) => (
-            <tr
-              key={run.id}
-              className="border-b border-surface-200 dark:border-white/[0.04] last:border-0"
-            >
-              <td className="px-4 py-3 stat-number text-xs whitespace-nowrap">
-                {formatTime(run.startedUTC)}
-              </td>
-              <td className="px-4 py-3 font-mono text-xs" title={run.target}>
-                {run.preset}
-              </td>
-              <td className="px-4 py-3 stat-number text-center">{run.maxVus}</td>
-              <td className="px-4 py-3 stat-number text-xs text-center whitespace-nowrap">
+    <div>
+      <div className="flex flex-wrap gap-3 mb-4">
+        <select
+          value={preset}
+          onChange={(e) => {
+            setPreset(e.target.value as LoadTestPreset);
+            setSelectedId(null);
+          }}
+          aria-label="Load test preset"
+          className={SELECT_CLASS}
+        >
+          <option value="light">Light</option>
+          <option value="heavy">Heavy</option>
+        </select>
+        <select
+          value={run?.id ?? ''}
+          onChange={(e) => setSelectedId(Number(e.target.value))}
+          disabled={!run}
+          aria-label="Load test run"
+          className={SELECT_CLASS}
+        >
+          {presetRuns.length === 0 && <option value="">No runs</option>}
+          {presetRuns.map((r) => (
+            <option key={r.id} value={r.id}>
+              {formatTime(r.startedUTC)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {!run ? (
+        <div className="glass rounded-xl p-6 text-sm text-surface-500 dark:text-surface-400 text-center">
+          No {preset} load tests yet.
+        </div>
+      ) : (
+        <>
+          <dl className="glass rounded-xl p-4 mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-2 text-sm">
+            <div>
+              <dt className="text-surface-500 dark:text-surface-400">Max users</dt>
+              <dd className="stat-number">{run.maxVus}</dd>
+            </div>
+            <div>
+              <dt className="text-surface-500 dark:text-surface-400">Ramp up / hold / down</dt>
+              <dd className="stat-number">
                 {seconds(run.rampUpSeconds)} / {seconds(run.holdSeconds)} /{' '}
                 {seconds(run.rampDownSeconds)}
-              </td>
-              <td className="px-4 py-3 stat-number text-xs text-center whitespace-nowrap">
+              </dd>
+            </div>
+            <div>
+              <dt className="text-surface-500 dark:text-surface-400">Think time</dt>
+              <dd className="stat-number">
                 {run.thinkTimeMinSeconds}–{run.thinkTimeMaxSeconds}s
-              </td>
-              <td className="px-4 py-3 text-xs text-surface-600 dark:text-surface-300">
-                {run.pageMix}
-              </td>
-              <td className="px-4 py-3 stat-number text-center">{run.requests}</td>
-              <td className="px-4 py-3 stat-number text-center">
-                {run.requestsPerSecond.toFixed(1)}
-              </td>
-              <td className="px-4 py-3 stat-number text-center">{ms(run.p50Ms)}</td>
-              <td className="px-4 py-3 stat-number text-center">{ms(run.p95Ms)}</td>
-              <td className="px-4 py-3 stat-number text-center">{ms(run.p99Ms)}</td>
-              <td className="px-4 py-3 stat-number text-center">{ms(run.maxMs)}</td>
-              <td className={`px-4 py-3 stat-number text-center ${countClass(run.http5xx)}`}>
-                {run.http5xx}
-              </td>
-              <td className={`px-4 py-3 stat-number text-center ${countClass(run.http429)}`}>
-                {run.http429}
-              </td>
-              <td className={`px-4 py-3 stat-number text-center ${countClass(run.otherErrors)}`}>
-                {run.otherErrors}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </ScrollRegion>
+              </dd>
+            </div>
+            <div>
+              <dt className="text-surface-500 dark:text-surface-400">Target</dt>
+              <dd className="font-mono text-xs break-all">{run.target}</dd>
+            </div>
+            <div className="sm:col-span-2 lg:col-span-4">
+              <dt className="text-surface-500 dark:text-surface-400">Page mix</dt>
+              <dd className="text-xs">{run.pageMix}</dd>
+            </div>
+          </dl>
+
+          <ScrollRegion
+            label="Load test results by page"
+            className="glass rounded-xl overflow-x-auto"
+          >
+            <table className="w-full text-sm min-w-[800px]">
+              <thead>
+                <tr className="border-b border-surface-200 dark:border-white/[0.06] text-left text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">
+                  <th className="px-4 py-3">Page</th>
+                  <th className="px-4 py-3 text-center">Requests</th>
+                  <th className="px-4 py-3 text-center">Req/s</th>
+                  <th className="px-4 py-3 text-center">p50</th>
+                  <th className="px-4 py-3 text-center">p95</th>
+                  <th className="px-4 py-3 text-center">p99</th>
+                  <th className="px-4 py-3 text-center">Max</th>
+                  <th className="px-4 py-3 text-center">5xx</th>
+                  <th className="px-4 py-3 text-center">429</th>
+                  <th className="px-4 py-3 text-center">Other Errors</th>
+                </tr>
+              </thead>
+              <tbody>
+                {run.pages.map((page) => (
+                  <tr
+                    key={page.page}
+                    className="border-b border-surface-200 dark:border-white/[0.04]"
+                  >
+                    <th scope="row" className="px-4 py-3 text-left font-mono text-xs font-medium">
+                      {page.page}
+                    </th>
+                    <LoadTestStatsCells stats={page} />
+                  </tr>
+                ))}
+                <tr className="font-semibold bg-surface-100/50 dark:bg-white/[0.03]">
+                  <th scope="row" className="px-4 py-3 text-left text-xs">
+                    All pages
+                  </th>
+                  <LoadTestStatsCells stats={run} />
+                </tr>
+              </tbody>
+            </table>
+          </ScrollRegion>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -626,7 +694,7 @@ export function AdminPage() {
                 />
               </div>
             )}
-            {!loading && <LoadTestTable runs={loadTestRuns} />}
+            {!loading && <LoadTestResults runs={loadTestRuns} />}
           </div>
 
           <div className="mt-10">

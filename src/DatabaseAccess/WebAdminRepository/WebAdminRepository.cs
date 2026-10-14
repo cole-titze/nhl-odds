@@ -36,7 +36,13 @@ public class WebAdminRepository : IWebAdminRepository
             .Take(20)
             .ToListAsync();
 
-        return dbRuns.Select(DbLoadTestRunToLoadTestRunMapper.Map).ToList();
+        var runIds = dbRuns.Select(r => r.Id).ToList();
+        var dbPages = await _db.LoadTestRunPage
+            .Where(p => runIds.Contains(p.LoadTestRunId))
+            .ToListAsync();
+        var pagesByRun = dbPages.ToLookup(p => p.LoadTestRunId);
+
+        return dbRuns.Select(r => DbLoadTestRunToLoadTestRunMapper.Map(r, pagesByRun[r.Id])).ToList();
     }
 
     public async Task<List<SeasonHealthCheck>> GetHealthChecks()

@@ -5,7 +5,7 @@ namespace DatabaseAccess.WebAdminRepository.Mappers;
 
 public static class DbLoadTestRunToLoadTestRunMapper
 {
-    public static LoadTestRun Map(DbLoadTestRun db)
+    public static LoadTestRun Map(DbLoadTestRun db, IEnumerable<DbLoadTestRunPage> pages)
     {
         return new LoadTestRun
         {
@@ -30,6 +30,19 @@ public static class DbLoadTestRunToLoadTestRunMapper
             Http5xx = db.Http5xx,
             Http429 = db.Http429,
             OtherErrors = db.OtherErrors,
+            Pages = pages.Select(p => new LoadTestRunPage
+            {
+                Page = p.Page,
+                Requests = p.Requests,
+                RequestsPerSecond = p.RequestsPerSecond,
+                P50Ms = p.P50Ms,
+                P95Ms = p.P95Ms,
+                P99Ms = p.P99Ms,
+                MaxMs = p.MaxMs,
+                Http5xx = p.Http5xx,
+                Http429 = p.Http429,
+                OtherErrors = p.OtherErrors,
+            }).ToList(),
         };
     }
 }

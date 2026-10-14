@@ -30,6 +30,19 @@ public static class LoadTestRunToLoadTestRunVmMapper
             Http5xx = run.Http5xx,
             Http429 = run.Http429,
             OtherErrors = run.OtherErrors,
+            Pages = run.Pages.Select(p => new LoadTestRunPageVM
+            {
+                Page = p.Page,
+                Requests = p.Requests,
+                RequestsPerSecond = p.RequestsPerSecond,
+                P50Ms = p.P50Ms,
+                P95Ms = p.P95Ms,
+                P99Ms = p.P99Ms,
+                MaxMs = p.MaxMs,
+                Http5xx = p.Http5xx,
+                Http429 = p.Http429,
+                OtherErrors = p.OtherErrors,
+            }).ToList(),
         };
     }
 }

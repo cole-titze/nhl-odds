@@ -57,7 +57,23 @@ const http5xx = new Counter("http_5xx");
 const http429 = new Counter("http_429");
 const otherErrors = new Counter("other_errors");
 
+// Stats are kept for all page loads (kind:page, which leaves out setup's sitemap request) and
+// for each page; k6 only reports a tag's numbers when a threshold names it, so these always pass
+const SUBMETRIC_FILTERS = [
+  "kind:page",
+  ...PAGE_MIX.map((p) => `name:${p.name}`),
+];
+const thresholds = {};
+for (const filter of SUBMETRIC_FILTERS) {
+  thresholds[`http_req_duration{${filter}}`] = ["max>=0"];
+  thresholds[`http_reqs{${filter}}`] = ["count>=0"];
+  for (const counter of ["http_5xx", "http_429", "other_errors"]) {
+    thresholds[`${counter}{${filter}}`] = ["count>=0"];
+  }
+}
+
 export const options = {
+  thresholds,
   stages: [
     { duration: `${PRESET.rampUpSeconds}s`, target: PRESET.maxVus },
     { duration: `${PRESET.holdSeconds}s`, target: PRESET.maxVus },
@@ -115,13 +131,14 @@ export default function (data) {
     headers: {
       "CF-Connecting-IP": `198.18.${Math.floor(__VU / 256)}.${__VU % 256}`,
     },
-    tags: { name: page.name },
+    tags: { name: page.name, kind: "page" },
     timeout: "30s",
   });
 
-  if (res.status >= 500) http5xx.add(1);
-  else if (res.status === 429) http429.add(1);
-  else if (res.status === 0 || res.status >= 400) otherErrors.add(1);
+  const tags = { name: page.name, kind: "page" };
+  if (res.status >= 500) http5xx.add(1, tags);
+  else if (res.status === 429) http429.add(1, tags);
+  else if (res.status === 0 || res.status >= 400) otherErrors.add(1, tags);
 
   sleep(
     THINK_TIME_MIN_SECONDS +
@@ -129,14 +146,33 @@ export default function (data) {
   );
 }
 
-// Writes the inputs and results as shell variables for the Job's save-results container
+// The results for one submetric filter ("kind:page" for all pages, "name:/teams" for one)
+function stats(metrics, filter, durationSeconds) {
+  const values = (name) => metrics[`${name}{${filter}}`]?.values ?? {};
+  const count = (name) => Math.round(values(name).count ?? 0);
+  const duration = (stat) =>
+    (values("http_req_duration")[stat] ?? 0).toFixed(1);
+  const requests = count("http_reqs");
+  return {
+    REQUESTS: requests,
+    REQUESTS_PER_SECOND: (requests / durationSeconds).toFixed(2),
+    P50_MS: duration("med"),
+    P95_MS: duration("p(95)"),
+    P99_MS: duration("p(99)"),
+    MAX_MS: duration("max"),
+    HTTP_5XX: count("http_5xx"),
+    HTTP_429: count("http_429"),
+    OTHER_ERRORS: count("other_errors"),
+  };
+}
+
+// Writes the inputs and all-pages results as shell variables, and the per-page results as SQL
+// (run inside save-load-test.sh's transaction, where :run_id is the new run's id)
 export function handleSummary(data) {
   const m = data.metrics;
-  const count = (name) => Math.round(m[name]?.values?.count ?? 0);
-  const duration = (stat) =>
-    (m.http_req_duration?.values?.[stat] ?? 0).toFixed(1);
   const finished = new Date();
   const started = new Date(finished.getTime() - data.state.testRunDurationMs);
+  const durationSeconds = Math.max(data.state.testRunDurationMs / 1000, 1);
   const pageMix = PAGE_MIX.map(
     (p) => `${p.name} ${Math.round((p.weight / TOTAL_WEIGHT) * 100)}%`,
   ).join(", ");
@@ -153,22 +189,30 @@ export function handleSummary(data) {
     PAGE_MIX: pageMix,
     STARTED_UTC: started.toISOString(),
     FINISHED_UTC: finished.toISOString(),
-    REQUESTS: count("http_reqs"),
-    REQUESTS_PER_SECOND: (m.http_reqs?.values?.rate ?? 0).toFixed(2),
-    P50_MS: duration("med"),
-    P95_MS: duration("p(95)"),
-    P99_MS: duration("p(99)"),
-    MAX_MS: duration("max"),
-    HTTP_5XX: count("http_5xx"),
-    HTTP_429: count("http_429"),
-    OTHER_ERRORS: count("other_errors"),
+    ...stats(m, "kind:page", durationSeconds),
   };
   const env = Object.entries(result)
     .map(([key, value]) => `${key}='${String(value).replace(/'/g, "")}'`)
     .join("\n");
 
+  const pages = PAGE_MIX.map((p) => ({
+    PAGE: p.name,
+    ...stats(m, `name:${p.name}`, durationSeconds),
+  }));
+  // Page names are the fixed ones above, so they're safe to put in a SQL string
+  const pagesSql = pages
+    .map(
+      (p) =>
+        `INSERT INTO "LoadTestRunPage" ("LoadTestRunId", "Page", "Requests", "RequestsPerSecond", ` +
+        `"P50Ms", "P95Ms", "P99Ms", "MaxMs", "Http5xx", "Http429", "OtherErrors") VALUES (:run_id, ` +
+        `'${p.PAGE}', ${p.REQUESTS}, ${p.REQUESTS_PER_SECOND}, ${p.P50_MS}, ${p.P95_MS}, ` +
+        `${p.P99_MS}, ${p.MAX_MS}, ${p.HTTP_5XX}, ${p.HTTP_429}, ${p.OTHER_ERRORS});`,
+    )
+    .join("\n");
+
   return {
-    stdout: JSON.stringify(result, null, 2) + "\n",
+    stdout: JSON.stringify({ ...result, pages }, null, 2) + "\n",
     "/out/result.env": env + "\n",
+    "/out/pages.sql": pagesSql + "\n",
   };
 }

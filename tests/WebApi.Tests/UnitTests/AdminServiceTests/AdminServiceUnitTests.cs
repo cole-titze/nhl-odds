@@ -146,6 +146,10 @@ public class AdminServiceUnitTests
                 Http5xx = 1,
                 Http429 = 2,
                 OtherErrors = 0,
+                Pages =
+                [
+                    new LoadTestRunPage { Page = "/game/:id", Requests = 600, P95Ms = 350, Http5xx = 1 },
+                ],
             },
         };
         var repo = new FakeAdminRepository(loadTestRuns: runs);
@@ -159,5 +163,8 @@ public class AdminServiceUnitTests
         result[0].HoldSeconds.Should().Be(120);
         result[0].P95Ms.Should().Be(180);
         result[0].Http429.Should().Be(2);
+        result[0].Pages.Should().ContainSingle();
+        result[0].Pages[0].Page.Should().Be("/game/:id");
+        result[0].Pages[0].P95Ms.Should().Be(350);
     }
 }
