@@ -226,6 +226,7 @@ function LoadTestResults({ runs }: { runs: LoadTestRun[] }) {
         >
           <option value="light">Light</option>
           <option value="heavy">Heavy</option>
+          <option value="stress">Stress</option>
         </select>
         <select
           value={run?.id ?? ''}
@@ -701,6 +702,12 @@ export function AdminPage() {
                   label="Heavy Load Test"
                   note="150 users, 4.5 minutes"
                   onStart={() => handleStart(() => startLoadTest('heavy'))}
+                />
+                <JobCard
+                  job={statuses.loadTestStress}
+                  label="Stress Load Test"
+                  note="300 users, 5 minutes"
+                  onStart={() => handleStart(() => startLoadTest('stress'))}
                 />
               </div>
             )}

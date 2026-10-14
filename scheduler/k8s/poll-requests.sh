@@ -178,7 +178,7 @@ spec:
               memory: "128Mi"
             limits:
               cpu: "2"
-              memory: "512Mi"
+              memory: "1Gi"
           volumeMounts:
             - name: out
               mountPath: /out

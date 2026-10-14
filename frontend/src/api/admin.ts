@@ -56,9 +56,10 @@ export interface JobStatuses {
   kalshiBackfill: JobInfo;
   loadTestLight: JobInfo;
   loadTestHeavy: JobInfo;
+  loadTestStress: JobInfo;
 }
 
-export type LoadTestPreset = 'light' | 'heavy';
+export type LoadTestPreset = 'light' | 'heavy' | 'stress';
 
 /** A load test's results for one page. */
 export interface LoadTestRunPage {

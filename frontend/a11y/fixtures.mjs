@@ -162,6 +162,7 @@ const responses = {
     kalshiBackfill: job('idle'),
     loadTestLight: job('completed'),
     loadTestHeavy: job('idle'),
+    loadTestStress: job('idle'),
   },
   GetLoadTestRuns: [
     {

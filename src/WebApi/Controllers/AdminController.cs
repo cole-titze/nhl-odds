@@ -24,7 +24,7 @@ public class AdminController
     private const string KalshiBackfillJob = "kalshi-backfill";
     // Load tests are one job per preset; scheduler/k8s/load-test.js defines what each preset runs
     private const string LoadTestJobPrefix = "load-test-";
-    private static readonly string[] LoadTestPresets = ["light", "heavy"];
+    private static readonly string[] LoadTestPresets = ["light", "heavy", "stress"];
 
     public AdminController(IJobService jobService, IAdminService adminService)
     {
@@ -155,6 +155,7 @@ public class AdminController
             kalshiBackfill = JobInfoToJobInfoVmMapper.Map(_jobService.GetStatus(KalshiBackfillJob)),
             loadTestLight = LoadTestStatus("light"),
             loadTestHeavy = LoadTestStatus("heavy"),
+            loadTestStress = LoadTestStatus("stress"),
         };
         return Results.Ok(statuses);
     }

@@ -18,6 +18,12 @@ const PRESETS = {
     holdSeconds: 180,
     rampDownSeconds: 30,
   },
+  stress: {
+    maxVus: 300,
+    rampUpSeconds: 90,
+    holdSeconds: 180,
+    rampDownSeconds: 30,
+  },
 };
 const THINK_TIME_MIN_SECONDS = 1;
 const THINK_TIME_MAX_SECONDS = 3;
