@@ -89,8 +89,15 @@ async function startPreview() {
 async function newContext(browser, theme, viewport) {
   // Reduced motion zeroes out the site's color transitions (see index.css), so
   // axe never samples a color halfway through one. The server's CSP would block
-  // axe's injected script, so it's bypassed.
-  const ctx = await browser.newContext({ viewport, reducedMotion: 'reduce', bypassCSP: true });
+  // axe's injected script, so it's bypassed. Service workers are blocked: once the
+  // site's worker (sw.ts) took control, WebKit sent some API requests past the
+  // mock below to the real (absent) API, and the Games feed timed out waiting.
+  const ctx = await browser.newContext({
+    viewport,
+    reducedMotion: 'reduce',
+    bypassCSP: true,
+    serviceWorkers: 'block',
+  });
   await ctx.addInitScript((t) => {
     localStorage.setItem('theme', t);
     localStorage.removeItem('themeState');
