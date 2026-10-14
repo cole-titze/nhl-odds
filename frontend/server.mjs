@@ -11,6 +11,10 @@ const PORT = Number(process.env.PORT) || 8080;
 const app = express();
 app.disable('x-powered-by');
 
+// Kubernetes health checks: answers without rendering a page or calling the web API, so a busy
+// or slow API doesn't take the frontend out of rotation
+app.get('/healthz', (_req, res) => res.type('text/plain').send('ok'));
+
 const setRealIp = (proxyReq, req) => proxyReq.setHeader('X-Real-IP', req.socket.remoteAddress ?? '');
 
 // MCP streams its responses, so it goes before compression (which buffers) and has no timeout
