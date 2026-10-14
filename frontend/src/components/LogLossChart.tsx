@@ -4,7 +4,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 import { formatShortDate } from '../utils/dates';
 import { useDisplayTimeZone } from '../hooks/useDisplayTimeZone';
 import { calculateLogLoss } from '../utils/predictions';
-import type { GameOddsVM } from '../types';
+import type { ChartGame } from '../types';
 import { getChipClasses } from '../utils/colorClass';
 import { dashFor, readableLineColor } from '../utils/chartSeries';
 import { useIsDarkTheme } from '../hooks/useRootTheme';
@@ -48,23 +48,16 @@ function getColor(name: string, index: number): string {
 const DEFAULT_ENABLED = new Set([HOMEGROWN, 'DraftKings', 'Kalshi']);
 
 interface Props {
-  games: GameOddsVM[];
-  deduplicateById?: boolean;
+  games: ChartGame[];
 }
 
-export function LogLossChart({ games, deduplicateById }: Props) {
+export function LogLossChart({ games }: Props) {
   const hydrated = useHydrated();
   const { timeZone } = useDisplayTimeZone();
-  const playedGames = useMemo(() => {
-    const filtered = games.filter((g) => g.hasBeenPlayed && g.logLoss != null && g.logLoss > 0);
-    if (!deduplicateById) return filtered;
-    const seen = new Set<number>();
-    return filtered.filter((g) => {
-      if (seen.has(g.id)) return false;
-      seen.add(g.id);
-      return true;
-    });
-  }, [games, deduplicateById]);
+  const playedGames = useMemo(
+    () => games.filter((g) => g.hasBeenPlayed && g.logLoss != null && g.logLoss > 0),
+    [games],
+  );
 
   const bookmakerNames = useMemo(() => {
     const names = new Set<string>();

@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router';
-import type { TeamVM } from '../types';
+import type { TeamSummaryVM } from '../types';
 import { TeamLogo } from './TeamLogo';
 
 interface KalshiTeamStats {
@@ -10,7 +10,7 @@ interface KalshiTeamStats {
 }
 
 interface TeamRowProps {
-  team: TeamVM;
+  team: TeamSummaryVM;
   season: number;
   showDk?: boolean;
   showKalshi?: boolean;

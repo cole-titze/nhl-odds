@@ -6,12 +6,12 @@ import { LogLossChart } from '../components/LogLossChart';
 import { Skeleton, StatCardSkeleton } from '../components/Skeleton';
 import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
 import { useFetch } from '../hooks/useFetch';
-import { getAllTeams } from '../api/teams';
+import { getSeasonTeams } from '../api/teams';
 import { forwardClientIp } from '../api/client';
 import { getCurrentSeason } from '../utils/season';
 import { calculateLogLoss } from '../utils/predictions';
 import { Winner } from '../types';
-import type { BookmakerOddsVM, GameOddsVM, TeamsVM, TeamVM } from '../types';
+import type { SeasonTeamGameVM, TeamSummaryVM } from '../types';
 
 type SortKey =
   | 'name'
@@ -32,21 +32,15 @@ interface KalshiTeamStats {
   accuracyPct: string;
 }
 
-function computeKalshiStats(team: TeamVM): KalshiTeamStats {
-  let games = 0;
-  let accurate = 0;
-  let totalLoss = 0;
-  for (const g of team.gameOddsVM) {
-    if (!g.hasBeenPlayed) continue;
-    const k = g.bookmakerOdds?.find((b) => b.bookmakerName === 'Kalshi');
-    if (!k || k.homeOdds <= 0 || k.awayOdds <= 0) continue;
-    games++;
-    const loss = calculateLogLoss(k.homeOdds, k.awayOdds, g.winner);
-    totalLoss += loss;
-    const kPredictedHome = k.homeOdds > k.awayOdds;
-    const homeWon = g.winner === Winner.HOME;
-    if (kPredictedHome === homeWon) accurate++;
-  }
+const NO_GAMES: SeasonTeamGameVM[] = [];
+
+interface KalshiTally {
+  games: number;
+  accurate: number;
+  totalLoss: number;
+}
+
+function kalshiStats({ games, accurate, totalLoss }: KalshiTally): KalshiTeamStats {
   return {
     games,
     accurate,
@@ -55,67 +49,42 @@ function computeKalshiStats(team: TeamVM): KalshiTeamStats {
   };
 }
 
-// The fields of each game this page reads (season chart, Kalshi stats)
-type TeamsPageGame = Pick<
-  GameOddsVM,
-  'id' | 'gameDate' | 'hasBeenPlayed' | 'logLoss' | 'winner'
-> & {
-  bookmakerOdds: Pick<BookmakerOddsVM, 'bookmakerName' | 'homeOdds' | 'awayOdds'>[];
-};
-
-interface CompactTeams {
-  seasonTotals: TeamsVM['seasonTotals'];
-  teams: (Omit<TeamVM, 'gameOddsVM'> & { gameIds: number[] })[];
-  games: TeamsPageGame[];
-}
-
-// The full response lists every game twice (once per team) with every field,
-// which made the server's HTML ~8 MB late in a season. The page gets each game
-// once with only the fields it reads (~1.6 MB).
-function compactTeams({ teams, seasonTotals }: TeamsVM): CompactTeams {
-  const games = new Map<number, TeamsPageGame>();
-  for (const t of teams) {
-    for (const g of t.gameOddsVM) {
-      games.set(g.id, {
-        id: g.id,
-        gameDate: g.gameDate,
-        hasBeenPlayed: g.hasBeenPlayed,
-        logLoss: g.logLoss,
-        winner: g.winner,
-        bookmakerOdds: (g.bookmakerOdds ?? []).map(({ bookmakerName, homeOdds, awayOdds }) => ({
-          bookmakerName,
-          homeOdds,
-          awayOdds,
-        })),
-      });
+// Kalshi's record per team and over the season, from each played game's Kalshi line
+function computeKalshiStats(games: SeasonTeamGameVM[]) {
+  const byTeam = new Map<number, KalshiTally>();
+  const season: KalshiTally = { games: 0, accurate: 0, totalLoss: 0 };
+  for (const g of games) {
+    if (!g.hasBeenPlayed) continue;
+    const k = g.bookmakerOdds?.find((b) => b.bookmakerName === 'Kalshi');
+    if (!k || k.homeOdds <= 0 || k.awayOdds <= 0) continue;
+    const loss = calculateLogLoss(k.homeOdds, k.awayOdds, g.winner);
+    const correct = k.homeOdds > k.awayOdds === (g.winner === Winner.HOME);
+    for (const tally of [
+      season,
+      ...[g.homeTeamId, g.awayTeamId].map((id) => {
+        if (!byTeam.has(id)) byTeam.set(id, { games: 0, accurate: 0, totalLoss: 0 });
+        return byTeam.get(id)!;
+      }),
+    ]) {
+      tally.games++;
+      tally.totalLoss += loss;
+      if (correct) tally.accurate++;
     }
   }
   return {
-    seasonTotals,
-    teams: teams.map(({ gameOddsVM, ...team }) => ({
-      ...team,
-      gameIds: gameOddsVM.map((g) => g.id),
-    })),
-    games: [...games.values()],
-  };
-}
-
-function expandTeams({ teams, seasonTotals, games }: CompactTeams): TeamsVM {
-  const byId = new Map(games.map((g) => [g.id, g]));
-  return {
-    seasonTotals,
-    teams: teams.map(({ gameIds, ...team }) => ({
-      ...team,
-      // Only the TeamsPageGame fields are read on this page
-      gameOddsVM: gameIds.map((id) => byId.get(id)!) as unknown as GameOddsVM[],
-    })),
+    byTeamId: new Map([...byTeam].map(([id, tally]) => [id, kalshiStats(tally)])),
+    season: {
+      games: season.games,
+      accurate: season.accurate,
+      logLoss: kalshiStats(season).logLoss,
+    },
   };
 }
 
 // First load renders on the server with this season's data. Client-side
 // navigation skips it (clientLoader) and the page fetches as before.
 export async function loader({ request }: LoaderFunctionArgs) {
-  return getAllTeams(getCurrentSeason(), forwardClientIp(request)).then(compactTeams, () => null);
+  return getSeasonTeams(getCurrentSeason(), forwardClientIp(request)).catch(() => null);
 }
 
 export async function clientLoader() {
@@ -123,49 +92,16 @@ export async function clientLoader() {
 }
 
 export function TeamsPage() {
-  const loaded = useLoaderData<typeof loader>();
-  const [initial] = useState(() => (loaded ? expandTeams(loaded) : null));
+  const initial = useLoaderData<typeof loader>();
   const [season, setSeason] = useState(getCurrentSeason);
   const [sortKey, setSortKey] = useState<SortKey>('points');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
-  const { data, loading, error } = useFetch(() => getAllTeams(season), [season], initial);
+  const { data, loading, error } = useFetch(() => getSeasonTeams(season), [season], initial);
 
-  const allGames = useMemo(() => {
-    if (!data) return [];
-    return data.teams.flatMap((t) => t.gameOddsVM);
-  }, [data]);
-
-  const kalshiByTeamId = useMemo(() => {
-    if (!data) return new Map<number, KalshiTeamStats>();
-    const map = new Map<number, KalshiTeamStats>();
-    for (const t of data.teams) {
-      map.set(t.id, computeKalshiStats(t));
-    }
-    return map;
-  }, [data]);
-
-  const kalshiSeasonTotals = useMemo(() => {
-    if (!data) return { games: 0, accurate: 0, logLoss: 0 };
-    let games = 0;
-    let accurate = 0;
-    let totalLoss = 0;
-    const seen = new Set<number>();
-    for (const t of data.teams) {
-      for (const g of t.gameOddsVM) {
-        if (!g.hasBeenPlayed || seen.has(g.id)) continue;
-        seen.add(g.id);
-        const k = g.bookmakerOdds?.find((b) => b.bookmakerName === 'Kalshi');
-        if (!k || k.homeOdds <= 0 || k.awayOdds <= 0) continue;
-        games++;
-        totalLoss += calculateLogLoss(k.homeOdds, k.awayOdds, g.winner);
-        const kPredictedHome = k.homeOdds > k.awayOdds;
-        const homeWon = g.winner === Winner.HOME;
-        if (kPredictedHome === homeWon) accurate++;
-      }
-    }
-    return { games, accurate, logLoss: games > 0 ? totalLoss / games : 0 };
-  }, [data]);
+  const kalshi = useMemo(() => computeKalshiStats(data?.games ?? []), [data]);
+  const kalshiByTeamId = kalshi.byTeamId;
+  const kalshiSeasonTotals = kalshi.season;
 
   const sorted = useMemo(() => {
     if (!data) return [];
@@ -288,7 +224,7 @@ export function TeamsPage() {
         </>
       )}
 
-      <LogLossChart games={allGames} deduplicateById />
+      <LogLossChart games={data?.games ?? NO_GAMES} />
 
       {data && (
         <>
@@ -436,15 +372,15 @@ export function TeamsPage() {
   );
 }
 
-function accuracy(t: TeamVM): number {
+function accuracy(t: TeamSummaryVM): number {
   return t.totalGameCount > 0 ? t.totalModelAccurateGameCount / t.totalGameCount : 0;
 }
 
-function dkAccuracy(t: TeamVM): number {
+function dkAccuracy(t: TeamSummaryVM): number {
   return t.draftKingsGameCount > 0 ? t.draftKingsAccurateGameCount / t.draftKingsGameCount : 0;
 }
 
-function points(t: TeamVM): number {
+function points(t: TeamSummaryVM): number {
   return t.seasonWins * 2 + t.seasonOvertimeLosses;
 }
 

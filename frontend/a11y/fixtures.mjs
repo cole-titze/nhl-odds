@@ -107,6 +107,34 @@ const responses = {
       draftKingsGameCount: 12,
     },
   },
+  // GetAllTeams' teams without their games, and each game once (both teams share the same games)
+  GetSeasonTeams: {
+    teams: [team(10, 'Toronto', 'Maple Leafs', 'TOR'), team(6, 'Boston', 'Bruins', 'BOS')].map(
+      ({ gameOddsVM, ...t }) => t,
+    ),
+    seasonTotals: {
+      modelLogLoss: 0.65,
+      totalGameCount: 12,
+      totalModelAccurateGameCount: 8,
+      draftKingsLogLoss: 0.66,
+      draftKingsAccurateGameCount: 7,
+      draftKingsGameCount: 12,
+    },
+    games: games.slice(29, 41).map((g) => ({
+      id: g.id,
+      gameDate: g.gameDate,
+      hasBeenPlayed: g.hasBeenPlayed,
+      logLoss: g.logLoss,
+      winner: g.winner,
+      homeTeamId: g.homeTeam.id,
+      awayTeamId: g.awayTeam.id,
+      bookmakerOdds: g.bookmakerOdds.map(({ bookmakerName, homeOdds, awayOdds }) => ({
+        bookmakerName,
+        homeOdds,
+        awayOdds,
+      })),
+    })),
+  },
   GetTeam: team(10, 'Toronto', 'Maple Leafs', 'TOR'),
   GetBestStrategies: [
     {

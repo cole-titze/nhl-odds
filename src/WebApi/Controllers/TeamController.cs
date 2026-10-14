@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using WebApi.BusinessLogic.TeamGetter;
 using WebApi.Caching;
+using WebApi.Mappers;
 
 namespace WebApi.Controllers;
 
@@ -24,6 +25,15 @@ public class TeamController
         var teamsVm = await _cache.GetOrSetAsync(ApiCache.AllTeamsKey(seasonStartYear),
             () => _teamGetter.GetAllTeamsStats(seasonStartYear), ApiCache.SizeOf);
         return Results.Ok(teamsVm);
+    }
+
+    // The Teams page's data (see SeasonTeamsVM), built from the cached GetAllTeams response
+    [HttpGet]
+    public async Task<IResult> GetSeasonTeams(int seasonStartYear)
+    {
+        var teamsVm = await _cache.GetOrSetAsync(ApiCache.AllTeamsKey(seasonStartYear),
+            () => _teamGetter.GetAllTeamsStats(seasonStartYear), ApiCache.SizeOf);
+        return Results.Ok(TeamsVmToSeasonTeamsVmMapper.Map(teamsVm));
     }
 
     [HttpGet]

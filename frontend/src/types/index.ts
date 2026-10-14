@@ -75,3 +75,26 @@ export interface TeamsVM {
   teams: TeamVM[];
   seasonTotals: SeasonTotalsVM;
 }
+
+/** A team's season stats without its games. */
+export type TeamSummaryVM = Omit<TeamVM, 'gameOddsVM'>;
+
+/** The game fields the log loss chart reads. */
+export type ChartGame = Pick<
+  GameOddsVM,
+  'id' | 'gameDate' | 'hasBeenPlayed' | 'logLoss' | 'winner'
+> & {
+  bookmakerOdds?: Pick<BookmakerOddsVM, 'bookmakerName' | 'homeOdds' | 'awayOdds'>[];
+};
+
+export type SeasonTeamGameVM = ChartGame & {
+  homeTeamId: number;
+  awayTeamId: number;
+};
+
+/** The Teams page's data: each team's stats and every game once (GetSeasonTeams). */
+export interface SeasonTeamsVM {
+  teams: TeamSummaryVM[];
+  seasonTotals: SeasonTotalsVM;
+  games: SeasonTeamGameVM[];
+}

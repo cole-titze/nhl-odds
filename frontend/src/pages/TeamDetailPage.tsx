@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Link,
   useLoaderData,
@@ -44,6 +44,22 @@ function StatCard({
       {sub && <div className="text-xs text-surface-500 dark:text-surface-400 mt-0.5">{sub}</div>}
     </div>
   );
+}
+
+// The game log starts with the games around the last one played; the rest are behind a button
+const LOG_GAMES_SHOWN = 10;
+const LOG_UPCOMING_SHOWN = 3;
+
+// The API lists games newest first, so upcoming games come before played ones. Picked from
+// hasBeenPlayed, not the clock, so the server and the browser show the same rows.
+function recentGames<T extends { hasBeenPlayed: boolean }>(games: T[]): T[] {
+  const firstPlayed = games.findIndex((g) => g.hasBeenPlayed);
+  const boundary = firstPlayed === -1 ? games.length : firstPlayed;
+  const start = Math.max(
+    0,
+    Math.min(boundary - LOG_UPCOMING_SHOWN, games.length - LOG_GAMES_SHOWN),
+  );
+  return games.slice(start, start + LOG_GAMES_SHOWN);
 }
 
 function seasonFrom(searchParams: URLSearchParams) {
@@ -98,6 +114,15 @@ export function TeamDetailPage() {
       accuracyPct: games > 0 ? ((accurate / games) * 100).toFixed(1) : '0.0',
     };
   }, [team]);
+
+  // Collapses again when the team or season changes
+  const logKey = `${teamId}-${season}`;
+  const [expandedLog, setExpandedLog] = useState<string | null>(null);
+  const showAllGames = expandedLog === logKey;
+  const logGames = useMemo(() => {
+    if (!team) return [];
+    return showAllGames ? team.gameOddsVM : recentGames(team.gameOddsVM);
+  }, [team, showAllGames]);
 
   if (loading) {
     return (
@@ -243,7 +268,7 @@ export function TeamDetailPage() {
                 </tr>
               </thead>
               <tbody>
-                {team.gameOddsVM.map((game) => {
+                {logGames.map((game) => {
                   const isHome = game.homeTeam?.id === team.id;
                   const opponent = isHome ? game.awayTeam : game.homeTeam;
                   const teamSide = isHome ? game.homeTeam : game.awayTeam;
@@ -376,6 +401,18 @@ export function TeamDetailPage() {
               </tbody>
             </table>
           </ScrollRegion>
+          {team.gameOddsVM.length > LOG_GAMES_SHOWN && (
+            <div className="border-t border-surface-200 dark:border-white/[0.06] px-4 py-3 text-center">
+              <button
+                type="button"
+                aria-expanded={showAllGames}
+                onClick={() => setExpandedLog(showAllGames ? null : logKey)}
+                className="text-sm font-medium text-accent-700 dark:text-accent-400 hover:underline"
+              >
+                {showAllGames ? 'Show recent games' : `Show all ${team.gameOddsVM.length} games`}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
