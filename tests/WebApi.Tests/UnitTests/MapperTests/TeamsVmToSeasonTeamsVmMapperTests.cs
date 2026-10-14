@@ -17,11 +17,15 @@ public class TeamsVmToSeasonTeamsVmMapperTests
         Winner = Winner.HOME,
         HomeTeam = new MatchupTeamVM { Id = 1 },
         AwayTeam = new MatchupTeamVM { Id = 2 },
-        BookmakerOdds = [new BookmakerOddsVM { BookmakerName = "Kalshi", HomeOdds = 0.55, AwayOdds = 0.45, HomePrice = -120 }],
+        BookmakerOdds =
+        [
+            new BookmakerOddsVM { BookmakerName = "Kalshi", HomeOdds = 0.55, AwayOdds = 0.45, HomePrice = -120 },
+            new BookmakerOddsVM { BookmakerName = "FanDuel", HomeOdds = 0.56, AwayOdds = 0.44 },
+        ],
     };
 
     [TestMethod]
-    public void Map_ShouldListEachGameOnceWithTeamIdsAndOdds()
+    public void Map_ShouldListEachGameOnceWithTeamIdsAndOnlyDraftKingsAndKalshi()
     {
         var shared = Game(1);
         var teamsVm = new TeamsVM

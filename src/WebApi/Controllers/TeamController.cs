@@ -31,9 +31,13 @@ public class TeamController
     [HttpGet]
     public async Task<IResult> GetSeasonTeams(int seasonStartYear)
     {
-        var teamsVm = await _cache.GetOrSetAsync(ApiCache.AllTeamsKey(seasonStartYear),
-            () => _teamGetter.GetAllTeamsStats(seasonStartYear), ApiCache.SizeOf);
-        return Results.Ok(TeamsVmToSeasonTeamsVmMapper.Map(teamsVm));
+        var seasonTeams = await _cache.GetOrSetAsync(ApiCache.SeasonTeamsKey(seasonStartYear), async () =>
+        {
+            var teamsVm = await _cache.GetOrSetAsync(ApiCache.AllTeamsKey(seasonStartYear),
+                () => _teamGetter.GetAllTeamsStats(seasonStartYear), ApiCache.SizeOf);
+            return TeamsVmToSeasonTeamsVmMapper.Map(teamsVm);
+        }, ApiCache.SizeOf);
+        return Results.Ok(seasonTeams);
     }
 
     [HttpGet]

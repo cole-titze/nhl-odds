@@ -30,9 +30,11 @@ public static class ApiCache
 
     public static long SizeOf(TeamsVM teams) => teams.Teams.Sum(t => 1 + t.GameOddsVM.Count());
     public static long SizeOf(TeamVM team) => 1 + team.GameOddsVM.Count();
+    public static long SizeOf(SeasonTeamsVM seasonTeams) => seasonTeams.Teams.Count() + seasonTeams.Games.Count();
 
     // Keys shared by the controllers, MCP tools and StartupCacheWarmer so they all hit the same entries
     public static string AllTeamsKey(int seasonStartYear) => $"AllTeams_{seasonStartYear}";
+    public static string SeasonTeamsKey(int seasonStartYear) => $"SeasonTeams_{seasonStartYear}";
     public static string TeamKey(int teamId, int seasonStartYear) => $"Team_{teamId}_{seasonStartYear}";
     public static string GameOddsKey(DateRange dateRange, int seasonStartYear) =>
         $"GameOdds_{dateRange.StartDate:yyyy-MM-dd}_{dateRange.EndDate:yyyy-MM-dd}_{seasonStartYear}";
