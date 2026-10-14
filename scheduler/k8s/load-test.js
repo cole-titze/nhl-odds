@@ -134,8 +134,10 @@ export default function (data) {
   const res = http.get(`${TARGET}${page.path(data.teamIds)}`, {
     // The web API rate-limits per CF-Connecting-IP, so each VU gets its own address
     // (198.18.0.0/15 is reserved for benchmarking) and is limited like one real visitor
+    // Browsers ask for compressed pages; without this k6 downloads them uncompressed (~6x the bytes)
     headers: {
       "CF-Connecting-IP": `198.18.${Math.floor(__VU / 256)}.${__VU % 256}`,
+      "Accept-Encoding": "gzip, br",
     },
     tags: { name: page.name, kind: "page" },
     timeout: "30s",
