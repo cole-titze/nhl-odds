@@ -30,4 +30,11 @@ public class AdminService : IAdminService
         var runs = await _adminRepository.GetLoadTestRuns();
         return runs.Select(LoadTestRunToLoadTestRunVmMapper.Map).ToList();
     }
+
+    /// <summary>The last <paramref name="days"/> days through <paramref name="today"/>; days with no probes are left out.</summary>
+    public async Task<List<UptimeDayVM>> GetUptimeDays(int days, DateOnly today)
+    {
+        var uptimeDays = await _adminRepository.GetUptimeDays(today.AddDays(1 - days));
+        return uptimeDays.Select(UptimeDayToUptimeDayVmMapper.Map).ToList();
+    }
 }

@@ -141,6 +141,18 @@ public class AdminController
         return Results.Ok(runs);
     }
 
+    // Days are Central Time, like the rollup (scheduler/k8s/save-uptime.sh)
+    [HttpGet]
+    public async Task<IResult> GetUptimeDays(int days = 30)
+    {
+        if (days is < 1 or > 3660)
+            return Results.BadRequest(new { message = "days must be between 1 and 3660." });
+
+        var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, CentralTime));
+        var uptimeDays = await _adminService.GetUptimeDays(days, today);
+        return Results.Ok(uptimeDays);
+    }
+
     [HttpGet]
     public IResult GetJobStatuses()
     {

@@ -23,6 +23,7 @@ import {
 import { formatSeasonLabel } from '../utils/season';
 import { JobCardSkeleton, HealthCheckTableSkeleton } from '../components/Skeleton';
 import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
+import { UptimeHistory } from '../components/UptimeHistory';
 import { clearAdminKey, setAdminKey, useAdminKey } from '../hooks/useAdminKey';
 
 const STATUS_STYLES: Record<string, string> = {
@@ -813,6 +814,11 @@ export function AdminPage() {
                 </table>
               </ScrollRegion>
             )}
+          </div>
+
+          <div className="mt-10">
+            <h2 className="font-display text-xl font-semibold mb-4">Uptime</h2>
+            <UptimeHistory />
           </div>
         </>
       )}

@@ -167,4 +167,24 @@ public class AdminServiceUnitTests
         result[0].Pages[0].Page.Should().Be("/game/:id");
         result[0].Pages[0].P95Ms.Should().Be(350);
     }
+
+    [TestMethod]
+    public async Task GetUptimeDays_ShouldReturnTheLastDaysThroughToday()
+    {
+        var uptimeDays = new List<UptimeDay>
+        {
+            new() { Day = new DateOnly(2026, 9, 15), ExpectedProbes = 1440, Probes = 1440, SuccessfulProbes = 1440 },
+            new() { Day = new DateOnly(2026, 9, 16), ExpectedProbes = 1440, Probes = 1430, SuccessfulProbes = 1400, AvgResponseMs = 85 },
+            new() { Day = new DateOnly(2026, 10, 15), ExpectedProbes = 600, Probes = 600, SuccessfulProbes = 600 },
+        };
+        var repo = new FakeAdminRepository(uptimeDays: uptimeDays);
+        var service = new AdminService(repo);
+
+        var result = await service.GetUptimeDays(30, new DateOnly(2026, 10, 15));
+
+        result.Select(d => d.Day).Should().Equal(new DateOnly(2026, 9, 16), new DateOnly(2026, 10, 15));
+        result[0].Probes.Should().Be(1430);
+        result[0].SuccessfulProbes.Should().Be(1400);
+        result[0].AvgResponseMs.Should().Be(85);
+    }
 }

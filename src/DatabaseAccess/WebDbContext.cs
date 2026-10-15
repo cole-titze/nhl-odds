@@ -21,6 +21,7 @@ public partial class GameDbContext : DbContext
     public virtual DbSet<DbJobStatus> JobStatus { get; set; } = null!;
     public virtual DbSet<DbLoadTestRun> LoadTestRun { get; set; } = null!;
     public virtual DbSet<DbLoadTestRunPage> LoadTestRunPage { get; set; } = null!;
+    public virtual DbSet<DbUptimeDay> UptimeDay { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

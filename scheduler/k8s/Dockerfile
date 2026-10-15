@@ -4,14 +4,14 @@ FROM alpine:3.24
 # about the missing cache) and remove it at the end
 RUN apk update && \
     apk upgrade && \
-    apk add bash curl postgresql18-client tzdata && \
+    apk add bash curl jq postgresql18-client tzdata && \
     curl -LO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl" && \
     chmod +x kubectl && mv kubectl /usr/local/bin/ && \
     rm -rf /var/cache/apk/*
 
 WORKDIR /app
-COPY entrypoint.sh poll-requests.sh save-load-test.sh request-load-test.sh load-test.js ./
-RUN chmod +x entrypoint.sh poll-requests.sh save-load-test.sh request-load-test.sh && adduser -D -u 10001 app
+COPY entrypoint.sh poll-requests.sh save-load-test.sh request-load-test.sh save-uptime.sh load-test.js ./
+RUN chmod +x entrypoint.sh poll-requests.sh save-load-test.sh request-load-test.sh save-uptime.sh && adduser -D -u 10001 app
 USER 10001
 
 ENTRYPOINT ["/app/entrypoint.sh"]

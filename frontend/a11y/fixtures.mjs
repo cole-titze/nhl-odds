@@ -164,6 +164,19 @@ const responses = {
     loadTestHeavy: job('idle'),
     loadTestStress: job('idle'),
   },
+  // Every bar state: up, some downtime, major downtime, and days with no data
+  GetUptimeDays: Array.from({ length: 25 }, (_, i) => {
+    const d = new Date(today);
+    d.setUTCDate(d.getUTCDate() - 24 + i);
+    const down = i === 5 ? 5 : i === 12 ? 60 : 0;
+    return {
+      day: isoDate(d),
+      expectedProbes: 1440,
+      probes: i === 20 ? 1300 : 1440,
+      successfulProbes: (i === 20 ? 1300 : 1440) - down,
+      avgResponseMs: 55 + (i % 7),
+    };
+  }),
   GetLoadTestRuns: [
     {
       id: 1,

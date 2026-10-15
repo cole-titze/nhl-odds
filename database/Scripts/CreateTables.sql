@@ -921,6 +921,20 @@ CREATE TABLE "LoadTestRunPage"
     FOREIGN KEY ("LoadTestRunId") REFERENCES "LoadTestRun"("Id") ON DELETE CASCADE
 );
 
+-- Daily rollup of the blackbox probe of the public site (scheduler/k8s/save-uptime.sh), one row per
+-- Central Time day. Prometheus keeps 15 days; this keeps them all. ExpectedProbes is the day's (or,
+-- for today, the elapsed) seconds over the probe interval, so missing probes show as no data, not up.
+CREATE TABLE "UptimeDay"
+(
+    "Day" DATE NOT NULL,
+    "ExpectedProbes" INTEGER NOT NULL,
+    "Probes" INTEGER NOT NULL,
+    "SuccessfulProbes" INTEGER NOT NULL,
+    "AvgResponseMs" DOUBLE PRECISION NULL,
+    "UpdatedUTC" TIMESTAMP NOT NULL,
+    CONSTRAINT "PK_UptimeDay" PRIMARY KEY("Day")
+);
+
 -- Snapshots of the NHL's public roster report (Active / Injured Reserve lists), one row per matched player
 CREATE TABLE "RosterStatus"
 (

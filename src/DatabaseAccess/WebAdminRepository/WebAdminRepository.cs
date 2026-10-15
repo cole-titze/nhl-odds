@@ -45,6 +45,16 @@ public class WebAdminRepository : IWebAdminRepository
         return dbRuns.Select(r => DbLoadTestRunToLoadTestRunMapper.Map(r, pagesByRun[r.Id])).ToList();
     }
 
+    public async Task<List<UptimeDay>> GetUptimeDays(DateOnly since)
+    {
+        var dbDays = await _db.UptimeDay
+            .Where(d => d.Day >= since)
+            .OrderBy(d => d.Day)
+            .ToListAsync();
+
+        return dbDays.Select(DbUptimeDayToUptimeDayMapper.Map).ToList();
+    }
+
     public async Task<List<SeasonHealthCheck>> GetHealthChecks()
     {
         var games = await _db.GameRaw

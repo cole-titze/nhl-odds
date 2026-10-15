@@ -198,3 +198,19 @@ export async function getHealthChecks(): Promise<SeasonHealthCheck[]> {
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
+
+/** One Central Time day of the public site's uptime probe; days with no probes aren't returned. */
+export interface UptimeDay {
+  day: string;
+  /** Probes the day should have had (today: so far); the ones missing are time with no data */
+  expectedProbes: number;
+  probes: number;
+  successfulProbes: number;
+  avgResponseMs: number | null;
+}
+
+export async function getUptimeDays(days: number): Promise<UptimeDay[]> {
+  const res = await adminFetch(`GetUptimeDays?days=${days}`);
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
