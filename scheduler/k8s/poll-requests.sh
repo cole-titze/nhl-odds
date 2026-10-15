@@ -3,7 +3,17 @@
 
 # A load test's Job writes its own result, but one that never got to (pod not scheduled, k6 killed)
 # would stay 'running' and block the next one; the longest preset takes under 5 minutes
-psql "$NHL_DATABASE_URL" -qAtc "UPDATE \"JobStatus\" SET \"Status\" = 'failed', \"FinishedAt\" = now() AT TIME ZONE 'UTC', \"Error\" = 'No result after 20 minutes; see the Job''s pod logs.' WHERE \"JobName\" LIKE 'load-test-%' AND \"Status\" = 'running' AND \"StartedAt\" < (now() AT TIME ZONE 'UTC') - interval '20 minutes'" >/dev/null 2>&1
+psql "$NHL_DATABASE_URL" -qAt >/dev/null 2>&1 <<'SQL'
+WITH stale AS (
+    UPDATE "JobStatus" SET "Status" = 'failed', "FinishedAt" = now() AT TIME ZONE 'UTC',
+        "Error" = 'No result after 20 minutes; see the Job''s pod logs.'
+    WHERE "JobName" LIKE 'load-test-%' AND "Status" = 'running'
+        AND "StartedAt" < (now() AT TIME ZONE 'UTC') - interval '20 minutes'
+    RETURNING "JobName", "Error"
+)
+INSERT INTO "ErrorLog" ("TimestampUTC", "ExceptionType", "Message", "StackTrace", "Source")
+SELECT now() AT TIME ZONE 'UTC', 'LoadTestFailed', "JobName" || ': ' || "Error", '', 'LoadTest' FROM stale;
+SQL
 
 REQUESTED=$(psql "$NHL_DATABASE_URL" -Atc "SELECT \"JobName\" FROM \"JobStatus\" WHERE \"Status\" = 'requested' LIMIT 1" 2>/dev/null)
 
