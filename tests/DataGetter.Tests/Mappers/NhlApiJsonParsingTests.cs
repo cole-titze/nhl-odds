@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using Entities.Models.GamePlayEvents;
 using Entities.Models.Teams;
+using Entities.ServiceModels;
 using Entities.ServiceModels.Mappers;
 using Entities.Types;
 using Entities.Types.Enums;
@@ -131,6 +132,32 @@ public class NhlApiJsonParsingTests
         game.GameType.Should().Be(GameType.Regular);
         game.HasBeenPlayed.Should().BeTrue();
         game.EndPeriod.Should().Be(PeriodType.Regulation);
+    }
+
+    [TestMethod]
+    public void MapGameResponse_FinalNotYetOff_IsPlayed()
+    {
+        // The NHL leaves a finished game FINAL for hours before marking it OFF; it still counts as played
+        var boxscore = JsonNode.Parse(BoxscoreJson)!;
+        boxscore["gameState"] = "FINAL";
+        var summary = new ServiceGameSummaryResponse(boxscore);
+
+        summary.IsGameInProgress().Should().BeFalse();
+        summary.IsGameDone().Should().BeTrue();
+        var game = MapGameResponseToGame.Map(boxscore, JsonNode.Parse(RightRailJson), JsonNode.Parse(PlayByPlayJson));
+        game.HasBeenPlayed.Should().BeTrue();
+        game.HomeGoals.Should().Be(5);
+    }
+
+    [TestMethod]
+    public void GameSummary_LiveOrCritical_IsInProgress()
+    {
+        foreach (var state in new[] { "PRE", "LIVE", "CRIT" })
+        {
+            var boxscore = JsonNode.Parse(BoxscoreJson)!;
+            boxscore["gameState"] = state;
+            new ServiceGameSummaryResponse(boxscore).IsGameInProgress().Should().BeTrue(state);
+        }
     }
 
     [TestMethod]

@@ -20,11 +20,13 @@ public class ServiceGameSummaryResponse
         if (response == null)
             return false;
 
-        if (response["gameState"]!.GetValue<string>() == "OFF")
-            return true;
-
-        return false;
+        return IsFinishedState(response["gameState"]!.GetValue<string>());
     }
+    /// <summary>
+    /// FINAL is a finished game the NHL hasn't made official yet (it turns OFF hours later). The stats are complete,
+    /// and the nightly re-fetch picks up any corrections made before it goes OFF.
+    /// </summary>
+    public static bool IsFinishedState(string gameState) => gameState is "OFF" or "FINAL";
     public bool IsGameFuture()
     {
         if (response == null)
@@ -41,7 +43,7 @@ public class ServiceGameSummaryResponse
             return false;
 
         var state = response["gameState"]!.GetValue<string>();
-        if (state != "OFF" && state != "FUT")
+        if (!IsFinishedState(state) && state != "FUT")
             return true;
 
         return false;
