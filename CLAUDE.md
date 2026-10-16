@@ -49,7 +49,7 @@ The app reads config in priority order:
    - `RUN_MODE` — `"NhlAdd"`, `"NhlUpdate"`, `"NextDayOdds"`, `"BackfillOdds"`, `"ClosingOdds"`, `"BackfillClosingOdds"`, `"NextDayKalshi"`, `"BackfillKalshi"`, `"CleanAll"` or `"LineupSnapshot"`
    - `THROTTLE_TIME_MS` — delay between the game/player/schedule NHL API requests (ms). The NHL publishes no limit (api-web answers 429 at about one request per 500 ms), so every NHL client waits at least 600 ms between requests (`ThrottledHttpClient.NHL_MIN_GAP`; a smaller THROTTLE_TIME_MS is raised to it) and retries 429s with growing waits
    - `BACKFILL_GAME_IDS` — comma-separated game IDs to limit `NhlUpdate` to
-   - `REFETCH_DAYS` — `NhlAdd` re-fetches games played in this many past days to pick up NHL stat corrections (default 7, `0` turns it off)
+   - `REFETCH_DAYS` — `NhlAdd` re-fetches games played in this many past days to pick up NHL stat corrections (default 4 — corrections land within ~2 days; `0` turns it off)
    - `SEASON_START` / `SEASON_END` — first and last season for `NhlUpdate`, as season start years (`2009` is 2009-10; default: every season, 2009 to the current one). Same value in both does one season
    - `FROM_STORED` — `true` makes `NhlUpdate` rebuild from the stored raw responses, never the API
    - `CLEAN_PARALLELISM` — how many seasons the data cleaner cleans at once (default 4; each holds two seasons of data in memory)

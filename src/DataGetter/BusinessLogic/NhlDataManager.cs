@@ -101,7 +101,7 @@ public class NhlDataManager
 
     /// <summary>
     /// Re-fetches the games played in the last few days. The NHL keeps correcting box scores and play-by-play
-    /// (shots, hits, blocks, re-typed shots, rescinded penalties) for days after a game, and a played game is otherwise
+    /// (shots, hits, blocks, re-typed shots, rescinded penalties) for a day or two after a game, and a played game is otherwise
     /// never fetched again.
     /// </summary>
     /// <param name="days">How many days back to re-fetch</param>

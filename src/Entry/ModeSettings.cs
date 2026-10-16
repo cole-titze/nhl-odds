@@ -11,7 +11,7 @@ public class ModeSettings
     public string OddsApiBackfillKey { get; set; } = string.Empty;
     public IEnumerable<int> BackfillGameIds { get; set; } = [];
     // NhlAdd re-fetches games played in this many past days to pick up NHL stat corrections; 0 turns it off
-    public int RefetchDays { get; set; } = 7;
+    public int RefetchDays { get; set; } = 4;
     // How many seasons the cleaner works on at once
     public int CleanParallelism { get; set; } = 4;
     // NhlUpdate's first and last season, as season start years (default: every season collected)

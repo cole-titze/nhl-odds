@@ -30,7 +30,7 @@ var settings = new ModeSettings()
         .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
         .Select(int.Parse)
         .ToList(),
-    RefetchDays = int.Parse(Environment.GetEnvironmentVariable("REFETCH_DAYS") ?? "7"),
+    RefetchDays = int.Parse(Environment.GetEnvironmentVariable("REFETCH_DAYS") ?? "4"),
     CleanParallelism = int.Parse(Environment.GetEnvironmentVariable("CLEAN_PARALLELISM") ?? "4"),
     FromStored = bool.TryParse(Environment.GetEnvironmentVariable("FROM_STORED"), out var fromStored) && fromStored,
     SeasonStart = int.TryParse(Environment.GetEnvironmentVariable("SEASON_START"), out var seasonStart) ? seasonStart : null,
