@@ -645,6 +645,11 @@ export function AdminPage() {
             </div>
           )}
 
+          <div className="mb-10">
+            <h2 className="font-display text-xl font-semibold mb-4">Uptime</h2>
+            <UptimeHistory />
+          </div>
+
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <LoadingStatus label="Loading job statuses…" />
@@ -814,11 +819,6 @@ export function AdminPage() {
                 </table>
               </ScrollRegion>
             )}
-          </div>
-
-          <div className="mt-10">
-            <h2 className="font-display text-xl font-semibold mb-4">Uptime</h2>
-            <UptimeHistory />
           </div>
         </>
       )}
