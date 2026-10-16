@@ -1,5 +1,6 @@
 from sklearn.decomposition import PCA
 from sklearn.feature_selection import SelectKBest, f_classif, f_regression
+from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
@@ -34,7 +35,8 @@ def _tune_pipeline(raw_folds, model_cls, model_params, n_trials, progress_callba
     def make_model():
         model = model_cls(**model_params)
         # One thread per trial — Optuna already runs trials in parallel
-        if "n_jobs" in model.get_params():
+        # LogisticRegression's n_jobs does nothing since sklearn 1.8 and warns when set
+        if "n_jobs" in model.get_params() and not isinstance(model, LogisticRegression):
             model.set_params(n_jobs=1)
         elif hasattr(model, "get_all_params"):  # CatBoost names it thread_count
             model.set_params(thread_count=1)

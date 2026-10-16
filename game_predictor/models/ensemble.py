@@ -44,7 +44,8 @@ def _single_threaded(estimator):
     """Clone with one thread. joblib caps OpenMP threads in its workers, but LightGBM ignores that and
     would start a thread per core in each of the workers."""
     model = clone(estimator)
-    if "n_jobs" in model.get_params():
+    # LogisticRegression's n_jobs does nothing since sklearn 1.8 and warns when set
+    if "n_jobs" in model.get_params() and not isinstance(model, LogisticRegression):
         model.set_params(n_jobs=1)
     return model
 
