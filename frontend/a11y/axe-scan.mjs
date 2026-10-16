@@ -216,8 +216,6 @@ async function tabThrough(page) {
   const problems = [];
   for (let i = 0; i < MAX_TABS; i++) {
     await page.keyboard.press(TAB);
-    // Linux WebKit (Playwright 1.64+) scrolls the focused element into view a little after the key press
-    await page.waitForTimeout(50);
     const problem = await page.evaluate(checkFocusVisible);
     if (problem && !problems.includes(problem)) problems.push(problem);
   }

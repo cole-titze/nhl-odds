@@ -23,9 +23,10 @@ export function Layout() {
     const footer = footerRef.current;
     if (!footer) return;
     const root = document.documentElement;
-    const observer = new ResizeObserver(() =>
-      root.style.setProperty('--footer-height', `${footer.offsetHeight}px`),
-    );
+    const publish = () => root.style.setProperty('--footer-height', `${footer.offsetHeight}px`);
+    // Set it now too: ResizeObserver only reports on the next rendering update, and focus can move first
+    publish();
+    const observer = new ResizeObserver(publish);
     observer.observe(footer);
     return () => {
       observer.disconnect();
