@@ -72,7 +72,7 @@ function toBar(day: string, data: UptimeDay | undefined): DayBar {
   const missingProbes = Math.max(0, data.expectedProbes - data.probes);
   // A failure outranks missing data
   const state: DayState =
-    uptime < 0.99
+    uptime < 0.97
       ? 'down'
       : downProbes > 0
         ? 'partial'
@@ -318,7 +318,7 @@ export function UptimeHistory() {
                     className={`inline-block size-2.5 rounded-sm ${STATE_STYLES[state].bar}`}
                   />
                   {STATE_STYLES[state].label}
-                  {state === 'down' && ' (under 99% up)'}
+                  {state === 'down' && ' (under 97% up)'}
                 </li>
               ))}
             </ul>
