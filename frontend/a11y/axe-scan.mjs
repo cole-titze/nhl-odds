@@ -212,11 +212,22 @@ function checkFocusVisible() {
   }`;
 }
 
+// WebKit can scroll a newly focused element into view a little after the key press (seen on CI's
+// Linux WebKit, Playwright 1.64), so give it up to 500 ms to come into view
+async function focusProblem(page) {
+  let problem = await page.evaluate(checkFocusVisible);
+  for (let i = 0; problem && i < 20; i++) {
+    await page.waitForTimeout(25);
+    problem = await page.evaluate(checkFocusVisible);
+  }
+  return problem;
+}
+
 async function tabThrough(page) {
   const problems = [];
   for (let i = 0; i < MAX_TABS; i++) {
     await page.keyboard.press(TAB);
-    const problem = await page.evaluate(checkFocusVisible);
+    const problem = await focusProblem(page);
     if (problem && !problems.includes(problem)) problems.push(problem);
   }
   return problems;
