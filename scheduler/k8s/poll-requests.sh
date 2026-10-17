@@ -147,10 +147,6 @@ spec:
   template:
     spec:
       restartPolicy: Never
-      # node01's pod subnet (10.43.0.0/24) overlaps the service range that holds the cluster DNS
-      # and API addresses, so its pods can't reach them; on the host network they can
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
       nodeSelector:
         kubernetes.io/hostname: node01
       tolerations:
