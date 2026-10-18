@@ -10,7 +10,7 @@ env:
   REPO: ${{ github.repository }}
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   # Trivy itself; the action is pinned separately below. Bump both together.
-  TRIVY_VERSION: v0.75.0
+  TRIVY_VERSION: v0.76.0
 
 jobs:
   # Downloads Trivy and its vulnerability DB once and caches them, so the scan
@@ -33,7 +33,7 @@ jobs:
 
   scan:
     needs: prime-cache
-    # The images are arm64-only, and Trivy scans the host's platform
+    # Matches the images' platform so the image layers pull natively
     runs-on: ubuntu-24.04-arm
     permissions:
       contents: read
@@ -53,6 +53,10 @@ jobs:
 
       - name: Scan ${{ matrix.image }}
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        # The images are arm64-only. Without a platform, Trivy looks for
+        # linux/amd64 in the image index even on an arm runner and fails
+        env:
+          TRIVY_PLATFORM: linux/arm64
         with:
           version: ${{ env.TRIVY_VERSION }}
           image-ref: ${{ env.REGISTRY }}/${{ env.REPO }}/${{ matrix.image }}:latest
