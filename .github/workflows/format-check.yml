@@ -20,6 +20,8 @@ on:
       - 'game_predictor/**'
       - '.github/workflows/format-check.yml'
   workflow_dispatch:
+  # The image workflows run these as promotion gates
+  workflow_call:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

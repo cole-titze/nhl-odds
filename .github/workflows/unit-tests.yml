@@ -16,6 +16,8 @@ on:
       - 'nhl-odds.sln'
       - '.github/workflows/unit-tests.yml'
   workflow_dispatch:
+  # The image workflows run these as promotion gates
+  workflow_call:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

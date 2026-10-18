@@ -1,0 +1,42 @@
+name: Promote Image
+
+# Moves an image's :prod tag to a digest. The image workflows call this once their
+# gates pass; the cluster's nightly updater deploys whatever :prod names. Run it by
+# hand to point :prod at a specific build (e.g. the digest that's live now).
+on:
+  workflow_call:
+    inputs:
+      image:
+        type: string
+        required: true
+      digest:
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      image:
+        description: Image name (webapi, frontend, entry, predictor, scheduler-k8s)
+        required: true
+      digest:
+        description: sha256:... digest to promote
+        required: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Point :prod at ${{ inputs.digest }}
+        run: .github/scripts/promote.sh "${{ github.repository }}/${{ inputs.image }}" "${{ inputs.digest }}" prod
+        env:
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
