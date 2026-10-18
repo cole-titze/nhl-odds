@@ -4,7 +4,11 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends && apt-get inst
 COPY requirements.txt .
 # Root is fine in a throwaway build layer; silences pip's warning about it
 ENV PIP_ROOT_USER_ACTION=ignore
-RUN pip install --no-cache-dir -r requirements.txt
+# pip is only needed to install; its vendored packages (urllib3, msgpack, ...) are what Trivy
+# flags, so remove it and ensurepip's bundled wheel afterwards
+RUN pip install --no-cache-dir -r requirements.txt \
+    && python -m pip uninstall -y pip \
+    && rm -rf /usr/local/lib/python3*/ensurepip/_bundled
 COPY . game_predictor/
 RUN useradd --uid 10001 --create-home app
 USER 10001
