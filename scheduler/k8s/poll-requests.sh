@@ -23,6 +23,24 @@ echo "$(date -u '+%Y-%m-%d %H:%M:%S') Picked up requested job: $REQUESTED"
 
 JOB_NAME="nhl-sched-$(echo "$REQUESTED" | tr '_' '-')-$(date +%s)"
 
+# Init container that waits until host:port answers. Under the cluster's network policies a new pod's
+# connections are refused for a few seconds, until every node's kube-router has its IP.
+wait_for() {
+    cat <<EOF
+        - name: wait-for-$3
+          image: busybox:1.37
+          command: ["sh", "-c", "for i in \$(seq 60); do nc -z -w1 $1 $2 && sleep 2 && exit 0; sleep 1; done; echo '$1:$2 unreachable'; exit 1"]
+          securityContext:
+            runAsUser: 65534
+            runAsGroup: 65534
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+EOF
+}
+
 case "$REQUESTED" in
     data-collection|odds-fetch|odds-backfill|next-day-kalshi|kalshi-backfill)
         case "$REQUESTED" in
@@ -48,6 +66,8 @@ spec:
       restartPolicy: OnFailure
       securityContext:
         runAsNonRoot: true
+      initContainers:
+$(wait_for nhl-odds-database-rw 5432 db)
       containers:
         - name: entry
           image: ghcr.io/cole-titze/nhl-odds/entry:latest
@@ -100,6 +120,8 @@ spec:
       restartPolicy: OnFailure
       securityContext:
         runAsNonRoot: true
+      initContainers:
+$(wait_for nhl-odds-database-rw 5432 db)
       containers:
         - name: predictor
           image: ghcr.io/cole-titze/nhl-odds/predictor:latest
@@ -161,6 +183,7 @@ spec:
         - name: out
           emptyDir: {}
       initContainers:
+$(wait_for nhl-odds-frontend 80 frontend)
         # Always exits 0 so save-results runs; k6's exit code goes in /out/rc
         - name: k6
           image: grafana/k6:latest
