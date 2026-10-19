@@ -82,10 +82,10 @@ $(wait_for nhl-odds-database-rw 5432 db)
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: nhl-odds-app-credentials
+                  name: nhl-odds-writer-credentials
                   key: password
             - name: NHL_DATABASE
-              value: "Host=nhl-odds-database-rw;Database=nhl;Username=nhl_app;Password=\$(POSTGRES_PASSWORD)"
+              value: "Host=nhl-odds-database-rw;Database=nhl;Username=nhl_writer;Password=\$(POSTGRES_PASSWORD)"
             - name: ODDS_API_KEY
               valueFrom:
                 secretKeyRef:
@@ -136,10 +136,10 @@ $(wait_for nhl-odds-database-rw 5432 db)
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: nhl-odds-app-credentials
+                  name: nhl-odds-writer-credentials
                   key: password
             - name: NHL_DATABASE
-              value: "Host=nhl-odds-database-rw;Database=nhl;Username=nhl_app;Password=\$(POSTGRES_PASSWORD)"
+              value: "Host=nhl-odds-database-rw;Database=nhl;Username=nhl_writer;Password=\$(POSTGRES_PASSWORD)"
 EOF
         ;;
 
@@ -222,10 +222,10 @@ $(wait_for nhl-odds-frontend 80 frontend)
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: nhl-odds-app-credentials
+                  name: nhl-odds-writer-credentials
                   key: password
             - name: NHL_DATABASE_URL
-              value: "postgresql://nhl_app:\$(POSTGRES_PASSWORD)@nhl-odds-database-rw:5432/nhl"
+              value: "postgresql://nhl_writer:\$(POSTGRES_PASSWORD)@nhl-odds-database-rw:5432/nhl"
           resources:
             requests:
               cpu: "10m"
