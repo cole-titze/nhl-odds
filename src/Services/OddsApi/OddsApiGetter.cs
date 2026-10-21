@@ -10,6 +10,9 @@ public class OddsApiGetter : IOddsApiGetter
     private const string BASE_URL = "https://api.the-odds-api.com/v4/sports/icehockey_nhl/odds";
     private const string SPORTS_URL = "https://api.the-odds-api.com/v4/sports";
     private const string HISTORICAL_BASE_URL = "https://api.the-odds-api.com/v4/historical/sports/icehockey_nhl/odds";
+    // The major US books plus Pinnacle (sharpest close). Up to 10 named books cost the same as one region
+    private const string BOOKMAKERS =
+        "draftkings,fanduel,betmgm,williamhill_us,espnbet,fanatics,betrivers,hardrockbet,pinnacle";
     private readonly string _apiKey;
     private readonly HttpClient _httpClient;
     private readonly ILogger<OddsApiGetter> _logger;
@@ -25,7 +28,7 @@ public class OddsApiGetter : IOddsApiGetter
     /// <summary>Upcoming games' odds. Throws on any failure so the daily fetch fails and logs to ErrorLog.</summary>
     public async Task<OddsApiResult> GetUpcomingOdds()
     {
-        var query = $"?apiKey={_apiKey}&regions=us&markets=h2h,spreads,totals&oddsFormat=american";
+        var query = $"?apiKey={_apiKey}&bookmakers={BOOKMAKERS}&markets=h2h,spreads,totals&oddsFormat=american";
         var response = await _httpClient.GetAsync(BASE_URL + query);
         ReadRemainingRequests(response);
 
@@ -47,7 +50,7 @@ public class OddsApiGetter : IOddsApiGetter
     /// Throws on any failure, like GetUpcomingOdds.</summary>
     public async Task<OddsApiResult> GetOddsStartingBetween(string markets, DateTime fromUtc, DateTime toUtc)
     {
-        var query = $"?apiKey={_apiKey}&regions=us&markets={markets}&oddsFormat=american"
+        var query = $"?apiKey={_apiKey}&bookmakers={BOOKMAKERS}&markets={markets}&oddsFormat=american"
             + $"&commenceTimeFrom={fromUtc:yyyy-MM-ddTHH:mm:ssZ}&commenceTimeTo={toUtc:yyyy-MM-ddTHH:mm:ssZ}";
         var response = await _httpClient.GetAsync(BASE_URL + query);
         ReadRemainingRequests(response);
@@ -78,7 +81,7 @@ public class OddsApiGetter : IOddsApiGetter
     public async Task<OddsApiResult> GetHistoricalOdds(DateTime date)
     {
         var dateStr = date.ToString("yyyy-MM-ddTHH:mm:ssZ");
-        var query = $"?apiKey={_apiKey}&regions=us&markets=h2h,spreads,totals&oddsFormat=american&date={dateStr}";
+        var query = $"?apiKey={_apiKey}&bookmakers={BOOKMAKERS}&markets=h2h,spreads,totals&oddsFormat=american&date={dateStr}";
         var url = HISTORICAL_BASE_URL + query;
 
         try
