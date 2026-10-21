@@ -84,22 +84,23 @@ public class BookmakerOddsFetcher
         // backfiller can deserialize it with the same OddsApiHistoricalResponse type
         var wrappedJson = JsonSerializer.Serialize(new { data = JsonSerializer.Deserialize<JsonElement>(rawJson) });
 
-        var distinctDates = gameDatesUtc
-            .Select(d => TimeZoneInfo.ConvertTimeFromUtc(d, centralZone).Date)
-            .Distinct();
+        // Only cache today's games: a response fetched days earlier isn't that day's morning odds
+        var today = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, centralZone).Date;
+        if (!gameDatesUtc.Any(d => TimeZoneInfo.ConvertTimeFromUtc(d, centralZone).Date == today))
+            return;
 
-        foreach (var gameDate in distinctDates)
-        {
-            var centralMorning = new DateTime(gameDate.Year, gameDate.Month, gameDate.Day, 6, 0, 0);
-            var queryDate = TimeZoneInfo.ConvertTimeToUtc(centralMorning, centralZone);
+        var centralMorning = new DateTime(today.Year, today.Month, today.Day, 6, 0, 0);
+        var queryDate = TimeZoneInfo.ConvertTimeToUtc(centralMorning, centralZone);
+        var todayStartUtc = TimeZoneInfo.ConvertTimeToUtc(today, centralZone);
 
-            var existing = await _bookmakerOddsRepo.GetCachedResponse(queryDate);
-            if (existing != null)
-                continue;
+        // First fetch of the day wins; an older row (e.g. from the old cache-ahead behavior)
+        // is shadowed because GetCachedResponse returns the newest
+        var existing = await _bookmakerOddsRepo.GetCachedResponse(queryDate);
+        if (existing != null && existing.FetchedDateUTC >= todayStartUtc)
+            return;
 
-            await _bookmakerOddsRepo.SaveRawResponse(wrappedJson, queryDate);
-            _logger.LogInformation("Cached upcoming odds response for game date {Date}", gameDate.ToString("yyyy-MM-dd"));
-        }
+        await _bookmakerOddsRepo.SaveRawResponse(wrappedJson, queryDate);
+        _logger.LogInformation("Cached upcoming odds response for game date {Date}", today.ToString("yyyy-MM-dd"));
 
         await _bookmakerOddsRepo.Commit();
     }
