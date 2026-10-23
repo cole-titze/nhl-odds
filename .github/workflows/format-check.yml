@@ -1,14 +1,15 @@
 name: Format Check
 
 on:
+  # On main, the image workflows run this as a gate for src/, frontend/ and
+  # game_predictor/, so a push only runs it for what none of them cover
   push:
     branches: [main]
     paths:
       - '**/*.cs'
       - '**/*.csproj'
+      - '!src/**'
       - '.editorconfig'
-      - 'frontend/**'
-      - 'game_predictor/**'
       - '.github/workflows/format-check.yml'
   pull_request:
     branches: [main]

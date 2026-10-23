@@ -1,12 +1,14 @@
 name: Unit Tests
 
 on:
+  # On main, Entry Container and Web API Container run this as a gate for src/,
+  # so a push only runs it for test-only changes
   push:
     branches: [main]
     paths:
       - '**/*.cs'
       - '**/*.csproj'
-      - 'nhl-odds.sln'
+      - '!src/**'
       - '.github/workflows/unit-tests.yml'
   pull_request:
     branches: [main]
