@@ -25,8 +25,8 @@ const PRESETS = {
     rampDownSeconds: 30,
   },
   max: {
-    maxVus: 600,
-    rampUpSeconds: 120,
+    maxVus: 1200,
+    rampUpSeconds: 180,
     holdSeconds: 180,
     rampDownSeconds: 30,
   },

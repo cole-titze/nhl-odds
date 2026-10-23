@@ -719,7 +719,7 @@ export function AdminPage() {
                 <JobCard
                   job={statuses.loadTestMax}
                   label="Max Load Test"
-                  note="600 users, 5.5 minutes"
+                  note="1200 users, 6.5 minutes"
                   onStart={() => handleStart(() => startLoadTest('max'))}
                 />
               </div>
