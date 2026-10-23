@@ -1,11 +1,7 @@
 name: Accessibility
 
+# No push trigger: on main, Frontend Container runs this as its promotion gate
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/accessibility.yml'
   pull_request:
     branches: [main]
     paths:
@@ -19,12 +15,36 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  # The scans run in Playwright's image, which has every browser and its system
+  # libraries; installing those on the runner took up to 12 minutes of apt
+  playwright:
+    name: Playwright version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: frontend/package-lock.json
+          sparse-checkout-cone-mode: false
+
+      - name: Read version from package-lock.json
+        id: version
+        run: echo "version=$(jq -r '.packages["node_modules/playwright"].version' frontend/package-lock.json)" >> "$GITHUB_OUTPUT"
+
   axe:
     # axe's WCAG rules run in Chromium only, split over four jobs by theme (it's
     # ~112 page scans); the focus, scroll and reflow checks run in all three
     # browsers, since those behave differently per engine
     name: a11y scan (${{ matrix.name }})
+    needs: playwright
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.playwright.outputs.version }}-noble
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -56,27 +76,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # The browser download is cached per Playwright version; its system
-      # libraries still install every run (they live outside the cache)
-      - name: Get Playwright version
-        id: playwright
-        run: echo "version=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
-
-      - name: Cache ${{ matrix.browser }}
-        id: browser-cache
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ steps.playwright.outputs.version }}-${{ matrix.browser }}
-
-      - name: Install ${{ matrix.browser }}
-        if: steps.browser-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps ${{ matrix.browser }}
-
-      - name: Install ${{ matrix.browser }} system libraries
-        if: steps.browser-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps ${{ matrix.browser }}
-
       - name: Build
         run: npm run build
 
@@ -86,3 +85,5 @@ jobs:
           A11Y_BROWSERS: ${{ matrix.browser }}
           A11Y_PARTS: ${{ matrix.parts }}
           A11Y_AXE_SHARD: ${{ matrix.shard }}
+          # Firefox won't start as root when HOME (/github/home) belongs to another user
+          HOME: /root
