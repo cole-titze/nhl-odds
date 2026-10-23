@@ -207,7 +207,7 @@ $(wait_for nhl-odds-frontend 80 frontend)
               memory: "128Mi"
             limits:
               cpu: "2"
-              memory: "1Gi"
+              memory: "2Gi"
           volumeMounts:
             - name: out
               mountPath: /out

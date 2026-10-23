@@ -228,6 +228,7 @@ function LoadTestResults({ runs }: { runs: LoadTestRun[] }) {
           <option value="light">Light</option>
           <option value="heavy">Heavy</option>
           <option value="stress">Stress</option>
+          <option value="max">Max</option>
         </select>
         <select
           value={run?.id ?? ''}
@@ -714,6 +715,12 @@ export function AdminPage() {
                   label="Stress Load Test"
                   note="300 users, 5 minutes"
                   onStart={() => handleStart(() => startLoadTest('stress'))}
+                />
+                <JobCard
+                  job={statuses.loadTestMax}
+                  label="Max Load Test"
+                  note="600 users, 5.5 minutes"
+                  onStart={() => handleStart(() => startLoadTest('max'))}
                 />
               </div>
             )}

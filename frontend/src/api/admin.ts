@@ -57,9 +57,10 @@ export interface JobStatuses {
   loadTestLight: JobInfo;
   loadTestHeavy: JobInfo;
   loadTestStress: JobInfo;
+  loadTestMax: JobInfo;
 }
 
-export type LoadTestPreset = 'light' | 'heavy' | 'stress';
+export type LoadTestPreset = 'light' | 'heavy' | 'stress' | 'max';
 
 /** A load test's results for one page. */
 export interface LoadTestRunPage {

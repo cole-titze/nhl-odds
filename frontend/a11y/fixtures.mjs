@@ -163,6 +163,7 @@ const responses = {
     loadTestLight: job('completed'),
     loadTestHeavy: job('idle'),
     loadTestStress: job('idle'),
+    loadTestMax: job('idle'),
   },
   // Every bar state: up, some downtime, major downtime, and days with no data
   GetUptimeDays: Array.from({ length: 25 }, (_, i) => {
