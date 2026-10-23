@@ -4,6 +4,7 @@ import compression from 'compression';
 import express from 'express';
 import { createRequestHandler } from '@react-router/express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
+import { pageCache } from './page-cache.mjs';
 
 const API_URL = process.env.API_URL || 'http://webapi:8080';
 const PORT = Number(process.env.PORT) || 8080;
@@ -15,7 +16,8 @@ app.disable('x-powered-by');
 // or slow API doesn't take the frontend out of rotation
 app.get('/healthz', (_req, res) => res.type('text/plain').send('ok'));
 
-const setRealIp = (proxyReq, req) => proxyReq.setHeader('X-Real-IP', req.socket.remoteAddress ?? '');
+const setRealIp = (proxyReq, req) =>
+  proxyReq.setHeader('X-Real-IP', req.socket.remoteAddress ?? '');
 
 // MCP streams its responses, so it goes before compression (which buffers) and has no timeout
 app.use(
@@ -29,11 +31,16 @@ app.use(
 
 app.use(compression());
 
-app.use(createProxyMiddleware({ target: API_URL, pathFilter: '/api', on: { proxyReq: setRealIp } }));
+app.use(
+  createProxyMiddleware({ target: API_URL, pathFilter: '/api', on: { proxyReq: setRealIp } }),
+);
 
 // Hashed file names, so they can be cached forever
 app.use('/assets', express.static('build/client/assets', { immutable: true, maxAge: '1y' }));
 app.use(express.static('build/client', { maxAge: '1h', index: false }));
+
+// Rendering is the server's bottleneck, so pages are kept a few seconds (page-cache.mjs)
+app.use(pageCache());
 
 app.use(createRequestHandler({ build: await import('./build/server/index.js') }));
 
