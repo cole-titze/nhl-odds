@@ -10,7 +10,7 @@ env:
   REPO: ${{ github.repository }}
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   # Trivy itself; the action is pinned separately below. Bump both together.
-  TRIVY_VERSION: v0.76.0
+  TRIVY_VERSION: v0.76.1
 
 jobs:
   # Downloads Trivy and its vulnerability DB once and caches them, so the scan
