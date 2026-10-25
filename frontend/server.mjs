@@ -16,8 +16,13 @@ app.disable('x-powered-by');
 // or slow API doesn't take the frontend out of rotation
 app.get('/healthz', (_req, res) => res.type('text/plain').send('ok'));
 
-const setRealIp = (proxyReq, req) =>
+// The API rate-limits per CF-Connecting-IP. Cloudflare sets it on public traffic; on the LAN
+// route Traefik strips it and sends X-Real-IP, so key on that instead of this pod's address.
+const setRealIp = (proxyReq, req) => {
   proxyReq.setHeader('X-Real-IP', req.socket.remoteAddress ?? '');
+  const clientIp = req.headers['cf-connecting-ip'] ?? req.headers['x-real-ip'];
+  if (clientIp) proxyReq.setHeader('CF-Connecting-IP', clientIp);
+};
 
 // MCP streams its responses, so it goes before compression (which buffers) and has no timeout
 app.use(
