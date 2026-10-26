@@ -1,5 +1,7 @@
 # Docker Deployment
 
+> **Note:** This setup isn't closely maintained and may lag behind production (no pinned image tags, network policies or pod hardening). Production runs on K3s, deployed by [ansible-setup](https://github.com/cole-titze/ansible-setup) — see `raspberry-pi-playbooks/cluster/kubernetes/nhl-odds/`.
+
 Deploy the full stack (database, API, frontend) using pre-built images from GitHub Container Registry. No repo clone needed.
 
 ## 1. Create a project directory
