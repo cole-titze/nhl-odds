@@ -238,7 +238,7 @@ export function Assistant() {
                 }
               }}
               placeholder="Ask a question…"
-              className="min-w-0 flex-1 resize-none rounded-lg border border-surface-300 dark:border-white/10 bg-white dark:bg-surface-900 px-3 py-2 text-sm sm:min-h-[5.5rem] sm:text-base text-surface-900 dark:text-surface-50 placeholder:text-surface-500 dark:placeholder:text-surface-400"
+              className="min-w-0 flex-1 resize-none rounded-lg border border-surface-300 dark:border-white/10 bg-white dark:bg-surface-900 px-3 py-2 text-base sm:min-h-[5.5rem] text-surface-900 dark:text-surface-50 placeholder:text-surface-500 dark:placeholder:text-surface-400"
             />
             <button
               type="submit"
