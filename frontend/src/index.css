@@ -696,3 +696,76 @@ html.scenic {
   animation: none !important;
   transition: none !important;
 }
+
+/* Chat assistant (Assistant.tsx): the panel pops up from the launcher, the puck mascot says hi,
+   blinks now and then, and hops while waiting for an answer. Reduced motion stops all of it
+   through the global rule above. */
+@keyframes assistant-pop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.92);
+  }
+}
+.assistant-pop {
+  transform-origin: bottom right;
+  animation: assistant-pop 220ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+@keyframes puck-hello {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  30% {
+    transform: translateY(-4px) rotate(-12deg);
+  }
+  60% {
+    transform: translateY(0) rotate(8deg);
+  }
+}
+.puck-hello {
+  animation: puck-hello 700ms ease-out 120ms;
+}
+@keyframes puck-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+.puck-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: puck-blink 4s infinite;
+}
+@keyframes puck-hop {
+  0%,
+  100% {
+    transform: translateY(0) scaleY(1);
+  }
+  15% {
+    transform: translateY(0) scaleY(0.85);
+  }
+  45% {
+    transform: translateY(-6px) scaleY(1.05);
+  }
+}
+.puck-throbber {
+  transform-origin: bottom center;
+  animation: puck-hop 800ms ease-in-out infinite;
+}
+@keyframes throbber-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+.throbber-dot {
+  animation: throbber-dot 1.2s infinite;
+}

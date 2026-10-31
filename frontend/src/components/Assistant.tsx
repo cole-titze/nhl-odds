@@ -34,6 +34,35 @@ function errorMessage(err: unknown, limits: Limits) {
   return "Sorry, the assistant couldn't answer. It runs on a home computer that may be off.";
 }
 
+// The assistant's mascot: a hockey puck with eyes that blink (puck-* classes in index.css)
+function PuckBot({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" aria-hidden="true" className={className}>
+      <path d="M3 13v6c0 3.3 5.8 6 13 6s13-2.7 13-6v-6Z" fill="#0b0f19" />
+      <ellipse
+        cx="16"
+        cy="13"
+        rx="13"
+        ry="6"
+        fill="#2a3242"
+        stroke="#ffffff"
+        strokeOpacity="0.35"
+      />
+      <g className="puck-eyes" fill="#ffffff">
+        <ellipse cx="11.5" cy="13" rx="1.6" ry="2.1" />
+        <ellipse cx="20.5" cy="13" rx="1.6" ry="2.1" />
+      </g>
+      <path
+        d="M13.5 16.5q2.5 1.6 5 0"
+        fill="none"
+        stroke="#ffffff"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function Assistant() {
   const hydrated = useHydrated();
   const [limits, setLimits] = useState<Limits | null>(null);
@@ -101,10 +130,13 @@ export function Assistant() {
           role="dialog"
           aria-labelledby={titleId}
           onKeyDown={(e) => e.key === 'Escape' && close()}
-          className="flex max-h-[min(32rem,60vh)] w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-xl bg-white dark:bg-surface-900 shadow-[0_12px_40px_rgba(0,0,0,0.35)] ring-2 ring-accent-600/60 dark:ring-accent-400/50"
+          className="assistant-pop flex max-h-[min(32rem,60vh)] w-[min(22rem,calc(100vw-2rem))] sm:max-h-[min(42rem,75vh)] sm:w-[27rem] lg:w-[30rem] flex-col overflow-hidden rounded-xl bg-white dark:bg-surface-900 shadow-[0_12px_40px_rgba(0,0,0,0.35)] ring-2 ring-accent-600/60 dark:ring-accent-400/50"
         >
           <div className="flex items-center justify-between bg-accent-600 px-4 py-2 text-on-accent">
-            <h2 id={titleId} className="text-sm font-semibold">
+            <h2 id={titleId} className="flex items-center gap-2 text-sm font-semibold sm:text-base">
+              <span className="puck-hello inline-flex rounded-full bg-white/90 p-0.5">
+                <PuckBot className="h-7 w-7" />
+              </span>
               Assistant <span className="font-normal">(experimental)</span>
             </h2>
             <button
@@ -119,7 +151,7 @@ export function Assistant() {
           <div
             ref={logRef}
             aria-live="polite"
-            className="flex-1 space-y-3 overflow-y-auto px-4 py-3 text-sm text-surface-800 dark:text-surface-100"
+            className="flex-1 space-y-3 overflow-y-auto px-4 py-3 text-sm sm:text-base text-surface-800 dark:text-surface-100"
           >
             {messages.length === 0 && (
               <div className="space-y-2 text-surface-600 dark:text-surface-300">
@@ -150,7 +182,17 @@ export function Assistant() {
                 {m.role === 'assistant' ? renderReply(m.content) : m.content}
               </p>
             ))}
-            {busy && <p className="text-surface-600 dark:text-surface-300">Thinking…</p>}
+            {busy && (
+              <p className="flex items-end gap-2 text-surface-600 dark:text-surface-300">
+                <PuckBot className="puck-throbber h-8 w-8" />
+                <span>
+                  Thinking
+                  <span className="throbber-dot">.</span>
+                  <span className="throbber-dot [animation-delay:200ms]">.</span>
+                  <span className="throbber-dot [animation-delay:400ms]">.</span>
+                </span>
+              </p>
+            )}
             {error && <p className="text-red-700 dark:text-red-300">{error}</p>}
           </div>
           <form
@@ -166,7 +208,7 @@ export function Assistant() {
             <textarea
               id={`${titleId}-input`}
               ref={inputRef}
-              rows={1}
+              rows={2}
               maxLength={2000}
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -177,12 +219,12 @@ export function Assistant() {
                 }
               }}
               placeholder="Ask a question…"
-              className="min-w-0 flex-1 resize-none rounded-lg border border-surface-300 dark:border-white/10 bg-white dark:bg-surface-900 px-3 py-2 text-sm text-surface-900 dark:text-surface-50 placeholder:text-surface-500 dark:placeholder:text-surface-400"
+              className="min-w-0 flex-1 resize-none rounded-lg border border-surface-300 dark:border-white/10 bg-white dark:bg-surface-900 px-3 py-2 text-sm sm:min-h-[5.5rem] sm:text-base text-surface-900 dark:text-surface-50 placeholder:text-surface-500 dark:placeholder:text-surface-400"
             />
             <button
               type="submit"
               disabled={busy || !draft.trim()}
-              className="rounded-lg bg-accent-600 px-3 py-2 text-sm font-semibold text-on-accent disabled:opacity-60"
+              className="self-end rounded-lg bg-accent-600 px-4 py-2 text-sm sm:text-base font-semibold text-on-accent disabled:opacity-60"
             >
               Send
             </button>
@@ -195,22 +237,9 @@ export function Assistant() {
         onClick={() => (open ? close() : setOpen(true))}
         aria-expanded={open}
         aria-label={open ? 'Close assistant' : 'Open assistant'}
-        className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-600 text-on-accent shadow-lg"
+        className="flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg ring-2 ring-accent-600 transition-transform hover:-translate-y-0.5 dark:ring-accent-400"
       >
-        <svg
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-          className="h-6 w-6"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M8 10h8M8 14h5M21 12a8.5 8.5 0 0 1-12.4 7.6L3 21l1.4-5.6A8.5 8.5 0 1 1 21 12Z"
-          />
-        </svg>
+        <PuckBot className="h-10 w-10" />
       </button>
     </div>
   );
