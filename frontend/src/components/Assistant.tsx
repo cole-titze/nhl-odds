@@ -1,0 +1,202 @@
+import { useEffect, useId, useRef, useState } from 'react';
+import { useLocation } from 'react-router';
+import { ApiError, apiFetch } from '../api/client';
+import { useHydrated } from '../hooks/useHydrated';
+
+// Experimental chat assistant backed by a local Ollama model (AssistantController in the web
+// API). It only appears when the API says it's enabled, and only after hydration, so server
+// rendered (and cached) pages never include it.
+
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+// Models answer in Markdown despite being asked not to; show **bold** and drop other markers
+function renderReply(text: string) {
+  return text
+    .replace(/^#+\s*/gm, '')
+    .split(/\*\*(.+?)\*\*/g)
+    .map((part, i) => (i % 2 ? <strong key={i}>{part}</strong> : part));
+}
+
+function errorMessage(err: unknown) {
+  if (err instanceof ApiError && err.status === 429)
+    return 'Too many questions — wait a minute and try again.';
+  return "Sorry, the assistant couldn't answer. It runs on a home computer that may be off.";
+}
+
+export function Assistant() {
+  const hydrated = useHydrated();
+  const [enabled, setEnabled] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [draft, setDraft] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { pathname } = useLocation();
+  const titleId = useId();
+  const launcherRef = useRef<HTMLButtonElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const logRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    apiFetch('/api/Assistant/Status')
+      .then(() => setEnabled(true))
+      .catch(() => setEnabled(false));
+  }, [hydrated]);
+
+  useEffect(() => {
+    if (open) inputRef.current?.focus();
+  }, [open]);
+
+  useEffect(() => {
+    logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
+  }, [messages, busy]);
+
+  if (!enabled) return null;
+
+  const close = () => {
+    setOpen(false);
+    launcherRef.current?.focus();
+  };
+
+  const send = async () => {
+    const content = draft.trim();
+    if (!content || busy) return;
+    const next: Message[] = [...messages, { role: 'user' as const, content }].slice(-20);
+    setMessages(next);
+    setDraft('');
+    setError(null);
+    setBusy(true);
+    try {
+      const { reply } = await apiFetch<{ reply: string }>('/api/Assistant/Chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: next, page: pathname }),
+      });
+      setMessages([...next, { role: 'assistant', content: reply }]);
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="fixed right-4 bottom-[calc(var(--footer-height,2rem)+1rem)] z-40 flex flex-col items-end gap-3">
+      {open && (
+        <div
+          role="dialog"
+          aria-labelledby={titleId}
+          onKeyDown={(e) => e.key === 'Escape' && close()}
+          className="glass flex max-h-[min(32rem,60vh)] w-[min(22rem,calc(100vw-2rem))] flex-col rounded-xl border border-surface-200 dark:border-white/[0.06] bg-surface-50/95 dark:bg-surface-950/95 shadow-xl"
+        >
+          <div className="flex items-center justify-between border-b border-surface-200 dark:border-white/[0.06] px-4 py-2">
+            <h2
+              id={titleId}
+              className="text-sm font-semibold text-surface-900 dark:text-surface-50"
+            >
+              Assistant{' '}
+              <span className="font-normal text-surface-500 dark:text-surface-400">
+                (experimental)
+              </span>
+            </h2>
+            <button
+              type="button"
+              onClick={close}
+              aria-label="Close assistant"
+              className="rounded-md px-2 py-1 text-surface-600 dark:text-surface-300 hover:bg-surface-200 dark:hover:bg-white/10"
+            >
+              ✕
+            </button>
+          </div>
+          <div
+            ref={logRef}
+            aria-live="polite"
+            className="flex-1 space-y-3 overflow-y-auto px-4 py-3 text-sm text-surface-800 dark:text-surface-100"
+          >
+            {messages.length === 0 && (
+              <p className="text-surface-600 dark:text-surface-300">
+                Ask about today&apos;s games, a team, or the model&apos;s odds.
+              </p>
+            )}
+            {messages.map((m, i) => (
+              <p
+                key={i}
+                className={`whitespace-pre-wrap break-words rounded-lg px-3 py-2 ${
+                  m.role === 'user'
+                    ? 'ml-6 bg-accent-600 text-on-accent'
+                    : 'mr-6 bg-surface-200/70 dark:bg-white/[0.06]'
+                }`}
+              >
+                <span className="sr-only">{m.role === 'user' ? 'You: ' : 'Assistant: '}</span>
+                {m.role === 'assistant' ? renderReply(m.content) : m.content}
+              </p>
+            ))}
+            {busy && <p className="text-surface-600 dark:text-surface-300">Thinking…</p>}
+            {error && <p className="text-red-700 dark:text-red-300">{error}</p>}
+          </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void send();
+            }}
+            className="flex gap-2 border-t border-surface-200 dark:border-white/[0.06] p-3"
+          >
+            <label htmlFor={`${titleId}-input`} className="sr-only">
+              Message
+            </label>
+            <textarea
+              id={`${titleId}-input`}
+              ref={inputRef}
+              rows={1}
+              maxLength={2000}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  void send();
+                }
+              }}
+              placeholder="Ask a question…"
+              className="min-w-0 flex-1 resize-none rounded-lg border border-surface-300 dark:border-white/10 bg-white dark:bg-surface-900 px-3 py-2 text-sm text-surface-900 dark:text-surface-50 placeholder:text-surface-500 dark:placeholder:text-surface-400"
+            />
+            <button
+              type="submit"
+              disabled={busy || !draft.trim()}
+              className="rounded-lg bg-accent-600 px-3 py-2 text-sm font-semibold text-on-accent disabled:opacity-60"
+            >
+              Send
+            </button>
+          </form>
+        </div>
+      )}
+      <button
+        ref={launcherRef}
+        type="button"
+        onClick={() => (open ? close() : setOpen(true))}
+        aria-expanded={open}
+        aria-label={open ? 'Close assistant' : 'Open assistant'}
+        className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-600 text-on-accent shadow-lg"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          className="h-6 w-6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M8 10h8M8 14h5M21 12a8.5 8.5 0 0 1-12.4 7.6L3 21l1.4-5.6A8.5 8.5 0 1 1 21 12Z"
+          />
+        </svg>
+      </button>
+    </div>
+  );
+}

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router';
 import { Navbar } from './Navbar';
+import { Assistant } from './Assistant';
 import { ThemeBackdrop } from './ThemeBackdrop';
 import { PHOTO_CREDITS } from '../themes';
 import { StatusBarTint } from './StatusBarTint';
@@ -68,6 +69,7 @@ export function Layout() {
         >
           <Outlet />
         </main>
+        <Assistant />
         {/* Fixed so it's always on screen: the games page scrolls forever and would never reach a footer */}
         <footer
           ref={footerRef}

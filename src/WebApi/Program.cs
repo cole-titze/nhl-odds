@@ -8,12 +8,14 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Prometheus;
 using WebApi.BusinessLogic.AdminService;
+using WebApi.BusinessLogic.Assistant;
 using WebApi.BusinessLogic.GameOddsGetter;
 using WebApi.BusinessLogic.JobService;
 using WebApi.BusinessLogic.StartupCacheWarmer;
 using WebApi.BusinessLogic.StrategyBacktester;
 using WebApi.BusinessLogic.TeamGetter;
 using WebApi.Caching;
+using WebApi.McpTools;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
@@ -43,6 +45,15 @@ builder.Services.AddScoped<IWebBookmakerOddsRepository, WebBookmakerOddsReposito
 builder.Services.AddScoped<IGameOddsRepository, GameOddsRepository>();
 builder.Services.AddScoped<IWebAdminRepository, WebAdminRepository>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+// Experimental assistant (AssistantController): a local Ollama model, off unless OLLAMA_URL is set
+builder.Services.AddScoped<GameOddsMcpTools>();
+builder.Services.AddScoped<TeamMcpTools>();
+builder.Services.AddHttpClient<IAssistantService, AssistantService>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["OLLAMA_URL"] ?? "http://localhost:11434");
+    // A reply with a couple of tool rounds can take a while on the Mac
+    client.Timeout = TimeSpan.FromMinutes(2);
+});
 builder.Services.AddDbContext<GameDbContext>(x => x.UseNpgsql(_connectionString));
 builder.Services.AddLogging();
 // Prometheus scrapes a separate port so /metrics is never reachable through nginx/Cloudflare
@@ -56,7 +67,21 @@ builder.Services.AddRateLimiter(options =>
         ?? "unknown";
 
     options.AddPolicy("api", httpContext =>
-        RateLimitPartition.GetTokenBucketLimiter(
+        // Every assistant message is a model run on the Mac, so it gets a far smaller bucket. It's
+        // picked here because MapControllers' RequireRateLimiting wins over [EnableRateLimiting].
+        httpContext.Request.Path.StartsWithSegments("/api/Assistant/Chat")
+        ? RateLimitPartition.GetTokenBucketLimiter(
+            partitionKey: "assistant:" + GetClientIp(httpContext),
+            factory: _ => new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = 5,
+                ReplenishmentPeriod = TimeSpan.FromSeconds(20),
+                TokensPerPeriod = 1,
+                AutoReplenishment = true,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0,
+            })
+        : RateLimitPartition.GetTokenBucketLimiter(
             partitionKey: GetClientIp(httpContext),
             factory: _ => new TokenBucketRateLimiterOptions
             {
