@@ -100,10 +100,16 @@ export function AboutPage() {
           </p>
         </section>
 
-        <section className="glass rounded-xl p-6 space-y-3">
+        <section id="mcp" className="glass rounded-xl p-6 space-y-3">
           <h2 className="font-display text-lg font-bold tracking-tight">
             Using MCP tools with Claude
           </h2>
+          <p className="text-surface-600 dark:text-surface-400 leading-relaxed">
+            The chat assistant on this site is an experiment. Like the rest of this hobby project,
+            it runs a small AI model on a home computer, so it can be slow, offline or wrong, and
+            each visitor gets only a few questions every few minutes. Its answers aren&apos;t
+            betting advice. For more, connect your own AI, like Claude, to the same data below.
+          </p>
           <p className="text-surface-600 dark:text-surface-400 leading-relaxed">
             This API exposes an{' '}
             <a

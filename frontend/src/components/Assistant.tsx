@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { useLocation } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { ApiError, apiFetch } from '../api/client';
 import { useHydrated } from '../hooks/useHydrated';
 
@@ -20,15 +20,23 @@ function renderReply(text: string) {
     .map((part, i) => (i % 2 ? <strong key={i}>{part}</strong> : part));
 }
 
-function errorMessage(err: unknown) {
+// Sent by /api/Assistant/Status (AssistantLimits in the web API)
+interface Limits {
+  burst: number;
+  minutesPerQuestion: number;
+}
+
+function errorMessage(err: unknown, limits: Limits) {
   if (err instanceof ApiError && err.status === 429)
-    return 'Too many questions — wait a minute and try again.';
+    return `That's the limit for now — you get one more question every ${limits.minutesPerQuestion} minutes.`;
+  if (err instanceof ApiError && err.status === 503)
+    return 'Someone else is asking a question right now. Try again in a minute.';
   return "Sorry, the assistant couldn't answer. It runs on a home computer that may be off.";
 }
 
 export function Assistant() {
   const hydrated = useHydrated();
-  const [enabled, setEnabled] = useState(false);
+  const [limits, setLimits] = useState<Limits | null>(null);
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState('');
@@ -42,9 +50,11 @@ export function Assistant() {
 
   useEffect(() => {
     if (!hydrated) return;
-    apiFetch('/api/Assistant/Status')
-      .then(() => setEnabled(true))
-      .catch(() => setEnabled(false));
+    apiFetch<Partial<Limits>>('/api/Assistant/Status')
+      .then((l) =>
+        setLimits({ burst: l.burst ?? 3, minutesPerQuestion: l.minutesPerQuestion ?? 2 }),
+      )
+      .catch(() => setLimits(null));
   }, [hydrated]);
 
   useEffect(() => {
@@ -55,7 +65,7 @@ export function Assistant() {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
   }, [messages, busy]);
 
-  if (!enabled) return null;
+  if (!limits) return null;
 
   const close = () => {
     setOpen(false);
@@ -78,7 +88,7 @@ export function Assistant() {
       });
       setMessages([...next, { role: 'assistant', content: reply }]);
     } catch (err) {
-      setError(errorMessage(err));
+      setError(errorMessage(err, limits));
     } finally {
       setBusy(false);
     }
@@ -91,23 +101,17 @@ export function Assistant() {
           role="dialog"
           aria-labelledby={titleId}
           onKeyDown={(e) => e.key === 'Escape' && close()}
-          className="glass flex max-h-[min(32rem,60vh)] w-[min(22rem,calc(100vw-2rem))] flex-col rounded-xl border border-surface-200 dark:border-white/[0.06] bg-surface-50/95 dark:bg-surface-950/95 shadow-xl"
+          className="flex max-h-[min(32rem,60vh)] w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-xl bg-white dark:bg-surface-900 shadow-[0_12px_40px_rgba(0,0,0,0.35)] ring-2 ring-accent-600/60 dark:ring-accent-400/50"
         >
-          <div className="flex items-center justify-between border-b border-surface-200 dark:border-white/[0.06] px-4 py-2">
-            <h2
-              id={titleId}
-              className="text-sm font-semibold text-surface-900 dark:text-surface-50"
-            >
-              Assistant{' '}
-              <span className="font-normal text-surface-500 dark:text-surface-400">
-                (experimental)
-              </span>
+          <div className="flex items-center justify-between bg-accent-600 px-4 py-2 text-on-accent">
+            <h2 id={titleId} className="text-sm font-semibold">
+              Assistant <span className="font-normal">(experimental)</span>
             </h2>
             <button
               type="button"
               onClick={close}
               aria-label="Close assistant"
-              className="rounded-md px-2 py-1 text-surface-600 dark:text-surface-300 hover:bg-surface-200 dark:hover:bg-white/10"
+              className="rounded-md px-2 py-1 hover:bg-white/20"
             >
               ✕
             </button>
@@ -118,9 +122,20 @@ export function Assistant() {
             className="flex-1 space-y-3 overflow-y-auto px-4 py-3 text-sm text-surface-800 dark:text-surface-100"
           >
             {messages.length === 0 && (
-              <p className="text-surface-600 dark:text-surface-300">
-                Ask about today&apos;s games, a team, or the model&apos;s odds.
-              </p>
+              <div className="space-y-2 text-surface-600 dark:text-surface-300">
+                <p>Ask about today&apos;s games, a team, or the model&apos;s odds.</p>
+                <p className="text-xs">
+                  Small home-run AI: {limits.burst} questions, then 1 every{' '}
+                  {limits.minutesPerQuestion} min.{' '}
+                  <Link
+                    to="/about#mcp"
+                    onClick={close}
+                    className="text-accent-600 dark:text-accent-400 underline hover:no-underline"
+                  >
+                    Connect your own AI
+                  </Link>
+                </p>
+              </div>
             )}
             {messages.map((m, i) => (
               <p

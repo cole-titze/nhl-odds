@@ -74,8 +74,8 @@ builder.Services.AddRateLimiter(options =>
             partitionKey: "assistant:" + GetClientIp(httpContext),
             factory: _ => new TokenBucketRateLimiterOptions
             {
-                TokenLimit = 5,
-                ReplenishmentPeriod = TimeSpan.FromSeconds(20),
+                TokenLimit = AssistantLimits.Burst,
+                ReplenishmentPeriod = TimeSpan.FromMinutes(AssistantLimits.MinutesPerQuestion),
                 TokensPerPeriod = 1,
                 AutoReplenishment = true,
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,

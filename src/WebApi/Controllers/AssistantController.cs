@@ -15,7 +15,9 @@ public class AssistantController(IConfiguration config, IServiceProvider service
     private bool Enabled => !string.IsNullOrEmpty(config["OLLAMA_URL"]);
 
     [HttpGet]
-    public IResult Status() => Enabled ? Results.Ok(new { enabled = true }) : Results.NotFound();
+    public IResult Status() => Enabled
+        ? Results.Ok(new { burst = AssistantLimits.Burst, minutesPerQuestion = AssistantLimits.MinutesPerQuestion })
+        : Results.NotFound();
 
     [HttpPost]
     public async Task<IResult> Chat(AssistantRequest request, CancellationToken cancellationToken)
@@ -31,6 +33,10 @@ public class AssistantController(IConfiguration config, IServiceProvider service
         {
             var reply = await services.GetRequiredService<IAssistantService>().Chat(request, cancellationToken);
             return Results.Ok(new { reply });
+        }
+        catch (AssistantBusyException)
+        {
+            return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
         }
         catch (HttpRequestException e)
         {

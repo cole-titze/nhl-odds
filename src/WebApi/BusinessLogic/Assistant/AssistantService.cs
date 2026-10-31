@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using WebApi.BusinessLogic.GameOddsGetter;
 using WebApi.McpTools;
 
@@ -23,7 +24,14 @@ public class AssistantService(
     // GetTeamStats returns a whole season of games; keep tool results inside the model's context
     private const int MaxToolResultChars = 24_000;
 
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    // Enums as names: the model read Winner 0 as "nobody won"
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        Converters = { new JsonStringEnumConverter() },
+    };
+
+    // One question at a time across all visitors (both WebApi replicas share one Mac, so this halves it at worst)
+    private static readonly SemaphoreSlim OneAtATime = new(1, 1);
 
     private static readonly JsonArray Tools =
     [
@@ -43,6 +51,20 @@ public class AssistantService(
     ];
 
     public async Task<string> Chat(AssistantRequest request, CancellationToken cancellationToken)
+    {
+        if (!await OneAtATime.WaitAsync(AssistantLimits.QueueWait, cancellationToken))
+            throw new AssistantBusyException();
+        try
+        {
+            return await Answer(request, cancellationToken);
+        }
+        finally
+        {
+            OneAtATime.Release();
+        }
+    }
+
+    private async Task<string> Answer(AssistantRequest request, CancellationToken cancellationToken)
     {
         var messages = new JsonArray { Message("system", BuildSystemPrompt(request.Page)) };
         foreach (var m in request.Messages)
@@ -99,13 +121,41 @@ public class AssistantService(
                 "get_team_stats" => await teamTools.GetTeamStats(Int(args, "teamId"), Int(args, "seasonStartYear")),
                 _ => throw new ArgumentException($"Unknown tool {name}"),
             };
-            var json = JsonSerializer.Serialize(result, JsonOptions);
+            var node = JsonSerializer.SerializeToNode(result, JsonOptions);
+            Simplify(node);
+            var json = node?.ToJsonString() ?? "null";
             return json.Length <= MaxToolResultChars ? json : json[..MaxToolResultChars] + " …(truncated)";
         }
         catch (Exception e)
         {
             logger.LogWarning(e, "Assistant tool {Tool} failed", name);
             return $"Error: {e.Message}";
+        }
+    }
+
+    // A 9B model read an unplayed game's Winner HOME and 0-0 goals as a result and made up a score,
+    // so unplayed games lose those fields and say so; logo URLs only cost context
+    private static void Simplify(JsonNode? node)
+    {
+        switch (node)
+        {
+            case JsonArray array:
+                foreach (var item in array)
+                    Simplify(item);
+                break;
+            case JsonObject obj:
+                obj.Remove("logoUri");
+                if (obj["hasBeenPlayed"] is JsonValue played && !played.GetValue<bool>())
+                {
+                    obj.Remove("winner");
+                    obj.Remove("logLoss");
+                    obj["status"] = "not played yet";
+                    foreach (var side in new[] { "homeTeam", "awayTeam" })
+                        (obj[side] as JsonObject)?.Remove("goals");
+                }
+                foreach (var (_, child) in obj.ToList())
+                    Simplify(child);
+                break;
         }
     }
 
@@ -120,7 +170,8 @@ public class AssistantService(
             teams or odds; never make numbers up. If the tools can't answer, say so.
 
             Today is {today:yyyy-MM-dd} (UTC). The current season is {season} ({season}-{(season + 1) % 100:00}).
-            Odds are win probabilities from 0 to 1. Log loss measures prediction accuracy; lower is
+            In game data, winner is HOME or AWAY and goals are each team's final score. A game with
+            status "not played yet" has no result: never give a score or winner for it. Odds are win probabilities from 0 to 1. Log loss measures prediction accuracy; lower is
             better, and random guessing scores about 0.693.
             The user is on the page "{page ?? "/"}". If it's /game/{"{id}"} or /team/{"{id}"}, that ID is
             what "this game" or "this team" means.
