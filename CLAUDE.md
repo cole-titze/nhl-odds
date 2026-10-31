@@ -63,7 +63,7 @@ The app reads config in priority order:
 3. **`src/WebApi/appsettings.Development.json`** (local dev for Web API, gitignored):
    - Needs a `ConnectionStrings:NHL_DATABASE` entry. Falls back to `NHL_DATABASE` env var.
    - `ADMIN_API_KEY` (env var or config) — required in the `X-Admin-Key` header by every `/api/Admin` endpoint (`[RequireAdminKey]` on `AdminController`). If unset, they're allowed in Development and return 403 elsewhere. The Admin page asks for the key and keeps it in localStorage; its nav link only shows in development or once a key is stored.
-   - `OLLAMA_URL` (env var or config) — experimental chat assistant (`AssistantController`, `frontend/src/components/Assistant.tsx`): the Ollama server it asks (e.g. `http://localhost:11434`). Unset turns it off: `Status` answers `{enabled:false}`, `Chat` 404s and the widget stays hidden. `OLLAMA_MODEL` picks the model (default `qwen3.5-32k`). Limits are in `AssistantLimits`
+   - `OLLAMA_URL` (env var or config) — experimental chat assistant (`AssistantController`, `frontend/src/components/Assistant.tsx`): the Ollama server it asks (e.g. `http://localhost:11434`). Unset turns it off: `Status` answers `{enabled:false}`, `Chat` 404s and the widget stays hidden. `OLLAMA_MODEL` picks the model (default `qwen3.5:9b`, asked for a 32k context). Limits are in `AssistantLimits`
 
 ## Database Setup
 
