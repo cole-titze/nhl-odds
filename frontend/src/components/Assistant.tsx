@@ -146,11 +146,19 @@ export function Assistant() {
     vv.addEventListener('scroll', fit);
     const root = document.documentElement;
     const overflow = root.style.overflow;
+    const { scrollX, scrollY } = window;
     root.style.overflow = 'hidden';
     return () => {
       vv.removeEventListener('resize', fit);
       vv.removeEventListener('scroll', fit);
       root.style.overflow = overflow;
+      // iOS can leave the viewport shifted once the keyboard closes, floating the fixed footer
+      // mid-screen; putting the page back where it was (again as the keyboard animates away)
+      // resyncs it
+      const restore = () => window.scrollTo(scrollX, scrollY);
+      restore();
+      vv.addEventListener('resize', restore);
+      setTimeout(() => vv.removeEventListener('resize', restore), 1000);
     };
   }, [open]);
 
