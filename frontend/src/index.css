@@ -802,13 +802,13 @@ html.scenic {
   --chat-filter: none;
 }
 
-/* Its header is tinted glass in the theme's accent: see-through enough to pick up the frost, dark
-   enough for white text (AA), with a glossy top edge. Solid in the contrast themes. */
+/* Its header is tinted glass in the theme's accent: barely see-through, dark enough for white text
+   (AA), with a glossy top edge. Solid in the contrast themes. */
 .assistant-header {
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--color-accent-600) 88%, transparent),
-    color-mix(in srgb, var(--color-accent-700) 85%, transparent)
+    color-mix(in srgb, var(--color-accent-600) 96%, transparent),
+    color-mix(in srgb, var(--color-accent-700) 94%, transparent)
   );
   backdrop-filter: blur(12px) saturate(160%);
   -webkit-backdrop-filter: blur(12px) saturate(160%);

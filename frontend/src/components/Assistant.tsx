@@ -124,7 +124,7 @@ export function Assistant() {
   }, [hydrated]);
 
   useEffect(() => {
-    if (open) inputRef.current?.focus();
+    if (open) inputRef.current?.focus({ preventScroll: true });
     // After the re-render, since the launcher is hidden behind the full-screen chat on phones
     else if (wasOpen.current) launcherRef.current?.focus();
     wasOpen.current = open;
@@ -207,7 +207,7 @@ export function Assistant() {
       setError(errorMessage(err, limits));
     } finally {
       setBusy(false);
-      inputRef.current?.focus();
+      inputRef.current?.focus({ preventScroll: true });
     }
   };
 
@@ -322,6 +322,13 @@ export function Assistant() {
               id={`${titleId}-input`}
               ref={inputRef}
               data-scroll
+              // A tap's own focus makes iOS slide the whole screen up to show the box, moving the
+              // header; focus it without scrolling instead (the box lifts above the keyboard anyway)
+              onTouchEnd={(e) => {
+                if (document.activeElement === e.currentTarget) return;
+                e.preventDefault();
+                e.currentTarget.focus({ preventScroll: true });
+              }}
               rows={1}
               maxLength={2000}
               value={draft}
