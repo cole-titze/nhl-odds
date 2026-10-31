@@ -801,3 +801,19 @@ html.scenic {
   --chat-bg: var(--bar-bg);
   --chat-filter: none;
 }
+
+/* Full screen on phones, so put the theme's page color under the frost: nothing behind it
+   should show through. Padding eases as the keyboard comes and goes. */
+@media (max-width: 639.98px) {
+  .assistant-panel {
+    --chat-solid: #fafafa;
+    background: linear-gradient(var(--chat-bg), var(--chat-bg)), var(--chat-solid);
+    transition: padding 180ms ease-out;
+  }
+  .dark .assistant-panel {
+    --chat-solid: #141418;
+  }
+  :is(.scenic, .theme-contrast-light, .theme-contrast-dark) .assistant-panel {
+    --chat-solid: var(--scene-base);
+  }
+}

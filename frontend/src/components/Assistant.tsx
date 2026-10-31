@@ -130,8 +130,7 @@ export function Assistant() {
     wasOpen.current = open;
   }, [open]);
 
-  // On phones, keep the chat's contents in the part of the screen the keyboard leaves and stop
-  // the page behind it from scrolling
+  // On phones, keep the chat's contents in the part of the screen the keyboard leaves
   useEffect(() => {
     const vv = window.visualViewport;
     if (!open || !vv || !window.matchMedia(PHONE).matches) return;
@@ -144,18 +143,19 @@ export function Assistant() {
     fit();
     vv.addEventListener('resize', fit);
     vv.addEventListener('scroll', fit);
-    const root = document.documentElement;
-    const overflow = root.style.overflow;
+    // Pin the page where it is: iOS ignores overflow: hidden and scrolls the page behind the
+    // chat as the keyboard comes and goes, which made it jump
+    const body = document.body;
+    const saved = body.style.cssText;
     const { scrollX, scrollY } = window;
-    root.style.overflow = 'hidden';
+    Object.assign(body.style, { position: 'fixed', top: `${-scrollY}px`, left: '0', right: '0' });
     return () => {
       vv.removeEventListener('resize', fit);
       vv.removeEventListener('scroll', fit);
-      root.style.overflow = overflow;
-      // iOS can leave the viewport shifted once the keyboard closes, floating the fixed footer
-      // mid-screen; putting the page back where it was (again as the keyboard animates away)
-      // resyncs it
-      const restore = () => window.scrollTo(scrollX, scrollY);
+      body.style.cssText = saved;
+      // Back where it was. iOS can also leave the viewport shifted once the keyboard closes,
+      // floating the fixed footer mid-screen, so do it again as the keyboard animates away.
+      const restore = () => window.scrollTo({ left: scrollX, top: scrollY, behavior: 'instant' });
       restore();
       vv.addEventListener('resize', restore);
       setTimeout(() => vv.removeEventListener('resize', restore), 1000);
