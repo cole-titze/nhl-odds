@@ -276,7 +276,7 @@ export function Assistant() {
             <button
               type="submit"
               disabled={busy || !draft.trim()}
-              className="self-end rounded-lg bg-accent-600 px-4 py-2 text-sm sm:text-base font-semibold text-on-accent disabled:opacity-60"
+              className="rounded-lg bg-accent-600 px-4 py-2 text-sm sm:text-base font-semibold text-on-accent disabled:opacity-60"
             >
               Send
             </button>
