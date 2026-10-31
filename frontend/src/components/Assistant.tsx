@@ -223,7 +223,7 @@ export function Assistant() {
           onKeyDown={(e) => e.key === 'Escape' && close()}
           className="assistant-pop flex max-h-[min(32rem,60vh)] w-[min(22rem,calc(100vw-2rem))] sm:max-h-[min(42rem,75vh)] sm:w-[27rem] lg:w-[30rem] assistant-panel flex-col overflow-hidden rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.35)] ring-2 ring-accent-600/60 dark:ring-accent-400/50 max-sm:fixed max-sm:inset-0 max-sm:pt-[var(--vv-top,0px)] max-sm:pb-[var(--vv-bottom,0px)] max-sm:max-h-none max-sm:w-full max-sm:rounded-none max-sm:ring-0"
         >
-          <div className="flex items-center justify-between bg-accent-600 px-4 py-2 text-on-accent">
+          <div className="assistant-header flex items-center justify-between px-4 py-2 text-on-accent">
             <h2 id={titleId} className="flex items-center gap-2 text-sm font-semibold sm:text-base">
               <span className="puck-hello inline-flex rounded-full bg-white/90 p-0.5">
                 <PuckBot className="h-7 w-7" />

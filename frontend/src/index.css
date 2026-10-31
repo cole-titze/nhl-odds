@@ -802,13 +802,34 @@ html.scenic {
   --chat-filter: none;
 }
 
+/* Its header is tinted glass in the theme's accent: see-through enough to pick up the frost, dark
+   enough for white text (AA), with a glossy top edge. Solid in the contrast themes. */
+.assistant-header {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-accent-600) 88%, transparent),
+    color-mix(in srgb, var(--color-accent-700) 85%, transparent)
+  );
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+:is(.theme-contrast-light, .theme-contrast-dark) .assistant-header {
+  background: var(--color-accent-700);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+}
+
 /* Full screen on phones, so put the theme's page color under the frost: nothing behind it
    should show through. Padding eases as the keyboard comes and goes. */
 @media (max-width: 639.98px) {
   .assistant-panel {
     --chat-solid: #fafafa;
     background: linear-gradient(var(--chat-bg), var(--chat-bg)), var(--chat-solid);
-    transition: padding 180ms ease-out;
+    /* Only the keyboard side eases: the top must follow iOS shifting the screen at once, or the header slides off and back */
+    transition: padding-bottom 180ms ease-out;
   }
   .dark .assistant-panel {
     --chat-solid: #141418;
