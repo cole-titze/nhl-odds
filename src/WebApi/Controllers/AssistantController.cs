@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using WebApi.BusinessLogic.Assistant;
+using WebApi.Filters;
 
 namespace WebApi.Controllers;
 
@@ -7,7 +8,7 @@ namespace WebApi.Controllers;
 // Chat has its own small rate-limit bucket (the "api" policy in Program.cs).
 [Route("api/[controller]/[action]")]
 [ApiController]
-public class AssistantController(IConfiguration config, IServiceProvider services, ILogger<AssistantController> logger)
+public class AssistantController(IConfiguration config, IServiceProvider services, IHttpContextAccessor http, ILogger<AssistantController> logger)
 {
     private const int MaxMessages = 20;
     private const int MaxMessageChars = 2_000;
@@ -16,7 +17,13 @@ public class AssistantController(IConfiguration config, IServiceProvider service
 
     [HttpGet]
     public IResult Status() => Enabled
-        ? Results.Ok(new { burst = AssistantLimits.Burst, minutesPerQuestion = AssistantLimits.MinutesPerQuestion })
+        ? Results.Ok(new
+        {
+            burst = AssistantLimits.Burst,
+            minutesPerQuestion = AssistantLimits.MinutesPerQuestion,
+            // The admin key lifts the per-visitor limit (Program.cs rate limiter)
+            unlimited = RequireAdminKeyAttribute.IsAdmin(http.HttpContext!),
+        })
         : Results.NotFound();
 
     [HttpPost]

@@ -19,17 +19,26 @@ public class RequireAdminKeyAttribute : Attribute, IAuthorizationFilter
     public void OnAuthorization(AuthorizationFilterContext context)
     {
         var services = context.HttpContext.RequestServices;
-        var expected = services.GetRequiredService<IConfiguration>()[ConfigKey];
-
-        if (string.IsNullOrEmpty(expected))
+        if (string.IsNullOrEmpty(services.GetRequiredService<IConfiguration>()[ConfigKey]))
         {
             if (!services.GetRequiredService<IWebHostEnvironment>().IsDevelopment())
                 context.Result = new StatusCodeResult(StatusCodes.Status403Forbidden);
             return;
         }
 
-        var provided = context.HttpContext.Request.Headers[HeaderName].ToString();
-        if (!CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(provided), Encoding.UTF8.GetBytes(expected)))
+        if (!IsAdmin(context.HttpContext))
             context.Result = new UnauthorizedResult();
+    }
+
+    /// <summary>Whether the request carries the admin key (always true in Development with no key configured).</summary>
+    public static bool IsAdmin(HttpContext httpContext)
+    {
+        var services = httpContext.RequestServices;
+        var expected = services.GetRequiredService<IConfiguration>()[ConfigKey];
+        if (string.IsNullOrEmpty(expected))
+            return services.GetRequiredService<IWebHostEnvironment>().IsDevelopment();
+
+        var provided = httpContext.Request.Headers[HeaderName].ToString();
+        return CryptographicOperations.FixedTimeEquals(Encoding.UTF8.GetBytes(provided), Encoding.UTF8.GetBytes(expected));
     }
 }

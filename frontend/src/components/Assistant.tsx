@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import { ApiError, apiFetch } from '../api/client';
 import { useHydrated } from '../hooks/useHydrated';
+import { getAdminKey } from '../hooks/useAdminKey';
 
 // Experimental chat assistant backed by a local Ollama model (AssistantController in the web
 // API). It only appears when the API says it's enabled, and only after hydration, so server
@@ -24,6 +25,14 @@ function renderReply(text: string) {
 interface Limits {
   burst: number;
   minutesPerQuestion: number;
+  // Sent the admin key: no per-visitor limit
+  unlimited: boolean;
+}
+
+// The admin key (stored by the Admin page) lifts the assistant's per-visitor limit
+function adminHeaders(): Record<string, string> {
+  const key = getAdminKey();
+  return key ? { 'X-Admin-Key': key } : {};
 }
 
 function errorMessage(err: unknown, limits: Limits) {
@@ -79,9 +88,13 @@ export function Assistant() {
 
   useEffect(() => {
     if (!hydrated) return;
-    apiFetch<Partial<Limits>>('/api/Assistant/Status')
+    apiFetch<Partial<Limits>>('/api/Assistant/Status', { headers: adminHeaders() })
       .then((l) =>
-        setLimits({ burst: l.burst ?? 3, minutesPerQuestion: l.minutesPerQuestion ?? 2 }),
+        setLimits({
+          burst: l.burst ?? 3,
+          minutesPerQuestion: l.minutesPerQuestion ?? 2,
+          unlimited: l.unlimited ?? false,
+        }),
       )
       .catch(() => setLimits(null));
   }, [hydrated]);
@@ -112,7 +125,7 @@ export function Assistant() {
     try {
       const { reply } = await apiFetch<{ reply: string }>('/api/Assistant/Chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...adminHeaders() },
         body: JSON.stringify({ messages: next, page: pathname }),
       });
       setMessages([...next, { role: 'assistant', content: reply }]);
@@ -157,8 +170,9 @@ export function Assistant() {
               <div className="space-y-2 text-surface-600 dark:text-surface-300">
                 <p>Ask about today&apos;s games, a team, or the model&apos;s odds.</p>
                 <p className="text-xs">
-                  Small home-run AI: {limits.burst} questions, then 1 every{' '}
-                  {limits.minutesPerQuestion} min.{' '}
+                  {limits.unlimited
+                    ? 'Small home-run AI. Admin: no question limit. '
+                    : `Small home-run AI: ${limits.burst} questions, then 1 every ${limits.minutesPerQuestion} min. `}
                   <Link
                     to="/about#mcp"
                     onClick={close}

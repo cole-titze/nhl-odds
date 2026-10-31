@@ -15,6 +15,7 @@ using WebApi.BusinessLogic.StartupCacheWarmer;
 using WebApi.BusinessLogic.StrategyBacktester;
 using WebApi.BusinessLogic.TeamGetter;
 using WebApi.Caching;
+using WebApi.Filters;
 using WebApi.McpTools;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -46,6 +47,7 @@ builder.Services.AddScoped<IGameOddsRepository, GameOddsRepository>();
 builder.Services.AddScoped<IWebAdminRepository, WebAdminRepository>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 // Experimental assistant (AssistantController): a local Ollama model, off unless OLLAMA_URL is set
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<GameOddsMcpTools>();
 builder.Services.AddScoped<TeamMcpTools>();
 builder.Services.AddHttpClient<IAssistantService, AssistantService>(client =>
@@ -67,10 +69,13 @@ builder.Services.AddRateLimiter(options =>
         ?? "unknown";
 
     options.AddPolicy("api", httpContext =>
-        // Every assistant message is a model run on the Mac, so it gets a far smaller bucket. It's
-        // picked here because MapControllers' RequireRateLimiting wins over [EnableRateLimiting].
+        // Every assistant message is a model run on the Mac, so it gets a far smaller bucket (no
+        // limit with the admin key). It's picked here because MapControllers' RequireRateLimiting
+        // wins over [EnableRateLimiting].
         httpContext.Request.Path.StartsWithSegments("/api/Assistant/Chat")
-        ? RateLimitPartition.GetTokenBucketLimiter(
+        ? RequireAdminKeyAttribute.IsAdmin(httpContext)
+            ? RateLimitPartition.GetNoLimiter("assistant-admin")
+            : RateLimitPartition.GetTokenBucketLimiter(
             partitionKey: "assistant:" + GetClientIp(httpContext),
             factory: _ => new TokenBucketRateLimiterOptions
             {
