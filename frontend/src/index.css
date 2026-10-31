@@ -780,3 +780,24 @@ html.scenic {
 .bubble-in {
   animation: bubble-in 180ms ease-out;
 }
+
+/* Chat panel (Assistant.tsx): frosted like the navbar, in each theme's bar colors with a heavier
+   blur so messages stay readable over the cards behind it. Contrast themes stay solid. */
+.assistant-panel {
+  --chat-bg: rgba(255, 255, 255, 0.82);
+  --chat-filter: blur(24px) saturate(140%);
+  background: var(--chat-bg);
+  backdrop-filter: var(--chat-filter);
+  -webkit-backdrop-filter: var(--chat-filter);
+}
+.dark .assistant-panel {
+  --chat-bg: rgba(19, 19, 19, 0.78);
+}
+.scenic .assistant-panel {
+  --chat-bg: var(--bar-bg);
+  --chat-filter: blur(28px) saturate(150%);
+}
+:is(.theme-contrast-light, .theme-contrast-dark) .assistant-panel {
+  --chat-bg: var(--bar-bg);
+  --chat-filter: none;
+}

@@ -48,7 +48,7 @@ function errorMessage(err: unknown, limits: Limits) {
 const PHONE = '(max-width: 639.98px)';
 
 const BOT_BUBBLE =
-  'w-fit whitespace-pre-wrap break-words rounded-2xl rounded-bl-md bg-white px-3.5 py-2 text-surface-900 shadow-sm ring-1 ring-surface-200 dark:bg-surface-800 dark:text-surface-50 dark:ring-white/[0.06]';
+  'glass w-fit whitespace-pre-wrap break-words rounded-2xl rounded-bl-md px-3.5 py-2 text-surface-900 shadow-sm dark:text-surface-50';
 
 // The assistant's mascot: a hockey puck with eyes that blink (puck-* classes in index.css)
 function PuckBot({ className = '' }: { className?: string }) {
@@ -203,7 +203,7 @@ export function Assistant() {
           role="dialog"
           aria-labelledby={titleId}
           onKeyDown={(e) => e.key === 'Escape' && close()}
-          className="assistant-pop flex max-h-[min(32rem,60vh)] w-[min(22rem,calc(100vw-2rem))] sm:max-h-[min(42rem,75vh)] sm:w-[27rem] lg:w-[30rem] flex-col overflow-hidden rounded-xl bg-white dark:bg-surface-900 shadow-[0_12px_40px_rgba(0,0,0,0.35)] ring-2 ring-accent-600/60 dark:ring-accent-400/50 max-sm:fixed max-sm:inset-0 max-sm:pt-[var(--vv-top,0px)] max-sm:pb-[var(--vv-bottom,0px)] max-sm:max-h-none max-sm:w-full max-sm:rounded-none max-sm:ring-0"
+          className="assistant-pop flex max-h-[min(32rem,60vh)] w-[min(22rem,calc(100vw-2rem))] sm:max-h-[min(42rem,75vh)] sm:w-[27rem] lg:w-[30rem] assistant-panel flex-col overflow-hidden rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.35)] ring-2 ring-accent-600/60 dark:ring-accent-400/50 max-sm:fixed max-sm:inset-0 max-sm:pt-[var(--vv-top,0px)] max-sm:pb-[var(--vv-bottom,0px)] max-sm:max-h-none max-sm:w-full max-sm:rounded-none max-sm:ring-0"
         >
           <div className="flex items-center justify-between bg-accent-600 px-4 py-2 text-on-accent">
             <h2 id={titleId} className="flex items-center gap-2 text-sm font-semibold sm:text-base">
@@ -224,7 +224,7 @@ export function Assistant() {
           <div
             ref={logRef}
             aria-live="polite"
-            className="flex flex-1 flex-col gap-2.5 overflow-y-auto bg-surface-50 px-3 py-3 text-sm sm:text-base text-surface-800 dark:bg-surface-950 dark:text-surface-100"
+            className="flex flex-1 flex-col gap-2.5 overflow-y-auto px-3 py-3 text-sm sm:text-base text-surface-800 dark:text-surface-100"
           >
             {messages.length === 0 && (
               <div className="space-y-2 text-surface-600 dark:text-surface-300">
@@ -313,7 +313,7 @@ export function Assistant() {
                 }
               }}
               placeholder="Ask a question…"
-              className="min-w-0 flex-1 resize-none rounded-lg border border-surface-300 dark:border-white/10 bg-white dark:bg-surface-900 max-h-36 px-3 py-2 text-base text-surface-900 dark:text-surface-50 placeholder:text-surface-500 dark:placeholder:text-surface-400"
+              className="min-w-0 flex-1 resize-none rounded-lg border border-surface-300 dark:border-white/10 bg-white/70 dark:bg-black/30 max-h-36 px-3 py-2 text-base text-surface-900 dark:text-surface-50 placeholder:text-surface-500 dark:placeholder:text-surface-400"
             />
             <button
               type="submit"
