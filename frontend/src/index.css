@@ -828,8 +828,9 @@ html.scenic {
   .assistant-panel {
     --chat-solid: #fafafa;
     background: linear-gradient(var(--chat-bg), var(--chat-bg)), var(--chat-solid);
-    /* Only the keyboard side eases: the top must follow iOS shifting the screen at once, or the header slides off and back */
-    transition: padding-bottom 180ms ease-out;
+    /* Only the keyboard side eases, on a curve close to the iOS keyboard's: the top must follow
+       iOS shifting the screen at once, or the header slides off and back */
+    transition: padding-bottom 250ms cubic-bezier(0.32, 0.72, 0, 1);
   }
   .dark .assistant-panel {
     --chat-solid: #141418;

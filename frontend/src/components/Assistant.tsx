@@ -152,6 +152,12 @@ export function Assistant() {
       if (!scroller || scroller.scrollHeight <= scroller.clientHeight) e.preventDefault();
     };
     panel?.addEventListener('touchmove', onTouchMove, { passive: false });
+    // The keyboard starts hiding as the box loses focus, but iOS reports the new size late, so
+    // drop the box now and let it slide down alongside the keyboard
+    const onFocusOut = (e: FocusEvent) => {
+      if (e.target === inputRef.current) panel?.style.setProperty('--vv-bottom', '0px');
+    };
+    panel?.addEventListener('focusout', onFocusOut);
     // Pin the page where it is: iOS ignores overflow: hidden and scrolls the page behind the
     // chat as the keyboard comes and goes, which made it jump
     const body = document.body;
@@ -162,6 +168,7 @@ export function Assistant() {
       vv.removeEventListener('resize', fit);
       vv.removeEventListener('scroll', fit);
       panel?.removeEventListener('touchmove', onTouchMove);
+      panel?.removeEventListener('focusout', onFocusOut);
       body.style.cssText = saved;
       // Back where it was. iOS can also leave the viewport shifted once the keyboard closes,
       // floating the fixed footer mid-screen, so do it again as the keyboard animates away.
