@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using Entities.ViewModels;
 using WebApi.BusinessLogic.GameOddsGetter;
 using WebApi.McpTools;
 
@@ -116,7 +117,7 @@ public class AssistantService(
         {
             object? result = name switch
             {
-                "get_todays_games" => await gameTools.GetTodaysGames(Int(args, "seasonStartYear")),
+                "get_todays_games" => await GetTodaysGames(Int(args, "seasonStartYear")),
                 "get_games_in_date_range" => await gameTools.GetGamesInDateRange(
                     Date(args, "startDate"), Date(args, "endDate"), Int(args, "seasonStartYear")),
                 "get_game" => await gameOddsGetter.GetGameOdds(Int(args, "gameId")),
@@ -148,6 +149,13 @@ public class AssistantService(
                 break;
             case JsonObject obj:
                 obj.Remove("logoUri");
+                // The model reads times as given, so hand it the site's Central time
+                if (obj["gameDate"] is JsonValue date && DateTime.TryParse(date.ToString(), null,
+                        System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var utc))
+                {
+                    obj.Remove("gameDate");
+                    obj["startTimeCentral"] = TimeZoneInfo.ConvertTimeFromUtc(utc, Central).ToString("ddd MMM d, h:mm tt") + " CT";
+                }
                 if (obj["hasBeenPlayed"] is JsonValue played && !played.GetValue<bool>())
                 {
                     obj.Remove("winner");
@@ -162,9 +170,22 @@ public class AssistantService(
         }
     }
 
+    // The site's "today" is Central time: after 7 PM CT the UTC date is already tomorrow, and a
+    // night's late games start after midnight UTC, so fetch both UTC days and keep the Central date
+    private async Task<IEnumerable<GameOddsVM>> GetTodaysGames(int seasonStartYear)
+    {
+        var today = CentralNow().Date;
+        var games = await gameTools.GetGamesInDateRange(today, today.AddDays(1), seasonStartYear);
+        return games.Where(g => TimeZoneInfo.ConvertTimeFromUtc(g.GameDate, Central).Date == today);
+    }
+
+    private static readonly TimeZoneInfo Central = TimeZoneInfo.FindSystemTimeZoneById("America/Chicago");
+
+    private static DateTime CentralNow() => TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Central);
+
     private static string BuildSystemPrompt(string? page)
     {
-        var today = DateTime.UtcNow;
+        var today = CentralNow();
         var season = today >= new DateTime(today.Year, 9, 20) ? today.Year : today.Year - 1;
         return $"""
             You are a small assistant on an NHL odds website. The site shows its own machine-learning
@@ -172,7 +193,7 @@ public class AssistantService(
             Answer briefly (a few sentences) in plain text. Use the tools for any facts about games,
             teams or odds; never make numbers up. If the tools can't answer, say so.
 
-            Today is {today:yyyy-MM-dd} (UTC). The current season is {season} ({season}-{(season + 1) % 100:00}).
+            Today is {today:dddd yyyy-MM-dd} (US Central time, which game times use too). The current season is {season} ({season}-{(season + 1) % 100:00}).
             In game data, winner is HOME or AWAY and goals are each team's final score. A game with
             status "not played yet" has no result: never give a score or winner for it. Odds are win probabilities from 0 to 1. Log loss measures prediction accuracy; lower is
             better, and random guessing scores about 0.693.
