@@ -146,6 +146,14 @@ export function Assistant() {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
   }, [messages, busy]);
 
+  // One line tall, growing with what's typed (up to max-h-36, then it scrolls)
+  useEffect(() => {
+    const input = inputRef.current;
+    if (!input) return;
+    input.style.height = 'auto';
+    input.style.height = `${input.scrollHeight + input.offsetHeight - input.clientHeight}px`;
+  }, [draft, open]);
+
   if (!limits) return null;
 
   const close = () => setOpen(false);
@@ -262,7 +270,7 @@ export function Assistant() {
             <textarea
               id={`${titleId}-input`}
               ref={inputRef}
-              rows={2}
+              rows={1}
               maxLength={2000}
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -273,7 +281,7 @@ export function Assistant() {
                 }
               }}
               placeholder="Ask a question…"
-              className="min-w-0 flex-1 resize-none rounded-lg border border-surface-300 dark:border-white/10 bg-white dark:bg-surface-900 px-3 py-2 text-base sm:min-h-[5.5rem] text-surface-900 dark:text-surface-50 placeholder:text-surface-500 dark:placeholder:text-surface-400"
+              className="min-w-0 flex-1 resize-none rounded-lg border border-surface-300 dark:border-white/10 bg-white dark:bg-surface-900 max-h-36 px-3 py-2 text-base text-surface-900 dark:text-surface-50 placeholder:text-surface-500 dark:placeholder:text-surface-400"
             />
             <button
               type="submit"
