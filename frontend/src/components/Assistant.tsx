@@ -181,7 +181,6 @@ export function Assistant() {
                     : `Small home-run AI: ${limits.burst} questions, then 1 every ${limits.minutesPerQuestion} min. `}
                   <Link
                     to="/about#mcp"
-                    onClick={close}
                     className="text-accent-600 dark:text-accent-400 underline hover:no-underline"
                   >
                     Connect your own AI

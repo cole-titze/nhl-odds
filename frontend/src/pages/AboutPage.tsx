@@ -3,12 +3,18 @@ import { useLocation } from 'react-router';
 import { PageTitle } from '../components/A11y';
 
 export function AboutPage() {
-  const { hash } = useLocation();
+  const { hash, key } = useLocation();
 
   // Links like /about#mcp (the chat assistant's) land on that section, also on client navigation
+  // and when clicked again while here (key changes). After a frame, so Layout moving focus to
+  // <main> on navigation can't undo it.
   useEffect(() => {
-    if (hash) document.getElementById(hash.slice(1))?.scrollIntoView();
-  }, [hash]);
+    if (!hash) return;
+    const frame = requestAnimationFrame(() =>
+      document.getElementById(hash.slice(1))?.scrollIntoView(),
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [hash, key]);
 
   return (
     <div className="max-w-2xl mx-auto">
