@@ -47,6 +47,9 @@ function errorMessage(err: unknown, limits: Limits) {
 // keyboard can't cover them (iOS doesn't shrink the layout for the keyboard). Matches Tailwind's max-sm.
 const PHONE = '(max-width: 639.98px)';
 
+const BOT_BUBBLE =
+  'w-fit whitespace-pre-wrap break-words rounded-2xl rounded-bl-md bg-white px-3.5 py-2 text-surface-900 shadow-sm ring-1 ring-surface-200 dark:bg-surface-800 dark:text-surface-50 dark:ring-white/[0.06]';
+
 // The assistant's mascot: a hockey puck with eyes that blink (puck-* classes in index.css)
 function PuckBot({ className = '' }: { className?: string }) {
   return (
@@ -73,6 +76,15 @@ function PuckBot({ className = '' }: { className?: string }) {
         strokeLinecap="round"
       />
     </svg>
+  );
+}
+
+// The mascot beside its messages, on a light disc so the dark puck shows in dark mode too
+function Avatar({ hop = false }: { hop?: boolean }) {
+  return (
+    <span className="inline-flex shrink-0 rounded-full bg-white p-0.5 ring-1 ring-surface-200 dark:ring-white/10">
+      <PuckBot className={`h-7 w-7 ${hop ? 'puck-throbber' : ''}`} />
+    </span>
   );
 }
 
@@ -177,6 +189,7 @@ export function Assistant() {
       setError(errorMessage(err, limits));
     } finally {
       setBusy(false);
+      inputRef.current?.focus();
     }
   };
 
@@ -211,7 +224,7 @@ export function Assistant() {
           <div
             ref={logRef}
             aria-live="polite"
-            className="flex-1 space-y-3 overflow-y-auto px-4 py-3 text-sm sm:text-base text-surface-800 dark:text-surface-100"
+            className="flex flex-1 flex-col gap-2.5 overflow-y-auto bg-surface-50 px-3 py-3 text-sm sm:text-base text-surface-800 dark:bg-surface-950 dark:text-surface-100"
           >
             {messages.length === 0 && (
               <div className="space-y-2 text-surface-600 dark:text-surface-300">
@@ -231,31 +244,50 @@ export function Assistant() {
                 </p>
               </div>
             )}
-            {messages.map((m, i) => (
-              <p
-                key={i}
-                className={`whitespace-pre-wrap break-words rounded-lg px-3 py-2 ${
-                  m.role === 'user'
-                    ? 'ml-6 bg-accent-600 text-on-accent'
-                    : 'mr-6 bg-surface-200/70 dark:bg-white/[0.06]'
-                }`}
-              >
-                <span className="sr-only">{m.role === 'user' ? 'You: ' : 'Assistant: '}</span>
-                {m.role === 'assistant' ? renderReply(m.content) : m.content}
-              </p>
-            ))}
-            {busy && (
-              <p className="flex items-end gap-2 text-surface-600 dark:text-surface-300">
-                <PuckBot className="puck-throbber h-8 w-8" />
-                <span>
-                  Thinking
-                  <span className="throbber-dot">.</span>
-                  <span className="throbber-dot [animation-delay:200ms]">.</span>
-                  <span className="throbber-dot [animation-delay:400ms]">.</span>
-                </span>
-              </p>
+            {messages.map((m, i) =>
+              m.role === 'user' ? (
+                <p
+                  key={i}
+                  className="bubble-in ml-auto w-fit max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-accent-600 px-3.5 py-2 text-on-accent shadow-sm"
+                >
+                  <span className="sr-only">You: </span>
+                  {m.content}
+                </p>
+              ) : (
+                <div key={i} className="bubble-in flex max-w-[85%] items-end gap-2">
+                  <Avatar />
+                  <p className={BOT_BUBBLE}>
+                    <span className="sr-only">Assistant: </span>
+                    {renderReply(m.content)}
+                  </p>
+                </div>
+              ),
             )}
-            {error && <p className="text-red-700 dark:text-red-300">{error}</p>}
+            {busy && (
+              <div className="bubble-in flex items-end gap-2">
+                <Avatar hop />
+                <p className={`${BOT_BUBBLE} flex gap-1 text-lg leading-none`}>
+                  <span className="sr-only">Thinking</span>
+                  <span aria-hidden="true" className="throbber-dot">
+                    •
+                  </span>
+                  <span aria-hidden="true" className="throbber-dot [animation-delay:200ms]">
+                    •
+                  </span>
+                  <span aria-hidden="true" className="throbber-dot [animation-delay:400ms]">
+                    •
+                  </span>
+                </p>
+              </div>
+            )}
+            {error && (
+              <div className="bubble-in flex max-w-[85%] items-end gap-2">
+                <Avatar />
+                <p className="w-fit rounded-2xl rounded-bl-md bg-red-50 px-3.5 py-2 text-red-800 shadow-sm dark:bg-red-950/60 dark:text-red-200">
+                  {error}
+                </p>
+              </div>
+            )}
           </div>
           <form
             onSubmit={(e) => {
@@ -285,6 +317,8 @@ export function Assistant() {
             />
             <button
               type="submit"
+              // Keep focus (and the phone keyboard) in the message box when Send is tapped
+              onMouseDown={(e) => e.preventDefault()}
               disabled={busy || !draft.trim()}
               className="rounded-lg bg-accent-600 px-4 py-2 text-sm sm:text-base font-semibold text-on-accent disabled:opacity-60"
             >

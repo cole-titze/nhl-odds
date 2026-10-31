@@ -769,3 +769,14 @@ html.scenic {
 .throbber-dot {
   animation: throbber-dot 1.2s infinite;
 }
+
+/* Chat bubbles (Assistant.tsx) fade up into place */
+@keyframes bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.bubble-in {
+  animation: bubble-in 180ms ease-out;
+}
