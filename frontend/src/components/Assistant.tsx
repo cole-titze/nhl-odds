@@ -232,7 +232,7 @@ export function Assistant() {
           <div
             ref={logRef}
             aria-live="polite"
-            className="flex flex-1 flex-col gap-2.5 overflow-y-auto px-3 py-3 text-sm sm:text-base text-surface-800 dark:text-surface-100"
+            className="flex flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain px-3 py-3 text-sm sm:text-base text-surface-800 dark:text-surface-100"
           >
             {messages.length === 0 && (
               <div className="space-y-2 text-surface-600 dark:text-surface-300">
