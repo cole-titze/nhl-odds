@@ -43,8 +43,8 @@ function errorMessage(err: unknown, limits: Limits) {
   return "Sorry, the assistant couldn't answer. It runs on a home computer that may be off.";
 }
 
-// Phones get a full-screen chat sized to the visual viewport, so the on-screen keyboard can't
-// cover it (iOS doesn't shrink the layout for the keyboard). Matches Tailwind's max-sm.
+// Phones get a full-screen chat whose contents stay in the visual viewport, so the on-screen
+// keyboard can't cover them (iOS doesn't shrink the layout for the keyboard). Matches Tailwind's max-sm.
 const PHONE = '(max-width: 639.98px)';
 
 // The assistant's mascot: a hockey puck with eyes that blink (puck-* classes in index.css)
@@ -118,14 +118,16 @@ export function Assistant() {
     wasOpen.current = open;
   }, [open]);
 
-  // On phones, fit the chat to the part of the screen the keyboard leaves and stop the page
-  // behind it from scrolling
+  // On phones, keep the chat's contents in the part of the screen the keyboard leaves and stop
+  // the page behind it from scrolling
   useEffect(() => {
     const vv = window.visualViewport;
     if (!open || !vv || !window.matchMedia(PHONE).matches) return;
     const fit = () => {
+      // The card covers the whole screen; padding keeps its contents in the part above the keyboard
+      const below = window.innerHeight - vv.offsetTop - vv.height;
       panelRef.current?.style.setProperty('--vv-top', `${vv.offsetTop}px`);
-      panelRef.current?.style.setProperty('--vv-height', `${vv.height}px`);
+      panelRef.current?.style.setProperty('--vv-bottom', `${Math.max(0, below)}px`);
     };
     fit();
     vv.addEventListener('resize', fit);
@@ -180,7 +182,7 @@ export function Assistant() {
           role="dialog"
           aria-labelledby={titleId}
           onKeyDown={(e) => e.key === 'Escape' && close()}
-          className="assistant-pop flex max-h-[min(32rem,60vh)] w-[min(22rem,calc(100vw-2rem))] sm:max-h-[min(42rem,75vh)] sm:w-[27rem] lg:w-[30rem] flex-col overflow-hidden rounded-xl bg-white dark:bg-surface-900 shadow-[0_12px_40px_rgba(0,0,0,0.35)] ring-2 ring-accent-600/60 dark:ring-accent-400/50 max-sm:fixed max-sm:inset-x-0 max-sm:top-[var(--vv-top,0px)] max-sm:h-[var(--vv-height,100dvh)] max-sm:max-h-none max-sm:w-full max-sm:rounded-none max-sm:ring-0"
+          className="assistant-pop flex max-h-[min(32rem,60vh)] w-[min(22rem,calc(100vw-2rem))] sm:max-h-[min(42rem,75vh)] sm:w-[27rem] lg:w-[30rem] flex-col overflow-hidden rounded-xl bg-white dark:bg-surface-900 shadow-[0_12px_40px_rgba(0,0,0,0.35)] ring-2 ring-accent-600/60 dark:ring-accent-400/50 max-sm:fixed max-sm:inset-0 max-sm:pt-[var(--vv-top,0px)] max-sm:pb-[var(--vv-bottom,0px)] max-sm:max-h-none max-sm:w-full max-sm:rounded-none max-sm:ring-0"
         >
           <div className="flex items-center justify-between bg-accent-600 px-4 py-2 text-on-accent">
             <h2 id={titleId} className="flex items-center gap-2 text-sm font-semibold sm:text-base">
