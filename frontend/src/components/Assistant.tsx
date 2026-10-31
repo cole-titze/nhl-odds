@@ -250,8 +250,8 @@ export function Assistant() {
                 <p>Ask about today&apos;s games, a team, or the model&apos;s odds.</p>
                 <p className="text-xs">
                   {limits.unlimited
-                    ? 'Small home-run AI. Admin: no question limit. '
-                    : `Small home-run AI: ${limits.burst} questions, then 1 every ${limits.minutesPerQuestion} min. `}
+                    ? 'Small local AI. Admin: no question limit. '
+                    : `Small local AI: ${limits.burst} questions, then 1 every ${limits.minutesPerQuestion} min. `}
                   <Link
                     to="/about#mcp"
                     // The full-screen phone chat would hide the section

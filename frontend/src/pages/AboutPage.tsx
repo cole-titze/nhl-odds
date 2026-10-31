@@ -32,6 +32,11 @@ export function AboutPage() {
             is trained on historical game data from the 2009 season onwards, using play-by-play
             statistics including shots, goals, hits, penalties, and more.
           </p>
+          <p className="text-surface-600 dark:text-surface-400 leading-relaxed">
+            It started as a way to learn and has grown along with what I&apos;ve learned: nightly
+            data jobs, Docker, Kubernetes, SEO, load testing, a local AI assistant, data science,
+            and more.
+          </p>
         </section>
 
         <section className="glass rounded-xl p-6 space-y-3">
@@ -121,8 +126,8 @@ export function AboutPage() {
           </h2>
           <p className="text-surface-600 dark:text-surface-400 leading-relaxed">
             The chat assistant on this site is an experiment. Like the rest of this hobby project,
-            it runs a small AI model on a home computer, so it can be slow, offline or wrong, and
-            each visitor gets only a few questions every few minutes. Its answers aren&apos;t
+            it runs a small local AI model on a home computer, so it can be slow, offline or wrong,
+            and each visitor gets only a few questions every few minutes. Its answers aren&apos;t
             betting advice. For more, connect your own AI, like Claude, to the same data below.
           </p>
           <p className="text-surface-600 dark:text-surface-400 leading-relaxed">
