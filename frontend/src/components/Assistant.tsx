@@ -88,13 +88,19 @@ export function Assistant() {
 
   useEffect(() => {
     if (!hydrated) return;
-    apiFetch<Partial<Limits>>('/api/Assistant/Status', { headers: adminHeaders() })
+    apiFetch<Partial<Limits> & { enabled?: boolean }>('/api/Assistant/Status', {
+      headers: adminHeaders(),
+    })
       .then((l) =>
-        setLimits({
-          burst: l.burst ?? 3,
-          minutesPerQuestion: l.minutesPerQuestion ?? 2,
-          unlimited: l.unlimited ?? false,
-        }),
+        setLimits(
+          l.enabled === false
+            ? null
+            : {
+                burst: l.burst ?? 3,
+                minutesPerQuestion: l.minutesPerQuestion ?? 2,
+                unlimited: l.unlimited ?? false,
+              },
+        ),
       )
       .catch(() => setLimits(null));
   }, [hydrated]);

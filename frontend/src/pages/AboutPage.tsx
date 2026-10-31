@@ -1,6 +1,15 @@
+import { useEffect } from 'react';
+import { useLocation } from 'react-router';
 import { PageTitle } from '../components/A11y';
 
 export function AboutPage() {
+  const { hash } = useLocation();
+
+  // Links like /about#mcp (the chat assistant's) land on that section, also on client navigation
+  useEffect(() => {
+    if (hash) document.getElementById(hash.slice(1))?.scrollIntoView();
+  }, [hash]);
+
   return (
     <div className="max-w-2xl mx-auto">
       <PageTitle
@@ -100,7 +109,7 @@ export function AboutPage() {
           </p>
         </section>
 
-        <section id="mcp" className="glass rounded-xl p-6 space-y-3">
+        <section id="mcp" className="scroll-mt-24 glass rounded-xl p-6 space-y-3">
           <h2 className="font-display text-lg font-bold tracking-tight">
             Using MCP tools with Claude
           </h2>

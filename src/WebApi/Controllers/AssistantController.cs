@@ -4,7 +4,7 @@ using WebApi.Filters;
 
 namespace WebApi.Controllers;
 
-// Experimental: only enabled when OLLAMA_URL is set; otherwise every action 404s and the site hides the widget.
+// Experimental: only enabled when OLLAMA_URL is set; otherwise Status says so (the site hides the widget) and Chat 404s.
 // Chat has its own small rate-limit bucket (the "api" policy in Program.cs).
 [Route("api/[controller]/[action]")]
 [ApiController]
@@ -16,15 +16,17 @@ public class AssistantController(IConfiguration config, IServiceProvider service
     private bool Enabled => !string.IsNullOrEmpty(config["OLLAMA_URL"]);
 
     [HttpGet]
+    // 200 either way so a disabled assistant doesn't put a 404 in the metrics on every page view
     public IResult Status() => Enabled
         ? Results.Ok(new
         {
+            enabled = true,
             burst = AssistantLimits.Burst,
             minutesPerQuestion = AssistantLimits.MinutesPerQuestion,
             // The admin key lifts the per-visitor limit (Program.cs rate limiter)
             unlimited = RequireAdminKeyAttribute.IsAdmin(http.HttpContext!),
         })
-        : Results.NotFound();
+        : Results.Ok(new { enabled = false });
 
     [HttpPost]
     public async Task<IResult> Chat(AssistantRequest request, CancellationToken cancellationToken)
