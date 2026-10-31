@@ -143,6 +143,15 @@ export function Assistant() {
     fit();
     vv.addEventListener('resize', fit);
     vv.addEventListener('scroll', fit);
+    // A swipe with nothing to scroll goes to the page, and iOS shifts the whole screen (the
+    // header jitters). Only the message list and a long message box may scroll, and only once
+    // they overflow.
+    const panel = panelRef.current;
+    const onTouchMove = (e: TouchEvent) => {
+      const scroller = (e.target as Element).closest<HTMLElement>('[data-scroll]');
+      if (!scroller || scroller.scrollHeight <= scroller.clientHeight) e.preventDefault();
+    };
+    panel?.addEventListener('touchmove', onTouchMove, { passive: false });
     // Pin the page where it is: iOS ignores overflow: hidden and scrolls the page behind the
     // chat as the keyboard comes and goes, which made it jump
     const body = document.body;
@@ -152,6 +161,7 @@ export function Assistant() {
     return () => {
       vv.removeEventListener('resize', fit);
       vv.removeEventListener('scroll', fit);
+      panel?.removeEventListener('touchmove', onTouchMove);
       body.style.cssText = saved;
       // Back where it was. iOS can also leave the viewport shifted once the keyboard closes,
       // floating the fixed footer mid-screen, so do it again as the keyboard animates away.
@@ -231,6 +241,7 @@ export function Assistant() {
           </div>
           <div
             ref={logRef}
+            data-scroll
             aria-live="polite"
             className="flex flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain px-3 py-3 text-sm sm:text-base text-surface-800 dark:text-surface-100"
           >
@@ -310,6 +321,7 @@ export function Assistant() {
             <textarea
               id={`${titleId}-input`}
               ref={inputRef}
+              data-scroll
               rows={1}
               maxLength={2000}
               value={draft}
