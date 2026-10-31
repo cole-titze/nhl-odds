@@ -47,6 +47,13 @@ for i in $(seq 60); do
   sleep 2
 done
 
+# The frontend can still be starting when a warm webapi answers on the first try
+for i in $(seq 30); do
+  curl -fsS -o /dev/null --max-time 5 "http://127.0.0.1:$port/healthz" 2>/dev/null && break
+  [ "$i" = 30 ] && { echo "frontend never answered"; exit 1; }
+  sleep 1
+done
+
 check() {
   local code
   code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "http://127.0.0.1:$port$1" || true)
