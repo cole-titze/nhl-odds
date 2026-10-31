@@ -43,6 +43,10 @@ function errorMessage(err: unknown, limits: Limits) {
   return "Sorry, the assistant couldn't answer. It runs on a home computer that may be off.";
 }
 
+// Phones get a full-screen chat sized to the visual viewport, so the on-screen keyboard can't
+// cover it (iOS doesn't shrink the layout for the keyboard). Matches Tailwind's max-sm.
+const PHONE = '(max-width: 639.98px)';
+
 // The assistant's mascot: a hockey puck with eyes that blink (puck-* classes in index.css)
 function PuckBot({ className = '' }: { className?: string }) {
   return (
@@ -85,6 +89,8 @@ export function Assistant() {
   const launcherRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const wasOpen = useRef(false);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -107,6 +113,31 @@ export function Assistant() {
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
+    // After the re-render, since the launcher is hidden behind the full-screen chat on phones
+    else if (wasOpen.current) launcherRef.current?.focus();
+    wasOpen.current = open;
+  }, [open]);
+
+  // On phones, fit the chat to the part of the screen the keyboard leaves and stop the page
+  // behind it from scrolling
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!open || !vv || !window.matchMedia(PHONE).matches) return;
+    const fit = () => {
+      panelRef.current?.style.setProperty('--vv-top', `${vv.offsetTop}px`);
+      panelRef.current?.style.setProperty('--vv-height', `${vv.height}px`);
+    };
+    fit();
+    vv.addEventListener('resize', fit);
+    vv.addEventListener('scroll', fit);
+    const root = document.documentElement;
+    const overflow = root.style.overflow;
+    root.style.overflow = 'hidden';
+    return () => {
+      vv.removeEventListener('resize', fit);
+      vv.removeEventListener('scroll', fit);
+      root.style.overflow = overflow;
+    };
   }, [open]);
 
   useEffect(() => {
@@ -115,10 +146,7 @@ export function Assistant() {
 
   if (!limits) return null;
 
-  const close = () => {
-    setOpen(false);
-    launcherRef.current?.focus();
-  };
+  const close = () => setOpen(false);
 
   const send = async () => {
     const content = draft.trim();
@@ -143,13 +171,16 @@ export function Assistant() {
   };
 
   return (
-    <div className="fixed right-4 bottom-[calc(var(--footer-height,2rem)+1rem)] z-40 flex flex-col items-end gap-3">
+    <div
+      className={`fixed right-4 bottom-[calc(var(--footer-height,2rem)+1rem)] z-40 flex flex-col items-end gap-3 ${open ? 'max-sm:z-[60]' : ''}`}
+    >
       {open && (
         <div
+          ref={panelRef}
           role="dialog"
           aria-labelledby={titleId}
           onKeyDown={(e) => e.key === 'Escape' && close()}
-          className="assistant-pop flex max-h-[min(32rem,60vh)] w-[min(22rem,calc(100vw-2rem))] sm:max-h-[min(42rem,75vh)] sm:w-[27rem] lg:w-[30rem] flex-col overflow-hidden rounded-xl bg-white dark:bg-surface-900 shadow-[0_12px_40px_rgba(0,0,0,0.35)] ring-2 ring-accent-600/60 dark:ring-accent-400/50"
+          className="assistant-pop flex max-h-[min(32rem,60vh)] w-[min(22rem,calc(100vw-2rem))] sm:max-h-[min(42rem,75vh)] sm:w-[27rem] lg:w-[30rem] flex-col overflow-hidden rounded-xl bg-white dark:bg-surface-900 shadow-[0_12px_40px_rgba(0,0,0,0.35)] ring-2 ring-accent-600/60 dark:ring-accent-400/50 max-sm:fixed max-sm:inset-x-0 max-sm:top-[var(--vv-top,0px)] max-sm:h-[var(--vv-height,100dvh)] max-sm:max-h-none max-sm:w-full max-sm:rounded-none max-sm:ring-0"
         >
           <div className="flex items-center justify-between bg-accent-600 px-4 py-2 text-on-accent">
             <h2 id={titleId} className="flex items-center gap-2 text-sm font-semibold sm:text-base">
@@ -181,6 +212,8 @@ export function Assistant() {
                     : `Small home-run AI: ${limits.burst} questions, then 1 every ${limits.minutesPerQuestion} min. `}
                   <Link
                     to="/about#mcp"
+                    // The full-screen phone chat would hide the section
+                    onClick={() => window.matchMedia(PHONE).matches && close()}
                     className="text-accent-600 dark:text-accent-400 underline hover:no-underline"
                   >
                     Connect your own AI
@@ -256,7 +289,7 @@ export function Assistant() {
         onClick={() => (open ? close() : setOpen(true))}
         aria-expanded={open}
         aria-label={open ? 'Close assistant' : 'Open assistant'}
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg ring-2 ring-accent-600 transition-transform hover:-translate-y-0.5 dark:ring-accent-400"
+        className={`flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg ring-2 ring-accent-600 transition-transform hover:-translate-y-0.5 dark:ring-accent-400 ${open ? 'max-sm:hidden' : ''}`}
       >
         <PuckBot className="h-10 w-10" />
       </button>
