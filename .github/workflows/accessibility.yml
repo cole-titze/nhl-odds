@@ -80,10 +80,11 @@ jobs:
         run: npm run build
 
       - name: Run a11y scan
-        run: npm run a11y
+        # Firefox won't start as root when HOME (/github/home) belongs to another user. Set HOME in
+        # the command, not in env: the runner's own `docker exec` also gets step env, and its docker
+        # CLI then warns that it can't read /root/.docker/config.json
+        run: HOME=/root npm run a11y
         env:
           A11Y_BROWSERS: ${{ matrix.browser }}
           A11Y_PARTS: ${{ matrix.parts }}
           A11Y_AXE_SHARD: ${{ matrix.shard }}
-          # Firefox won't start as root when HOME (/github/home) belongs to another user
-          HOME: /root
