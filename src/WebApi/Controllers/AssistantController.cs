@@ -12,6 +12,8 @@ public class AssistantController(IConfiguration config, IServiceProvider service
 {
     private const int MaxMessages = 20;
     private const int MaxMessageChars = 2_000;
+    // Page goes into the system prompt, so only accept a short path (the site sends its pathname)
+    private const int MaxPageChars = 200;
 
     private bool Enabled => !string.IsNullOrEmpty(config["OLLAMA_URL"]);
 
@@ -35,7 +37,8 @@ public class AssistantController(IConfiguration config, IServiceProvider service
             return Results.NotFound();
         if (request.Messages is not { Count: > 0 and <= MaxMessages }
             || request.Messages.Any(m => m.Role is not ("user" or "assistant") || m.Content.Length > MaxMessageChars)
-            || request.Messages[^1].Role != "user")
+            || request.Messages[^1].Role != "user"
+            || request.Page is { } page && (page.Length > MaxPageChars || !page.StartsWith('/') || page.Any(char.IsWhiteSpace)))
             return Results.BadRequest();
 
         try
