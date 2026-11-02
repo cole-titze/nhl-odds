@@ -123,13 +123,6 @@ export function Assistant() {
       .catch(() => setLimits(null));
   }, [hydrated]);
 
-  useEffect(() => {
-    if (open) inputRef.current?.focus({ preventScroll: true });
-    // After the re-render, since the launcher is hidden behind the full-screen chat on phones
-    else if (wasOpen.current) launcherRef.current?.focus();
-    wasOpen.current = open;
-  }, [open]);
-
   // On phones, keep the chat's contents in the part of the screen the keyboard leaves
   useEffect(() => {
     const vv = window.visualViewport;
@@ -140,9 +133,23 @@ export function Assistant() {
       panelRef.current?.style.setProperty('--vv-top', `${vv.offsetTop}px`);
       panelRef.current?.style.setProperty('--vv-bottom', `${Math.max(0, below)}px`);
     };
-    fit();
-    vv.addEventListener('resize', fit);
-    vv.addEventListener('scroll', fit);
+    // iOS fires its last resize/scroll before Safari's toolbars and the keyboard finish moving,
+    // which left the header slightly off screen until the next change, so keep measuring every
+    // frame for a moment after each one
+    let frame = 0;
+    const settle = () => {
+      cancelAnimationFrame(frame);
+      const until = performance.now() + 600;
+      const tick = () => {
+        fit();
+        if (performance.now() < until) frame = requestAnimationFrame(tick);
+      };
+      tick();
+    };
+    settle();
+    vv.addEventListener('resize', settle);
+    vv.addEventListener('scroll', settle);
+    window.addEventListener('resize', settle);
     // A swipe with nothing to scroll goes to the page, and iOS shifts the whole screen (the
     // header jitters). Only the message list and a long message box may scroll, and only once
     // they overflow.
@@ -155,9 +162,16 @@ export function Assistant() {
     // The keyboard starts hiding as the box loses focus, but iOS reports the new size late, so
     // drop the box now and let it slide down alongside the keyboard
     const onFocusOut = (e: FocusEvent) => {
-      if (e.target === inputRef.current) panel?.style.setProperty('--vv-bottom', '0px');
+      if (e.target !== inputRef.current) return;
+      cancelAnimationFrame(frame);
+      panel?.style.setProperty('--vv-bottom', '0px');
     };
     panel?.addEventListener('focusout', onFocusOut);
+    // Opening the keyboard again moves things the same way
+    const onFocusIn = (e: FocusEvent) => {
+      if (e.target === inputRef.current) settle();
+    };
+    panel?.addEventListener('focusin', onFocusIn);
     // Pin the page where it is: iOS ignores overflow: hidden and scrolls the page behind the
     // chat as the keyboard comes and goes, which made it jump
     const body = document.body;
@@ -165,10 +179,13 @@ export function Assistant() {
     const { scrollX, scrollY } = window;
     Object.assign(body.style, { position: 'fixed', top: `${-scrollY}px`, left: '0', right: '0' });
     return () => {
-      vv.removeEventListener('resize', fit);
-      vv.removeEventListener('scroll', fit);
+      cancelAnimationFrame(frame);
+      vv.removeEventListener('resize', settle);
+      vv.removeEventListener('scroll', settle);
+      window.removeEventListener('resize', settle);
       panel?.removeEventListener('touchmove', onTouchMove);
       panel?.removeEventListener('focusout', onFocusOut);
+      panel?.removeEventListener('focusin', onFocusIn);
       body.style.cssText = saved;
       // Back where it was. iOS can also leave the viewport shifted once the keyboard closes,
       // floating the fixed footer mid-screen, so do it again as the keyboard animates away.
@@ -177,6 +194,15 @@ export function Assistant() {
       vv.addEventListener('resize', restore);
       setTimeout(() => vv.removeEventListener('resize', restore), 1000);
     };
+  }, [open]);
+
+  // After the phone effect above, so the page behind the chat is pinned before the keyboard
+  // opens; pinning it mid-animation shifted the first open
+  useEffect(() => {
+    if (open) inputRef.current?.focus({ preventScroll: true });
+    // After the re-render, since the launcher is hidden behind the full-screen chat on phones
+    else if (wasOpen.current) launcherRef.current?.focus();
+    wasOpen.current = open;
   }, [open]);
 
   useEffect(() => {
