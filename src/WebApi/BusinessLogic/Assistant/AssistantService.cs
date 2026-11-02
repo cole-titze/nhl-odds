@@ -65,8 +65,15 @@ public class AssistantService(
         }
     }
 
+    private string Model => config["OLLAMA_MODEL"] ?? "qwen3.5:9b";
+
     private async Task<string> Answer(AssistantRequest request, CancellationToken cancellationToken)
     {
+        // Turn away off-topic questions with one short call before the full tool loop
+        var gateModel = config["OLLAMA_GATE_MODEL"] is { Length: > 0 } gate ? gate : Model;
+        if (await AssistantGate.Check(http, gateModel, request.Messages, logger, cancellationToken) == GateResult.Off)
+            return AssistantGate.OffTopicReply;
+
         var messages = new JsonArray { Message("system", BuildSystemPrompt(request.Page)) };
         foreach (var m in request.Messages)
             messages.Add(Message(m.Role, m.Content));
@@ -75,7 +82,7 @@ public class AssistantService(
         {
             var body = new JsonObject
             {
-                ["model"] = config["OLLAMA_MODEL"] ?? "qwen3.5:9b",
+                ["model"] = Model,
                 ["messages"] = messages.DeepClone(),
                 ["stream"] = false,
                 // A 9B model spends most of a reply reasoning when thinking is on
