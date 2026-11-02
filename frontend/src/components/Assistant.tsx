@@ -40,7 +40,7 @@ function errorMessage(err: unknown, limits: Limits) {
     return `That's the limit for now — you get one more question every ${limits.minutesPerQuestion} minutes.`;
   if (err instanceof ApiError && err.status === 503)
     return 'Someone else is asking a question right now. Try again in a minute.';
-  return "Sorry, the assistant couldn't answer. It runs on a home computer that may be off.";
+  return 'Sorry, something went wrong. Please try again later.';
 }
 
 // Phones get a full-screen chat whose contents stay in the visual viewport, so the on-screen
