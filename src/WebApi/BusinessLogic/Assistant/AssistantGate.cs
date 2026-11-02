@@ -17,6 +17,8 @@ public static class AssistantGate
     public static readonly TimeSpan Timeout = TimeSpan.FromSeconds(15);
     // The previous reply only gives a follow-up its context; it doesn't need all of it
     private const int MaxContextChars = 500;
+    // Enough for the prompt, for a separate gate model (OLLAMA_GATE_MODEL)
+    public const int ContextTokens = 2048;
 
     public const string OffTopicReply =
         "I can only answer questions about NHL games, teams, odds and this site's predictions.";
@@ -33,7 +35,7 @@ public static class AssistantGate
         Reply with exactly one word: ON or OFF.
         """;
 
-    public static async Task<GateResult> Check(HttpClient http, string model, IReadOnlyList<AssistantMessage> messages,
+    public static async Task<GateResult> Check(HttpClient http, string model, int contextTokens, IReadOnlyList<AssistantMessage> messages,
         ILogger logger, CancellationToken cancellationToken)
     {
         var question = messages[^1].Content;
@@ -54,7 +56,7 @@ public static class AssistantGate
                 ["think"] = false,
                 ["options"] = new JsonObject
                 {
-                    ["num_ctx"] = 2048,
+                    ["num_ctx"] = contextTokens,
                     ["num_predict"] = 4,
                     ["temperature"] = 0,
                 },

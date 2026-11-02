@@ -56,7 +56,7 @@ public class AssistantGateTests
             NullLogger<AssistantService>.Instance);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("ON", GateResult.On)]
     [DataRow(" off.", GateResult.Off)]
     [DataRow("On\n", GateResult.On)]
@@ -72,7 +72,7 @@ public class AssistantGateTests
     {
         var ollama = new FakeOllama(Reply("ON"));
 
-        var result = await AssistantGate.Check(Client(ollama), "gate-model", Ask("Who wins tonight?"),
+        var result = await AssistantGate.Check(Client(ollama), "gate-model", 2048, Ask("Who wins tonight?"),
             NullLogger.Instance, CancellationToken.None);
 
         result.Should().Be(GateResult.On);
@@ -95,7 +95,7 @@ public class AssistantGateTests
             new("user", "and the Leafs?"),
         ];
 
-        await AssistantGate.Check(Client(ollama), "m", messages, NullLogger.Instance, CancellationToken.None);
+        await AssistantGate.Check(Client(ollama), "m", 2048, messages, NullLogger.Instance, CancellationToken.None);
 
         var prompt = ollama.Requests.Single()["messages"]![1]!["content"]!.GetValue<string>();
         prompt.Should().Contain("Edmonton is 8-3").And.Contain("and the Leafs?");
@@ -107,7 +107,7 @@ public class AssistantGateTests
     {
         var ollama = new FakeOllama(() => new HttpResponseMessage(HttpStatusCode.InternalServerError));
 
-        var result = await AssistantGate.Check(Client(ollama), "m", Ask("hi"), NullLogger.Instance, CancellationToken.None);
+        var result = await AssistantGate.Check(Client(ollama), "m", 2048, Ask("hi"), NullLogger.Instance, CancellationToken.None);
 
         result.Should().Be(GateResult.Error);
     }
@@ -154,6 +154,17 @@ public class AssistantGateTests
         await CreateService(ollama, settings).Chat(new AssistantRequest(Ask("hi"), "/"), CancellationToken.None);
 
         ollama.Requests[0]["model"]!.GetValue<string>().Should().Be("small");
-        ollama.Requests[1]["model"]!.GetValue<string>().Should().Be("big");
+        ollama.Requests[1]["model"]!.GetValue<string>().Should().Be("big");        ollama.Requests[0]["options"]!["num_ctx"]!.GetValue<int>().Should().Be(AssistantGate.ContextTokens);
+    }
+
+    [TestMethod]
+    public async Task Chat_SameModel_ShouldAskForTheSameContextSoOllamaDoesNotReload()
+    {
+        var ollama = new FakeOllama(Reply("ON"), Reply("answer"));
+
+        await CreateService(ollama).Chat(new AssistantRequest(Ask("hi"), "/"), CancellationToken.None);
+
+        ollama.Requests[0]["options"]!["num_ctx"]!.GetValue<int>()
+            .Should().Be(ollama.Requests[1]["options"]!["num_ctx"]!.GetValue<int>());
     }
 }

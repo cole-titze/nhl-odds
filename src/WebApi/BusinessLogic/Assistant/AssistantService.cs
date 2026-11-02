@@ -24,6 +24,7 @@ public class AssistantService(
     private const int MaxToolRounds = 3;
     // GetTeamStats returns a whole season of games; keep tool results inside the model's context
     private const int MaxToolResultChars = 24_000;
+    private const int ContextTokens = 32768;
 
     // Enums as names: the model read Winner 0 as "nobody won"
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
@@ -70,8 +71,10 @@ public class AssistantService(
     private async Task<string> Answer(AssistantRequest request, CancellationToken cancellationToken)
     {
         // Turn away off-topic questions with one short call before the full tool loop
+        // Ollama reloads a model asked for a different num_ctx, so the main model's check uses its context
         var gateModel = config["OLLAMA_GATE_MODEL"] is { Length: > 0 } gate ? gate : Model;
-        if (await AssistantGate.Check(http, gateModel, request.Messages, logger, cancellationToken) == GateResult.Off)
+        var gateContext = gateModel == Model ? ContextTokens : AssistantGate.ContextTokens;
+        if (await AssistantGate.Check(http, gateModel, gateContext, request.Messages, logger, cancellationToken) == GateResult.Off)
             return AssistantGate.OffTopicReply;
 
         var messages = new JsonArray { Message("system", BuildSystemPrompt(request.Page)) };
@@ -89,7 +92,7 @@ public class AssistantService(
                 ["think"] = false,
                 // get_all_teams alone is ~5k tokens; Ollama's default context would cut it off. Set
                 // here so a stock model works without a custom 32k variant.
-                ["options"] = new JsonObject { ["num_ctx"] = 32768 },
+                ["options"] = new JsonObject { ["num_ctx"] = ContextTokens },
             };
             if (round < MaxToolRounds)
                 body["tools"] = Tools.DeepClone();
