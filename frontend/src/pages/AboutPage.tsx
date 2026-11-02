@@ -125,8 +125,8 @@ export function AboutPage() {
             Using MCP tools with Claude
           </h2>
           <p className="text-surface-600 dark:text-surface-400 leading-relaxed">
-            The chat assistant on this site is an experiment. It uses a small AI model, so it can be
-            slow, unavailable or wrong, and each visitor gets only a few questions every few
+            The chat assistant on this site is an experiment. It uses a small local AI model, so it
+            can be slow, unavailable or wrong, and each visitor gets only a few questions every few
             minutes. It only answers questions about hockey, the odds and this site. Its answers
             aren&apos;t betting advice. For more, connect your own AI, like Claude, to the same data
             below.
