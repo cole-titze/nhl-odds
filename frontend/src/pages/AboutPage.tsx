@@ -128,8 +128,8 @@ export function AboutPage() {
             The chat assistant on this site is an experiment. Like the rest of this hobby project,
             it runs a small local AI model on a home computer, so it can be slow, offline or wrong,
             and each visitor gets only a few questions every few minutes. It only answers questions
-            about hockey, the odds and this site. Its answers aren&apos;t
-            betting advice. For more, connect your own AI, like Claude, to the same data below.
+            about hockey, the odds and this site. Its answers aren&apos;t betting advice. For more,
+            connect your own AI, like Claude, to the same data below.
           </p>
           <p className="text-surface-600 dark:text-surface-400 leading-relaxed">
             This API exposes an{' '}
