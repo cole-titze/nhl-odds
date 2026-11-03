@@ -24,6 +24,7 @@ import { checkStrategy } from '../utils/bettingStrategies';
 import { useStrategy } from '../contexts/StrategyContext';
 import { StrategyPicker } from '../components/StrategyPicker';
 import { Skeleton } from '../components/Skeleton';
+import { GameLineups } from '../components/GameLineups';
 import { TeamLogo } from '../components/TeamLogo';
 import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
 
@@ -319,6 +320,8 @@ export function GamePage() {
           </ScrollRegion>
         </div>
       )}
+
+      <GameLineups game={game} />
     </div>
   );
 }
