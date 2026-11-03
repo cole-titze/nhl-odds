@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Npgsql;
+using Search;
 
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -35,6 +36,7 @@ var settings = new ModeSettings()
     FromStored = bool.TryParse(Environment.GetEnvironmentVariable("FROM_STORED"), out var fromStored) && fromStored,
     SeasonStart = int.TryParse(Environment.GetEnvironmentVariable("SEASON_START"), out var seasonStart) ? seasonStart : null,
     SeasonEnd = int.TryParse(Environment.GetEnvironmentVariable("SEASON_END"), out var seasonEnd) ? seasonEnd : null,
+    Elasticsearch = ElasticsearchSettings.From(Environment.GetEnvironmentVariable),
 };
 
 if (string.IsNullOrEmpty(settings.ConnectionString))
@@ -50,6 +52,7 @@ if (string.IsNullOrEmpty(settings.ConnectionString))
         settings.OddsApiKey = config["OddsApi:API_FUTURE_KEY"] ?? string.Empty;
     if (string.IsNullOrEmpty(settings.OddsApiBackfillKey))
         settings.OddsApiBackfillKey = config["OddsApi:API_BACKFILL_KEY"] ?? string.Empty;
+    settings.Elasticsearch ??= ElasticsearchSettings.From(key => config[$"Elasticsearch:{key}"]);
     var gameIdsConfig = config["ModeSettings:BACKFILL_GAME_IDS"];
     if (!settings.BackfillGameIds.Any() && !string.IsNullOrEmpty(gameIdsConfig))
         settings.BackfillGameIds = gameIdsConfig.Split(',', StringSplitOptions.RemoveEmptyEntries)
@@ -68,6 +71,7 @@ var jobName = settings.Mode switch
     ModeType.BackfillKalshi => "kalshi-backfill",
     ModeType.CleanAll => "clean-all",
     ModeType.LineupSnapshot => "lineup-snapshot",
+    ModeType.SearchIndex => "search-index",
     _ => null,
 };
 

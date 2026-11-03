@@ -8,6 +8,7 @@ export default [
     route('game/:gameId', 'pages/GamePage.tsx'),
     route('strategies', 'pages/CrossBookStrategyPage.tsx'),
     route('about', 'pages/AboutPage.tsx'),
+    route('search', 'pages/SearchPage.tsx'),
     route('admin', 'pages/AdminPage.tsx'),
   ]),
   route('sitemap.xml', 'routes/sitemap.ts'),

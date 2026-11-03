@@ -46,7 +46,7 @@ The app reads config in priority order:
 
 1. **Environment variables** (production):
    - `NHL_DATABASE` — full PostgreSQL connection string (e.g. `Host=localhost;Database=nhl;Username=postgres;Password=...`)
-   - `RUN_MODE` — `"NhlAdd"`, `"NhlUpdate"`, `"NextDayOdds"`, `"BackfillOdds"`, `"ClosingOdds"`, `"BackfillClosingOdds"`, `"NextDayKalshi"`, `"BackfillKalshi"`, `"CleanAll"` or `"LineupSnapshot"`
+   - `RUN_MODE` — `"NhlAdd"`, `"NhlUpdate"`, `"NextDayOdds"`, `"BackfillOdds"`, `"ClosingOdds"`, `"BackfillClosingOdds"`, `"NextDayKalshi"`, `"BackfillKalshi"`, `"CleanAll"`, `"LineupSnapshot"` or `"SearchIndex"`
    - `THROTTLE_TIME_MS` — delay between the game/player/schedule NHL API requests (ms). The NHL publishes no limit (api-web answers 429 at about one request per 500 ms), so every NHL client waits at least 600 ms between requests (`ThrottledHttpClient.NHL_MIN_GAP`; a smaller THROTTLE_TIME_MS is raised to it) and retries 429s with growing waits
    - `BACKFILL_GAME_IDS` — comma-separated game IDs to limit `NhlUpdate` to
    - `REFETCH_DAYS` — `NhlAdd` re-fetches games played in this many past days to pick up NHL stat corrections (default 4 — corrections land within ~2 days; `0` turns it off)
@@ -55,6 +55,7 @@ The app reads config in priority order:
    - `CLEAN_PARALLELISM` — how many seasons the data cleaner cleans at once (default 4; each holds two seasons of data in memory)
    - `ODDS_API_KEY` — The Odds API key (for `NextDayOdds` and `ClosingOdds`; the free key's 500 credits a month reset on the 1st at 00:00 UTC)
    - `API_BACKFILL_KEY` — The Odds API key for backfill (can be different quota)
+   - `ELASTICSEARCH_URL` / `ELASTICSEARCH_USERNAME` / `ELASTICSEARCH_PASSWORD` — Elasticsearch for `SearchIndex` (locally also `Elasticsearch:ELASTICSEARCH_URL` etc. in `appsettings.Local.json`)
 
 2. **`src/Entry/appsettings.Local.json`** (local dev, gitignored):
    - Copy the structure from `src/Entry/appsettings.json` and fill in the connection string.
@@ -63,6 +64,7 @@ The app reads config in priority order:
 3. **`src/WebApi/appsettings.Development.json`** (local dev for Web API, gitignored):
    - Needs a `ConnectionStrings:NHL_DATABASE` entry. Falls back to `NHL_DATABASE` env var.
    - `ADMIN_API_KEY` (env var or config) — required in the `X-Admin-Key` header by every `/api/Admin` endpoint (`[RequireAdminKey]` on `AdminController`). If unset, they're allowed in Development and return 403 elsewhere. The Admin page asks for the key and keeps it in localStorage; its nav link only shows in development or once a key is stored.
+   - `ELASTICSEARCH_URL` / `ELASTICSEARCH_USERNAME` / `ELASTICSEARCH_PASSWORD` (env var or config) — site search (`SearchController`, `GET /api/Search?q=`, `frontend/src/pages/SearchPage.tsx` and the navbar box). Unset turns it off (`/api/Search` 404s, the page says so); Elasticsearch down answers 503. Results are cached 2 minutes in their own 500-entry cache (`SearchGetter`), apart from `ApiCache`. The `search_requests_total{result}` metric counts outcomes
    - `OLLAMA_URL` (env var or config) — experimental chat assistant (`AssistantController`, `frontend/src/components/Assistant.tsx`): the Ollama server it asks (e.g. `http://localhost:11434`). Unset turns it off: `Status` answers `{enabled:false}`, `Chat` 404s and the widget stays hidden. `OLLAMA_MODEL` picks the model (default `qwen3.5:9b`, asked for a 32k context). Before the tool loop, `AssistantGate` makes one short tool-less call that answers ON/OFF and turns off-topic questions (math, homework, code) away with a fixed reply; an unclear verdict, error or timeout lets the question through. `OLLAMA_GATE_MODEL` picks its model (default: `OLLAMA_MODEL`, already loaded). A turned-away question still uses a rate-limit token. Results go to the log and the `assistant_gate_total{result}` metric. Limits are in `AssistantLimits`
 
 ## Database Setup
@@ -97,6 +99,7 @@ psql -h localhost -U postgres -d nhl -f database/Scripts/CreateTables.sql
 | `database` | SQL scripts for schema (not a C# project) |
 | `src/WebApi` | ASP.NET Core Web API — controllers, view model mappers, Swagger |
 | `src/BookmakerOddsGetter` | Fetches and backfills odds from The Odds API and Kalshi (no API key needed for Kalshi) |
+| `src/Search` | Site search over Elasticsearch, shared by `Entry` (builds the indices) and `WebApi` (queries them): a small REST client (`ElasticsearchClient`, plain HTTP + JSON, no official client), index mappings (`SearchIndexes`), documents (`SearchDocumentMapper`) and the query (`SiteSearch`) |
 | `tests/` | xUnit/MSTest projects mirroring the `src/` projects under test |
 | `frontend` | React 19 + TypeScript + Vite + Tailwind CSS v4 frontend — game odds, team stats, team detail pages. Server-rendered with React Router framework mode (`src/routes.ts`, `src/root.tsx`); Games, Teams, Team and Game pages have route `loader`s for the first load (Teams sends each game once with only the fields it reads; an unknown game is a 404), client navigation fetches in the page |
 
@@ -161,6 +164,7 @@ HTTP Request
   - the betting-partner odds widget (DraftKings US, FanDuel CA) → `PartnerOdds`, one row per team per line (`Line`/`Outcome` split from the qualifier), each new version (after puck drop it shows live odds: pre-game lines are `PartnerUpdatedUTC < StartTimeUTC`)
   - the newest 100 NHL.com articles (league and team sites) plus the rewritten-in-place ones (backup goalies list; this and last season's trade and signing trackers and the daily props article, found by `NhlSeasonArticles` so no slug changes each season) → `NhlArticle` (a version per new text), `NhlArticleTag` (team/player/game tags carry the NHL id), `NhlArticleMention` (players linked in the text) and, for the props article, `NhlPropsPick`
   - NHL requests are spaced at least 600 ms apart per host (it answers 429 faster than that)
+- `SearchIndex` — rebuilds the site-search indices (`nhl-teams`, `nhl-players`, `nhl-games`, `nhl-articles`) from Postgres: each into a new `{alias}-{timestamp}` index, then the alias moves to it atomically and old ones are deleted, so search never goes down; a failed build leaves the old index. Runs hourly. Failures go to `ErrorLog` (`Source` `SearchIndex`). Needs `ELASTICSEARCH_URL`; production uses a writer limited to `create_index`/`write`/`manage` on `nhl-*` (the webapi a `read`-only user)
 
 **Raw NHL responses** — every request to a per-game endpoint (gamecenter boxscore/right-rail/play-by-play, shift charts, goal replays) or a player page goes through `RawResponseCache`, which stores the 200 responses gzipped in `NhlApiResponse` (a new row only when the text changes; `LastSeenUTC` moves otherwise). Its policy is `Fresh` (always the API) or, for `NhlUpdate` with `FROM_STORED=true`, `StoredOnly`. A game's copy is only served if it was fetched 8+ hours after the game started. Store errors are logged and ignored, so the store can never break a run.
 
@@ -172,6 +176,8 @@ gameId = (seasonStartYear × 1,000,000) + 20,000 + gameNumber
 The first 4 digits of a game ID are always the season start year.
 
 **Game event tables** — each play-by-play event type (Goal, Shot, Hit, Penalty, etc.) has its own DB table and `DbModel`. `GameRepository` handles all of them via a typed `_dbSetEventMap` dictionary and `AddOrUpdateEvents<T>`.
+
+**Site search** (`src/Search`) — one `_msearch` over the four aliases per query. A date in the query ("oilers march 3", "10/30", "tonight") is taken out by `SiteSearch.Parse` (no year: the nearest such date) and filters games on their Eastern schedule date; without one, games nearest today rank first. Names match as you type (`search_as_you_type`), accent-folded, with up to 1 typo (2 from 8 letters, `NameFuzziness`) and fan nicknames (`SearchIndexes.TeamNicknames`, a search-time synonym filter, so editing it needs no reindex). Articles are the newest version of each `NhlArticle`, markdown stripped; snippets mark matches with private-use characters (`MATCH_START`/`MATCH_END`) rather than HTML. Article links are `nhl.com/news/{slug}`.
 
 **Commits are explicit** — repositories accumulate EF change tracking; callers must invoke `repo.Commit()` (which calls `SaveChangesAsync()`). `NhlDataManager` commits after each logical save step.
 

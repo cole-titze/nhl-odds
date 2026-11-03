@@ -11,6 +11,7 @@ using DatabaseAccess.LineupArticleRepository;
 using DatabaseAccess.PlayerRepository;
 using DatabaseAccess.RawResponseRepository;
 using DatabaseAccess.RosterStatusRepository;
+using DatabaseAccess.SearchSourceRepository;
 using DatabaseAccess.SnapshotRepository;
 using DatabaseAccess.TeamRepository;
 using DataCleaner;
@@ -19,6 +20,7 @@ using Entities.DbModels;
 using Entities.Types;
 using Entities.Types.Enums;
 using Microsoft.Extensions.Logging;
+using Search;
 using Services.Kalshi;
 using Services.NhlData;
 using Services.OddsApi;
@@ -49,6 +51,14 @@ public class DataGetterEntry
     {
         var watch = Stopwatch.StartNew();
         Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
+
+        // Needs none of the NHL API setup below
+        if (modeSettings.Mode == ModeType.SearchIndex)
+        {
+            var searchErrorRepo = new ErrorRepository(new NhlDbContext(modeSettings.ConnectionString));
+            await LogFailure(searchErrorRepo, "SearchIndex", () => BuildSearchIndex(modeSettings));
+            return;
+        }
 
         var nhlDbContext = new NhlDbContext(modeSettings.ConnectionString);
         var playerRepo = new PlayerRepository(nhlDbContext);
@@ -225,6 +235,34 @@ public class DataGetterEntry
         var elapsedTime = watch.Elapsed;
         var minutes = elapsedTime.TotalMinutes.ToString();
         _logger.LogTrace("Completed Data Collection in " + minutes + " minutes");
+    }
+
+    /// <summary>
+    /// Rebuilds every search index (teams, players, games, articles) from the database. Each index is built
+    /// beside the live one and swapped in when complete, so the site's search keeps working throughout.
+    /// </summary>
+    private async Task BuildSearchIndex(ModeSettings modeSettings)
+    {
+        var settings = modeSettings.Elasticsearch
+            ?? throw new ArgumentException("ELASTICSEARCH_URL must be set for SearchIndex mode");
+        var source = new SearchSourceRepository(new NhlDbContext(modeSettings.ConnectionString));
+        using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(2) };
+        var indexer = new SearchIndexer(new ElasticsearchClient(http, settings), _loggerFactory.CreateLogger<SearchIndexer>());
+        var now = DateTime.UtcNow;
+
+        var seasonTeams = await source.GetSeasonTeams();
+        var teams = SearchDocumentMapper.MapTeams(seasonTeams);
+        await indexer.Rebuild(SearchIndexes.Teams, teams, t => t.TeamId.ToString(), now);
+
+        var players = SearchDocumentMapper.MapPlayers(
+            (await source.GetPlayers()).Select(p => new PlayerRow(p.Player, p.Position)), teams);
+        await indexer.Rebuild(SearchIndexes.Players, players, p => p.PlayerId.ToString(), now);
+
+        var games = SearchDocumentMapper.MapGames(await source.GetGames(), seasonTeams);
+        await indexer.Rebuild(SearchIndexes.Games, games, g => g.GameId.ToString(), now);
+
+        var articles = SearchDocumentMapper.MapArticles(await source.GetArticles());
+        await indexer.Rebuild(SearchIndexes.Articles, articles, a => a.EntityId, now);
     }
 
     /// <summary>

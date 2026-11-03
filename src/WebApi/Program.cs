@@ -6,11 +6,14 @@ using DatabaseAccess.WebGameOddsRepository;
 using DatabaseAccess.WebTeamRepository;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Prometheus;
 using WebApi.BusinessLogic.AdminService;
 using WebApi.BusinessLogic.Assistant;
 using WebApi.BusinessLogic.GameOddsGetter;
 using WebApi.BusinessLogic.JobService;
+using WebApi.BusinessLogic.SearchGetter;
+using Search;
 using WebApi.BusinessLogic.StartupCacheWarmer;
 using WebApi.BusinessLogic.StrategyBacktester;
 using WebApi.BusinessLogic.TeamGetter;
@@ -56,6 +59,16 @@ builder.Services.AddHttpClient<IAssistantService, AssistantService>(client =>
     // A reply with a couple of tool rounds can take a while on the Mac
     client.Timeout = TimeSpan.FromMinutes(2);
 });
+// Site search (SearchController): Elasticsearch, off unless ELASTICSEARCH_URL is set
+var elasticsearch = ElasticsearchSettings.From(key => builder.Configuration[key]);
+if (elasticsearch != null)
+{
+    builder.Services.AddSingleton(elasticsearch);
+    builder.Services.AddKeyedSingleton(SearchGetter.CacheKey, (_, _) => SearchGetter.CreateCache());
+    builder.Services.TryAddSingleton(TimeProvider.System);
+    builder.Services.AddHttpClient<ElasticsearchClient>(client => client.Timeout = TimeSpan.FromSeconds(5));
+    builder.Services.AddScoped<ISearchGetter, SearchGetter>();
+}
 builder.Services.AddDbContext<GameDbContext>(x => x.UseNpgsql(_connectionString));
 builder.Services.AddLogging();
 // Prometheus scrapes a separate port so /metrics is never reachable through nginx/Cloudflare

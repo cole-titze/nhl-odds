@@ -294,7 +294,77 @@ const responses = {
   GetErrorLogs: [],
 };
 
+const searchResults = {
+  query: 'leafs',
+  teams: [
+    {
+      teamId: 10,
+      name: 'Toronto Maple Leafs',
+      abbreviation: 'TOR',
+      logoUri: 'https://assets.nhle.com/logos/nhl/svg/TOR_light.svg',
+      active: true,
+    },
+    {
+      teamId: 53,
+      name: 'Arizona Coyotes',
+      abbreviation: 'ARI',
+      logoUri: 'https://assets.nhle.com/logos/nhl/svg/ARI_light.svg',
+      active: false,
+    },
+  ],
+  players: [
+    {
+      playerId: 8479318,
+      name: 'Auston Matthews',
+      position: 'C',
+      teamId: 10,
+      teamName: 'Toronto Maple Leafs',
+      teamAbbreviation: 'TOR',
+      isActive: true,
+      headshot: '',
+    },
+    {
+      playerId: 1,
+      name: 'Free Agent',
+      position: null,
+      teamId: null,
+      teamName: null,
+      teamAbbreviation: null,
+      isActive: false,
+      headshot: '',
+    },
+  ],
+  games: [
+    {
+      gameId: 2026020100,
+      gameDate: '2026-10-31',
+      startTimeUtc: '2026-10-31T23:00:00Z',
+      played: true,
+      home: { teamId: 10, name: 'Toronto Maple Leafs', abbreviation: 'TOR', goals: 4 },
+      away: { teamId: 5, name: 'Pittsburgh Penguins', abbreviation: 'PIT', goals: 2 },
+    },
+    {
+      gameId: 2026020200,
+      gameDate: '2026-11-17',
+      startTimeUtc: '2026-11-18T00:00:00Z',
+      played: false,
+      home: { teamId: 13, name: 'Florida Panthers', abbreviation: 'FLA', goals: null },
+      away: { teamId: 10, name: 'Toronto Maple Leafs', abbreviation: 'TOR', goals: null },
+    },
+  ],
+  articles: [
+    {
+      title: 'NHL Trade Tracker',
+      summary: 'Every deal',
+      url: 'https://www.nhl.com/news/nhl-trade-tracker',
+      date: '2026-11-02T18:00:00Z',
+      snippet: 'The Maple \uE000Leafs\uE001 acquired a defenseman from the Sharks.',
+    },
+  ],
+};
+
 export function mockApi(url) {
+  if (url.includes('/api/Search')) return searchResults;
   if (url.includes('/GetGameOddsInDateRange')) {
     const params = new URL(url).searchParams;
     const start = params.get('startDate');
@@ -306,5 +376,14 @@ export function mockApi(url) {
 }
 
 export function pagesFor() {
-  return ['/', '/teams', '/team/10', `/game/${games[33].id}`, '/strategies', '/about', '/admin'];
+  return [
+    '/',
+    '/teams',
+    '/team/10',
+    `/game/${games[33].id}`,
+    '/strategies',
+    '/about',
+    '/admin',
+    '/search?q=leafs',
+  ];
 }
