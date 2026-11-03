@@ -18,6 +18,7 @@ using WebApi.BusinessLogic.StartupCacheWarmer;
 using WebApi.BusinessLogic.StrategyBacktester;
 using WebApi.BusinessLogic.TeamGetter;
 using WebApi.BusinessLogic.TrackRecord;
+using WebApi;
 using WebApi.Caching;
 using WebApi.Filters;
 using WebApi.McpTools;
@@ -134,10 +135,6 @@ builder.Services.AddRateLimiter(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
-// Mirrors getCurrentSeason in frontend/src/utils/season.ts: a new season starts on September 20
-static int GetCurrentSeason(DateTime date) =>
-    date >= new DateTime(date.Year, 9, 20) ? date.Year : date.Year - 1;
-
 static string BuildMcpInstructions(int currentSeason) => $"""
         This server provides NHL game data, ML model predictions, and bookmaker odds.
 
@@ -167,7 +164,7 @@ builder.Services.AddMcpServer(options =>
         // Built per session so the current season stays correct without a restart
         transport.ConfigureSessionOptions = (_, options, _) =>
         {
-            options.ServerInstructions = BuildMcpInstructions(GetCurrentSeason(DateTime.UtcNow));
+            options.ServerInstructions = BuildMcpInstructions(Seasons.Current(DateTime.UtcNow));
             return Task.CompletedTask;
         };
     })

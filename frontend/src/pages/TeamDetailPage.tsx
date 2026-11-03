@@ -17,6 +17,7 @@ import { wasCorrectlyPredicted, calculateLogLoss } from '../utils/predictions';
 import { Skeleton } from '../components/Skeleton';
 import { SeasonSelector } from '../components/SeasonSelector';
 import { LogLossChart } from '../components/LogLossChart';
+import { CalendarSubscribe } from '../components/CalendarSubscribe';
 import { Winner } from '../types';
 import { useOddsFormatContext } from '../contexts/OddsFormatContext';
 import { formatOdds } from '../utils/oddsFormat';
@@ -199,7 +200,16 @@ export function TeamDetailPage() {
             </span>
           </div>
         </div>
-        <SeasonSelector value={season} onChange={(s) => setSearchParams({ season: String(s) })} />
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* The feed is this season's games, so it's offered only on this season's page */}
+          {season === getCurrentSeason() && (
+            <CalendarSubscribe
+              teamId={team.id}
+              teamName={`${team.locationName} ${team.teamName}`}
+            />
+          )}
+          <SeasonSelector value={season} onChange={(s) => setSearchParams({ season: String(s) })} />
+        </div>
       </div>
 
       <LogLossChart games={team.gameOddsVM} />
