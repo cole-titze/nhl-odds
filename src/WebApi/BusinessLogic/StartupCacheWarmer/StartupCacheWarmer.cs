@@ -115,10 +115,5 @@ public class StartupCacheWarmer : BackgroundService
     }
 
     // NHL season starts September 20 — before then, the season began last year.
-    private static int GetCurrentSeasonStartYear()
-    {
-        var now = DateTime.UtcNow;
-        var seasonStart = new DateTime(now.Year, 9, 20);
-        return now >= seasonStart ? now.Year : now.Year - 1;
-    }
+    private static int GetCurrentSeasonStartYear() => Seasons.Current(DateTime.UtcNow);
 }
