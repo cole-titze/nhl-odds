@@ -231,6 +231,7 @@ export function TeamsPage() {
       <PageTitle
         title="Teams"
         description="How the NHL Odds model has done for every NHL team this season: accuracy, log loss, and betting results."
+        imageAlt="This season's accuracy and log loss for the NHL Odds model next to DraftKings"
       />
       <div className="flex items-center justify-between mb-8">
         <h1 className="font-display text-3xl font-bold tracking-tight">Teams</h1>

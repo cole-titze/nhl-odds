@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { useLocation } from 'react-router';
 import { SITE_URL } from '../utils/site';
+import { shareImagePath } from '../og/paths';
 
 const DEFAULT_DESCRIPTION =
   'Machine learning win probabilities for every NHL game, compared with sportsbook and Kalshi odds.';
@@ -8,20 +9,25 @@ const DEFAULT_DESCRIPTION =
 /**
  * Sets the browser tab title and the tags search engines and link previews
  * read; React 19 hoists these into <head>. noindex keeps a page out of search.
+ * Every page gets a preview image (og/paths.ts); imageAlt describes what it shows.
  */
 export function PageTitle({
   title,
   description = DEFAULT_DESCRIPTION,
   noindex = false,
+  imageAlt,
 }: {
   title?: string;
   description?: string;
   noindex?: boolean;
+  imageAlt?: string;
 }) {
   const { pathname } = useLocation();
   const fullTitle = title ? `${title} · NHL Odds` : 'NHL Odds';
   // Without the query string, so URL variants count as one page
   const url = SITE_URL + pathname;
+  const image = SITE_URL + shareImagePath(pathname);
+  const alt = imageAlt ?? `${fullTitle}: ${description}`;
   return (
     <>
       <title>{fullTitle}</title>
@@ -32,7 +38,14 @@ export function PageTitle({
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:url" content={url} />
-      <meta name="twitter:card" content="summary" />
+      <meta property="og:image" content={image} />
+      <meta property="og:image:type" content="image/png" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta property="og:image:alt" content={alt} />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:image" content={image} />
+      <meta name="twitter:image:alt" content={alt} />
     </>
   );
 }

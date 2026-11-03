@@ -11,4 +11,8 @@ export default [
     route('admin', 'pages/AdminPage.tsx'),
   ]),
   route('sitemap.xml', 'routes/sitemap.ts'),
+  // Link preview images (og:image) for the pages above
+  route('og/game/:file', 'routes/og.game.tsx'),
+  route('og/team/:file', 'routes/og.team.tsx'),
+  route('og/:file', 'routes/og.page.tsx'),
 ] satisfies RouteConfig;

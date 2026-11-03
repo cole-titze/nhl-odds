@@ -27,6 +27,20 @@ import { Skeleton } from '../components/Skeleton';
 import { TeamLogo } from '../components/TeamLogo';
 import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
 
+// Describes the link preview image (og/cards.tsx GameCard). No date: the page's
+// time zone differs between the server and the browser.
+function shareImageAlt(game: GameOddsVM, matchup: string): string {
+  const { awayTeam: away, homeTeam: home } = game;
+  if (!away || !home) return matchup;
+  const odds =
+    home.modelOdds != null && away.modelOdds != null
+      ? `the model gives the ${away.teamName} ${Math.round(away.modelOdds * 100)}% and the ${home.teamName} ${Math.round(home.modelOdds * 100)}%`
+      : 'no model odds yet';
+  return game.hasBeenPlayed
+    ? `${matchup}, final score ${away.goals}-${home.goals}; ${odds.replace('gives', 'gave')}`
+    : `${matchup}: ${odds}`;
+}
+
 function formatPoint(point: number): string {
   return point > 0 ? `+${point}` : `${point}`;
 }
@@ -117,6 +131,7 @@ export function GamePage() {
       <PageTitle
         title={matchup}
         description={`${matchup}: the NHL Odds model's win probability compared with sportsbook and Kalshi odds.`}
+        imageAlt={shareImageAlt(game, matchup)}
       />
       <h1 className="sr-only">{matchup}</h1>
       {/* Matchup Header */}
