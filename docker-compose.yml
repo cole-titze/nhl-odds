@@ -29,6 +29,10 @@ services:
     environment:
       - NHL_DATABASE=Host=database;Database=nhl;Username=postgres;Password=${POSTGRES_PASSWORD}
       - ADMIN_API_KEY=${ADMIN_API_KEY:-}
+      # Site search: set ELASTICSEARCH_URL=http://elasticsearch:9200 and start with --profile search
+      - ELASTICSEARCH_URL=${ELASTICSEARCH_URL:-}
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD:-}
     depends_on:
       database:
         condition: service_healthy
@@ -43,6 +47,9 @@ services:
       - ODDS_API_KEY=${ODDS_API_KEY:-}
       - API_BACKFILL_KEY=${API_BACKFILL_KEY:-}
       - THROTTLE_TIME_MS=${THROTTLE_TIME_MS:-250}
+      - ELASTICSEARCH_URL=${ELASTICSEARCH_URL:-}
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD:-}
     depends_on:
       database:
         condition: service_healthy
@@ -74,6 +81,28 @@ services:
       database:
         condition: service_healthy
 
+  # Site search, optional: ELASTIC_PASSWORD=... ELASTICSEARCH_URL=http://elasticsearch:9200 docker compose --profile search up,
+  # then fill it with RUN_MODE=SearchIndex docker compose run entry. Locally everything logs in as the elastic
+  # superuser; production uses least-privilege users (ansible-setup).
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.3
+    profiles: ["search"]
+    restart: always
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - node.store.allow_mmap=false
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - xpack.ml.enabled=false
+      - ingest.geoip.downloader.enabled=false
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-}
+    ports:
+      - "127.0.0.1:9200:9200"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+
   frontend:
     build:
       context: ./frontend
@@ -86,3 +115,4 @@ services:
 
 volumes:
   pg-data:
+  es-data:

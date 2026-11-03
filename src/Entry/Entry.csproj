@@ -21,6 +21,7 @@
     <ProjectReference Include="..\DataGetter\DataGetter.csproj" />
     <ProjectReference Include="..\DataCleaner\DataCleaner.csproj" />
     <ProjectReference Include="..\BookmakerOddsGetter\BookmakerOddsGetter.csproj" />
+    <ProjectReference Include="..\Search\Search.csproj" />
   </ItemGroup>
 
     <ItemGroup>

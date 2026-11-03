@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { NavLink } from 'react-router';
+import { Form, Link, NavLink, useLocation } from 'react-router';
 import { ThemePicker } from './ThemePicker';
 import { useOddsFormatContext } from '../contexts/OddsFormatContext';
 import { useAdminKey } from '../hooks/useAdminKey';
+import { MAX_QUERY_CHARS } from '../api/search';
 
 const links = [
   { to: '/strategies', label: 'Strategies' },
@@ -15,12 +16,32 @@ const links = [
 
 const adminLink = { to: '/admin', label: 'Admin' };
 
+function SearchIcon({ className }: { className: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+    >
+      <path
+        fillRule="evenodd"
+        d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.45 4.39l3.08 3.08a.75.75 0 11-1.06 1.06l-3.08-3.08A7 7 0 012 9z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+
 export function Navbar() {
   const { format, toggle: toggleOdds } = useOddsFormatContext();
   const [menuOpen, setMenuOpen] = useState(false);
   // /admin still works by URL; the link only shows once there's a key to use it with
   const adminKey = useAdminKey();
   const navLinks = import.meta.env.DEV || adminKey != null ? [...links, adminLink] : links;
+  // The search page has its own box
+  const onSearchPage = useLocation().pathname === '/search';
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -72,6 +93,38 @@ export function Navbar() {
           </nav>
         </div>
         <div className="flex items-center gap-1">
+          {!onSearchPage && (
+            <>
+              {/* A plain GET form to /search, so it works before the page's script loads */}
+              <Form role="search" method="get" action="/search" className="hidden md:block mr-1">
+                <label htmlFor="nav-search" className="sr-only">
+                  Search teams, players, games and articles
+                </label>
+                <div className="relative">
+                  <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-500 dark:text-surface-400" />
+                  <input
+                    id="nav-search"
+                    type="search"
+                    name="q"
+                    required
+                    minLength={2}
+                    maxLength={MAX_QUERY_CHARS}
+                    autoComplete="off"
+                    enterKeyHint="search"
+                    placeholder="Search"
+                    className="w-40 lg:w-52 rounded-lg border border-surface-300 dark:border-white/15 bg-white/70 dark:bg-white/[0.04] py-1.5 pl-8 pr-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
+                  />
+                </div>
+              </Form>
+              <Link
+                to="/search"
+                className="md:hidden p-2.5 rounded-lg hover:bg-surface-100 dark:hover:bg-white/[0.06] text-surface-500 dark:text-surface-400 transition-colors"
+                aria-label="Search"
+              >
+                <SearchIcon className="h-5 w-5" />
+              </Link>
+            </>
+          )}
           <button
             onClick={toggleOdds}
             className="px-2.5 py-1.5 rounded-lg cursor-pointer hover:bg-surface-100 dark:hover:bg-white/[0.06] text-surface-500 dark:text-surface-400 transition-colors text-xs font-mono font-semibold"

@@ -9,6 +9,7 @@ COPY src/DatabaseAccess/DatabaseAccess.csproj src/DatabaseAccess/
 COPY src/Entities/Entities.csproj src/Entities/
 COPY src/Services/Services.csproj src/Services/
 COPY src/BookmakerOddsGetter/BookmakerOddsGetter.csproj src/BookmakerOddsGetter/
+COPY src/Search/Search.csproj src/Search/
 RUN dotnet restore src/Entry/Entry.csproj
 
 COPY . .

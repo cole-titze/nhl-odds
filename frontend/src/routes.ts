@@ -11,6 +11,7 @@ export default [
     route('track-record', 'pages/TrackRecordPage.tsx'),
     route('disagreements', 'pages/DisagreementsPage.tsx'),
     route('about', 'pages/AboutPage.tsx'),
+    route('search', 'pages/SearchPage.tsx'),
     route('admin', 'pages/AdminPage.tsx'),
   ]),
   route('sitemap.xml', 'routes/sitemap.ts'),

@@ -12,6 +12,7 @@ public enum ModeType
     BackfillKalshi,
     CleanAll,
     LineupSnapshot,
+    SearchIndex,
 }
 public static class ModeTypeParser
 {
@@ -40,6 +41,8 @@ public static class ModeTypeParser
                 return ModeType.CleanAll;
             case "LineupSnapshot":
                 return ModeType.LineupSnapshot;
+            case "SearchIndex":
+                return ModeType.SearchIndex;
             default:
                 throw new ArgumentException($"Invalid ModeType value: {modeType}", nameof(modeType));
         }

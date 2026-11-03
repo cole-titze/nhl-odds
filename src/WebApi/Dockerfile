@@ -4,11 +4,13 @@ WORKDIR /src
 COPY src/WebApi/WebApi.csproj src/WebApi/
 COPY src/DatabaseAccess/DatabaseAccess.csproj src/DatabaseAccess/
 COPY src/Entities/Entities.csproj src/Entities/
+COPY src/Search/Search.csproj src/Search/
 RUN dotnet restore src/WebApi/WebApi.csproj
 
 COPY src/WebApi/ src/WebApi/
 COPY src/DatabaseAccess/ src/DatabaseAccess/
 COPY src/Entities/ src/Entities/
+COPY src/Search/ src/Search/
 RUN dotnet publish src/WebApi/WebApi.csproj -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine

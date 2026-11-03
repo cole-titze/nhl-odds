@@ -12,6 +12,7 @@ using DatabaseAccess.WebTeamRepository;
 using DatabaseAccess.WebTrackRecordRepository;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Prometheus;
 using WebApi;
 using WebApi.BusinessLogic.AdminService;
@@ -20,6 +21,8 @@ using WebApi.BusinessLogic.ClientErrors;
 using WebApi.BusinessLogic.GameOddsGetter;
 using WebApi.BusinessLogic.JobService;
 using WebApi.BusinessLogic.PlayerGetter;
+using WebApi.BusinessLogic.SearchGetter;
+using Search;
 using WebApi.BusinessLogic.StartupCacheWarmer;
 using WebApi.BusinessLogic.StrategyBacktester;
 using WebApi.BusinessLogic.TeamGetter;
@@ -87,6 +90,16 @@ builder.Services.AddHttpClient(nameof(OllamaProbe), client =>
 builder.Services.AddSingleton(sp => new OllamaProbe(
     sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(OllamaProbe)),
     sp.GetRequiredService<ILogger<OllamaProbe>>()));
+// Site search (SearchController): Elasticsearch, off unless ELASTICSEARCH_URL is set
+var elasticsearch = ElasticsearchSettings.From(key => builder.Configuration[key]);
+if (elasticsearch != null)
+{
+    builder.Services.AddSingleton(elasticsearch);
+    builder.Services.AddKeyedSingleton(SearchGetter.CacheKey, (_, _) => SearchGetter.CreateCache());
+    builder.Services.TryAddSingleton(TimeProvider.System);
+    builder.Services.AddHttpClient<ElasticsearchClient>(client => client.Timeout = TimeSpan.FromSeconds(5));
+    builder.Services.AddScoped<ISearchGetter, SearchGetter>();
+}
 builder.Services.AddDbContext<GameDbContext>(x => x.UseNpgsql(_connectionString));
 builder.Services.AddLogging();
 // Prometheus scrapes a separate port so /metrics is never reachable through nginx/Cloudflare

@@ -1,4 +1,5 @@
 using Entities.Types.Enums;
+using Search;
 
 namespace Entry;
 
@@ -19,4 +20,6 @@ public class ModeSettings
     public int? SeasonEnd { get; set; }
     // NhlUpdate rebuilds from the stored raw responses instead of asking the API
     public bool FromStored { get; set; }
+    // SearchIndex's Elasticsearch (ELASTICSEARCH_URL/USERNAME/PASSWORD); null when ELASTICSEARCH_URL isn't set
+    public ElasticsearchSettings? Elasticsearch { get; set; }
 }
