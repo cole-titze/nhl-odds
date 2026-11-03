@@ -2,6 +2,7 @@ using System.Threading.RateLimiting;
 using DatabaseAccess;
 using DatabaseAccess.WebAdminRepository;
 using DatabaseAccess.WebBookmakerOddsRepository;
+using DatabaseAccess.WebErrorLogRepository;
 using DatabaseAccess.WebGameOddsRepository;
 using DatabaseAccess.WebTeamRepository;
 using Microsoft.AspNetCore.RateLimiting;
@@ -9,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Prometheus;
 using WebApi.BusinessLogic.AdminService;
 using WebApi.BusinessLogic.Assistant;
+using WebApi.BusinessLogic.ClientErrors;
 using WebApi.BusinessLogic.GameOddsGetter;
 using WebApi.BusinessLogic.JobService;
 using WebApi.BusinessLogic.StartupCacheWarmer;
@@ -46,6 +48,9 @@ builder.Services.AddScoped<IWebBookmakerOddsRepository, WebBookmakerOddsReposito
 builder.Services.AddScoped<IGameOddsRepository, GameOddsRepository>();
 builder.Services.AddScoped<IWebAdminRepository, WebAdminRepository>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+// Browser error reports (ClientErrorController); the throttle is shared by all visitors
+builder.Services.AddScoped<IWebErrorLogRepository, WebErrorLogRepository>();
+builder.Services.AddSingleton<ClientErrorThrottle>();
 // Experimental assistant (AssistantController): a local Ollama model, off unless OLLAMA_URL is set
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<GameOddsMcpTools>();
@@ -81,6 +86,19 @@ builder.Services.AddRateLimiter(options =>
             {
                 TokenLimit = AssistantLimits.Burst,
                 ReplenishmentPeriod = TimeSpan.FromMinutes(AssistantLimits.MinutesPerQuestion),
+                TokensPerPeriod = 1,
+                AutoReplenishment = true,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0,
+            })
+        // Browser error reports: a few per visitor, so one stuck page can't fill ErrorLog
+        : httpContext.Request.Path.StartsWithSegments("/api/ClientError")
+        ? RateLimitPartition.GetTokenBucketLimiter(
+            partitionKey: "client-error:" + GetClientIp(httpContext),
+            factory: _ => new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = ClientErrorLimits.Burst,
+                ReplenishmentPeriod = TimeSpan.FromMinutes(ClientErrorLimits.MinutesPerReport),
                 TokensPerPeriod = 1,
                 AutoReplenishment = true,
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
