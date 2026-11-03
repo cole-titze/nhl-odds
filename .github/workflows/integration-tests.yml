@@ -3,7 +3,8 @@ name: Integration Tests
 # tests/Integration.Tests: the EF Core queries, the schema (CreateTables.sql against the EF
 # models) and the Web API's endpoints against a real Postgres. Testcontainers starts
 # postgres:18-alpine in Docker, which GitHub's Ubuntu runners have. Kept out of Unit Tests
-# (filtered by TestCategory) so the fast tests still gate the image builds.
+# (filtered by TestCategory) so the fast tests still gate the image builds. The e2e job runs
+# the built frontend against the real API and a seeded database (frontend/e2e).
 on:
   # Sunday, with the weekly image rebuilds
   schedule:
@@ -33,3 +34,52 @@ jobs:
       - name: Run integration tests
         run: dotnet test tests/Integration.Tests --verbosity normal
 
+
+  # Every page of the production frontend against the real Web API and a seeded Postgres
+  # (frontend/e2e): catches the API's JSON drifting from what the pages read, which the
+  # a11y scan's hand-written mocks can't
+  e2e:
+    name: End-to-end smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_PASSWORD: e2e
+          POSTGRES_DB: nhl_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci && npx playwright install --with-deps chromium
+
+      # run.sh loads the schema and seed, starts both servers, and prints their logs on failure
+      - name: Run smoke test
+        run: frontend/e2e/run.sh
+        env:
+          E2E_DATABASE: Host=localhost;Port=5432;Username=postgres;Password=e2e;Database=nhl_e2e

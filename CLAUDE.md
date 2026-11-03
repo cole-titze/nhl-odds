@@ -26,6 +26,10 @@ dotnet test
 dotnet test tests/Integration.Tests
 INTEGRATION_DATABASE="Host=localhost;Username=postgres;Password=..." dotnet test tests/Integration.Tests
 
+# End-to-end smoke test (frontend/e2e): loads CreateTables.sql + seed.sql into an empty database, starts the
+# Web API and `npm start`, and checks every page in Chromium. Also weekly in integration-tests.yml
+E2E_DATABASE="Host=localhost;Username=postgres;Password=...;Database=nhl_e2e" frontend/e2e/run.sh
+
 # Build a specific project
 dotnet build src/DataGetter/DataGetter.csproj
 

@@ -92,18 +92,23 @@ export function GamePage() {
     );
   }
 
+  // A title of their own, kept out of search, so these never leave the tab blank
   if (error)
     return (
-      <div
-        role="alert"
-        className="glass rounded-xl text-center text-red-700 dark:text-red-400 py-8"
-      >
-        {error}
-      </div>
+      <>
+        <PageTitle title={error === 'Game not found.' ? 'Game not found' : 'Game'} noindex />
+        <div
+          role="alert"
+          className="glass rounded-xl text-center text-red-700 dark:text-red-400 py-8"
+        >
+          {error}
+        </div>
+      </>
     );
   if (!game)
     return (
       <div className="text-center text-surface-500 dark:text-surface-400 py-12">
+        <PageTitle title="Game not found" noindex />
         Game not found.
       </div>
     );
