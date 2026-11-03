@@ -10,9 +10,9 @@ public class ClientErrorReportToErrorLogMapperTests
     private static readonly DateTime Now = new(2026, 11, 3, 18, 0, 0, DateTimeKind.Utc);
 
     [TestMethod]
-    public void Map_PutsKindPageAndUserAgentAboveTheStack()
+    public void Map_PutsKindVersionPageAndUserAgentAboveTheStack()
     {
-        var report = new ClientErrorReport("render", "TypeError", "boom", "at a\nat b", "/teams");
+        var report = new ClientErrorReport("render", "TypeError", "boom", "at a\nat b", "/teams", "2026.11.03-abc1234");
 
         var log = ClientErrorReportToErrorLogMapper.Map(report, "Mozilla/5.0 (iPhone)", Now);
 
@@ -20,7 +20,7 @@ public class ClientErrorReportToErrorLogMapperTests
         log.Source.Should().Be("Frontend");
         log.ExceptionType.Should().Be("TypeError");
         log.Message.Should().Be("boom");
-        log.StackTrace.Should().Be("Kind: render\nPage: /teams\nUser agent: Mozilla/5.0 (iPhone)\n\nat a\nat b");
+        log.StackTrace.Should().Be("Kind: render\nVersion: 2026.11.03-abc1234\nPage: /teams\nUser agent: Mozilla/5.0 (iPhone)\n\nat a\nat b");
         log.GameId.Should().BeNull();
     }
 
@@ -30,7 +30,7 @@ public class ClientErrorReportToErrorLogMapperTests
         var log = ClientErrorReportToErrorLogMapper.Map(new ClientErrorReport("error", " ", "boom", null, null), null, Now);
 
         log.ExceptionType.Should().Be("Error");
-        log.StackTrace.Should().Be("Kind: error\nPage: \nUser agent: ");
+        log.StackTrace.Should().Be("Kind: error\nVersion: unknown\nPage: \nUser agent: ");
     }
 
     [DataTestMethod]

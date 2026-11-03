@@ -7,12 +7,13 @@ public static class ClientErrorReportToErrorLogMapper
 {
     /// <summary>
     /// Maps a browser error to an ErrorLog row under the current season, so the Admin page lists it with that
-    /// season's errors. The kind, page and user agent go at the top of the stack trace. Long fields are cut short.
+    /// season's errors. The kind, build version, page and user agent go at the top of the stack trace. Long fields are cut short.
     /// </summary>
     public static ErrorLog Map(ClientErrorReport report, string? userAgent, DateTime nowUtc)
     {
         var name = string.IsNullOrWhiteSpace(report.Name) ? "Error" : report.Name.Trim();
         var details = $"Kind: {report.Kind}\n"
+            + $"Version: {Truncate(report.Version ?? "unknown", ClientErrorLimits.MaxVersionChars)}\n"
             + $"Page: {Truncate(report.Page ?? "", ClientErrorLimits.MaxPageChars)}\n"
             + $"User agent: {Truncate(userAgent ?? "", ClientErrorLimits.MaxUserAgentChars)}";
         var stack = string.IsNullOrWhiteSpace(report.Stack) ? details : details + "\n\n" + report.Stack;

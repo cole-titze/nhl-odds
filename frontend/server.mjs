@@ -5,6 +5,7 @@ import express from 'express';
 import { createRequestHandler } from '@react-router/express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { pageCache } from './page-cache.mjs';
+import { clientErrors } from './client-errors.mjs';
 
 const API_URL = process.env.API_URL || 'http://webapi:8080';
 const PORT = Number(process.env.PORT) || 8080;
@@ -36,12 +37,18 @@ app.use(
 
 app.use(compression());
 
+// Visitors' error reports: their stack traces are mapped to the source before the API gets them
+const errors = clientErrors({ apiUrl: API_URL });
+app.post('/api/ClientError', errors.report);
+
 app.use(
   createProxyMiddleware({ target: API_URL, pathFilter: '/api', on: { proxyReq: setRealIp } }),
 );
 
 // Hashed file names, so they can be cached forever
 app.use('/assets', express.static('build/client/assets', { immutable: true, maxAge: '1y' }));
+// A file the build doesn't have: a tab from an older build, so a plain 404 (and a report)
+app.use('/assets', errors.missingAsset);
 app.use(express.static('build/client', { maxAge: '1h', index: false }));
 
 // Rendering is the server's bottleneck, so pages are kept a few seconds (page-cache.mjs)

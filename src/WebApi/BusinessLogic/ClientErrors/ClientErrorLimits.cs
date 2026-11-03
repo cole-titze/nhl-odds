@@ -31,8 +31,10 @@ public static class ClientErrorLimits
     public const int MaxPageChars = 200;
     public const int MaxUserAgentChars = 300;
     public const int MaxStackTraceChars = 4_000;
+    public const int MaxVersionChars = 60;
 
-    public static readonly string[] Kinds = ["error", "unhandledrejection", "render"];
+    /// <summary>What caught the error: see <see cref="ClientErrorReport.Kind"/></summary>
+    public static readonly string[] Kinds = ["error", "unhandledrejection", "render", "api", "chunk"];
 }
 
 /// <summary>

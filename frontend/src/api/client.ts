@@ -1,3 +1,5 @@
+import { reportApiFailure } from '../utils/errorReporting';
+
 // In the browser the API is same-origin (/api is proxied). On the server it's
 // called directly: API_URL is the webapi service, the Vite proxy target in dev.
 const BASE_URL = import.meta.env.SSR
@@ -13,8 +15,17 @@ export class ApiError extends Error {
 }
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, init);
+  const method = init?.method ?? 'GET';
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, init);
+  } catch (e) {
+    // In the browser only: the pages show their own error, this tells us it happened
+    reportApiFailure(method, path, null, e);
+    throw e;
+  }
   if (!res.ok) {
+    reportApiFailure(method, path, res.status);
     throw new ApiError(res.status, res.statusText);
   }
   return res.json();

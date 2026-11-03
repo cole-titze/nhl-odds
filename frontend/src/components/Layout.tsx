@@ -8,6 +8,7 @@ import { StatusBarTint } from './StatusBarTint';
 import { useOddsFormat } from '../hooks/useOddsFormat';
 import { useActiveThemeId } from '../hooks/useRootTheme';
 import { OddsFormatContext } from '../contexts/OddsFormatContext';
+import { BUILD_SHA, BUILD_VERSION } from '../build';
 
 export function Layout() {
   const oddsFormat = useOddsFormat();
@@ -86,7 +87,22 @@ export function Layout() {
               </a>{' '}
               (CC BY 4.0).
             </>
+          )}{' '}
+          {/* Which build is live; error reports carry the same version */}
+          Build{' '}
+          {BUILD_SHA ? (
+            <a
+              href={`https://github.com/cole-titze/nhl-odds/commit/${BUILD_SHA}`}
+              target="_blank"
+              rel="noreferrer"
+              className="underline"
+            >
+              {BUILD_VERSION}
+            </a>
+          ) : (
+            BUILD_VERSION
           )}
+          .
         </footer>
       </div>
     </OddsFormatContext.Provider>

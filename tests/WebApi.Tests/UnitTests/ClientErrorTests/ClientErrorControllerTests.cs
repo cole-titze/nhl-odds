@@ -45,6 +45,21 @@ public class ClientErrorControllerTests
     }
 
     [DataTestMethod]
+    [DataRow("api")]
+    [DataRow("chunk")]
+    public async Task Post_ApiAndChunkReports_AreSaved(string kind)
+    {
+        var repo = new FakeErrorLogRepository();
+
+        var result = await Controller(repo).Post(
+            new ClientErrorReport(kind, "ApiError", "GET /api/Team/GetTeam answered 500", null, "/team/10", "2026.11.03-abc1234"),
+            null, CancellationToken.None);
+
+        result.Should().BeOfType<NoContent>();
+        repo.Added.Should().ContainSingle().Which.StackTrace.Should().StartWith($"Kind: {kind}\nVersion: 2026.11.03-abc1234\n");
+    }
+
+    [DataTestMethod]
     [DataRow("bogus", "msg", "/")]
     [DataRow("error", "", "/")]
     [DataRow("error", "   ", "/")]
