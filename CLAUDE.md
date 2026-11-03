@@ -113,7 +113,7 @@ psql -h localhost -U postgres -d nhl -f database/Scripts/CreateTables.sql
 | `src/WebApi` | ASP.NET Core Web API — controllers, view model mappers, Swagger |
 | `src/BookmakerOddsGetter` | Fetches and backfills odds from The Odds API and Kalshi (no API key needed for Kalshi) |
 | `tests/` | xUnit/MSTest projects mirroring the `src/` projects under test, plus `Integration.Tests` (repositories, schema and Web API against real Postgres) |
-| `frontend` | React 19 + TypeScript + Vite + Tailwind CSS v4 frontend — game odds, team stats, team detail pages. Server-rendered with React Router framework mode (`src/routes.ts`, `src/root.tsx`); Games, Teams, Team and Game pages have route `loader`s for the first load (Teams sends each game once with only the fields it reads; an unknown game is a 404), client navigation fetches in the page |
+| `frontend` | React 19 + TypeScript + Vite + Tailwind CSS v4 frontend — game odds, team stats, team detail pages. Server-rendered with React Router framework mode (`src/routes.ts`, `src/root.tsx`); Games, Teams, Team and Game pages have route `loader`s for the first load (Teams sends each game once with only the fields it reads; an unknown game is a 404), client navigation fetches in the page. Every page's link preview (`og:image`, from `PageTitle`) is a 1200×630 PNG drawn on the server by `src/routes/og.*.tsx` (cards in `src/og/cards.tsx`, Satori + resvg WebAssembly, kept in memory and redrawn when what they show changes) |
 
 ### Data Flow
 

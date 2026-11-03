@@ -325,6 +325,7 @@ export function GamesPage() {
       <PageTitle
         title="Games"
         description="Today's NHL games with machine learning win probabilities, sportsbook and Kalshi odds, and the model's betting picks."
+        imageAlt="Today's NHL games, each with the model's win probability for both teams, or the final score"
       />
       <h1 className="sr-only">Games</h1>
       <div

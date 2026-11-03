@@ -179,6 +179,7 @@ export function TeamDetailPage() {
             { name: `${team.locationName} ${team.teamName}`, path: `/team/${team.id}` },
           ]),
         ]}
+        imageAlt={`${team.locationName} ${team.teamName} logo with this season's record, how often the model picked their games right, and their next game`}
       />
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
         <div className="flex items-center gap-5">

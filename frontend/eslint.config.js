@@ -38,4 +38,12 @@ export default defineConfig([
       ],
     },
   },
+  {
+    // Link preview images: Satori lays out inline styles only, and these are never pages
+    files: ['src/og/**/*.tsx'],
+    rules: {
+      'react/forbid-dom-props': 'off',
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])
