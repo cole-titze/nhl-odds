@@ -6,7 +6,8 @@ import { getAdminKey } from '../hooks/useAdminKey';
 
 // Experimental chat assistant backed by a local Ollama model (AssistantController in the web
 // API). It only appears when the API says it's enabled, and only after hydration, so server
-// rendered (and cached) pages never include it.
+// rendered (and cached) pages never include it. While the model's computer doesn't answer it's
+// greyed out and opens to an offline note instead of a usable chat.
 
 interface Message {
   role: 'user' | 'assistant';
@@ -27,6 +28,8 @@ interface Limits {
   minutesPerQuestion: number;
   // Sent the admin key: no per-visitor limit
   unlimited: boolean;
+  // False while the model's computer doesn't answer (asleep or locked): shown, but can't be used
+  available: boolean;
 }
 
 // The admin key (stored by the Admin page) lifts the assistant's per-visitor limit
@@ -104,6 +107,7 @@ export function Assistant() {
   const panelRef = useRef<HTMLDivElement>(null);
   const wasOpen = useRef(false);
 
+  // Asked again each time the chat opens, so it comes back online without a reload
   useEffect(() => {
     if (!hydrated) return;
     apiFetch<Partial<Limits> & { enabled?: boolean }>('/api/Assistant/Status', {
@@ -117,11 +121,13 @@ export function Assistant() {
                 burst: l.burst ?? 3,
                 minutesPerQuestion: l.minutesPerQuestion ?? 2,
                 unlimited: l.unlimited ?? false,
+                available: l.available ?? true,
               },
         ),
       )
-      .catch(() => setLimits(null));
-  }, [hydrated]);
+      // Keep a widget that's already showing (just mark it offline); otherwise stay hidden
+      .catch(() => setLimits((l) => l && { ...l, available: false }));
+  }, [hydrated, open]);
 
   // On phones, keep the chat's contents in the part of the screen the keyboard leaves
   useEffect(() => {
@@ -221,9 +227,11 @@ export function Assistant() {
 
   const close = () => setOpen(false);
 
+  const offline = !limits.available;
+
   const send = async () => {
     const content = draft.trim();
-    if (!content || busy) return;
+    if (!content || busy || offline) return;
     const next: Message[] = [...messages, { role: 'user' as const, content }].slice(-20);
     setMessages(next);
     setDraft('');
@@ -237,7 +245,9 @@ export function Assistant() {
       });
       setMessages([...next, { role: 'assistant', content: reply }]);
     } catch (err) {
-      setError(errorMessage(err, limits));
+      // 502: the API couldn't reach the model's computer
+      if (err instanceof ApiError && err.status === 502) setLimits({ ...limits, available: false });
+      else setError(errorMessage(err, limits));
     } finally {
       setBusy(false);
       inputRef.current?.focus({ preventScroll: true });
@@ -278,7 +288,7 @@ export function Assistant() {
             aria-live="polite"
             className="flex flex-1 flex-col gap-2.5 overflow-y-auto overscroll-contain px-3 py-3 text-sm sm:text-base text-surface-800 dark:text-surface-100"
           >
-            {messages.length === 0 && (
+            {messages.length === 0 && !offline && (
               <div className="space-y-2 text-surface-600 dark:text-surface-300">
                 <p>Ask about today&apos;s games, a team, or the model&apos;s odds.</p>
                 <p className="text-xs">
@@ -332,7 +342,16 @@ export function Assistant() {
                 </p>
               </div>
             )}
-            {error && (
+            {offline && (
+              <div className="bubble-in flex max-w-[85%] items-end gap-2">
+                <Avatar />
+                <p role="status" className={BOT_BUBBLE}>
+                  The assistant is offline right now (the computer it runs on is asleep). Try again
+                  later.
+                </p>
+              </div>
+            )}
+            {error && !offline && (
               <div className="bubble-in flex max-w-[85%] items-end gap-2">
                 <Avatar />
                 <p className="w-fit rounded-2xl rounded-bl-md bg-red-50 px-3.5 py-2 text-red-800 shadow-sm dark:bg-red-950/60 dark:text-red-200">
@@ -364,6 +383,7 @@ export function Assistant() {
               }}
               rows={1}
               maxLength={2000}
+              disabled={offline}
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {
@@ -372,14 +392,14 @@ export function Assistant() {
                   void send();
                 }
               }}
-              placeholder="Ask a question…"
-              className="min-w-0 flex-1 resize-none rounded-lg border border-surface-300 dark:border-white/10 bg-white/70 dark:bg-black/30 max-h-36 px-3 py-2 text-base text-surface-900 dark:text-surface-50 placeholder:text-surface-500 dark:placeholder:text-surface-400"
+              placeholder={offline ? 'Assistant offline' : 'Ask a question…'}
+              className="disabled:opacity-60 min-w-0 flex-1 resize-none rounded-lg border border-surface-300 dark:border-white/10 bg-white/70 dark:bg-black/30 max-h-36 px-3 py-2 text-base text-surface-900 dark:text-surface-50 placeholder:text-surface-500 dark:placeholder:text-surface-400"
             />
             <button
               type="submit"
               // Keep focus (and the phone keyboard) in the message box when Send is tapped
               onMouseDown={(e) => e.preventDefault()}
-              disabled={busy || !draft.trim()}
+              disabled={busy || offline || !draft.trim()}
               className="rounded-lg bg-accent-600 px-4 py-2 text-sm sm:text-base font-semibold text-on-accent disabled:opacity-60"
             >
               Send
@@ -392,10 +412,21 @@ export function Assistant() {
         type="button"
         onClick={() => (open ? close() : setOpen(true))}
         aria-expanded={open}
-        aria-label={open ? 'Close assistant' : 'Open assistant'}
-        className={`flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg ring-2 ring-accent-600 transition-transform hover:-translate-y-0.5 dark:ring-accent-400 ${open ? 'max-sm:hidden' : ''}`}
+        aria-label={
+          open ? 'Close assistant' : offline ? 'Open assistant (offline)' : 'Open assistant'
+        }
+        title={offline ? 'Assistant offline' : undefined}
+        className={`relative flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg ring-2 transition-transform hover:-translate-y-0.5 ${offline ? 'ring-surface-400' : 'ring-accent-600 dark:ring-accent-400'} ${open ? 'max-sm:hidden' : ''}`}
       >
-        <PuckBot className="h-10 w-10" />
+        <PuckBot className={`h-10 w-10 ${offline ? 'opacity-50 grayscale' : ''}`} />
+        {offline && (
+          <span
+            aria-hidden="true"
+            className="absolute -top-1 -right-1 rounded-full bg-surface-600 px-1.5 py-0.5 text-[0.625rem] font-semibold leading-none text-white"
+          >
+            off
+          </span>
+        )}
       </button>
     </div>
   );
