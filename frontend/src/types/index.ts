@@ -107,3 +107,49 @@ export interface SeasonBookmakerOddsVM {
   homeOdds: number;
   awayOdds: number;
 }
+
+/** How the model's win probabilities held up over a season (Track Record page) */
+export interface TrackRecordVM {
+  seasonStartYear: number;
+  liveOnly: boolean;
+  gameCount: number;
+  liveGameCount: number;
+  modelLogLoss: number | null;
+  modelAccuracy: number | null;
+  calibration: CalibrationBinVM[];
+  logLossByDate: LogLossPointVM[];
+  sources: SourceComparisonVM[];
+  closingLine: ClosingLineVM | null;
+}
+
+export interface CalibrationBinVM {
+  low: number;
+  high: number;
+  games: number;
+  meanPredicted: number;
+  homeWinRate: number;
+}
+
+export interface LogLossPointVM {
+  date: string;
+  games: number;
+  model: number;
+  market: number | null;
+}
+
+export interface SourceComparisonVM {
+  name: string;
+  games: number;
+  logLoss: number;
+  accuracy: number;
+  modelLogLoss: number;
+  modelAccuracy: number;
+}
+
+export interface ClosingLineVM {
+  games: number;
+  modelCloser: number;
+  movedTowardModel: number;
+  movedAwayFromModel: number;
+  averageMoveTowardModel: number;
+}

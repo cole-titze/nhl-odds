@@ -5,7 +5,7 @@ import { getAllTeams } from '../api/teams';
 import { getCurrentSeason } from '../utils/season';
 import { SITE_URL } from '../utils/site';
 
-const STATIC_PATHS = ['/', '/strategies', '/teams', '/about'];
+const STATIC_PATHS = ['/', '/strategies', '/teams', '/track-record', '/about'];
 
 // Building it takes a full-season API call, so it's reused for an hour
 const MAX_AGE_MS = 60 * 60 * 1000;
