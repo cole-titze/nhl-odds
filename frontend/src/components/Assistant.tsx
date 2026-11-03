@@ -346,8 +346,7 @@ export function Assistant() {
               <div className="bubble-in flex max-w-[85%] items-end gap-2">
                 <Avatar />
                 <p role="status" className={BOT_BUBBLE}>
-                  The assistant is offline right now (the computer it runs on is asleep). Try again
-                  later.
+                  The assistant is unavailable right now. Try again later.
                 </p>
               </div>
             )}
