@@ -137,3 +137,25 @@ export interface LineupPlayerVM {
   playerId: number | null;
   note: string | null;
 }
+
+/** How the market's view of a game moved before puck drop (Game page) */
+export interface OddsMovementVM {
+  gameId: number;
+  startUTC: string;
+  series: OddsSeriesVM[];
+  move: MarketMoveVM | null;
+}
+
+export interface OddsSeriesVM {
+  name: string;
+  kind: 'model' | 'partner' | 'average' | 'kalshi';
+  points: { timeUTC: string; homeProbability: number }[];
+}
+
+export interface MarketMoveVM {
+  open: number;
+  close: number;
+  model: number | null;
+  /** Close minus open, positive when the market moved toward the model */
+  towardModel: number | null;
+}

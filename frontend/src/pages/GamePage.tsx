@@ -25,6 +25,7 @@ import { useStrategy } from '../contexts/StrategyContext';
 import { StrategyPicker } from '../components/StrategyPicker';
 import { Skeleton } from '../components/Skeleton';
 import { GameLineups } from '../components/GameLineups';
+import { OddsMovementChart } from '../components/OddsMovementChart';
 import { TeamLogo } from '../components/TeamLogo';
 import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
 
@@ -321,6 +322,7 @@ export function GamePage() {
         </div>
       )}
 
+      <OddsMovementChart game={game} />
       <GameLineups game={game} />
     </div>
   );
