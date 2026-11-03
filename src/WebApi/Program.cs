@@ -56,6 +56,16 @@ builder.Services.AddHttpClient<IAssistantService, AssistantService>(client =>
     // A reply with a couple of tool rounds can take a while on the Mac
     client.Timeout = TimeSpan.FromMinutes(2);
 });
+// Status hides the widget while Ollama doesn't answer (the Mac is asleep or locked)
+// (a named client, since a typed one is transient and the probe's cached answer must be shared)
+builder.Services.AddHttpClient(nameof(OllamaProbe), client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["OLLAMA_URL"] ?? "http://localhost:11434");
+    client.Timeout = OllamaProbe.Timeout;
+});
+builder.Services.AddSingleton(sp => new OllamaProbe(
+    sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(OllamaProbe)),
+    sp.GetRequiredService<ILogger<OllamaProbe>>()));
 builder.Services.AddDbContext<GameDbContext>(x => x.UseNpgsql(_connectionString));
 builder.Services.AddLogging();
 // Prometheus scrapes a separate port so /metrics is never reachable through nginx/Cloudflare

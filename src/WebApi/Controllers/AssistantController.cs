@@ -5,10 +5,12 @@ using WebApi.Filters;
 namespace WebApi.Controllers;
 
 // Experimental: only enabled when OLLAMA_URL is set; otherwise Status says so (the site hides the widget) and Chat 404s.
+// Status also says available=false while Ollama doesn't answer (the Mac is asleep or locked): the widget stays
+// but shows an offline note and can't be used.
 // Chat has its own small rate-limit bucket (the "api" policy in Program.cs).
 [Route("api/[controller]/[action]")]
 [ApiController]
-public class AssistantController(IConfiguration config, IServiceProvider services, IHttpContextAccessor http, ILogger<AssistantController> logger)
+public class AssistantController(IConfiguration config, IServiceProvider services, IHttpContextAccessor http, ILogger<AssistantController> logger, OllamaProbe probe)
 {
     private const int MaxMessages = 20;
     private const int MaxMessageChars = 2_000;
@@ -19,10 +21,11 @@ public class AssistantController(IConfiguration config, IServiceProvider service
 
     [HttpGet]
     // 200 either way so a disabled assistant doesn't put a 404 in the metrics on every page view
-    public IResult Status() => Enabled
+    public async Task<IResult> Status() => Enabled
         ? Results.Ok(new
         {
             enabled = true,
+            available = await probe.IsReachable(),
             burst = AssistantLimits.Burst,
             minutesPerQuestion = AssistantLimits.MinutesPerQuestion,
             // The admin key lifts the per-visitor limit (Program.cs rate limiter)
