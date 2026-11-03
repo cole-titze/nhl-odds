@@ -35,19 +35,18 @@ public class TeamAndAdminRepositoryTests
 
         var team = await new TeamRepository(db).GetTeam(Seed.Leafs, Seed.Season);
 
-        team.Team.TeamName.Should().Be("Maple Leafs");
+        team!.Team.TeamName.Should().Be("Maple Leafs");
         team.Team.LocationName.Should().Be("Toronto");
     }
 
     [TestMethod]
-    public async Task GetTeam_UnknownTeam_Throws()
+    public async Task GetTeam_UnknownTeam_ShouldBeNull()
     {
-        // Documents today's behaviour: the API answers an unknown team with a 500, not a 404
         await using var db = TestContexts.Web();
 
-        var act = () => new TeamRepository(db).GetTeam(99, Seed.Season);
+        var team = await new TeamRepository(db).GetTeam(99, Seed.Season);
 
-        await act.Should().ThrowAsync<InvalidOperationException>();
+        team.Should().BeNull();
     }
 
     [TestMethod]

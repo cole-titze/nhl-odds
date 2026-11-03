@@ -23,9 +23,11 @@ public class TeamGetter : ITeamGetter
         return TeamsToTeamsVmMapper.Map(teams);
     }
 
-    public async Task<TeamVM> GetTeamStats(int teamId, int seasonStartYear)
+    public async Task<TeamVM?> GetTeamStats(int teamId, int seasonStartYear)
     {
         var team = await _teamRepository.GetTeam(teamId, seasonStartYear);
+        if (team is null)
+            return null;
         team = await _gameOddsGetter.BuildTeamGameOdds(team, seasonStartYear);
         return TeamToTeamVmMapper.Map(team);
     }

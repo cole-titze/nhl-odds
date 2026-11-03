@@ -10,7 +10,8 @@ public class DbGameOdds
     public double HomeOdds { get; set; }
     public double AwayOdds { get; set; }
     public double LogLoss { get; set; }
-    public string Notes { get; set; } = string.Empty;
+    // NULL is allowed in CreateTables.sql; the predictor always writes it, but a NULL must not break game queries
+    public string? Notes { get; set; }
     [ForeignKey(nameof(GameId))]
     public DbGameRaw? Game { get; set; }
     public void Clone(DbGameOdds gameOdds)

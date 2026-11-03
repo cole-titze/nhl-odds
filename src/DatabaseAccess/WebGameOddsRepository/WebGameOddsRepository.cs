@@ -21,18 +21,20 @@ public class GameOddsRepository : IGameOddsRepository
         _bookmakerOddsRepo = bookmakerOddsRepo;
     }
 
-    private static double CentralOffsetHours(DateTime utcNow) =>
-        CentralZone.GetUtcOffset(utcNow).TotalHours;
+    // Midnight Central at the start of this date, as UTC. Uses that date's own UTC offset, not today's,
+    // so a game near midnight on the far side of a DST change still lands on its Central date
+    private static DateTime CentralDayStartUtc(DateTime date) =>
+        TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(date.Date, DateTimeKind.Unspecified), CentralZone);
 
     public async Task<IEnumerable<GameOdds>> GetGameOddsInDateRange(DateRange dateRange, int seasonStartYear)
     {
         var seasonTeams = await GetSeasonTeams(seasonStartYear);
-        var offset = CentralOffsetHours(DateTime.UtcNow);
+        var fromUtc = CentralDayStartUtc(dateRange.StartDate);
+        var toUtc = CentralDayStartUtc(dateRange.EndDate.Date.AddDays(1));
 
         var games = await _dbContext.GameRaw
             .AsNoTracking()
-            .Where(g => g.GameDateUTC.AddHours(offset).Date >= dateRange.StartDate.Date
-                     && g.GameDateUTC.AddHours(offset).Date <= dateRange.EndDate.Date)
+            .Where(g => g.GameDateUTC >= fromUtc && g.GameDateUTC < toUtc)
             .OrderBy(g => g.GameDateUTC)
             .ToListAsync();
 
@@ -175,12 +177,12 @@ public class GameOddsRepository : IGameOddsRepository
     {
         var utcNow = DateTime.UtcNow;
         var nowCentralDate = TimeZoneInfo.ConvertTimeFromUtc(utcNow, CentralZone).Date;
-        var offset = CentralOffsetHours(utcNow);
+        var todayStartUtc = CentralDayStartUtc(nowCentralDate);
 
         var upcoming = await _dbContext.GameRaw
             .AsNoTracking()
             .Where(g => g.SeasonStartYear == seasonStartYear
-                && g.GameDateUTC.AddHours(offset).Date >= nowCentralDate)
+                && g.GameDateUTC >= todayStartUtc)
             .OrderBy(g => g.GameDateUTC)
             .Select(g => (DateTime?)g.GameDateUTC)
             .FirstOrDefaultAsync();
@@ -191,7 +193,7 @@ public class GameOddsRepository : IGameOddsRepository
         var past = await _dbContext.GameRaw
             .AsNoTracking()
             .Where(g => g.SeasonStartYear == seasonStartYear
-                && g.GameDateUTC.AddHours(offset).Date < nowCentralDate)
+                && g.GameDateUTC < todayStartUtc)
             .OrderByDescending(g => g.GameDateUTC)
             .Select(g => (DateTime?)g.GameDateUTC)
             .FirstOrDefaultAsync();

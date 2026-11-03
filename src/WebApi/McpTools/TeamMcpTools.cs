@@ -21,7 +21,7 @@ public class TeamMcpTools(ITeamGetter teamGetter, [FromKeyedServices(ApiCache.Se
     }
 
     [McpServerTool, Description("Get stats for a specific NHL team by team ID, including game history with model odds and bookmaker lines.")]
-    public async Task<TeamVM> GetTeamStats(
+    public async Task<TeamVM?> GetTeamStats(
         [Description("The team ID")] int teamId,
         [Description("The season start year (e.g. 2024 for the 2024-25 season)")] int seasonStartYear)
         => await cache.GetOrSetAsync(ApiCache.TeamKey(teamId, seasonStartYear),

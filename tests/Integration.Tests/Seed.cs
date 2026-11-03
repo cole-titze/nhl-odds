@@ -33,9 +33,8 @@ public static class Seed
         public int EndPeriod { get; init; }
     }
 
-    // Notes is nullable in CreateTables.sql but not in DbGameOdds, and the predictor always
-    // writes it, so it's filled in here too (a NULL fails to load)
-    public record GameOdds(int GameId, DateTime RunUtc, double HomeOdds, int ModelId = 1);
+    // The predictor always writes Notes; null tests a row it left empty
+    public record GameOdds(int GameId, DateTime RunUtc, double HomeOdds, int ModelId = 1, string? Notes = "integration-test");
 
     public record BookmakerOdds(int GameId, string Bookmaker, double HomeOdds)
     {
@@ -92,9 +91,10 @@ public static class Seed
         {
             await Insert("""
                 INSERT INTO "GameOdds" ("GameId", "ModelId", "RunDateUTC", "HomeOdds", "AwayOdds", "Notes")
-                VALUES (@game, @model, @run, @home, @away, 'integration-test')
+                VALUES (@game, @model, @run, @home, @away, @notes)
                 """,
-                ("game", o.GameId), ("model", o.ModelId), ("run", o.RunUtc), ("home", o.HomeOdds), ("away", 1 - o.HomeOdds));
+                ("game", o.GameId), ("model", o.ModelId), ("run", o.RunUtc), ("home", o.HomeOdds), ("away", 1 - o.HomeOdds),
+                ("notes", (object?)o.Notes ?? DBNull.Value));
         }
     }
 

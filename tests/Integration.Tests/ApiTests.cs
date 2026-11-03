@@ -106,6 +106,14 @@ public class ApiTests
     }
 
     [TestMethod]
+    public async Task GetTeam_UnknownTeam_ShouldBe404()
+    {
+        var res = await _client.GetAsync("/api/Team/GetTeam?teamId=99&seasonStartYear=2026");
+
+        res.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [TestMethod]
     public async Task GetHealthChecks_ShouldAnswerFromTheDatabase()
     {
         // Admin endpoints need X-Admin-Key outside Development; the test host sets one
