@@ -135,18 +135,23 @@ export function TeamDetailPage() {
     );
   }
 
+  // A title of their own, kept out of search, so these never leave the tab blank
   if (error)
     return (
-      <div
-        role="alert"
-        className="glass rounded-xl text-center text-red-700 dark:text-red-400 py-8"
-      >
-        {error}
-      </div>
+      <>
+        <PageTitle title={error === 'Team not found.' ? 'Team not found' : 'Team'} noindex />
+        <div
+          role="alert"
+          className="glass rounded-xl text-center text-red-700 dark:text-red-400 py-8"
+        >
+          {error}
+        </div>
+      </>
     );
   if (!team)
     return (
       <div className="text-center text-surface-500 dark:text-surface-400 py-12">
+        <PageTitle title="Team not found" noindex />
         Team not found.
       </div>
     );
