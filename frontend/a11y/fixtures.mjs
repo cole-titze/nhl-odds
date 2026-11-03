@@ -380,6 +380,68 @@ const responses = {
       move: { open: 0.52, close: 0.553, model: 0.58, towardModel: 0.033 },
     };
   })(),
+  GetTrackRecord: {
+    seasonStartYear: 2026,
+    liveOnly: false,
+    gameCount: 120,
+    liveGameCount: 90,
+    modelLogLoss: 0.6712,
+    modelAccuracy: 0.575,
+    calibration: [
+      { low: 0.3, high: 0.35, games: 6, meanPredicted: 0.33, homeWinRate: 0.33 },
+      { low: 0.4, high: 0.45, games: 22, meanPredicted: 0.43, homeWinRate: 0.41 },
+      { low: 0.5, high: 0.55, games: 40, meanPredicted: 0.52, homeWinRate: 0.55 },
+      { low: 0.6, high: 0.65, games: 30, meanPredicted: 0.62, homeWinRate: 0.6 },
+      { low: 0.7, high: 0.75, games: 22, meanPredicted: 0.71, homeWinRate: 0.77 },
+    ],
+    logLossByDate: Array.from({ length: 20 }, (_, i) => ({
+      date: isoDate(new Date(today.getTime() - (20 - i) * 86400000)) + 'T00:00:00',
+      games: (i + 1) * 6,
+      model: 0.68 - i * 0.0005,
+      market: 0.675 - i * 0.0004,
+    })),
+    sources: [
+      {
+        name: "Bookmakers' average (morning)",
+        games: 110,
+        logLoss: 0.668,
+        accuracy: 0.58,
+        modelLogLoss: 0.671,
+        modelAccuracy: 0.57,
+      },
+      {
+        name: "Bookmakers' average (closing)",
+        games: 100,
+        logLoss: 0.664,
+        accuracy: 0.59,
+        modelLogLoss: 0.67,
+        modelAccuracy: 0.57,
+      },
+      {
+        name: 'DraftKings',
+        games: 110,
+        logLoss: 0.669,
+        accuracy: 0.58,
+        modelLogLoss: 0.671,
+        modelAccuracy: 0.57,
+      },
+      {
+        name: 'Kalshi',
+        games: 95,
+        logLoss: 0.673,
+        accuracy: 0.56,
+        modelLogLoss: 0.67,
+        modelAccuracy: 0.57,
+      },
+    ],
+    closingLine: {
+      games: 100,
+      modelCloser: 54,
+      movedTowardModel: 51,
+      movedAwayFromModel: 44,
+      averageMoveTowardModel: 0.0042,
+    },
+  },
 };
 
 export function mockApi(url) {
@@ -394,5 +456,14 @@ export function mockApi(url) {
 }
 
 export function pagesFor() {
-  return ['/', '/teams', '/team/10', `/game/${games[33].id}`, '/strategies', '/about', '/admin'];
+  return [
+    '/',
+    '/teams',
+    '/team/10',
+    `/game/${games[33].id}`,
+    '/strategies',
+    '/track-record',
+    '/about',
+    '/admin',
+  ];
 }
