@@ -292,6 +292,53 @@ const responses = {
     },
   ],
   GetErrorLogs: [],
+  GetOddsMovement: (() => {
+    const start = new Date(today.getTime() + 6 * 3600000);
+    const at = (hoursBefore) => new Date(start.getTime() - hoursBefore * 3600000).toISOString();
+    const points = (pairs) => pairs.map(([h, p]) => ({ timeUTC: at(h), homeProbability: p }));
+    return {
+      gameId: 2026020100,
+      startUTC: start.toISOString(),
+      series: [
+        { name: 'Model', kind: 'model', points: points([[20, 0.58]]) },
+        {
+          name: 'DraftKings (US)',
+          kind: 'partner',
+          points: points([
+            [16, 0.52],
+            [9, 0.535],
+            [4, 0.55],
+            [1, 0.556],
+          ]),
+        },
+        {
+          name: 'FanDuel (CA)',
+          kind: 'partner',
+          points: points([
+            [15, 0.515],
+            [6, 0.545],
+          ]),
+        },
+        {
+          name: "Sportsbooks' average",
+          kind: 'average',
+          points: points([
+            [18, 0.52],
+            [0.02, 0.553],
+          ]),
+        },
+        {
+          name: 'Kalshi',
+          kind: 'kalshi',
+          points: points([
+            [18, 0.51],
+            [0.02, 0.56],
+          ]),
+        },
+      ],
+      move: { open: 0.52, close: 0.553, model: 0.58, towardModel: 0.033 },
+    };
+  })(),
 };
 
 export function mockApi(url) {
