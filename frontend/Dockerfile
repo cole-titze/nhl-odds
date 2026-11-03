@@ -6,7 +6,10 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
-RUN npm run build && npm prune --omit=dev
+# The build's version (vite.config.ts); the workflow passes them, as .git isn't in the context
+ARG GIT_SHA=""
+ARG BUILD_DATE=""
+RUN GIT_SHA="$GIT_SHA" BUILD_DATE="$BUILD_DATE" npm run build && npm prune --omit=dev
 
 # Node renders the pages (server.mjs), serves the assets and proxies /api and /mcp
 FROM node:24-alpine
@@ -21,7 +24,7 @@ ENV NODE_ENV=production PORT=8080 TZ=America/Chicago
 COPY --from=build /app/package.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/build ./build
-COPY server.mjs page-cache.mjs ./
+COPY server.mjs page-cache.mjs client-errors.mjs ./
 # Numeric (the node user) so Kubernetes runAsNonRoot can verify it
 USER 1000
 EXPOSE 8080
