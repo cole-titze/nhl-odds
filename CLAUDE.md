@@ -18,8 +18,13 @@ dotnet run --project src/Entry
 # Run the web API
 dotnet run --project src/WebApi
 
-# Run all tests
+# Run all tests (the integration tests skip without a database; CI runs the unit tests with --filter "TestCategory!=Integration")
 dotnet test
+
+# Integration tests (tests/Integration.Tests): real Postgres from CreateTables.sql via Testcontainers (needs Docker),
+# or an existing server: a throwaway database is created on it and dropped afterwards. Weekly in CI (integration-tests.yml)
+dotnet test tests/Integration.Tests
+INTEGRATION_DATABASE="Host=localhost;Username=postgres;Password=..." dotnet test tests/Integration.Tests
 
 # Build a specific project
 dotnet build src/DataGetter/DataGetter.csproj
@@ -97,7 +102,7 @@ psql -h localhost -U postgres -d nhl -f database/Scripts/CreateTables.sql
 | `database` | SQL scripts for schema (not a C# project) |
 | `src/WebApi` | ASP.NET Core Web API — controllers, view model mappers, Swagger |
 | `src/BookmakerOddsGetter` | Fetches and backfills odds from The Odds API and Kalshi (no API key needed for Kalshi) |
-| `tests/` | xUnit/MSTest projects mirroring the `src/` projects under test |
+| `tests/` | xUnit/MSTest projects mirroring the `src/` projects under test, plus `Integration.Tests` (repositories, schema and Web API against real Postgres) |
 | `frontend` | React 19 + TypeScript + Vite + Tailwind CSS v4 frontend — game odds, team stats, team detail pages. Server-rendered with React Router framework mode (`src/routes.ts`, `src/root.tsx`); Games, Teams, Team and Game pages have route `loader`s for the first load (Teams sends each game once with only the fields it reads; an unknown game is a 404), client navigation fetches in the page |
 
 ### Data Flow
