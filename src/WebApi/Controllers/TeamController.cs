@@ -54,6 +54,6 @@ public class TeamController
     {
         var teamVm = await _cache.GetOrSetAsync(ApiCache.TeamKey(teamId, seasonStartYear),
             () => _teamGetter.GetTeamStats(teamId, seasonStartYear), ApiCache.SizeOf, ApiCache.DateRangeLifetime);
-        return Results.Ok(teamVm);
+        return teamVm is null ? Results.NotFound() : Results.Ok(teamVm);
     }
 }

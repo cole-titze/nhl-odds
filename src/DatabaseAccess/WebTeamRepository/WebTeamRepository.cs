@@ -21,12 +21,12 @@ public class TeamRepository : ITeamRepository
         return DbSeasonTeamToTeamStatsMapper.MapList(dbTeams);
     }
 
-    public async Task<TeamStats> GetTeam(int teamId, int seasonStartYear)
+    public async Task<TeamStats?> GetTeam(int teamId, int seasonStartYear)
     {
         var dbTeam = await _dbContext.SeasonTeam
             .AsNoTracking()
             .Where(x => x.TeamId == teamId && x.SeasonStartYear == seasonStartYear)
-            .FirstAsync();
-        return DbSeasonTeamToTeamStatsMapper.Map(dbTeam);
+            .FirstOrDefaultAsync();
+        return dbTeam is null ? null : DbSeasonTeamToTeamStatsMapper.Map(dbTeam);
     }
 }

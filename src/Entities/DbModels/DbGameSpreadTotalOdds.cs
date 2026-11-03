@@ -12,7 +12,8 @@ public class DbGameSpreadTotalOdds
     public double ResidualStd { get; set; }
     public double? Line { get; set; }
     public double? CoverProbability { get; set; }
-    public string Notes { get; set; } = string.Empty;
+    // NULL is allowed in CreateTables.sql; the predictor always writes it, but a NULL must not break game queries
+    public string? Notes { get; set; }
     [ForeignKey(nameof(GameId))]
     public DbGameRaw? Game { get; set; }
 }

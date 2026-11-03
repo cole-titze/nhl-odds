@@ -16,8 +16,7 @@ public class GameOddsRepositoryTests
         await Seed.DefaultTeams();
     }
 
-    // The times below fall on the same Central date in both CST and CDT: the date filter
-    // uses today's UTC offset, so the tests mustn't depend on when they run
+    // Ordinary days, away from a DST change
     private static readonly DateTime Nov4Noon = new(2026, 11, 4, 12, 0, 0);    // Nov 4 CT
     private static readonly DateTime Nov4Evening = new(2026, 11, 5, 2, 0, 0);  // Nov 4 CT, Nov 5 UTC
     private static readonly DateTime Nov3Evening = new(2026, 11, 4, 3, 0, 0);  // Nov 3 CT, Nov 4 UTC
@@ -32,6 +31,40 @@ public class GameOddsRepositoryTests
             new DateRange { StartDate = new DateTime(2026, 11, 4), EndDate = new DateTime(2026, 11, 4) }, Seed.Season);
 
         games.Select(g => g.Game.Id).Should().Equal(2, 1);
+    }
+
+    [TestMethod]
+    public async Task GetGameOddsInDateRange_ShouldUseEachDatesOwnOffsetAcrossDst()
+    {
+        // 2026-11-01 05:30 UTC is 00:30 CDT Nov 1 (DST ends at 07:00 UTC that day): 23:30 Oct 31 with CST's offset.
+        // 2027-03-14 05:30 UTC is 23:30 CST Mar 13 (DST starts at 08:00 UTC that day): 00:30 Mar 14 with CDT's offset.
+        // Converting with today's offset put one of them on the wrong day, whichever half of the year the test ran in
+        await Seed.Games(
+            new Seed.Game(1, new DateTime(2026, 11, 1, 5, 30, 0)),
+            new Seed.Game(2, new DateTime(2027, 3, 14, 5, 30, 0)));
+        await using var db = TestContexts.Web();
+        var repo = TestContexts.GameOdds(db);
+
+        async Task<int[]> On(DateTime day) =>
+            (await repo.GetGameOddsInDateRange(new DateRange { StartDate = day, EndDate = day }, Seed.Season))
+                .Select(g => g.Game.Id).ToArray();
+
+        (await On(new DateTime(2026, 10, 31))).Should().BeEmpty();
+        (await On(new DateTime(2026, 11, 1))).Should().Equal(1);
+        (await On(new DateTime(2027, 3, 13))).Should().Equal(2);
+        (await On(new DateTime(2027, 3, 14))).Should().BeEmpty();
+    }
+
+    [TestMethod]
+    public async Task GetGameOdds_NullNotes_ShouldStillLoad()
+    {
+        await Seed.Games(new Seed.Game(1, Nov4Evening));
+        await Seed.Predictions(new Seed.GameOdds(1, Nov4Noon, 0.6, Notes: null));
+        await using var db = TestContexts.Web();
+
+        var game = await TestContexts.GameOdds(db).GetGameOdds(1);
+
+        game!.ModelHomeOdds.Should().BeApproximately(0.6, 1e-9);
     }
 
     [TestMethod]

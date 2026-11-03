@@ -15,8 +15,8 @@ public class FakeTeamRepository : ITeamRepository
         return Task.FromResult(_teams);
     }
 
-    public Task<TeamStats> GetTeam(int teamId, int seasonStartYear)
+    public Task<TeamStats?> GetTeam(int teamId, int seasonStartYear)
     {
-        return Task.FromResult(_teams.First(t => t.Team.Id == teamId));
+        return Task.FromResult(_teams.FirstOrDefault(t => t.Team.Id == teamId));
     }
 }
