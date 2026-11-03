@@ -107,3 +107,33 @@ export interface SeasonBookmakerOddsVM {
   homeOdds: number;
   awayOdds: number;
 }
+
+/** NHL.com's projected lineup for a game (Game page); null when there isn't one yet */
+export interface GameLineupResultVM {
+  lineup: GameLineupVM | null;
+}
+
+export interface GameLineupVM {
+  gameId: number;
+  updatedUTC: string;
+  /** Versions seen before puck drop; more than one means it changed */
+  versionCount: number;
+  statusReport: string | null;
+  away: TeamLineupVM;
+  home: TeamLineupVM;
+}
+
+export interface TeamLineupVM {
+  forwards: LineupPlayerVM[][];
+  defense: LineupPlayerVM[][];
+  goalies: LineupPlayerVM[];
+  scratched: LineupPlayerVM[];
+  injured: LineupPlayerVM[];
+  suspended: LineupPlayerVM[];
+}
+
+export interface LineupPlayerVM {
+  name: string;
+  playerId: number | null;
+  note: string | null;
+}

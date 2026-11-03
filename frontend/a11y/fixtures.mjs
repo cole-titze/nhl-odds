@@ -292,6 +292,47 @@ const responses = {
     },
   ],
   GetErrorLogs: [],
+  GetGameLineup: {
+    lineup: {
+      gameId: 2026020100,
+      updatedUTC: new Date(today.getTime() - 3 * 3600000).toISOString(),
+      versionCount: 2,
+      statusReport:
+        'Matthews took part in the morning skate and is expected to play.\nSwayman will start after Korpisalo started on Tuesday.',
+      away: {
+        forwards: [
+          ['Knies', 'Matthews', 'Marner'],
+          ['Robertson', 'Tavares', 'Nylander'],
+          ['McMann', 'Domi', 'Jarnkrok'],
+          ['Lorentz', 'Kampf', 'Reaves'],
+        ].map((line) => line.map((name) => ({ name, playerId: null, note: null }))),
+        defense: [
+          ['Rielly', 'Tanev'],
+          ['McCabe', 'Ekman-Larsson'],
+          ['Benoit', 'Myers'],
+        ].map((pair) => pair.map((name) => ({ name, playerId: null, note: null }))),
+        goalies: [
+          { name: 'Stolarz', playerId: null, note: null },
+          { name: 'Woll', playerId: null, note: null },
+        ],
+        scratched: [{ name: 'Timmins', playerId: null, note: null }],
+        injured: [{ name: 'Liljegren', playerId: null, note: 'lower body' }],
+        suspended: [],
+      },
+      home: {
+        forwards: [['Marchand', 'Zacha', 'Pastrnak']].map((line) =>
+          line.map((name) => ({ name, playerId: null, note: null })),
+        ),
+        defense: [['Lindholm', 'McAvoy']].map((pair) =>
+          pair.map((name) => ({ name, playerId: null, note: null })),
+        ),
+        goalies: [{ name: 'Swayman', playerId: null, note: null }],
+        scratched: [],
+        injured: [],
+        suspended: [{ name: 'Lauko', playerId: null, note: null }],
+      },
+    },
+  },
 };
 
 export function mockApi(url) {

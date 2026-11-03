@@ -22,6 +22,8 @@ public partial class GameDbContext : DbContext
     public virtual DbSet<DbLoadTestRun> LoadTestRun { get; set; } = null!;
     public virtual DbSet<DbLoadTestRunPage> LoadTestRunPage { get; set; } = null!;
     public virtual DbSet<DbUptimeDay> UptimeDay { get; set; } = null!;
+    public virtual DbSet<DbLineupGame> LineupGame { get; set; } = null!;
+    public virtual DbSet<DbLineupPlayer> LineupPlayer { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -37,6 +39,10 @@ public partial class GameDbContext : DbContext
             .HasKey(c => new { c.GameId, c.ModelId, c.RunDateUTC });
         modelBuilder.Entity<DbLoadTestRunPage>()
             .HasKey(c => new { c.LoadTestRunId, c.Page });
+        modelBuilder.Entity<DbLineupGame>()
+            .HasKey(c => c.SectionHash);
+        modelBuilder.Entity<DbLineupPlayer>()
+            .HasKey(c => new { c.SectionHash, c.Side, c.Group, c.LineNumber, c.Slot });
         modelBuilder.Entity<DbSeasonTeam>()
             .HasKey(c => new { c.TeamId, c.SeasonStartYear });
     }
