@@ -1,0 +1,35 @@
+name: Integration Tests
+
+# tests/Integration.Tests: the EF Core queries, the schema (CreateTables.sql against the EF
+# models) and the Web API's endpoints against a real Postgres. Testcontainers starts
+# postgres:18-alpine in Docker, which GitHub's Ubuntu runners have. Kept out of Unit Tests
+# (filtered by TestCategory) so the fast tests still gate the image builds.
+on:
+  # Sunday, with the weekly image rebuilds
+  schedule:
+    - cron: '0 8 * * 0'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      # CI=true (set by GitHub) makes the tests fail, not skip, if no database starts
+      - name: Run integration tests
+        run: dotnet test tests/Integration.Tests --verbosity normal
+

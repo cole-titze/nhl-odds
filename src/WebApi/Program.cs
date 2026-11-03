@@ -191,3 +191,7 @@ app.MapControllers().RequireRateLimiting("api");
 app.MapMcp("/mcp").RequireRateLimiting("mcp");
 
 app.Run();
+
+// For WebApplicationFactory<Program> in tests/Integration.Tests
+public partial class Program;
+
