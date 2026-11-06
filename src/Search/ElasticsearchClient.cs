@@ -126,6 +126,40 @@ public class ElasticsearchClient
         return result?.Select(kv => kv.Key).ToList() ?? [];
     }
 
+    /// <summary>
+    /// Every document in an index (or alias), a page at a time, sorted by <paramref name="sortField"/> (a keyword
+    /// with a unique value per document) and paged with search_after. Nothing if the index doesn't exist.
+    /// </summary>
+    /// <param name="source">The _source filter, e.g. {"includes": [...], "exclude_vectors": false}</param>
+    public async IAsyncEnumerable<JsonNode> ReadAll(string index, JsonObject source, string sortField,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
+    {
+        const int pageSize = 500;
+        JsonNode? after = null;
+        while (true)
+        {
+            var body = new JsonObject
+            {
+                ["size"] = pageSize,
+                ["_source"] = source.DeepClone(),
+                ["sort"] = new JsonArray(new JsonObject { [sortField] = "asc" }),
+            };
+            if (after != null)
+                body["search_after"] = after.DeepClone();
+
+            using var response = await _http.PostAsync($"{index}/_search", Json(body), ct);
+            if (response.StatusCode == HttpStatusCode.NotFound)
+                yield break;
+            await EnsureSuccess(response, $"read {index}", ct);
+            var hits = JsonNode.Parse(await response.Content.ReadAsStringAsync(ct))!["hits"]!["hits"]!.AsArray();
+            foreach (var hit in hits)
+                yield return hit!;
+            if (hits.Count < pageSize)
+                yield break;
+            after = hits[^1]!["sort"];
+        }
+    }
+
     /// <summary>Runs several searches in one round trip (_msearch). Body is header/query line pairs.</summary>
     public async Task<JsonNode> MultiSearch(string ndjson, CancellationToken ct = default)
     {

@@ -22,4 +22,6 @@ public class ModeSettings
     public bool FromStored { get; set; }
     // SearchIndex's Elasticsearch (ELASTICSEARCH_URL/USERNAME/PASSWORD); null when ELASTICSEARCH_URL isn't set
     public ElasticsearchSettings? Elasticsearch { get; set; }
+    // SearchIndex's embedding server for article vectors (EMBEDDING_URL/MODEL); null leaves articles keyword-only
+    public EmbeddingSettings? Embedding { get; set; }
 }

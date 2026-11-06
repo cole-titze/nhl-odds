@@ -37,6 +37,7 @@ var settings = new ModeSettings()
     SeasonStart = int.TryParse(Environment.GetEnvironmentVariable("SEASON_START"), out var seasonStart) ? seasonStart : null,
     SeasonEnd = int.TryParse(Environment.GetEnvironmentVariable("SEASON_END"), out var seasonEnd) ? seasonEnd : null,
     Elasticsearch = ElasticsearchSettings.From(Environment.GetEnvironmentVariable),
+    Embedding = EmbeddingSettings.From(Environment.GetEnvironmentVariable),
 };
 
 if (string.IsNullOrEmpty(settings.ConnectionString))
@@ -53,6 +54,7 @@ if (string.IsNullOrEmpty(settings.ConnectionString))
     if (string.IsNullOrEmpty(settings.OddsApiBackfillKey))
         settings.OddsApiBackfillKey = config["OddsApi:API_BACKFILL_KEY"] ?? string.Empty;
     settings.Elasticsearch ??= ElasticsearchSettings.From(key => config[$"Elasticsearch:{key}"]);
+    settings.Embedding ??= EmbeddingSettings.From(key => config[$"Embedding:{key}"]);
     var gameIdsConfig = config["ModeSettings:BACKFILL_GAME_IDS"];
     if (!settings.BackfillGameIds.Any() && !string.IsNullOrEmpty(gameIdsConfig))
         settings.BackfillGameIds = gameIdsConfig.Split(',', StringSplitOptions.RemoveEmptyEntries)

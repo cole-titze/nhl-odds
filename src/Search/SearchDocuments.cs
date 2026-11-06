@@ -15,7 +15,12 @@ public record GameTeamDocument(int TeamId, string Name, string Abbreviation, int
 public record GameDocument(int GameId, string GameDate, DateTime StartTimeUtc, int Season, string GameType, bool Played,
     GameTeamDocument Home, GameTeamDocument Away);
 
-public record ArticleDocument(string EntityId, string Title, string? Summary, string Body, DateTime? Date, string Url);
+/// <param name="EmbeddingKey">Which text and model <paramref name="Embedding"/> came from (see <see cref="ArticleEmbeddings"/>),
+/// so the next rebuild can reuse an unchanged article's vector instead of asking the model again</param>
+/// <param name="Embedding">The article as a vector, for semantic search; null when the embedding server is off or
+/// didn't get to it this run (keyword search still finds it)</param>
+public record ArticleDocument(string EntityId, string Title, string? Summary, string Body, DateTime? Date, string Url,
+    string? EmbeddingKey = null, float[]? Embedding = null);
 
 /// <summary>A player row and the position from their latest game roster, if any.</summary>
 public record PlayerRow(DbPlayer Player, string? Position);
