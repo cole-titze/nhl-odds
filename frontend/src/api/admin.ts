@@ -54,6 +54,7 @@ export interface JobStatuses {
   predictionBackfill: JobInfo;
   nextDayKalshi: JobInfo;
   kalshiBackfill: JobInfo;
+  searchIndex: JobInfo;
   loadTestLight: JobInfo;
   loadTestHeavy: JobInfo;
   loadTestStress: JobInfo;
@@ -152,6 +153,15 @@ export async function startPredictionBackfill(): Promise<{ message: string }> {
 
 export async function startKalshiBackfill(): Promise<{ message: string }> {
   const res = await adminFetch('StartKalshiBackfill', { method: 'POST' });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message || `API error: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function startSearchIndex(): Promise<{ message: string }> {
+  const res = await adminFetch('StartSearchIndex', { method: 'POST' });
   if (!res.ok) {
     const body = await res.json().catch(() => null);
     throw new Error(body?.message || `API error: ${res.status}`);

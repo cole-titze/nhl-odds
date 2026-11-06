@@ -9,6 +9,7 @@ import {
   startPrediction,
   startPredictionBackfill,
   startKalshiBackfill,
+  startSearchIndex,
   startLoadTest,
   verifyAdminKey,
   AdminAuthError,
@@ -68,20 +69,40 @@ function ElapsedTime({ startedAt }: { startedAt: string | null }) {
   return <span className="stat-number text-xs">{elapsed}</span>;
 }
 
+// The CronJob schedules in ansible-setup (raspberry-pi-playbooks/cluster/kubernetes/nhl-odds/nhl-odds-template.yml),
+// all in Central Time; change both together
+const SCHEDULES = {
+  dataCollection: 'Daily, 3:00 AM CT',
+  oddsFetch: 'Daily, 6:00 AM CT',
+  nextDayKalshi: 'Daily, 6:15 AM CT',
+  prediction: 'Daily, 6:30 AM CT',
+  searchIndex: 'Hourly, at :20',
+  loadTestLight: 'Weekly, Sun 12:30 AM CT',
+  manual: 'Manual only',
+} as const;
+
 function JobCard({
   job,
   label,
   note,
+  schedule,
   onStart,
+  startLabel,
+  repeatable = false,
 }: {
   job: JobInfo;
   label: string;
   note?: string;
+  /** When it runs on its own: the cluster CronJob's schedule (ansible-setup nhl-odds-template.yml), or manual only */
+  schedule: string;
   onStart?: () => void;
+  startLabel?: string;
+  /** Can run again after completing today (a job that also runs hourly on its own) */
+  repeatable?: boolean;
 }) {
   const isRunning = job.status === 'running';
   const isRequested = job.status === 'requested';
-  const ranToday = job.completedToday;
+  const ranToday = job.completedToday && !repeatable;
   const detailsRef = useRef<HTMLDetailsElement>(null);
 
   return (
@@ -108,6 +129,10 @@ function JobCard({
       </div>
 
       <div className="space-y-2 text-sm mb-5">
+        <div className="flex justify-between gap-4">
+          <span className="text-surface-500 dark:text-surface-400">Runs</span>
+          <span className="text-xs font-medium text-right">{schedule}</span>
+        </div>
         {isRunning ? (
           <div className="flex justify-between">
             <span className="text-surface-500 dark:text-surface-400">Elapsed</span>
@@ -164,7 +189,7 @@ function JobCard({
               ? 'Requested...'
               : ranToday
                 ? 'Completed Today'
-                : `Start ${label}`}
+                : (startLabel ?? `Start ${label}`)}
         </button>
       )}
     </div>
@@ -661,34 +686,49 @@ export function AdminPage() {
               <JobCardSkeleton />
               <JobCardSkeleton />
               <JobCardSkeleton />
+              <JobCardSkeleton />
             </div>
           ) : statuses ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <JobCard
                 job={statuses.dataCollection}
                 label="Data Collection"
+                schedule={SCHEDULES.dataCollection}
                 onStart={() => handleStart(startDataCollection)}
               />
               <JobCard
                 job={statuses.predictionBackfill}
                 label="Prediction Backfill"
+                schedule={SCHEDULES.manual}
                 onStart={() => handleStart(startPredictionBackfill)}
               />
               <JobCard
                 job={statuses.oddsBackfill}
                 label="Odds Backfill"
+                schedule={SCHEDULES.manual}
                 onStart={() => handleStart(startOddsBackfill)}
               />
               <JobCard
                 job={statuses.kalshiBackfill}
                 label="Kalshi Backfill"
+                schedule={SCHEDULES.manual}
                 onStart={() => handleStart(startKalshiBackfill)}
               />
-              <JobCard job={statuses.nextDayKalshi} label="Kalshi Fetch" />
-              <JobCard job={statuses.oddsFetch} label="Odds Fetch" />
+              <JobCard
+                job={statuses.searchIndex}
+                label="Search Index"
+                note="New article vectors: up to 30 min per run"
+                schedule={SCHEDULES.searchIndex}
+                startLabel="Rebuild Search Index"
+                repeatable
+                onStart={() => handleStart(startSearchIndex)}
+              />
+              <JobCard job={statuses.nextDayKalshi} label="Kalshi Fetch" schedule={SCHEDULES.nextDayKalshi} />
+              <JobCard job={statuses.oddsFetch} label="Odds Fetch" schedule={SCHEDULES.oddsFetch} />
               <JobCard
                 job={statuses.prediction}
                 label="Prediction"
+                schedule={SCHEDULES.prediction}
                 onStart={() => handleStart(startPrediction)}
               />
             </div>
@@ -702,24 +742,28 @@ export function AdminPage() {
                   job={statuses.loadTestLight}
                   label="Light Load Test"
                   note="25 users, 3 minutes"
+                  schedule={SCHEDULES.loadTestLight}
                   onStart={() => handleStart(() => startLoadTest('light'))}
                 />
                 <JobCard
                   job={statuses.loadTestHeavy}
                   label="Heavy Load Test"
                   note="150 users, 4.5 minutes"
+                  schedule={SCHEDULES.manual}
                   onStart={() => handleStart(() => startLoadTest('heavy'))}
                 />
                 <JobCard
                   job={statuses.loadTestStress}
                   label="Stress Load Test"
                   note="300 users, 5 minutes"
+                  schedule={SCHEDULES.manual}
                   onStart={() => handleStart(() => startLoadTest('stress'))}
                 />
                 <JobCard
                   job={statuses.loadTestMax}
                   label="Max Load Test"
                   note="1200 users, 6.5 minutes"
+                  schedule={SCHEDULES.manual}
                   onStart={() => handleStart(() => startLoadTest('max'))}
                 />
               </div>

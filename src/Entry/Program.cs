@@ -77,6 +77,21 @@ var jobName = settings.Mode switch
     _ => null,
 };
 
+// Any fixed number; only search-index takes it ("nhlsearc" in ASCII)
+const long SearchIndexLockKey = 0x6E686C7365617263;
+
+// One search-index build at a time: the hourly CronJob and an admin "Rebuild" can start together, and two builds
+// would race on the aliases (one's cleanup could delete the index the other just made live). The lock lives as long
+// as this connection, so a crashed run frees it. A run that finds it taken leaves the job status to the one running.
+await using var searchIndexLock = settings.Mode == ModeType.SearchIndex
+    ? await TryLock(settings.ConnectionString, SearchIndexLockKey)
+    : null;
+if (settings.Mode == ModeType.SearchIndex && searchIndexLock == null)
+{
+    loggerFactory.CreateLogger("Entry").LogInformation("Another search-index build is running; skipping this one");
+    return;
+}
+
 await UpdateJobStatus(settings.ConnectionString, jobName, "running", null);
 try
 {
@@ -87,6 +102,19 @@ catch (Exception ex)
 {
     await UpdateJobStatus(settings.ConnectionString, jobName, "failed", ex.Message);
     throw;
+}
+
+/// <summary>A session-level Postgres advisory lock: the open connection holding it, or null if another session has it.</summary>
+static async Task<NpgsqlConnection?> TryLock(string connectionString, long key)
+{
+    var conn = new NpgsqlConnection(connectionString);
+    await conn.OpenAsync();
+    await using var cmd = new NpgsqlCommand("SELECT pg_try_advisory_lock(@key)", conn);
+    cmd.Parameters.AddWithValue("key", key);
+    if ((bool)(await cmd.ExecuteScalarAsync())!)
+        return conn;
+    await conn.DisposeAsync();
+    return null;
 }
 
 static async Task UpdateJobStatus(string connectionString, string? jobName, string status, string? error)

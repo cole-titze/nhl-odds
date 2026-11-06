@@ -21,6 +21,7 @@ public class LocalJobRunner : BackgroundService
         ["odds-backfill"] = ("dotnet", "run --project Entry", new() { { "RUN_MODE", "BackfillOdds" } }),
         ["next-day-kalshi"] = ("dotnet", "run --project Entry", new() { { "RUN_MODE", "NextDayKalshi" } }),
         ["kalshi-backfill"] = ("dotnet", "run --project Entry", new() { { "RUN_MODE", "BackfillKalshi" } }),
+        ["search-index"] = ("dotnet", "run --project Entry", new() { { "RUN_MODE", "SearchIndex" } }),
         ["prediction"] = ("python3", "-m game_predictor --mode predict", null),
         ["prediction-backfill"] = ("python3", "-m game_predictor --mode backfill", null),
     };
