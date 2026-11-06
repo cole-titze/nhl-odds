@@ -262,8 +262,27 @@ public class DataGetterEntry
         await indexer.Rebuild(SearchIndexes.Games, games, g => g.GameId.ToString(), now);
 
         var articles = SearchDocumentMapper.MapArticles(await source.GetArticles());
-        await indexer.Rebuild(SearchIndexes.Articles, articles, a => a.EntityId, now);
+        var articlesIndex = SearchIndexes.Articles;
+        if (modeSettings.Embedding is { } embeddingSettings)
+        {
+            // Vectors for semantic search; a slow or missing embedding server leaves articles without them
+            var logger = _loggerFactory.CreateLogger<ArticleEmbeddings>();
+            using var embedHttp = new HttpClient { Timeout = EmbedRequestTimeout };
+            var previous = await ArticleEmbeddings.ReadPrevious(new ElasticsearchClient(http, settings), logger);
+            articles = await new ArticleEmbeddings(new OllamaEmbedder(embedHttp, embeddingSettings), logger)
+                .Add(articles, previous, EmbedBudget);
+            if (articles.FirstOrDefault(a => a.Embedding != null)?.Embedding is { } vector)
+                articlesIndex = SearchIndexes.ArticlesWithEmbeddings(vector.Length);
+        }
+        await indexer.Rebuild(articlesIndex, articles, a => a.EntityId, now);
     }
+
+    // The first request loads the model (seconds on a Pi); a batch of 16 article openings on its CPU takes ~10-30 s
+    private static readonly TimeSpan EmbedRequestTimeout = TimeSpan.FromMinutes(3);
+
+    // The job runs hourly and never overlaps itself; a first run that needs every article embedded stops here and
+    // indexes the rest without vectors, and the next runs pick them up
+    private static readonly TimeSpan EmbedBudget = TimeSpan.FromMinutes(30);
 
     /// <summary>
     /// Runs a step and, if it throws, records the error in ErrorLog before rethrowing so the job still fails

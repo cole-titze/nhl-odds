@@ -99,6 +99,17 @@ if (elasticsearch != null)
     builder.Services.TryAddSingleton(TimeProvider.System);
     builder.Services.AddHttpClient<ElasticsearchClient>(client => client.Timeout = TimeSpan.FromSeconds(5));
     builder.Services.AddScoped<ISearchGetter, SearchGetter>();
+    // Semantic article search: the query embedded by the model the articles were, off unless EMBEDDING_URL is set
+    var embedding = EmbeddingSettings.From(key => builder.Configuration[key]);
+    if (embedding != null)
+    {
+        builder.Services.AddSingleton(embedding);
+        builder.Services.AddSingleton<EmbeddingCircuit>();
+        builder.Services.AddHttpClient<IEmbedder, OllamaEmbedder>(client => client.Timeout = TimeSpan.FromSeconds(5));
+        builder.Services.AddScoped<IQueryEmbedder, QueryEmbedder>();
+    }
+    else
+        builder.Services.AddSingleton<IQueryEmbedder, NoQueryEmbedder>();
 }
 builder.Services.AddDbContext<GameDbContext>(x => x.UseNpgsql(_connectionString));
 builder.Services.AddLogging();

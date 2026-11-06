@@ -8,6 +8,14 @@ namespace Search;
 /// </summary>
 public record SearchIndex(string Alias, JsonObject Mappings, int Size)
 {
+    /// <summary>The same index with one more field mapped.</summary>
+    public SearchIndex WithProperty(string name, JsonObject mapping)
+    {
+        var mappings = Mappings.DeepClone().AsObject();
+        mappings["properties"]![name] = mapping;
+        return this with { Mappings = mappings };
+    }
+
     public string NewIndexName(DateTime nowUtc) => $"{Alias}-{nowUtc:yyyyMMddHHmmss}";
 
     /// <summary>The create-index body: shared analysis settings, one shard, no replicas (it's a single node).</summary>
@@ -169,7 +177,23 @@ public static class SearchIndexes
         ["body"] = new JsonObject { ["type"] = "text", ["analyzer"] = ArticleAnalyzer },
         ["date"] = Of("date"),
         ["url"] = StoredOnly(),
+        ["embeddingKey"] = StoredOnly(),
     }), Size: 6);
+
+    public const string ArticleEmbeddingField = "embedding";
+
+    /// <summary>
+    /// The articles index with its vector field, sized for the model that made the vectors. Only mapped when some
+    /// article has a vector: a dense_vector needs its dimensions up front. Cosine similarity, stored as int8 HNSW
+    /// (a quarter of the memory of float32, for a recall loss that doesn't matter at a few thousand articles).
+    /// </summary>
+    public static SearchIndex ArticlesWithEmbeddings(int dims) => Articles.WithProperty(ArticleEmbeddingField, new JsonObject
+    {
+        ["type"] = "dense_vector",
+        ["dims"] = dims,
+        ["similarity"] = "cosine",
+        ["index_options"] = new JsonObject { ["type"] = "int8_hnsw" },
+    });
 
     public static readonly SearchIndex[] All = [Teams, Players, Games, Articles];
 }

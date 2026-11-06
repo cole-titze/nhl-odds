@@ -33,6 +33,9 @@ services:
       - ELASTICSEARCH_URL=${ELASTICSEARCH_URL:-}
       - ELASTICSEARCH_USERNAME=elastic
       - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD:-}
+      # Semantic article search: EMBEDDING_URL=http://embeddings:11434 (the embeddings service below)
+      - EMBEDDING_URL=${EMBEDDING_URL:-}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-nomic-embed-text}
     depends_on:
       database:
         condition: service_healthy
@@ -50,6 +53,9 @@ services:
       - ELASTICSEARCH_URL=${ELASTICSEARCH_URL:-}
       - ELASTICSEARCH_USERNAME=elastic
       - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD:-}
+      # Semantic article search: EMBEDDING_URL=http://embeddings:11434 (the embeddings service below)
+      - EMBEDDING_URL=${EMBEDDING_URL:-}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-nomic-embed-text}
     depends_on:
       database:
         condition: service_healthy
@@ -103,6 +109,18 @@ services:
     volumes:
       - es-data:/usr/share/elasticsearch/data
 
+  # Article embeddings for semantic search, optional (same search profile; set EMBEDDING_URL=http://embeddings:11434).
+  # A small model on the CPU, like the cluster runs; pulled on first start into the volume.
+  embeddings:
+    image: ollama/ollama:0.40.15
+    profiles: ["search"]
+    restart: always
+    environment:
+      - OLLAMA_KEEP_ALIVE=-1
+    entrypoint: ["sh", "-c", "ollama serve & until ollama list >/dev/null 2>&1; do sleep 1; done; ollama pull ${EMBEDDING_MODEL:-nomic-embed-text} && wait"]
+    volumes:
+      - ollama-models:/root/.ollama
+
   frontend:
     build:
       context: ./frontend
@@ -116,3 +134,4 @@ services:
 volumes:
   pg-data:
   es-data:
+  ollama-models:
