@@ -15,7 +15,6 @@ import { getAnchorDate, getGameOddsInDateRange } from '../api/gameOdds';
 import { forwardClientIp } from '../api/client';
 import { formatDate, toDateInputValue } from '../utils/dates';
 import { getCurrentSeason } from '../utils/season';
-import { isPagePinned, whenPageFree } from '../utils/pageScroll';
 
 export type OddsType = 'moneyline' | 'spread' | 'overUnder';
 
@@ -25,8 +24,8 @@ const TABBABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 // The feed starts a week before the day the page opens scrolled to, so a plain
-// Tab out of the filter bar would land on an off-screen card from days ago (and
-// scroll up into a load of even older games). Send it to the first item that's
+// Tab out of the filter bar would land on the off-screen "Show earlier games"
+// button above cards from days ago. Send it to the first item that's
 // actually on screen instead, which is what comes next visually. Done on the
 // Tab keypress rather than by redirecting focus when it arrives, because moving
 // focus on focus is a change of context (WCAG 3.2.1).
@@ -135,78 +134,9 @@ export function GamesPage() {
     seasonStartYear,
   } = useBidirectionalGames(season, initial);
 
-  const topSentinelRef = useRef<HTMLDivElement | null>(null);
-  const bottomSentinelRef = useRef<HTMLDivElement | null>(null);
-
   const initialLoading = initialStatus === 'loading';
   const initialError = initialStatus === 'error';
   const ready = initialStatus === 'idle' && !!earliestLoaded && !!latestLoaded;
-
-  // Auto-load via IntersectionObserver. rootMargin pre-fires the load 600px
-  // before the user reaches the edge so the next chunk arrives without a stall.
-  // Deps use `ready` (boolean) instead of earliestLoaded/latestLoaded so the
-  // observer is only re-created when GamesFeed mounts/unmounts — not on every
-  // chunk load. Re-creating on every chunk load caused the IO to re-fire
-  // immediately for visible sentinels, cascading into repeated loads and
-  // content shifts in both directions.
-  //
-  // Older days go in above the view. The scroll is put back so nothing moves on
-  // screen, but Chrome still scores it as layout shift when it lands while the
-  // page loads (CLS ~0.9), so they wait for the user's first scroll, tap or key.
-  const userActed = useRef(false);
-  // The older-days loading band only shows when the top of the feed is on
-  // screen: added and removed off screen above the view, it counts as layout
-  // shift too though nothing visibly moves
-  const [olderBandOnScreen, setOlderBandOnScreen] = useState(false);
-  useEffect(() => {
-    if (!ready) return;
-    const top = topSentinelRef.current;
-    const bot = bottomSentinelRef.current;
-    if (!top || !bot) return;
-
-    // While the phone chat pins the page, its scroll and size read wrong (and WebKit can
-    // report the edges as on screen); look again once it lets go
-    let recheck: (() => void) | null = null;
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (isPagePinned()) {
-          recheck ??= whenPageFree(() => {
-            recheck = null;
-            for (const el of observed) {
-              io.unobserve(el);
-              io.observe(el);
-            }
-          });
-          return;
-        }
-        for (const e of entries) {
-          if (!e.isIntersecting) continue;
-          if (e.target === top) {
-            setOlderBandOnScreen(e.boundingClientRect.bottom >= 0);
-            loadOlder();
-          } else if (e.target === bot) loadNewer();
-        }
-      },
-      { rootMargin: '600px 0px 600px 0px', threshold: 0 },
-    );
-    const observed = new Set<Element>([bot]);
-    io.observe(bot);
-
-    const inputs = ['wheel', 'touchstart', 'keydown', 'pointerdown'] as const;
-    const armOlder = () => {
-      for (const type of inputs) window.removeEventListener(type, armOlder);
-      userActed.current = true;
-      observed.add(top);
-      io.observe(top);
-    };
-    if (userActed.current) armOlder();
-    else for (const type of inputs) window.addEventListener(type, armOlder, { passive: true });
-    return () => {
-      for (const type of inputs) window.removeEventListener(type, armOlder);
-      recheck?.();
-      io.disconnect();
-    };
-  }, [ready, loadNewer, loadOlder]);
 
   // Tell the browser how much of the viewport the sticky navbar + filter bar
   // (top) and the floating "Jump to today" button (bottom) cover, so tabbing
@@ -405,16 +335,15 @@ export function GamesPage() {
             earliestLoaded={earliestLoaded!}
             latestLoaded={latestLoaded!}
             oddsType={oddsType}
-            topSentinelRef={topSentinelRef}
-            bottomSentinelRef={bottomSentinelRef}
             olderStatus={olderStatus}
-            showOlderBand={olderBandOnScreen}
             newerStatus={newerStatus}
             hasMoreOlder={hasMoreOlder}
             hasMoreNewer={hasMoreNewer}
             seasonStartYear={seasonStartYear}
             onLoadPrevSeason={() => setSeason((s) => Math.max(2009, s - 1))}
             onLoadNextSeason={() => setSeason((s) => Math.min(getCurrentSeason(), s + 1))}
+            onLoadOlder={loadOlder}
+            onLoadNewer={loadNewer}
           />
         </div>
       )}
