@@ -22,6 +22,7 @@ public class AdminController
     private const string PredictionBackfillJob = "prediction-backfill";
     private const string NextDayKalshiJob = "next-day-kalshi";
     private const string KalshiBackfillJob = "kalshi-backfill";
+    private const string SearchIndexJob = "search-index";
     // Load tests are one job per preset; scheduler/k8s/load-test.js defines what each preset runs
     private const string LoadTestJobPrefix = "load-test-";
     private static readonly string[] LoadTestPresets = ["light", "heavy", "stress", "max"];
@@ -90,6 +91,20 @@ public class AdminController
             return Results.Conflict(new { message = "Kalshi backfill is already running or requested." });
 
         return Results.Ok(new { message = "Kalshi backfill requested." });
+    }
+
+    /// <summary>
+    /// Rebuilds the site-search indices now instead of at the next hourly run (after a mapping or embedding model
+    /// change, say). No once-a-day limit: the hourly CronJob completes it every hour anyway. A run that overlaps the
+    /// CronJob's finds its lock taken and exits, so two builds never race on the aliases.
+    /// </summary>
+    [HttpPost]
+    public IResult StartSearchIndex()
+    {
+        if (!_jobService.RequestJob(SearchIndexJob))
+            return Results.Conflict(new { message = "The search index is already being rebuilt or requested." });
+
+        return Results.Ok(new { message = "Search index rebuild requested." });
     }
 
     [HttpPost]
@@ -165,6 +180,7 @@ public class AdminController
             predictionBackfill = JobInfoToJobInfoVmMapper.Map(_jobService.GetStatus(PredictionBackfillJob)),
             nextDayKalshi = JobInfoToJobInfoVmMapper.Map(_jobService.GetStatus(NextDayKalshiJob)),
             kalshiBackfill = JobInfoToJobInfoVmMapper.Map(_jobService.GetStatus(KalshiBackfillJob)),
+            searchIndex = JobInfoToJobInfoVmMapper.Map(_jobService.GetStatus(SearchIndexJob)),
             loadTestLight = LoadTestStatus("light"),
             loadTestHeavy = LoadTestStatus("heavy"),
             loadTestStress = LoadTestStatus("stress"),

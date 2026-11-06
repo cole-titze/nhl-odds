@@ -28,6 +28,9 @@ case "$REQUESTED" in
     kalshi-backfill)
         docker compose -f "$COMPOSE_FILE" run --rm -e RUN_MODE=BackfillKalshi entry
         ;;
+    search-index)
+        docker compose -f "$COMPOSE_FILE" run --rm -e RUN_MODE=SearchIndex entry
+        ;;
     prediction)
         docker compose -f "$COMPOSE_FILE" run --rm predictor
         ;;

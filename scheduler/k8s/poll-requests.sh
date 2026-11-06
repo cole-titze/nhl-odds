@@ -42,13 +42,29 @@ EOF
 }
 
 case "$REQUESTED" in
-    data-collection|odds-fetch|odds-backfill|next-day-kalshi|kalshi-backfill)
+    data-collection|odds-fetch|odds-backfill|next-day-kalshi|kalshi-backfill|search-index)
+        EXTRA_ENV=""
         case "$REQUESTED" in
             data-collection)  RUN_MODE=NhlAdd ;;
             odds-fetch)       RUN_MODE=NextDayOdds ;;
             odds-backfill)    RUN_MODE=BackfillOdds ;;
             next-day-kalshi)  RUN_MODE=NextDayKalshi ;;
             kalshi-backfill)  RUN_MODE=BackfillKalshi ;;
+            search-index)
+                RUN_MODE=SearchIndex
+                # The same Elasticsearch writer and embedding server as the hourly CronJob (ansible-setup)
+                EXTRA_ENV='            - name: ELASTICSEARCH_URL
+              value: http://nhl-odds-elasticsearch:9200
+            - name: ELASTICSEARCH_USERNAME
+              value: nhl_search_writer
+            - name: ELASTICSEARCH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nhl-odds-search-writer-credentials
+                  key: password
+            - name: EMBEDDING_URL
+              value: http://nhl-odds-embeddings:11434'
+                ;;
         esac
 
         kubectl apply -f - <<EOF
@@ -96,6 +112,7 @@ $(wait_for nhl-odds-database-rw 5432 db)
                 secretKeyRef:
                   name: nhl-odds-secret
                   key: api-backfill-key
+$EXTRA_ENV
 EOF
         ;;
 

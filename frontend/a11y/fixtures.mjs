@@ -365,6 +365,7 @@ const responses = {
     predictionBackfill: job('idle'),
     nextDayKalshi: job('requested'),
     kalshiBackfill: job('idle'),
+    searchIndex: job('idle'),
     loadTestLight: job('completed'),
     loadTestHeavy: job('idle'),
     loadTestStress: job('idle'),
