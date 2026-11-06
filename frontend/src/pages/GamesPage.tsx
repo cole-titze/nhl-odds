@@ -15,6 +15,7 @@ import { getAnchorDate, getGameOddsInDateRange } from '../api/gameOdds';
 import { forwardClientIp } from '../api/client';
 import { formatDate, toDateInputValue } from '../utils/dates';
 import { getCurrentSeason } from '../utils/season';
+import { isPagePinned, whenPageFree } from '../utils/pageScroll';
 
 export type OddsType = 'moneyline' | 'spread' | 'overUnder';
 
@@ -163,8 +164,21 @@ export function GamesPage() {
     const bot = bottomSentinelRef.current;
     if (!top || !bot) return;
 
+    // While the phone chat pins the page, its scroll and size read wrong (and WebKit can
+    // report the edges as on screen); look again once it lets go
+    let recheck: (() => void) | null = null;
     const io = new IntersectionObserver(
       (entries) => {
+        if (isPagePinned()) {
+          recheck ??= whenPageFree(() => {
+            recheck = null;
+            for (const el of observed) {
+              io.unobserve(el);
+              io.observe(el);
+            }
+          });
+          return;
+        }
         for (const e of entries) {
           if (!e.isIntersecting) continue;
           if (e.target === top) {
@@ -175,18 +189,21 @@ export function GamesPage() {
       },
       { rootMargin: '600px 0px 600px 0px', threshold: 0 },
     );
+    const observed = new Set<Element>([bot]);
     io.observe(bot);
 
     const inputs = ['wheel', 'touchstart', 'keydown', 'pointerdown'] as const;
     const armOlder = () => {
       for (const type of inputs) window.removeEventListener(type, armOlder);
       userActed.current = true;
+      observed.add(top);
       io.observe(top);
     };
     if (userActed.current) armOlder();
     else for (const type of inputs) window.addEventListener(type, armOlder, { passive: true });
     return () => {
       for (const type of inputs) window.removeEventListener(type, armOlder);
+      recheck?.();
       io.disconnect();
     };
   }, [ready, loadNewer, loadOlder]);

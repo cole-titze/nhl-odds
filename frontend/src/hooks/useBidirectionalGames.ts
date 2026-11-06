@@ -2,6 +2,7 @@ import { useCallback, useEffect, useReducer, useRef } from 'react';
 import { getAnchorDate, getGameOddsInDateRange } from '../api/gameOdds';
 import type { GameOddsVM } from '../types';
 import { addDaysIso, formatDate } from '../utils/dates';
+import { whenPageFree } from '../utils/pageScroll';
 
 const HALF_CHUNK = 7;
 const CHUNK_DAYS = 14;
@@ -295,20 +296,24 @@ export function useBidirectionalGames(seasonStartYear: number, initial?: Initial
     dispatch({ type: 'LOAD_OLDER_START' });
     getGameOddsInDateRange(newEarliest, fetchUpper, s.seasonStartYear)
       .then((games) => {
-        if (epochRef.current !== myEpoch) return;
-        // Older games render above the current view. Snapshot scroll position
-        // before the prepend dispatches — useLayoutEffect in the page reads
-        // this and restores scrollTop after the DOM updates.
-        const snapshot: PrependSnapshot = {
-          prevScrollHeight: document.documentElement.scrollHeight,
-          prevScrollY: window.scrollY,
-        };
-        dispatch({
-          type: 'LOAD_OLDER_SUCCESS',
-          games,
-          newEarliest,
-          isEmpty: games.length === 0,
-          snapshot,
+        // Held while the phone chat pins the page: scrollY reads 0 then, so the
+        // view couldn't be put back and would land on another date
+        whenPageFree(() => {
+          if (epochRef.current !== myEpoch) return;
+          // Older games render above the current view. Snapshot scroll position
+          // before the prepend dispatches — useLayoutEffect in the page reads
+          // this and restores scrollTop after the DOM updates.
+          const snapshot: PrependSnapshot = {
+            prevScrollHeight: document.documentElement.scrollHeight,
+            prevScrollY: window.scrollY,
+          };
+          dispatch({
+            type: 'LOAD_OLDER_SUCCESS',
+            games,
+            newEarliest,
+            isEmpty: games.length === 0,
+            snapshot,
+          });
         });
       })
       .catch((err: Error) => {
