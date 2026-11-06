@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router';
 import { ApiError, apiFetch } from '../api/client';
 import { useHydrated } from '../hooks/useHydrated';
 import { getAdminKey } from '../hooks/useAdminKey';
+import { pinPage } from '../utils/pageScroll';
 
 // Experimental chat assistant backed by a local Ollama model (AssistantController in the web
 // API). It only appears when the API says it's enabled, and only after hydration, so server
@@ -180,10 +181,7 @@ export function Assistant() {
     panel?.addEventListener('focusin', onFocusIn);
     // Pin the page where it is: iOS ignores overflow: hidden and scrolls the page behind the
     // chat as the keyboard comes and goes, which made it jump
-    const body = document.body;
-    const saved = body.style.cssText;
-    const { scrollX, scrollY } = window;
-    Object.assign(body.style, { position: 'fixed', top: `${-scrollY}px`, left: '0', right: '0' });
+    const unpin = pinPage();
     return () => {
       cancelAnimationFrame(frame);
       vv.removeEventListener('resize', settle);
@@ -192,11 +190,9 @@ export function Assistant() {
       panel?.removeEventListener('touchmove', onTouchMove);
       panel?.removeEventListener('focusout', onFocusOut);
       panel?.removeEventListener('focusin', onFocusIn);
-      body.style.cssText = saved;
       // Back where it was. iOS can also leave the viewport shifted once the keyboard closes,
       // floating the fixed footer mid-screen, so do it again as the keyboard animates away.
-      const restore = () => window.scrollTo({ left: scrollX, top: scrollY, behavior: 'instant' });
-      restore();
+      const restore = unpin();
       vv.addEventListener('resize', restore);
       setTimeout(() => vv.removeEventListener('resize', restore), 1000);
     };
