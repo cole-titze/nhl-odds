@@ -369,6 +369,20 @@ export function useBidirectionalGames(seasonStartYear: number, initial?: Initial
     dispatch({ type: 'ACK_PREPEND' });
   }, []);
 
+  // More games load on a button press. One that lands on two weeks with no games
+  // (All-Star break, a gap at the season's edge) keeps going until it finds some or
+  // reaches the season's end, so a press never seems to do nothing.
+  useEffect(() => {
+    if (state.olderStatus === 'idle' && state.consecutiveEmptyOlder > 0 && state.hasMoreOlder) {
+      loadOlder();
+    }
+  }, [state.olderStatus, state.consecutiveEmptyOlder, state.hasMoreOlder, loadOlder]);
+  useEffect(() => {
+    if (state.newerStatus === 'idle' && state.consecutiveEmptyNewer > 0 && state.hasMoreNewer) {
+      loadNewer();
+    }
+  }, [state.newerStatus, state.consecutiveEmptyNewer, state.hasMoreNewer, loadNewer]);
+
   return {
     seasonStartYear: state.seasonStartYear,
     anchorDate: state.anchorDate,

@@ -1,4 +1,3 @@
-import { type RefObject } from 'react';
 import { parseISO } from 'date-fns';
 import { GameCard } from './GameCard';
 import type { OddsType } from '../pages/GamesPage';
@@ -12,17 +11,15 @@ interface GamesFeedProps {
   earliestLoaded: string;
   latestLoaded: string;
   oddsType: OddsType;
-  topSentinelRef: RefObject<HTMLDivElement | null>;
-  bottomSentinelRef: RefObject<HTMLDivElement | null>;
   olderStatus: LoadStatus;
-  /** Whether to show the band while older days load (only when it'd be on screen) */
-  showOlderBand: boolean;
   newerStatus: LoadStatus;
   hasMoreOlder: boolean;
   hasMoreNewer: boolean;
   seasonStartYear: number;
   onLoadPrevSeason: () => void;
   onLoadNextSeason: () => void;
+  onLoadOlder: () => void;
+  onLoadNewer: () => void;
 }
 
 export function GamesFeed({
@@ -30,16 +27,15 @@ export function GamesFeed({
   earliestLoaded,
   latestLoaded,
   oddsType,
-  topSentinelRef,
-  bottomSentinelRef,
   olderStatus,
-  showOlderBand,
   newerStatus,
   hasMoreOlder,
   hasMoreNewer,
   seasonStartYear,
   onLoadPrevSeason,
   onLoadNextSeason,
+  onLoadOlder,
+  onLoadNewer,
 }: GamesFeedProps) {
   // Oldest at top → future games sit below the current day.
   const dates = enumerateDateRange(earliestLoaded, latestLoaded);
@@ -49,17 +45,15 @@ export function GamesFeed({
 
   return (
     <div>
-      <div ref={topSentinelRef} aria-hidden="true" />
-
-      {!hasMoreOlder && (
+      {hasMoreOlder ? (
+        <ShowMoreButton label="Show earlier games" status={olderStatus} onClick={onLoadOlder} />
+      ) : (
         <FeedBoundary
           label={`Start of ${seasonLabel}`}
           buttonLabel={canLoadPrev ? `← Load ${formatSeasonLabel(seasonStartYear - 1)}` : null}
           onClick={onLoadPrevSeason}
         />
       )}
-
-      {olderStatus === 'loading' && showOlderBand && <FeedLoaderBand />}
 
       <div className="space-y-8">
         {dates.map((date) => {
@@ -80,30 +74,54 @@ export function GamesFeed({
         })}
       </div>
 
-      {newerStatus === 'loading' && <FeedLoaderBand />}
-
-      {!hasMoreNewer && (
+      {hasMoreNewer ? (
+        <ShowMoreButton label="Show later games" status={newerStatus} onClick={onLoadNewer} />
+      ) : (
         <FeedBoundary
           label={`End of ${seasonLabel}`}
           buttonLabel={canLoadNext ? `Load ${formatSeasonLabel(seasonStartYear + 1)} →` : null}
           onClick={onLoadNextSeason}
         />
       )}
-
-      <div ref={bottomSentinelRef} aria-hidden="true" />
     </div>
   );
 }
 
-function FeedLoaderBand() {
+// Loads two more weeks at one end of the feed. Stays mounted while loading (disabled,
+// with the status announced) so focus doesn't drop. Older games go in above the view
+// and the page puts the scroll back, so the games on screen stay put and the button
+// moves up above the new ones.
+function ShowMoreButton({
+  label,
+  status,
+  onClick,
+}: {
+  label: string;
+  status: LoadStatus;
+  onClick: () => void;
+}) {
+  const loading = status === 'loading';
   return (
-    <div className="my-6 flex items-center justify-center" role="status">
-      <div className="relative overflow-hidden rounded-full glass px-4 py-2">
-        <div className="absolute inset-0 skeleton-shimmer" aria-hidden="true" />
-        <span className="relative text-xs font-medium text-surface-500 dark:text-surface-400">
-          Loading more games…
+    <div className="my-6 flex flex-col items-center gap-2 text-center">
+      <button
+        type="button"
+        onClick={onClick}
+        aria-disabled={loading}
+        className={`relative overflow-hidden px-4 py-2 text-sm font-medium rounded-full glass text-surface-700 dark:text-surface-200 transition-colors ${
+          loading ? 'cursor-wait' : 'hover:text-accent-600 dark:hover:text-accent-400'
+        }`}
+      >
+        {loading && <span className="absolute inset-0 skeleton-shimmer" aria-hidden="true" />}
+        <span className="relative">
+          {loading ? 'Loading…' : status === 'error' ? 'Try again' : label}
         </span>
-      </div>
+      </button>
+      <span
+        role="status"
+        className={status === 'error' ? 'text-xs text-red-700 dark:text-red-400' : 'sr-only'}
+      >
+        {loading ? 'Loading more games…' : status === 'error' ? 'Couldn’t load more games.' : ''}
+      </span>
     </div>
   );
 }
