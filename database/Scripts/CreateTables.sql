@@ -258,6 +258,22 @@ CREATE TABLE "GameOdds"
     FOREIGN KEY ("GameId") REFERENCES "GameRaw"("Id")
 );
 
+-- Why the model predicted what it did (#155): each feature group's effect on the home team's win
+-- probability for a GameOdds prediction (game_predictor/explain). Contributions add up to HomeOdds - BaseHomeOdds.
+CREATE TABLE "GamePredictionFactor"
+(
+    "GameId" INTEGER NOT NULL,
+    "ModelId" INTEGER NOT NULL,
+    "RunDateUTC" TIMESTAMP NOT NULL,
+    "Rank" INTEGER NOT NULL,                       -- 1 = the largest effect for this prediction
+    "Factor" TEXT NOT NULL,                        -- feature group, e.g. 'Rest'
+    "Detail" TEXT NOT NULL,                        -- the game's values for it, in words
+    "Contribution" DOUBLE PRECISION NOT NULL,      -- change in home win probability; positive favors home
+    "BaseHomeOdds" DOUBLE PRECISION NOT NULL,      -- average prediction over the background games
+    CONSTRAINT "PK_GamePredictionFactor" PRIMARY KEY("GameId", "ModelId", "RunDateUTC", "Rank"),
+    FOREIGN KEY ("GameId") REFERENCES "GameRaw"("Id")
+);
+
 CREATE TABLE "GameSpreadTotalOdds"
 (
     "GameId" INTEGER NOT NULL,

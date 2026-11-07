@@ -98,6 +98,11 @@ jobs:
           docker run --rm -e NHL_DATABASE="Host=none;Database=nhl;Username=x;Password=x" --entrypoint python "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build.outputs.digest }}"
           -c "import game_predictor.workflow, lightgbm, xgboost, shap, optuna; print('imports ok')"
 
+      - name: Unit tests
+        run: >-
+          docker run --rm -e NHL_DATABASE="Host=none;Database=nhl;Username=x;Password=x" --entrypoint python "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build.outputs.digest }}"
+          -m unittest discover -s game_predictor/tests -t . -v
+
   promote:
     needs: [build, format, smoke]
     uses: ./.github/workflows/promote.yml

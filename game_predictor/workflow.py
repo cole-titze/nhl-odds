@@ -9,7 +9,8 @@ from .config import HOMEGROWN_MODEL_ID, SPREAD_MODEL_ID, TOTAL_MODEL_ID, get_db_
 from .db.connection import get_connection
 from .db.queries import FEATURE_COLUMNS
 from .db.reader import load_consensus_lines, load_cover_history, load_training_data, load_unplayed_games
-from .db.writer import save_predictions, save_spread_total_predictions
+from .db.writer import save_prediction_factors, save_predictions, save_spread_total_predictions
+from .explain import background_sample, explain_games
 from .models.probability import covered, fit_cover_calibration, line_cover_probability
 from .models.regression_training import (
     compute_residual_std,
@@ -60,7 +61,7 @@ def _load_checked_unplayed_games(conn) -> pd.DataFrame:
     return unplayed_df
 
 
-def _save_unplayed_predictions(conn, save_pipeline, save_model, save_name, run_date):
+def _save_unplayed_predictions(conn, save_pipeline, save_model, save_name, run_date, train_df):
     unplayed_df = _load_checked_unplayed_games(conn)
 
     if unplayed_df.empty:
@@ -90,6 +91,20 @@ def _save_unplayed_predictions(conn, save_pipeline, save_model, save_name, run_d
 
     print(f"Saving {len(unplayed_predictions)} unplayed game predictions to GameOdds...")
     save_predictions(conn, unplayed_predictions)
+    _save_prediction_factors(conn, unplayed_df, save_pipeline, save_model, run_date, train_df)
+
+
+def _save_prediction_factors(conn, unplayed_df, pipeline, model, run_date, train_df):
+    """The main factors behind each saved prediction (#155). A failure here is logged and doesn't
+    fail the run: the predictions are already saved."""
+    try:
+        started = time.time()
+        factors = explain_games(unplayed_df, pipeline, model, background_sample(train_df))
+        save_prediction_factors(conn, factors, HOMEGROWN_MODEL_ID, run_date)
+        print(f"Saved prediction factors for {len(unplayed_df)} games in {time.time() - started:.0f}s.")
+    except Exception as e:  # noqa: BLE001 - explanations are optional
+        conn.rollback()
+        print(f"WARNING: could not save prediction factors: {e}")
 
 
 def _run_backfill(conn, train_df):
@@ -349,7 +364,7 @@ def run(mode: str = "predict"):
         save_pipeline, save_model, save_name = result
         run_date = datetime.now(timezone.utc)
 
-        _save_unplayed_predictions(conn, save_pipeline, save_model, save_name, run_date)
+        _save_unplayed_predictions(conn, save_pipeline, save_model, save_name, run_date, train_df)
 
         for target, model_id, exp_name in [
             ("spread", SPREAD_MODEL_ID, SAVE_SPREAD_EXPERIMENT),

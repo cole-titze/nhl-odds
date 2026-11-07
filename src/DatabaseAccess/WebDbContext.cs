@@ -20,6 +20,7 @@ public partial class GameDbContext : DbContext
     public virtual DbSet<DbGameCleaned> GameCleaned { get; set; } = null!;
     public virtual DbSet<DbBookmakerOddsResponse> BookmakerOddsResponse { get; set; } = null!;
     public virtual DbSet<DbGameSpreadTotalOdds> GameSpreadTotalOdds { get; set; } = null!;
+    public virtual DbSet<DbGamePredictionFactor> GamePredictionFactor { get; set; } = null!;
     public virtual DbSet<DbJobStatus> JobStatus { get; set; } = null!;
     public virtual DbSet<DbLoadTestRun> LoadTestRun { get; set; } = null!;
     public virtual DbSet<DbLoadTestRunPage> LoadTestRunPage { get; set; } = null!;
@@ -43,6 +44,8 @@ public partial class GameDbContext : DbContext
             .HasKey(c => new { c.GameId, c.ModelId, c.RunDateUTC });
         modelBuilder.Entity<DbGameSpreadTotalOdds>()
             .HasKey(c => new { c.GameId, c.ModelId, c.RunDateUTC });
+        modelBuilder.Entity<DbGamePredictionFactor>()
+            .HasKey(c => new { c.GameId, c.ModelId, c.RunDateUTC, c.Rank });
         modelBuilder.Entity<DbLoadTestRunPage>()
             .HasKey(c => new { c.LoadTestRunId, c.Page });
         modelBuilder.Entity<DbLineupGame>()

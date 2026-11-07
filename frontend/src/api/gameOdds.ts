@@ -1,5 +1,5 @@
 import { ApiError, apiFetch } from './client';
-import type { GameOddsVM } from '../types';
+import type { GameOddsVM, PredictionFactorsVM } from '../types';
 
 export interface AnchorDateVM {
   anchorDate: string | null;
@@ -44,4 +44,16 @@ export async function getAnchorDate(
   return {
     anchorDate: raw.anchorDate ? raw.anchorDate.slice(0, 10) : null,
   };
+}
+
+// null when the prediction shown has no saved factors
+export async function getPredictionFactors(
+  gameId: number,
+  init?: RequestInit,
+): Promise<PredictionFactorsVM | null> {
+  const res = await apiFetch<{ factors: PredictionFactorsVM | null }>(
+    `/api/GameOdds/GetPredictionFactors?gameId=${gameId}`,
+    init,
+  );
+  return res.factors;
 }

@@ -97,6 +97,40 @@ const responses = {
   GetAnchorDate: { anchorDate: ANCHOR_DATE },
   // The Game page's game (pagesFor's /game/:id); without it the page rendered as TBD vs TBD
   GetGame: games[33],
+  // Game page "Why the model predicts this" (#155): both directions, a detail and a long one
+  GetPredictionFactors: {
+    factors: {
+      gameId: games[33].id,
+      runDateUTC: `${ANCHOR_DATE}T11:00:00Z`,
+      baseHomeOdds: 0.541,
+      factors: [
+        {
+          factor: 'Rest',
+          detail: 'Home 2 days since last game, away back-to-back',
+          contribution: 0.031,
+        },
+        {
+          factor: 'Goaltending',
+          detail: 'Save % this season: home .903, away .917',
+          contribution: -0.018,
+        },
+        { factor: 'Elo rating', detail: 'Elo: home 1534, away 1498', contribution: 0.012 },
+        {
+          factor: 'Travel',
+          detail:
+            'Away team travelled 1,840 km more since its last game; away team 2 time zones from home',
+          contribution: 0.009,
+        },
+        { factor: 'Special teams', detail: '', contribution: -0.006 },
+        { factor: 'Shot share', detail: 'Corsi %: home 51.2%, away 49.8%', contribution: 0.004 },
+        {
+          factor: 'Results',
+          detail: 'Win % this season: home 58.3%, away 50.0%',
+          contribution: -0.003,
+        },
+      ],
+    },
+  },
   // Filtered by date range below
   GetAllTeams: {
     teams: [team(10, 'Toronto', 'Maple Leafs', 'TOR'), team(6, 'Boston', 'Bruins', 'BOS')],

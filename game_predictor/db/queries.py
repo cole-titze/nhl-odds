@@ -255,6 +255,17 @@ ON CONFLICT ("GameId", "ModelId", "RunDateUTC") DO UPDATE SET
     "Notes" = EXCLUDED."Notes";
 """
 
+UPSERT_PREDICTION_FACTOR = """
+INSERT INTO "GamePredictionFactor"
+    ("GameId", "ModelId", "RunDateUTC", "Rank", "Factor", "Detail", "Contribution", "BaseHomeOdds")
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+ON CONFLICT ("GameId", "ModelId", "RunDateUTC", "Rank") DO UPDATE SET
+    "Factor" = EXCLUDED."Factor",
+    "Detail" = EXCLUDED."Detail",
+    "Contribution" = EXCLUDED."Contribution",
+    "BaseHomeOdds" = EXCLUDED."BaseHomeOdds";
+"""
+
 _ATTEMPT_COLS = (
     'e."GameId", e."Id", e."SortOrder", e."SituationCode", e."PeriodNumber", e."PeriodType", '
     'e."SecondsIntoPeriod", e."XCoordinate", e."YCoordinate", e."ShotType"'

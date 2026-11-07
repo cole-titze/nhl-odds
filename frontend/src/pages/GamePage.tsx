@@ -27,6 +27,7 @@ import { Skeleton } from '../components/Skeleton';
 import { GameLineups } from '../components/GameLineups';
 import { OddsMovementChart } from '../components/OddsMovementChart';
 import { TeamLogo } from '../components/TeamLogo';
+import { PredictionFactors } from '../components/PredictionFactors';
 import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
 import { breadcrumbs, sportsEvent } from '../utils/structuredData';
 
@@ -237,6 +238,8 @@ export function GamePage() {
           </div>
         )}
       </div>
+
+      <PredictionFactors game={game} />
 
       {/* Spread & Total Predictions */}
       {(game.predictedSpread != null || game.predictedTotal != null) && (

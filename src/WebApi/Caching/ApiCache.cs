@@ -43,6 +43,7 @@ public static class ApiCache
     public static string LineupKey(int gameId) => $"Lineup_{gameId}";
     public static string OddsMovementKey(int gameId) => $"OddsMovement_{gameId}";
     public static string TrackRecordKey(int seasonStartYear, bool liveOnly) => $"TrackRecord_{seasonStartYear}_{liveOnly}";
+    public static string PredictionFactorsKey(int gameId) => $"PredictionFactors_{gameId}";
 
     public static async Task<T> GetOrSetAsync<T>(this IMemoryCache cache, string key, Func<Task<T>> create,
         Func<T, long> sizeOf, TimeSpan? lifetime = null)

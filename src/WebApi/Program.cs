@@ -6,6 +6,7 @@ using DatabaseAccess.WebErrorLogRepository;
 using DatabaseAccess.WebGameOddsRepository;
 using DatabaseAccess.WebLineupRepository;
 using DatabaseAccess.WebOddsMovementRepository;
+using DatabaseAccess.WebPredictionFactorRepository;
 using DatabaseAccess.WebTeamRepository;
 using DatabaseAccess.WebTrackRecordRepository;
 using Microsoft.AspNetCore.RateLimiting;
@@ -55,6 +56,7 @@ builder.Services.AddScoped<IWebOddsMovementRepository, WebOddsMovementRepository
 builder.Services.AddScoped<IWebTrackRecordRepository, WebTrackRecordRepository>();
 builder.Services.AddScoped<ITrackRecordGetter, TrackRecordGetter>();
 builder.Services.AddScoped<IGameOddsRepository, GameOddsRepository>();
+builder.Services.AddScoped<IWebPredictionFactorRepository, WebPredictionFactorRepository>();
 builder.Services.AddScoped<IWebAdminRepository, WebAdminRepository>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 // Browser error reports (ClientErrorController); the throttle is shared by all visitors

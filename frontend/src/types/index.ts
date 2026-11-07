@@ -205,3 +205,19 @@ export interface ClosingLineVM {
   movedAwayFromModel: number;
   averageMoveTowardModel: number;
 }
+
+/** One feature group's effect on the model's prediction (#155) */
+export interface PredictionFactorVM {
+  factor: string;
+  detail: string;
+  /** Change in the home team's win probability; positive favors home */
+  contribution: number;
+}
+
+/** Why the model predicted a game the way it did: baseHomeOdds plus every contribution is its home win probability */
+export interface PredictionFactorsVM {
+  gameId: number;
+  runDateUTC: string;
+  baseHomeOdds: number;
+  factors: PredictionFactorVM[];
+}

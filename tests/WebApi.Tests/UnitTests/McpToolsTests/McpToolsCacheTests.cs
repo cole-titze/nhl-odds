@@ -1,3 +1,4 @@
+using DatabaseAccess.WebPredictionFactorRepository;
 using Entities.Types;
 using Entities.ViewModels;
 using FakeItEasy;
@@ -35,6 +36,7 @@ public class McpToolsCacheTests
         _services = new ServiceCollection()
             .AddSingleton(_teamGetter)
             .AddSingleton(_gameOddsGetter)
+            .AddSingleton(A.Fake<IWebPredictionFactorRepository>())
             .AddKeyedSingleton(ApiCache.ServiceKey, (_, _) => ApiCache.Create())
             .BuildServiceProvider();
     }

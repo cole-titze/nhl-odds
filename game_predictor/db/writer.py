@@ -1,6 +1,6 @@
 import numpy as np
 
-from .queries import UPSERT_GAME_ODDS, UPSERT_SPREAD_TOTAL
+from .queries import UPSERT_GAME_ODDS, UPSERT_PREDICTION_FACTOR, UPSERT_SPREAD_TOTAL
 
 
 def _native(value):
@@ -46,4 +46,25 @@ def save_spread_total_predictions(conn, predictions: list[dict]):
                     pred["Notes"],
                 ),
             )
+    conn.commit()
+
+
+def save_prediction_factors(conn, factors: list[dict], model_id: int, run_date):
+    with conn.cursor() as cursor:
+        cursor.executemany(
+            UPSERT_PREDICTION_FACTOR,
+            [
+                (
+                    _native(f["GameId"]),
+                    model_id,
+                    run_date,
+                    _native(f["Rank"]),
+                    f["Factor"],
+                    f["Detail"],
+                    _native(f["Contribution"]),
+                    _native(f["BaseHomeOdds"]),
+                )
+                for f in factors
+            ],
+        )
     conn.commit()
