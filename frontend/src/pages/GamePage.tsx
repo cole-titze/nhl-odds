@@ -28,6 +28,7 @@ import { GameLineups } from '../components/GameLineups';
 import { OddsMovementChart } from '../components/OddsMovementChart';
 import { TeamLogo } from '../components/TeamLogo';
 import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
+import { breadcrumbs, sportsEvent } from '../utils/structuredData';
 
 function formatPoint(point: number): string {
   return point > 0 ? `+${point}` : `${point}`;
@@ -124,6 +125,13 @@ export function GamePage() {
       <PageTitle
         title={matchup}
         description={`${matchup}: the NHL Odds model's win probability compared with sportsbook and Kalshi odds.`}
+        schema={[
+          sportsEvent(game),
+          breadcrumbs([
+            { name: 'Games', path: '/' },
+            { name: matchup, path: `/game/${game.id}` },
+          ]),
+        ]}
       />
       <h1 className="sr-only">{matchup}</h1>
       {/* Matchup Header */}

@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router';
 import { PageTitle } from '../components/A11y';
+import { faqPage } from '../utils/structuredData';
+import { FAQ } from '../content/faq';
 
 export function AboutPage() {
   const { hash, key } = useLocation();
@@ -20,7 +22,8 @@ export function AboutPage() {
     <div className="max-w-2xl mx-auto">
       <PageTitle
         title="About"
-        description="How NHL Odds predicts NHL games with a machine learning model trained on play-by-play data since 2009."
+        description="How NHL Odds predicts NHL games with a machine learning model trained on play-by-play data since 2009, and answers to common questions."
+        schema={[faqPage(FAQ)]}
       />
       <h1 className="font-display text-3xl font-bold tracking-tight mb-8">About NHL Odds</h1>
 
@@ -36,29 +39,6 @@ export function AboutPage() {
             It started as a way to learn and has grown along with what I&apos;ve learned: nightly
             data jobs, Docker, Kubernetes, SEO, load testing, a local AI assistant, data science,
             and more.
-          </p>
-        </section>
-
-        <section className="glass rounded-xl p-6 space-y-3">
-          <h2 className="font-display text-lg font-bold tracking-tight">
-            How are predictions made?
-          </h2>
-          <p className="text-surface-600 dark:text-surface-400 leading-relaxed">
-            Before each game, the model calculates the probability that the home team will win based
-            on each team's historical performance metrics. These probabilities are displayed as
-            percentages on the Games page.
-          </p>
-        </section>
-
-        <section className="glass rounded-xl p-6 space-y-3">
-          <h2 className="font-display text-lg font-bold tracking-tight">What is log loss?</h2>
-          <p className="text-surface-600 dark:text-surface-400 leading-relaxed">
-            Log loss (logarithmic loss) measures how well the model's predicted probabilities match
-            actual outcomes. A lower log loss indicates better calibrated predictions. A perfect
-            prediction (100% confidence, correct outcome) has a log loss of{' '}
-            <span className="stat-number text-accent-600 dark:text-accent-400">0</span>. Random
-            guessing (50/50) gives a log loss of about{' '}
-            <span className="stat-number text-surface-900 dark:text-white">0.693</span>.
           </p>
         </section>
 
@@ -118,6 +98,18 @@ export function AboutPage() {
             </a>{' '}
             or another licensed provider directly.
           </p>
+        </section>
+
+        <section aria-labelledby="faq-heading" className="glass rounded-xl p-6 space-y-5">
+          <h2 id="faq-heading" className="font-display text-lg font-bold tracking-tight">
+            Frequently asked questions
+          </h2>
+          {FAQ.map(({ question, answer }) => (
+            <div key={question} className="space-y-1.5">
+              <h3 className="font-semibold">{question}</h3>
+              <p className="text-surface-600 dark:text-surface-400 leading-relaxed">{answer}</p>
+            </div>
+          ))}
         </section>
 
         <section id="mcp" className="scroll-mt-24 glass rounded-xl p-6 space-y-3">

@@ -20,6 +20,7 @@ import { LogLossChart } from '../components/LogLossChart';
 import { Winner } from '../types';
 import { useOddsFormatContext } from '../contexts/OddsFormatContext';
 import { formatOdds } from '../utils/oddsFormat';
+import { breadcrumbs, sportsTeam } from '../utils/structuredData';
 import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
 
 function StatCard({
@@ -170,6 +171,13 @@ export function TeamDetailPage() {
       <PageTitle
         title={`${team.locationName} ${team.teamName}`}
         description={`${team.locationName} ${team.teamName} games with NHL Odds model predictions, results, and betting record.`}
+        schema={[
+          sportsTeam(team),
+          breadcrumbs([
+            { name: 'Teams', path: '/teams' },
+            { name: `${team.locationName} ${team.teamName}`, path: `/team/${team.id}` },
+          ]),
+        ]}
       />
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
         <div className="flex items-center gap-5">

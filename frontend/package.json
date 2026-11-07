@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "a11y": "node a11y/axe-scan.mjs",
     "lighthouse": "node lighthouse/run.mjs",
+    "check-schema": "node scripts/check-structured-data.mjs",
     "format": "prettier --write 'src/**/*.{ts,tsx}'",
     "format:check": "prettier --check 'src/**/*.{ts,tsx}'",
     "start": "node server.mjs"

@@ -88,3 +88,8 @@ jobs:
           A11Y_BROWSERS: ${{ matrix.browser }}
           A11Y_PARTS: ${{ matrix.parts }}
           A11Y_AXE_SHARD: ${{ matrix.shard }}
+
+      # schema.org JSON-LD on every page (#167); no browser needed, so one job runs it
+      - name: Check structured data
+        if: matrix.name == 'chromium'
+        run: npm run check-schema

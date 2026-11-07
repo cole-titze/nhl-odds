@@ -95,6 +95,8 @@ const job = (status) => ({
 
 const responses = {
   GetAnchorDate: { anchorDate: ANCHOR_DATE },
+  // The Game page's game (pagesFor's /game/:id); without it the page rendered as TBD vs TBD
+  GetGame: games[33],
   // Filtered by date range below
   GetAllTeams: {
     teams: [team(10, 'Toronto', 'Maple Leafs', 'TOR'), team(6, 'Boston', 'Bruins', 'BOS')],

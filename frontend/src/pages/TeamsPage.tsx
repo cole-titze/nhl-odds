@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { itemList } from '../utils/structuredData';
 import { useLoaderData, type LoaderFunctionArgs } from 'react-router';
 import { SeasonSelector } from '../components/SeasonSelector';
 import { TeamRow } from '../components/TeamRow';
@@ -231,6 +232,21 @@ export function TeamsPage() {
       <PageTitle
         title="Teams"
         description="How the NHL Odds model has done for every NHL team this season: accuracy, log loss, and betting results."
+        schema={
+          data
+            ? [
+                itemList(
+                  'NHL teams',
+                  [...data.teams]
+                    .sort((a, b) => a.teamName.localeCompare(b.teamName))
+                    .map((t) => ({
+                      name: `${t.locationName} ${t.teamName}`,
+                      path: `/team/${t.id}`,
+                    })),
+                ),
+              ]
+            : []
+        }
       />
       <div className="flex items-center justify-between mb-8">
         <h1 className="font-display text-3xl font-bold tracking-tight">Teams</h1>
