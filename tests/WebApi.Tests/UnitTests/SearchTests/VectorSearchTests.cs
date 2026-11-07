@@ -198,7 +198,7 @@ public class VectorSearchTests
     {
         EmbeddingSettings.From(_ => null).Should().BeNull();
         EmbeddingSettings.From(k => k == EmbeddingSettings.UrlKey ? "http://e:11434/" : null)
-            .Should().Be(new EmbeddingSettings("http://e:11434", "nomic-embed-text", 0.55));
+            .Should().Be(new EmbeddingSettings("http://e:11434", "nomic-embed-text:v1.5", 0.55));
     }
 
     [TestMethod]

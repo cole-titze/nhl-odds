@@ -16,7 +16,9 @@ public record EmbeddingSettings(string Url, string Model, double MinSimilarity)
     public const string UrlKey = "EMBEDDING_URL";
     public const string ModelKey = "EMBEDDING_MODEL";
     public const string MinSimilarityKey = "EMBEDDING_MIN_SIMILARITY";
-    public const string DefaultModel = "nomic-embed-text";
+    // A version tag, not "latest": vectors from different weights don't compare, and a moved tag would swap them
+    // under the same name (the cluster pins the same tag in ansible-setup's nhl_odds_embedding_model)
+    public const string DefaultModel = "nomic-embed-text:v1.5";
     public const double DefaultMinSimilarity = 0.55;
 
     /// <summary>Null when no URL is set, which turns vector search off (keyword search still works).</summary>
