@@ -117,6 +117,8 @@ services:
     restart: always
     environment:
       - OLLAMA_KEEP_ALIVE=-1
+      # A second slot, so a search's query embedding runs beside the index job's batch instead of waiting behind it
+      - OLLAMA_NUM_PARALLEL=2
     entrypoint: ["sh", "-c", "ollama serve & until ollama list >/dev/null 2>&1; do sleep 1; done; ollama pull ${EMBEDDING_MODEL:-nomic-embed-text:v1.5} && wait"]
     volumes:
       - ollama-models:/root/.ollama

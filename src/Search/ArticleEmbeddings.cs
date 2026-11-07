@@ -18,7 +18,14 @@ public record PreviousEmbedding(string Key, float[] Vector);
 /// </summary>
 public class ArticleEmbeddings(IEmbedder embedder, ILogger logger)
 {
-    public const int BatchSize = 16;
+    /// <summary>
+    /// Articles per embed request. Small on purpose: the job shares the embedding server with live searches, and a
+    /// search's query must never wait out its 2 s timeout behind a long batch (on a Pi CPU, ~16 article openings
+    /// take tens of seconds). The server also keeps a second slot free for queries (OLLAMA_NUM_PARALLEL=2). The
+    /// requests run one after another, never in parallel: the model already uses every core, so more at once
+    /// would only slow the searches down without finishing sooner.
+    /// </summary>
+    public const int BatchSize = 4;
 
     /// <summary>
     /// How much of an article goes into its vector: the headline, summary and opening, where NHL.com articles say
@@ -32,9 +39,13 @@ public class ArticleEmbeddings(IEmbedder embedder, ILogger logger)
         return text.Length <= MaxTextChars ? text : text[..MaxTextChars];
     }
 
-    /// <summary>A hash of the model and text: a vector can be reused only while both are the same.</summary>
+    /// <summary>
+    /// A hash of everything that decides the vector: the model, the document prefix it's given and the text. A
+    /// vector is reused only while all three are the same, so changing any of them re-embeds the articles.
+    /// </summary>
     public static string EmbeddingKey(string model, string text) =>
-        Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(model + "\n" + text)))[..32];
+        Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
+            model + "\n" + EmbeddingPrompts.Prefix(model, EmbeddingPurpose.Document) + text)))[..32];
 
     /// <summary>The vectors in the live articles index, by entity id. Empty if there's no index or it can't be read.</summary>
     public static async Task<Dictionary<string, PreviousEmbedding>> ReadPrevious(ElasticsearchClient client, ILogger logger,
