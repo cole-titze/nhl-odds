@@ -37,3 +37,13 @@ export function enumerateDateRange(startIso: string, endIso: string): string[] {
   }
   return out;
 }
+
+// Bucket a game's UTC datetime to a yyyy-MM-dd string in Central time (DST-aware).
+export function gameDateBucket(isoGameDate: string): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Chicago',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(isoGameDate));
+}

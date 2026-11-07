@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 import { getAnchorDate, getGameOddsInDateRange } from '../api/gameOdds';
 import type { GameOddsVM } from '../types';
-import { addDaysIso, formatDate } from '../utils/dates';
+import { addDaysIso, formatDate, gameDateBucket } from '../utils/dates';
 import { whenPageFree } from '../utils/pageScroll';
 
 const HALF_CHUNK = 7;
@@ -213,16 +213,6 @@ function mergeGames(
     next.set(key, prev ? [...prev, g] : [g]);
   }
   return next;
-}
-
-// Bucket a game's UTC datetime to a yyyy-MM-dd string in Central time (DST-aware).
-export function gameDateBucket(isoGameDate: string): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Chicago',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date(isoGameDate));
 }
 
 export function useBidirectionalGames(seasonStartYear: number, initial?: InitialChunk | null) {

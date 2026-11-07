@@ -1,11 +1,9 @@
-// /sitemap.xml: the main pages and every team page. Game pages are left out on
-// purpose: thousands of near-identical pages add little, and search engines
-// can still reach them through links.
+// /sitemap.xml: the pages src/sitePages.ts marks for it (the main pages and
+// every team page). New pages are added there, not here.
 import { getAllTeams } from '../api/teams';
 import { getCurrentSeason } from '../utils/season';
 import { SITE_URL } from '../utils/site';
-
-const STATIC_PATHS = ['/', '/strategies', '/teams', '/track-record', '/about'];
+import { STATIC_SITEMAP_PATHS } from '../sitePages';
 
 // Building it takes a full-season API call, so it's reused for an hour
 const MAX_AGE_MS = 60 * 60 * 1000;
@@ -14,7 +12,7 @@ let cached: { xml: string; at: number } | null = null;
 async function buildSitemap(): Promise<string> {
   const { teams } = await getAllTeams(getCurrentSeason());
   const paths = [
-    ...STATIC_PATHS,
+    ...STATIC_SITEMAP_PATHS,
     ...teams
       .map((t) => t.id)
       .sort((a, b) => a - b)

@@ -466,6 +466,7 @@ export function pagesFor() {
     `/game/${games[33].id}`,
     '/strategies',
     '/track-record',
+    '/disagreements',
     '/about',
     '/admin',
   ];

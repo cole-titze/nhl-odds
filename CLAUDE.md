@@ -36,7 +36,7 @@ dotnet build src/DataGetter/DataGetter.csproj
 # Frontend (from frontend/ directory)
 cd frontend && npm install    # install dependencies
 cd frontend && npm run dev    # React Router dev server (Vite, with SSR) on http://localhost:5173
-cd frontend && npm run build  # production build to frontend/build/ (client assets + server bundle)
+cd frontend && npm run build  # production build to frontend/build/ (client assets + server bundle); first checks every route is in sitePages.ts and the a11y scan (npm run check-pages)
 cd frontend && npm start      # production server (server.mjs) on :8080: renders pages, serves assets, proxies /api and /mcp to API_URL
 cd frontend && npm run a11y   # WCAG 2.2 AA checks: axe (Chromium) + reflow/focus/scroll checks in Chromium, Firefox, WebKit (mocked API; run build first; A11Y_BROWSERS=chromium to limit; A11Y_PARTS=axe|checks and A11Y_AXE_SHARD=2/4 split it like CI does)
 cd frontend && npm run lighthouse  # Lighthouse on one page of each type (mocked API; run build first): fails if SEO < 95, warns on accessibility/best practices < 90, performance < 80. LIGHTHOUSE_URL=https://nhl.half-built.com scores the live site instead (report only; weekly in CI). Reports in frontend/lighthouse/reports/
@@ -212,5 +212,7 @@ The first 4 digits of a game ID are always the season start year.
 A name without `Recent` or `Last{n}` means the group's long window. A new window size goes in the name (`Last{n}…`).
 
 **Structured data** (#167) — `PageTitle` (`components/A11y.tsx`, used by every page) renders schema.org JSON-LD on every indexable page: the site's `WebSite` and `Organization`, a `WebPage`, and whatever the page passes in `schema` (builders in `utils/structuredData.ts`). The About page's FAQ (`content/faq.ts`) is both the visible section and its `FAQPage` markup. A new page type that needs its own items gets a line in `PAGE_TYPES` in `scripts/check-structured-data.mjs`, which CI runs in the a11y workflow.
+
+**Adding a frontend page** — a route in `frontend/src/routes.ts` also goes in `frontend/src/sitePages.ts`, as `'static'` (listed in `/sitemap.xml`) or `{ exclude: '<reason>' }`, and gets a page in the a11y scan (`pagesFor()` in `frontend/a11y/fixtures.mjs`, with mocks for its API calls). `npm run build` runs `scripts/check-site-pages.mjs` first and fails until all three agree.
 
 **Data collection starts at 2009** (first season with modern play-by-play stats), defined as `START_YEAR` in `src/Entry/DataGetterEntry.cs`.

@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "react-router dev",
-    "build": "react-router typegen && tsc -b && react-router build && node scripts/move-sourcemaps.mjs && vite build -c vite.sw.config.ts",
+    "check-pages": "node scripts/check-site-pages.mjs",
+    "build": "npm run check-pages && react-router typegen && tsc -b && react-router build && node scripts/move-sourcemaps.mjs && vite build -c vite.sw.config.ts",
     "lint": "eslint .",
     "a11y": "node a11y/axe-scan.mjs",
     "lighthouse": "node lighthouse/run.mjs",
