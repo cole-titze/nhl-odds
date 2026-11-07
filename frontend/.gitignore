@@ -28,3 +28,6 @@ dist-ssr
 # React Router build output and generated route types
 build
 .react-router
+
+# Lighthouse HTML reports (npm run lighthouse)
+lighthouse/reports

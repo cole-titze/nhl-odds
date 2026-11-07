@@ -455,6 +455,7 @@ export function mockApi(url) {
   return key ? responses[key] : {};
 }
 
+// One page of each type. The Lighthouse check (lighthouse/run.mjs) scores the same list, minus /admin
 export function pagesFor() {
   return [
     '/',
