@@ -7,6 +7,7 @@ on:
       - 'frontend/**'
       - '.github/workflows/frontend-build.yml'
       - '.github/workflows/accessibility.yml'
+      - '.github/workflows/lighthouse.yml'
   pull_request:
     branches: [main]
     paths:
@@ -88,6 +89,12 @@ jobs:
     if: github.event_name != 'pull_request'
     uses: ./.github/workflows/accessibility.yml
 
+  lighthouse:
+    if: github.event_name != 'pull_request'
+    uses: ./.github/workflows/lighthouse.yml
+    with:
+      target: build
+
   smoke:
     needs: build
     if: github.event_name != 'pull_request'
@@ -103,7 +110,7 @@ jobs:
         run: .github/scripts/smoke-test.sh "${{ env.REGISTRY }}/${{ github.repository }}/webapi:prod" "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build.outputs.digest }}"
 
   promote:
-    needs: [build, format, a11y, smoke]
+    needs: [build, format, a11y, lighthouse, smoke]
     uses: ./.github/workflows/promote.yml
     permissions:
       contents: read

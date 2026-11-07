@@ -30,6 +30,7 @@ cd frontend && npm run dev    # React Router dev server (Vite, with SSR) on http
 cd frontend && npm run build  # production build to frontend/build/ (client assets + server bundle)
 cd frontend && npm start      # production server (server.mjs) on :8080: renders pages, serves assets, proxies /api and /mcp to API_URL
 cd frontend && npm run a11y   # WCAG 2.2 AA checks: axe (Chromium) + reflow/focus/scroll checks in Chromium, Firefox, WebKit (mocked API; run build first; A11Y_BROWSERS=chromium to limit; A11Y_PARTS=axe|checks and A11Y_AXE_SHARD=2/4 split it like CI does)
+cd frontend && npm run lighthouse  # Lighthouse on one page of each type (mocked API; run build first): fails if SEO < 95, warns on accessibility/best practices < 90, performance < 80. LIGHTHOUSE_URL=https://nhl.half-built.com scores the live site instead (report only; weekly in CI). Reports in frontend/lighthouse/reports/
 
 # Python game predictor (from repo root)
 python3 -m venv .venv

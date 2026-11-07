@@ -1,0 +1,97 @@
+name: Lighthouse
+
+# No push trigger: on main, Frontend Container runs this as its promotion gate.
+# The weekly run scores the live site and only reports.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/lighthouse.yml'
+  schedule:
+    # Mondays 13:17 UTC (7:17/8:17 AM Central)
+    - cron: '17 13 * * 1'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'build: gate the production build (mocked API); live: report on https://nhl.half-built.com'
+        type: choice
+        options: [build, live]
+        default: build
+  # Frontend Container runs this as a promotion gate. It passes target: build, since a called
+  # workflow sees the caller's event, and its own weekly schedule would otherwise mean live
+  workflow_call:
+    inputs:
+      target:
+        type: string
+        default: build
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  # Chromium comes from Playwright's image, like the a11y scan, instead of an install on the runner
+  playwright:
+    name: Playwright version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: frontend/package-lock.json
+          sparse-checkout-cone-mode: false
+
+      - name: Read version from package-lock.json
+        id: version
+        run: echo "version=$(jq -r '.packages["node_modules/playwright"].version' frontend/package-lock.json)" >> "$GITHUB_OUTPUT"
+
+  lighthouse:
+    # Gate: fails if any page's SEO score is under 95 (the other categories only warn).
+    # Live: the same pages on the real site, report only.
+    name: Lighthouse (${{ (inputs.target == 'live' || (github.event_name == 'schedule' && inputs.target == '')) && 'live site' || 'build' }})
+    needs: playwright
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.playwright.outputs.version }}-noble
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      LIGHTHOUSE_URL: ${{ (inputs.target == 'live' || (github.event_name == 'schedule' && inputs.target == '')) && 'https://nhl.half-built.com' || '' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        if: env.LIGHTHOUSE_URL == ''
+        run: npm run build
+
+      - name: Run Lighthouse
+        run: npm run lighthouse
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lighthouse-reports
+          path: frontend/lighthouse/reports/
+          if-no-files-found: ignore
+          retention-days: 30
