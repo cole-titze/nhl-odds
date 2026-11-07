@@ -23,6 +23,14 @@ public class SearchControllerTests
             Queries.Add(query);
             return Task.FromResult(new SearchResults(query, [], [], [], []));
         }
+
+        public Task<SuggestResults> Suggest(string query, CancellationToken ct)
+        {
+            if (fail != null)
+                throw fail;
+            Queries.Add("suggest:" + query);
+            return Task.FromResult(new SuggestResults(query, [], [], []));
+        }
     }
 
     private static SearchController Controller(ISearchGetter? search)
@@ -70,6 +78,46 @@ public class SearchControllerTests
     public async Task Get_ElasticsearchFails_ReturnsServiceUnavailable()
     {
         var result = await Controller(new FakeSearch(new HttpRequestException("refused"))).Get("leafs", CancellationToken.None);
+
+        result.Should().BeAssignableTo<IStatusCodeHttpResult>().Which.StatusCode.Should().Be(StatusCodes.Status503ServiceUnavailable);
+    }
+
+    [TestMethod]
+    public async Task Suggest_SearchOff_ReturnsNotFound()
+    {
+        var result = await Controller(null).Suggest("lea", CancellationToken.None);
+
+        result.Should().BeAssignableTo<IStatusCodeHttpResult>().Which.StatusCode.Should().Be(404);
+    }
+
+    [DataTestMethod]
+    [DataRow(null)]
+    [DataRow("l")]
+    public async Task Suggest_TooShort_ReturnsBadRequest(string? q)
+    {
+        var search = new FakeSearch();
+
+        var result = await Controller(search).Suggest(q, CancellationToken.None);
+
+        result.Should().BeAssignableTo<IStatusCodeHttpResult>().Which.StatusCode.Should().Be(400);
+        search.Queries.Should().BeEmpty();
+    }
+
+    [TestMethod]
+    public async Task Suggest_TrimsTheQueryAndAsksForSuggestions()
+    {
+        var search = new FakeSearch();
+
+        var result = await Controller(search).Suggest(" lea  ", CancellationToken.None);
+
+        result.Should().BeOfType<Ok<SuggestResults>>();
+        search.Queries.Should().Equal("suggest:lea");
+    }
+
+    [TestMethod]
+    public async Task Suggest_ElasticsearchFails_ReturnsServiceUnavailable()
+    {
+        var result = await Controller(new FakeSearch(new ElasticsearchException("down"))).Suggest("lea", CancellationToken.None);
 
         result.Should().BeAssignableTo<IStatusCodeHttpResult>().Which.StatusCode.Should().Be(StatusCodes.Status503ServiceUnavailable);
     }

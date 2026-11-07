@@ -720,6 +720,10 @@ const searchResults = {
 };
 
 export function mockApi(url) {
+  if (url.includes('/api/Search/Suggest')) {
+    const { query, teams, players, games } = searchResults;
+    return { query: new URL(url).searchParams.get('q') ?? query, teams, players, games };
+  }
   if (url.includes('/api/Search')) return searchResults;
   if (url.includes('/GetGameOddsInDateRange')) {
     const params = new URL(url).searchParams;

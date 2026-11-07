@@ -81,3 +81,29 @@ export async function search(query: string, init?: RequestInit): Promise<SearchO
     return { kind: 'error' };
   }
 }
+
+/** What the search box suggests as you type: a few teams, players and games (no articles). */
+export interface SuggestResults {
+  query: string;
+  teams: TeamResult[];
+  players: PlayerResult[];
+  games: GameResult[];
+}
+
+/**
+ * Suggestions for the search box. Null when there's nothing to suggest from: too short, search off or
+ * unavailable, or the request was aborted because the user kept typing. The box then shows no list and
+ * Enter still goes to the full search.
+ */
+export async function suggest(query: string, signal?: AbortSignal): Promise<SuggestResults | null> {
+  const q = query.trim();
+  if (q.length < MIN_QUERY_CHARS) return null;
+  try {
+    return await apiFetch<SuggestResults>(
+      `/api/Search/Suggest?${new URLSearchParams({ q: q.slice(0, MAX_QUERY_CHARS) })}`,
+      { signal },
+    );
+  } catch {
+    return null;
+  }
+}

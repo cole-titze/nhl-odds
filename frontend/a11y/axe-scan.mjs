@@ -14,9 +14,12 @@
 //    game fully on screen, without scrolling (the feed starts days before
 //    the date the page opens on, so the next card in DOM order is off screen)
 // 5. Tabbing between the Games filter bar's controls must not scroll the feed
+// 6. Navbar search suggestions: typing opens the list, arrow keys move
+//    through it (the box keeps focus), Escape closes it and Enter on a
+//    suggestion opens it; axe also scans the open list (desktop)
 //
 // axe runs in Chromium only (its rules don't depend on the engine); checks
-// 2-5 run in every browser in A11Y_BROWSERS (comma-separated, default
+// 2-6 run in every browser in A11Y_BROWSERS (comma-separated, default
 // chromium,firefox,webkit), since scrolling and focus behave differently in
 // each. WebKit is driven with Option+Tab, as Safari's plain Tab skips links
 // and buttons. Set CHROMIUM_PATH to use an existing Chromium instead of
@@ -233,6 +236,42 @@ async function tabThrough(page) {
   return problems;
 }
 
+/** Types into the navbar search box and waits for its suggestion list. */
+async function openSuggestions(page) {
+  await page.locator('header [role="combobox"]').fill('leafs');
+  await page.locator('header [role="listbox"]:not([hidden])').waitFor({ timeout: 5000 });
+}
+
+/** Problems with the navbar suggestion list's keyboard behavior (check 6). */
+async function suggestionProblems(page) {
+  const problems = [];
+  const box = page.locator('header [role="combobox"]');
+  await openSuggestions(page);
+  if ((await box.getAttribute('aria-expanded')) !== 'true')
+    problems.push('aria-expanded is not true with the list open');
+  await page.keyboard.press('ArrowDown');
+  const activeId = await box.getAttribute('aria-activedescendant');
+  const selected =
+    activeId && (await page.locator(`[id="${activeId}"]`).getAttribute('aria-selected'));
+  if (selected !== 'true') problems.push('ArrowDown did not select the first suggestion');
+  if (!(await box.evaluate((el) => el === document.activeElement)))
+    problems.push('ArrowDown moved focus out of the box');
+  await page.keyboard.press('Escape');
+  if ((await box.getAttribute('aria-expanded')) !== 'false')
+    problems.push('Escape did not close the list');
+  // ArrowDown reopens it on the first suggestion
+  await page.keyboard.press('ArrowDown');
+  if ((await box.getAttribute('aria-expanded')) !== 'true')
+    problems.push('ArrowDown did not reopen the list');
+  await page.keyboard.press('Enter');
+  await page
+    .waitForURL('**/team/10', { timeout: 5000 })
+    .catch(() => problems.push(`Enter went to ${page.url()}, not /team/10`));
+  if ((await box.inputValue()) !== '')
+    problems.push('the box kept its text after opening a suggestion');
+  return problems;
+}
+
 function report(label, problems) {
   console.log(`${problems.length === 0 ? 'PASS' : 'FAIL'}  ${engine}: ${label}`);
   for (const p of problems) console.log(`    - ${p}`);
@@ -269,6 +308,15 @@ try {
             }
             await page.waitForTimeout(300);
             total += report(`axe [${viewportName} ${theme}] ${path}`, await runAxe(page));
+          }
+          if (viewportName === 'desktop') {
+            await load(page, '/about');
+            await openSuggestions(page);
+            await page.keyboard.press('ArrowDown');
+            total += report(
+              `axe [${viewportName} ${theme}] search suggestions open`,
+              await runAxe(page),
+            );
           }
           if (viewportName === 'phone') {
             await load(page, '/about');
@@ -396,6 +444,18 @@ try {
         await page.keyboard.press(TAB);
       }
       total += report(`filter bar tabbing keeps scroll [${viewportName}] /`, problems);
+      await ctx.close();
+    }
+
+    // 6. Navbar search suggestions (the box is desktop-only; phones use /search)
+    {
+      const ctx = await newContext(browser, 'light', VIEWPORTS.desktop);
+      const page = await ctx.newPage();
+      await load(page, '/about');
+      total += report(
+        'search suggestions keyboard [desktop] /about',
+        await suggestionProblems(page),
+      );
       await ctx.close();
     }
 

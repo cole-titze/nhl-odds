@@ -71,4 +71,38 @@ public class SiteSearchParseTests
         lines[5].Should().Contain("\"gameDate\":\"2026-11-03\"").And.NotContain("match_none");
         lines[7].Should().Contain("match_none");  // articles
     }
+
+    [TestMethod]
+    public void BuildSuggestRequest_SearchesTeamsPlayersAndGamesOnly_AFewOfEach()
+    {
+        var lines = SiteSearch.BuildSuggestRequest(new ParsedQuery("lea", null), new DateTime(2026, 11, 3, 12, 0, 0, DateTimeKind.Utc))
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+        lines.Should().HaveCount(6);
+        lines.Where((_, i) => i % 2 == 0).Should().Equal(
+            new[] { SearchIndexes.Teams, SearchIndexes.Players, SearchIndexes.Games }.Select(index => $"{{\"index\":\"{index.Alias}\"}}"));
+        lines[1].Should().Contain($"\"size\":{SiteSearch.SuggestTeams}").And.Contain("bool_prefix");
+        lines[3].Should().Contain($"\"size\":{SiteSearch.SuggestPlayers}");
+        lines[5].Should().Contain($"\"size\":{SiteSearch.SuggestGames}");
+        string.Join('\n', lines).Should().NotContain("highlight").And.NotContain("knn");
+    }
+
+    [TestMethod]
+    public void ReadSuggestions_ReadsTeamsPlayersAndGames()
+    {
+        var response = System.Text.Json.Nodes.JsonNode.Parse("""
+            {"responses":[
+              {"hits":{"hits":[{"_source":{"teamId":10,"name":"Toronto Maple Leafs","commonName":"Maple Leafs","placeName":"Toronto","formerNames":[],"abbreviation":"TOR","logoUri":"tor.svg","active":true,"lastSeason":2026}}]}},
+              {"hits":{"hits":[{"_source":{"playerId":8479318,"fullName":"Auston Matthews","position":"C","teamId":10,"teamName":"Toronto Maple Leafs","teamAbbreviation":"TOR","isActive":true,"headshot":"am.png"}}]}},
+              {"error":{"type":"index_not_found_exception"}}
+            ]}
+            """)!;
+
+        var results = SiteSearch.ReadSuggestions("lea", response);
+
+        results.Query.Should().Be("lea");
+        results.Teams.Should().ContainSingle().Which.Name.Should().Be("Toronto Maple Leafs");
+        results.Players.Should().ContainSingle().Which.PlayerId.Should().Be(8479318);
+        results.Games.Should().BeEmpty();
+    }
 }

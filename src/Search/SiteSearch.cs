@@ -16,6 +16,8 @@ public record GameResult(int GameId, string GameDate, DateTime StartTimeUtc, boo
 /// <param name="Snippet">Body text around the match, with each match between <see cref="SiteSearch.MatchStart"/> and <see cref="SiteSearch.MatchEnd"/></param>
 public record ArticleResult(string Title, string? Summary, string Url, DateTime? Date, string? Snippet);
 public record SearchResults(string Query, List<TeamResult> Teams, List<PlayerResult> Players, List<GameResult> Games, List<ArticleResult> Articles);
+/// <summary>What the search box suggests as you type: a few teams, players and games, no articles.</summary>
+public record SuggestResults(string Query, List<TeamResult> Teams, List<PlayerResult> Players, List<GameResult> Games);
 
 /// <summary>Builds the site's search request (one _msearch over the four indices) and reads its response.</summary>
 public static partial class SiteSearch
@@ -136,6 +138,39 @@ public static partial class SiteSearch
         if (hybrid)
             Add(SearchIndexes.Articles, ArticlesVectorQuery(query.Text, queryVector!, minSimilarity), FusionDepth);
         return body.ToString();
+    }
+
+    /// <summary>How many of each the search box suggests: few enough to read at a glance under the box.</summary>
+    public const int SuggestTeams = 3;
+    public const int SuggestPlayers = 4;
+    public const int SuggestGames = 3;
+
+    /// <summary>
+    /// The _msearch body for suggestions as you type: the same team, player and game queries as
+    /// <see cref="BuildRequest"/>, fewer of each, and no articles (no highlighting or query embedding, so each
+    /// keystroke stays cheap). <see cref="ReadSuggestions"/> reads the response.
+    /// </summary>
+    public static string BuildSuggestRequest(ParsedQuery query, DateTime nowUtc)
+    {
+        var body = new StringBuilder();
+        void Add(SearchIndex index, JsonObject search, int size)
+        {
+            search["size"] = size;
+            body.Append(new JsonObject { ["index"] = index.Alias }.ToJsonString()).Append('\n');
+            body.Append(search.ToJsonString()).Append('\n');
+        }
+
+        Add(SearchIndexes.Teams, TeamsQuery(query.Text), SuggestTeams);
+        Add(SearchIndexes.Players, PlayersQuery(query.Text), SuggestPlayers);
+        Add(SearchIndexes.Games, GamesQuery(query, nowUtc), SuggestGames);
+        return body.ToString();
+    }
+
+    /// <summary>Reads a <see cref="BuildSuggestRequest"/> response (its items are in the same order as a full search's).</summary>
+    public static SuggestResults ReadSuggestions(string query, JsonNode response)
+    {
+        var results = ReadResponse(query, response);
+        return new SuggestResults(results.Query, results.Teams, results.Players, results.Games);
     }
 
     /// <summary>Matches nothing: used for an index the query can't apply to (e.g. players for a bare date).</summary>
