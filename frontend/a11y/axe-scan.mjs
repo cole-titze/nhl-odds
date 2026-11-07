@@ -16,7 +16,8 @@
 // 5. Tabbing between the Games filter bar's controls must not scroll the feed
 // 6. Navbar search suggestions: typing opens the list, arrow keys move
 //    through it (the box keeps focus), Escape closes it and Enter on a
-//    suggestion opens it; axe also scans the open list (desktop)
+//    suggestion opens it, and a 503 shows "search isn't available"; axe also
+//    scans the open list and the message (desktop)
 //
 // axe runs in Chromium only (its rules don't depend on the engine); checks
 // 2-6 run in every browser in A11Y_BROWSERS (comma-separated, default
@@ -456,6 +457,30 @@ try {
         'search suggestions keyboard [desktop] /about',
         await suggestionProblems(page),
       );
+      await ctx.close();
+    }
+
+    // 6b. Search down: the box says so instead of showing nothing
+    {
+      const ctx = await newContext(browser, 'light', VIEWPORTS.desktop);
+      // Registered after newContext's mocks, so it wins for this URL
+      await ctx.route('**/api/Search/Suggest**', (route) =>
+        route.fulfill({ status: 503, json: {} }),
+      );
+      const page = await ctx.newPage();
+      await load(page, '/about');
+      const problems = [];
+      await page.locator('header [role="combobox"]').fill('leafs');
+      await page
+        .locator('header')
+        .getByText("Search isn't available right now")
+        .first()
+        .waitFor({ timeout: 5000 })
+        .catch(() => problems.push('no "unavailable" message after a 503'));
+      const status = await page.locator('header [role="status"]').textContent();
+      if (!status?.includes("isn't available")) problems.push(`status line says "${status}"`);
+      if (engine === 'chromium') problems.push(...(await runAxe(page)));
+      total += report('search suggestions on a 503 [desktop] /about', problems);
       await ctx.close();
     }
 

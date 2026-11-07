@@ -90,12 +90,15 @@ export interface SuggestResults {
   games: GameResult[];
 }
 
+/** Suggestions, or why there are none: search is down (503, or the API doesn't answer), or nothing to show. */
+export type SuggestOutcome = SuggestResults | 'unavailable' | null;
+
 /**
- * Suggestions for the search box. Null when there's nothing to suggest from: too short, search off or
- * unavailable, or the request was aborted because the user kept typing. The box then shows no list and
- * Enter still goes to the full search.
+ * Suggestions for the search box. 'unavailable' when search is down (a 503, or no answer at all), which the box
+ * says, like the search page does. Null when there's quietly nothing to suggest: too short, search turned off
+ * (404), rate limited (429, gone by the next keystroke), or aborted because the user kept typing.
  */
-export async function suggest(query: string, signal?: AbortSignal): Promise<SuggestResults | null> {
+export async function suggest(query: string, signal?: AbortSignal): Promise<SuggestOutcome> {
   const q = query.trim();
   if (q.length < MIN_QUERY_CHARS) return null;
   try {
@@ -103,7 +106,10 @@ export async function suggest(query: string, signal?: AbortSignal): Promise<Sugg
       `/api/Search/Suggest?${new URLSearchParams({ q: q.slice(0, MAX_QUERY_CHARS) })}`,
       { signal },
     );
-  } catch {
-    return null;
+  } catch (e) {
+    if (signal?.aborted) return null;
+    if (e instanceof ApiError) return e.status >= 500 ? 'unavailable' : null;
+    // fetch itself failed: the API (or the network) isn't answering
+    return 'unavailable';
   }
 }

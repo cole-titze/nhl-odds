@@ -9,6 +9,14 @@ import {
 } from '../api/search';
 import { TeamLogo } from './TeamLogo';
 
+// The panel under the box, list or message: straight off the box's bottom edge, its width from lg (where the box
+// grows to w-72); below lg the box is narrower, so the panel sticks out to the left with its own top edge and
+// rounded corner there
+const PANEL_CLASS =
+  "absolute right-0 top-full z-10 w-72 max-w-[calc(100vw-2rem)] overflow-hidden rounded-b-xl rounded-tl-xl border border-accent-500 bg-white shadow-xl shadow-black/10 before:mx-3 before:hidden lg:before:block before:border-t before:border-surface-200 before:content-[''] lg:rounded-tl-none lg:border-t-0 dark:bg-surface-900 dark:shadow-black/40 dark:before:border-white/10";
+
+const UNAVAILABLE = "Search isn't available right now. Try again in a minute.";
+
 // Typing waits this long before asking for suggestions, so each keystroke isn't a request
 const SUGGEST_DELAY_MS = 200;
 
@@ -106,6 +114,8 @@ export function SearchBox() {
   const { pathname, search } = useLocation();
   const [text, setText] = useState('');
   const [results, setResults] = useState<SuggestResults | null>(null);
+  // The text whose suggestions failed because search is down, so the message shows only for it
+  const [unavailableFor, setUnavailableFor] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -114,6 +124,9 @@ export function SearchBox() {
   const options = results && results.query === text.trim() ? optionsFor(results, text) : [];
   // Only the "see all" row means nothing matched: no list, just the form
   const showList = open && options.length > 1;
+  const showUnavailable =
+    open && !showList && unavailableFor !== null && unavailableFor === text.trim();
+  const showPanel = showList || showUnavailable;
 
   function close() {
     setOpen(false);
@@ -129,6 +142,7 @@ export function SearchBox() {
     setShownLocation(location);
     setText('');
     setResults(null);
+    setUnavailableFor(null);
     setOpen(false);
     setActive(-1);
   }
@@ -149,13 +163,16 @@ export function SearchBox() {
     request.current?.abort();
     if (value.trim().length < MIN_QUERY_CHARS) {
       setResults(null);
+      setUnavailableFor(null);
       return;
     }
     timer.current = setTimeout(async () => {
       const controller = new AbortController();
       request.current = controller;
       const found = await suggest(value, controller.signal);
-      if (!controller.signal.aborted) setResults(found);
+      if (controller.signal.aborted) return;
+      setResults(found === 'unavailable' ? null : found);
+      setUnavailableFor(found === 'unavailable' ? value.trim() : null);
     }, SUGGEST_DELAY_MS);
   }
 
@@ -180,7 +197,7 @@ export function SearchBox() {
       e.preventDefault();
       go(options[active]);
     } else if (e.key === 'Escape') {
-      if (showList) {
+      if (showPanel) {
         e.preventDefault();
         close();
       } else if (text) {
@@ -229,28 +246,28 @@ export function SearchBox() {
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={onKeyDown}
           onFocus={() => setOpen(true)}
-          // Grows on focus; with the list open, box and list are one panel: same solid background and accent
+          // Grows on focus; with the list (or message) open, box and panel are one: same solid background and accent
           // border, the box's bottom corners squared off where the list hangs from it
           className={`w-40 focus:w-48 lg:w-52 lg:focus:w-72 border py-1.5 pl-8 pr-2 text-sm transition-[width] duration-150 motion-reduce:transition-none focus:outline-none ${
-            showList
+            showPanel
               ? 'rounded-t-lg rounded-b-none border-accent-500 border-b-transparent bg-white dark:bg-surface-900'
               : 'rounded-lg border-surface-300 dark:border-white/15 bg-white/70 dark:bg-white/[0.04] focus-visible:ring-2 focus-visible:ring-accent-500'
           }`}
         />
-        {/* Tells screen readers there's a list to arrow into, after each new set of suggestions */}
+        {/* Tells screen readers there's a list to arrow into after each new set of suggestions, or that search is down */}
         <p role="status" className="sr-only">
           {showList
             ? `${count} suggestion${count === 1 ? '' : 's'}. Use the up and down arrows to choose.`
-            : ''}
+            : showUnavailable
+              ? UNAVAILABLE
+              : ''}
         </p>
         <ul
           id={listId}
           role="listbox"
           aria-label="Suggestions"
           hidden={!showList}
-          // Straight off the box's bottom edge, its width from lg (where the box grows to w-72); below lg the box
-          // is narrower, so the list sticks out to the left with its own top edge and rounded corner there
-          className="absolute right-0 top-full z-10 w-72 max-w-[calc(100vw-2rem)] overflow-hidden rounded-b-xl rounded-tl-xl border border-accent-500 bg-white pb-1.5 shadow-xl shadow-black/10 before:mx-3 before:hidden lg:before:block before:border-t before:border-surface-200 before:content-[''] lg:rounded-tl-none lg:border-t-0 dark:bg-surface-900 dark:shadow-black/40 dark:before:border-white/10"
+          className={`${PANEL_CLASS} pb-1.5`}
         >
           {options.map((o, i) => {
             const firstOfGroup = o.group !== 'all' && (i === 0 || options[i - 1].group !== o.group);
@@ -301,6 +318,15 @@ export function SearchBox() {
             );
           })}
         </ul>
+        {showUnavailable && (
+          // Not part of the listbox (it isn't a choice); the status line above reads it out
+          <div
+            aria-hidden="true"
+            className={`${PANEL_CLASS} px-3 py-2.5 text-sm text-red-700 dark:text-red-400`}
+          >
+            {UNAVAILABLE}
+          </div>
+        )}
       </div>
     </Form>
   );
