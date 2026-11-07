@@ -90,6 +90,7 @@ public class AssistantService(
                 ["stream"] = false,
                 // A 9B model spends most of a reply reasoning when thinking is on
                 ["think"] = false,
+                ["keep_alive"] = AssistantLimits.KeepAlive,
                 // get_all_teams alone is ~5k tokens; Ollama's default context would cut it off. Set
                 // here so a stock model works without a custom 32k variant.
                 ["options"] = new JsonObject { ["num_ctx"] = ContextTokens },

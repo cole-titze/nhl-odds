@@ -54,6 +54,7 @@ public static class AssistantGate
                 },
                 ["stream"] = false,
                 ["think"] = false,
+                ["keep_alive"] = AssistantLimits.KeepAlive,
                 ["options"] = new JsonObject
                 {
                     ["num_ctx"] = contextTokens,
