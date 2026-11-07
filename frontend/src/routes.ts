@@ -6,6 +6,7 @@ export default [
     route('teams', 'pages/TeamsPage.tsx'),
     route('team/:teamId', 'pages/TeamDetailPage.tsx'),
     route('game/:gameId', 'pages/GamePage.tsx'),
+    route('player/:playerId', 'pages/PlayerPage.tsx'),
     route('strategies', 'pages/CrossBookStrategyPage.tsx'),
     route('track-record', 'pages/TrackRecordPage.tsx'),
     route('disagreements', 'pages/DisagreementsPage.tsx'),

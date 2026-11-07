@@ -221,3 +221,115 @@ export interface PredictionFactorsVM {
   baseHomeOdds: number;
   factors: PredictionFactorVM[];
 }
+
+/** NHL position letter */
+export type PositionCode = 'C' | 'L' | 'R' | 'D' | 'G';
+
+export interface PlayerTeamVM {
+  id: number;
+  locationName: string;
+  teamName: string;
+  logoUri: string;
+}
+
+/** A box score line: skater fields for skaters, goalie fields for goalies */
+export interface PlayerGameStatsVM {
+  timeOnIceSeconds: number;
+  goals: number;
+  assists: number;
+  points: number;
+  shotsOnGoal: number;
+  plusMinus: number;
+  shotsAgainst: number;
+  saves: number;
+  goalsAgainst: number;
+  savePct: number | null;
+  isStarter: boolean;
+}
+
+export interface PlayerGameVM {
+  gameId: number;
+  gameDate: string;
+  gameType: number;
+  teamId: number;
+  isHome: boolean;
+  opponent: PlayerTeamVM;
+  teamGoals: number;
+  opponentGoals: number;
+  /** OTL: lost in overtime or a shootout */
+  result: 'W' | 'L' | 'OTL';
+  stats: PlayerGameStatsVM;
+}
+
+export interface PlayerSeasonTotalsVM {
+  gamesPlayed: number;
+  timeOnIceSeconds: number;
+  goals: number;
+  assists: number;
+  points: number;
+  shotsOnGoal: number;
+  plusMinus: number;
+  shotsAgainst: number;
+  saves: number;
+  goalsAgainst: number;
+  savePct: number | null;
+  goalsAgainstAverage: number | null;
+}
+
+/** The Player page (GetPlayer) */
+export interface PlayerVM {
+  id: number;
+  firstName: string;
+  lastName: string;
+  headShot: string;
+  /** From his most recent game; null when he has none */
+  position: PositionCode | null;
+  sweaterNumber: number | null;
+  /** yyyy-MM-dd */
+  birthDate: string | null;
+  birthCity: string;
+  birthStateProvince: string;
+  heightInInches: number;
+  weightInPounds: number;
+  /** The team of his most recent game */
+  currentTeam: PlayerTeamVM | null;
+  seasonStartYear: number;
+  /** Newest first */
+  games: PlayerGameVM[];
+  seasonTotals: PlayerSeasonTotalsVM;
+}
+
+/** A player whose latest game in the season was for the team (GetTeamRoster) */
+export interface RosterPlayerVM {
+  id: number;
+  firstName: string;
+  lastName: string;
+  headShot: string;
+  position: PositionCode;
+  sweaterNumber: number | null;
+  gamesPlayed: number;
+}
+
+export interface GamePlayerVM {
+  id: number;
+  firstName: string;
+  lastName: string;
+  position: PositionCode;
+  sweaterNumber: number | null;
+  /** null before the game is played */
+  stats: PlayerGameStatsVM | null;
+}
+
+/** A game's players (GetGamePlayers): once played, who dressed with their lines (hasStats); before, each team's roster */
+export interface GamePlayersVM {
+  gameId: number;
+  hasStats: boolean;
+  home: GamePlayerVM[];
+  away: GamePlayerVM[];
+}
+
+/** A player with a game in the season, for the sitemap */
+export interface ActivePlayerVM {
+  id: number;
+  lastGameDate: string;
+}

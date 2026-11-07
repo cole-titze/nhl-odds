@@ -9,6 +9,7 @@ import {
 } from 'react-router';
 import { useFetch } from '../hooks/useFetch';
 import { getTeam } from '../api/teams';
+import { getTeamRoster } from '../api/players';
 import { forwardClientIp } from '../api/client';
 import { getCurrentSeason } from '../utils/season';
 import { formatShortDate } from '../utils/dates';
@@ -23,30 +24,10 @@ import { useOddsFormatContext } from '../contexts/OddsFormatContext';
 import { formatOdds } from '../utils/oddsFormat';
 import { breadcrumbs, sportsTeam } from '../utils/structuredData';
 import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
-
-function StatCard({
-  label,
-  value,
-  sub,
-  accent,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  accent?: boolean;
-}) {
-  return (
-    <div className="glass rounded-xl p-4 text-center">
-      <div
-        className={`stat-number text-2xl font-bold ${accent ? 'text-accent-600 dark:text-accent-400' : ''}`}
-      >
-        {value}
-      </div>
-      <div className="text-xs text-surface-500 dark:text-surface-400 mt-1">{label}</div>
-      {sub && <div className="text-xs text-surface-500 dark:text-surface-400 mt-0.5">{sub}</div>}
-    </div>
-  );
-}
+import { Breadcrumbs, type Crumb } from '../components/Breadcrumbs';
+import { StatCard } from '../components/StatCard';
+import { playerName, playerPath, positionGroups, positionName } from '../utils/players';
+import type { RosterPlayerVM } from '../types';
 
 // The game log starts with the games around the last one played; the rest are behind a button
 const LOG_GAMES_SHOWN = 10;
@@ -71,7 +52,12 @@ function seasonFrom(searchParams: URLSearchParams) {
 // First load renders on the server; client-side navigation fetches in the page as before
 export async function loader({ params, request }: LoaderFunctionArgs) {
   const season = seasonFrom(new URL(request.url).searchParams);
-  return getTeam(Number(params.teamId), season, forwardClientIp(request)).catch(() => null);
+  const init = forwardClientIp(request);
+  const [team, roster] = await Promise.all([
+    getTeam(Number(params.teamId), season, init).catch(() => null),
+    getTeamRoster(Number(params.teamId), season, init).catch(() => null),
+  ]);
+  return { team, roster };
 }
 
 export async function clientLoader() {
@@ -91,7 +77,12 @@ export function TeamDetailPage() {
     data: team,
     loading,
     error,
-  } = useFetch(() => getTeam(Number(teamId), season), [teamId, season], initial);
+  } = useFetch(() => getTeam(Number(teamId), season), [teamId, season], initial?.team);
+  const { data: roster } = useFetch(
+    () => getTeamRoster(Number(teamId), season),
+    [teamId, season],
+    initial?.roster,
+  );
 
   const kalshiStats = useMemo(() => {
     if (!team) return null;
@@ -167,20 +158,20 @@ export function TeamDetailPage() {
       ? ((team.draftKingsAccurateGameCount / team.draftKingsGameCount) * 100).toFixed(1)
       : '0.0';
 
+  const crumbs: Crumb[] = [
+    { name: 'Teams', path: '/teams' },
+    { name: `${team.locationName} ${team.teamName}`, path: `/team/${team.id}` },
+  ];
+
   return (
     <div>
       <PageTitle
         title={`${team.locationName} ${team.teamName}`}
         description={`${team.locationName} ${team.teamName} games with NHL Odds model predictions, results, and betting record.`}
-        schema={[
-          sportsTeam(team),
-          breadcrumbs([
-            { name: 'Teams', path: '/teams' },
-            { name: `${team.locationName} ${team.teamName}`, path: `/team/${team.id}` },
-          ]),
-        ]}
+        schema={[sportsTeam(team, roster ?? []), breadcrumbs(crumbs)]}
         imageAlt={`${team.locationName} ${team.teamName} logo with this season's record, how often the model picked their games right, and their next game`}
       />
+      <Breadcrumbs items={crumbs} />
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
         <div className="flex items-center gap-5">
           <img
@@ -445,7 +436,62 @@ export function TeamDetailPage() {
           No games found for this team and season.
         </div>
       )}
+
+      {roster && roster.length > 0 && <Roster players={roster} />}
     </div>
+  );
+}
+
+// The players whose latest game this season was for the team, each linked to his page
+function Roster({ players }: { players: RosterPlayerVM[] }) {
+  return (
+    <section aria-labelledby="roster-heading" className="glass rounded-xl p-4 sm:p-5 mt-8">
+      <h2
+        id="roster-heading"
+        className="text-xs font-mono font-bold tracking-widest uppercase text-surface-500 dark:text-surface-400 mb-4"
+      >
+        Roster
+      </h2>
+      <div className="space-y-5">
+        {positionGroups(players).map((group) => (
+          <div key={group.label}>
+            <h3 className="text-sm font-semibold mb-2">{group.label}</h3>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1">
+              {group.players.map((p) => (
+                <li key={p.id}>
+                  <Link
+                    to={playerPath(p.id)}
+                    className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-surface-100 dark:hover:bg-white/[0.04] group"
+                  >
+                    <img
+                      src={p.headShot}
+                      alt=""
+                      loading="lazy"
+                      className="h-9 w-9 shrink-0 rounded-full object-cover bg-surface-200/60 dark:bg-white/[0.06]"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.visibility = 'hidden';
+                      }}
+                    />
+                    <span className="stat-number w-7 text-right text-xs text-surface-500 dark:text-surface-400">
+                      {p.sweaterNumber != null ? `#${p.sweaterNumber}` : ''}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-medium group-hover:text-accent-600 dark:group-hover:text-accent-400 group-hover:underline">
+                        {playerName(p)}
+                      </span>
+                      <span className="block text-xs text-surface-500 dark:text-surface-400">
+                        {positionName(p.position)} · {p.gamesPlayed}{' '}
+                        {p.gamesPlayed === 1 ? 'game' : 'games'}
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

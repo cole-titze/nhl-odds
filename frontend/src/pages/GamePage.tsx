@@ -7,9 +7,17 @@ import {
   type LoaderFunctionArgs,
 } from 'react-router';
 import { useState, useEffect } from 'react';
-import type { GameOddsVM, BookmakerOddsVM, PredictionFactorsVM } from '../types';
+import type {
+  GameOddsVM,
+  BookmakerOddsVM,
+  GamePlayerVM,
+  GamePlayersVM,
+  PredictionFactorsVM,
+} from '../types';
 import { Winner } from '../types';
 import { getGame, getPredictionFactors } from '../api/gameOdds';
+import { getGamePlayers } from '../api/players';
+import { useFetch } from '../hooks/useFetch';
 import { forwardClientIp } from '../api/client';
 import { useDisplayTimeZone } from '../hooks/useDisplayTimeZone';
 import { useOddsFormatContext } from '../contexts/OddsFormatContext';
@@ -30,6 +38,15 @@ import { TeamLogo } from '../components/TeamLogo';
 import { PredictionFactors } from '../components/PredictionFactors';
 import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
 import { breadcrumbs, sportsEvent } from '../utils/structuredData';
+import { Breadcrumbs, type Crumb } from '../components/Breadcrumbs';
+import {
+  formatSavePct,
+  formatToi,
+  playerName,
+  playerPath,
+  positionGroups,
+  positionName,
+} from '../utils/players';
 
 // Describes the link preview image (og/cards.tsx GameCard). No date: the page's
 // time zone differs between the server and the browser.
@@ -52,9 +69,10 @@ function formatPoint(point: number): string {
 // First load renders on the server; client-side navigation fetches in the page
 // as before (usually not even that: game cards pass the game in location.state)
 export async function loader({ params, request }: LoaderFunctionArgs) {
+  const init = forwardClientIp(request);
+  const playersRequest = getGamePlayers(params.gameId!, init).catch(() => null);
   let game: GameOddsVM | undefined;
   let factors: PredictionFactorsVM | null = null;
-  const init = forwardClientIp(request);
   try {
     // The prediction factors come with the first render, so their section doesn't push
     // the rest of the page down when it arrives (a layout shift)
@@ -67,8 +85,11 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   } catch {
     return null;
   }
+  const players = (await playersRequest) ?? null;
   // The page still renders its "Game not found" message, with a real 404 status for crawlers
-  return game ? { game, factors } : data({ game: null, factors: null }, { status: 404 });
+  return game
+    ? { game, factors, players }
+    : data({ game: null, factors: null, players: null }, { status: 404 });
 }
 
 export async function clientLoader() {
@@ -88,6 +109,12 @@ export function GamePage() {
   const [loading, setLoading] = useState(!game && !loaded);
   const [error, setError] = useState<string | null>(
     loaded && !loaded.game ? 'Game not found.' : null,
+  );
+  // Rosters or the box score; the page works without them
+  const { data: players } = useFetch(
+    async () => (await getGamePlayers(gameId ?? '')) ?? null,
+    [gameId],
+    loaded?.players,
   );
 
   useEffect(() => {
@@ -144,20 +171,23 @@ export function GamePage() {
     game.homeTeam ? `${game.homeTeam.locationName} ${game.homeTeam.teamName}` : 'TBD'
   }`;
 
+  const crumbs: Crumb[] = [
+    { name: 'Games', path: '/' },
+    { name: matchup, path: `/game/${game.id}` },
+  ];
+  const gamePlayers = players && players.gameId === game.id ? players : null;
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <PageTitle
         title={matchup}
         description={`${matchup}: the NHL Odds model's win probability compared with sportsbook and Kalshi odds.`}
-        schema={[
-          sportsEvent(game),
-          breadcrumbs([
-            { name: 'Games', path: '/' },
-            { name: matchup, path: `/game/${game.id}` },
-          ]),
-        ]}
+        schema={[sportsEvent(game, gamePlayers), breadcrumbs(crumbs)]}
         imageAlt={shareImageAlt(game, matchup)}
       />
+      <div className="-mb-2">
+        <Breadcrumbs items={crumbs} />
+      </div>
       <h1 className="sr-only">{matchup}</h1>
       {/* Matchup Header */}
       <div className={`glass rounded-xl px-6 py-6 ${borderClass}`}>
@@ -368,7 +398,180 @@ export function GamePage() {
 
       <OddsMovementChart game={game} />
       <GameLineups game={game} />
+      {gamePlayers && (gamePlayers.away.length > 0 || gamePlayers.home.length > 0) && (
+        <GamePlayers game={game} players={gamePlayers} />
+      )}
     </div>
+  );
+}
+
+// Each team's players, linked to their pages: the box score once played, else the rosters
+function GamePlayers({ game, players }: { game: GameOddsVM; players: GamePlayersVM }) {
+  const sides = [
+    { team: game.awayTeam, list: players.away },
+    { team: game.homeTeam, list: players.home },
+  ].filter((s) => s.team && s.list.length > 0);
+  return (
+    <section aria-labelledby="players-heading" className="space-y-4">
+      <h2
+        id="players-heading"
+        className="text-xs font-mono font-bold tracking-widest uppercase text-surface-500 dark:text-surface-400"
+      >
+        {players.hasStats ? 'Box Score' : 'Rosters'}
+      </h2>
+      {sides.map(({ team, list }) => {
+        const teamName = `${team!.locationName} ${team!.teamName}`;
+        return (
+          <div key={team!.id} className="glass rounded-xl overflow-hidden">
+            <h3 className="px-4 pt-4 pb-2 flex items-center gap-2 text-sm font-semibold">
+              <TeamLogo src={team!.logoUri} alt="" className="h-5 w-5 object-contain" />
+              {teamName}
+            </h3>
+            {players.hasStats ? (
+              <BoxScore teamName={teamName} list={list} />
+            ) : (
+              <div className="px-4 pb-4 space-y-3">
+                {positionGroups(list).map((group) => (
+                  <div key={group.label}>
+                    <h4 className="text-xs text-surface-500 dark:text-surface-400 mb-1">
+                      {group.label}
+                    </h4>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                      {group.players.map((p) => (
+                        <li key={p.id} className="flex items-center gap-2 text-sm">
+                          <span className="stat-number w-7 text-right text-xs text-surface-500 dark:text-surface-400">
+                            {p.sweaterNumber != null ? `#${p.sweaterNumber}` : ''}
+                          </span>
+                          <PlayerLink player={p} />
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+function PlayerLink({ player }: { player: GamePlayerVM }) {
+  return (
+    <Link
+      to={playerPath(player.id)}
+      className="inline-block py-0.5 font-medium hover:text-accent-600 dark:hover:text-accent-400 hover:underline"
+    >
+      {playerName(player)}
+    </Link>
+  );
+}
+
+function BoxScore({ teamName, list }: { teamName: string; list: GamePlayerVM[] }) {
+  const skaters = list.filter((p) => p.position !== 'G');
+  const goalies = list.filter((p) => p.position === 'G');
+  const th = 'py-2 px-2 font-semibold text-center';
+  const td = 'py-1.5 px-2 text-center stat-number text-xs';
+  const head =
+    'border-b border-surface-200 dark:border-white/[0.06] text-xs uppercase tracking-wider text-surface-500 dark:text-surface-400';
+  const row = 'border-b border-surface-100 dark:border-white/[0.03]';
+  const abbr = (short: string, title: string) => (
+    <abbr title={title} className="no-underline">
+      {short}
+    </abbr>
+  );
+  return (
+    <ScrollRegion label={`${teamName} box score`}>
+      {skaters.length > 0 && (
+        <table className="w-full text-sm">
+          <caption className="sr-only">{teamName} skaters</caption>
+          <thead>
+            <tr className={head}>
+              <th scope="col" className="py-2 px-4 font-semibold text-left">
+                Skater
+              </th>
+              <th scope="col" className={th}>
+                {abbr('Pos', 'Position')}
+              </th>
+              <th scope="col" className={th}>
+                {abbr('G', 'Goals')}
+              </th>
+              <th scope="col" className={th}>
+                {abbr('A', 'Assists')}
+              </th>
+              <th scope="col" className={th}>
+                {abbr('SOG', 'Shots on goal')}
+              </th>
+              <th scope="col" className={th}>
+                {abbr('TOI', 'Time on ice')}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {skaters.map((p) => (
+              <tr key={p.id} className={row}>
+                <th scope="row" className="py-1.5 px-4 text-left font-normal whitespace-nowrap">
+                  <span className="stat-number inline-block w-7 text-xs text-surface-500 dark:text-surface-400">
+                    {p.sweaterNumber ?? ''}
+                  </span>
+                  <PlayerLink player={p} />
+                </th>
+                <td className={td}>
+                  <abbr title={positionName(p.position)} className="no-underline">
+                    {p.position}
+                  </abbr>
+                </td>
+                <td className={td}>{p.stats?.goals ?? '-'}</td>
+                <td className={td}>{p.stats?.assists ?? '-'}</td>
+                <td className={td}>{p.stats?.shotsOnGoal ?? '-'}</td>
+                <td className={td}>{p.stats ? formatToi(p.stats.timeOnIceSeconds) : '-'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {goalies.length > 0 && (
+        <table className="w-full text-sm">
+          <caption className="sr-only">{teamName} goalies</caption>
+          <thead>
+            <tr className={head}>
+              <th scope="col" className="py-2 px-4 font-semibold text-left">
+                Goalie
+              </th>
+              <th scope="col" className={th}>
+                {abbr('SA', 'Shots against')}
+              </th>
+              <th scope="col" className={th}>
+                {abbr('SV', 'Saves')}
+              </th>
+              <th scope="col" className={th}>
+                {abbr('SV%', 'Save percentage')}
+              </th>
+              <th scope="col" className={th}>
+                {abbr('TOI', 'Time on ice')}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {goalies.map((p) => (
+              <tr key={p.id} className={row}>
+                <th scope="row" className="py-1.5 px-4 text-left font-normal whitespace-nowrap">
+                  <span className="stat-number inline-block w-7 text-xs text-surface-500 dark:text-surface-400">
+                    {p.sweaterNumber ?? ''}
+                  </span>
+                  <PlayerLink player={p} />
+                </th>
+                <td className={td}>{p.stats?.shotsAgainst ?? '-'}</td>
+                <td className={td}>{p.stats?.saves ?? '-'}</td>
+                <td className={td}>{formatSavePct(p.stats?.savePct ?? null)}</td>
+                <td className={td}>{p.stats ? formatToi(p.stats.timeOnIceSeconds) : '-'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </ScrollRegion>
   );
 }
 

@@ -82,6 +82,85 @@ const team = (id, locationName, teamName, abbrev) => ({
   gameOddsVM: games.slice(29, 41),
 });
 
+// Players for the Player page, the Team page's roster and the Game page's box score
+const headShot = (id) => `https://assets.nhle.com/mugs/nhl/20262027/TOR/${id}.png`;
+const rosterPlayer = (id, firstName, lastName, position, sweaterNumber, gamesPlayed) => ({
+  id,
+  firstName,
+  lastName,
+  headShot: headShot(id),
+  position,
+  sweaterNumber,
+  gamesPlayed,
+});
+const torRoster = [
+  rosterPlayer(8479318, 'Auston', 'Matthews', 'C', 34, 14),
+  rosterPlayer(8478483, 'Mitch', 'Marner', 'R', 16, 14),
+  rosterPlayer(8477939, 'William', 'Nylander', 'L', 88, 13),
+  rosterPlayer(8476853, 'Morgan', 'Rielly', 'D', 44, 14),
+  rosterPlayer(8479361, 'Joseph', 'Woll', 'G', 60, 9),
+];
+const bosRoster = [
+  rosterPlayer(8477956, 'David', 'Pastrnak', 'R', 88, 14),
+  rosterPlayer(8479325, 'Charlie', 'McAvoy', 'D', 73, 12),
+  rosterPlayer(8480280, 'Jeremy', 'Swayman', 'G', 1, 10),
+];
+const skaterLine = (goals, assists, shotsOnGoal, plusMinus, timeOnIceSeconds) => ({
+  timeOnIceSeconds,
+  goals,
+  assists,
+  points: goals + assists,
+  shotsOnGoal,
+  plusMinus,
+  shotsAgainst: 0,
+  saves: 0,
+  goalsAgainst: 0,
+  savePct: null,
+  isStarter: false,
+});
+const goalieLine = (saves, goalsAgainst) => ({
+  timeOnIceSeconds: 3600,
+  goals: 0,
+  assists: 0,
+  points: 0,
+  shotsOnGoal: 0,
+  plusMinus: 0,
+  shotsAgainst: saves + goalsAgainst,
+  saves,
+  goalsAgainst,
+  savePct: saves / (saves + goalsAgainst),
+  isStarter: true,
+});
+const gamePlayer = (p, stats) => {
+  const { headShot: _h, gamesPlayed: _g, ...rest } = p;
+  return { ...rest, stats };
+};
+// The Player page's games: the played ones among the team's games, newest first
+const playerGames = games
+  .slice(29, 41)
+  .filter((g) => g.hasBeenPlayed)
+  .reverse()
+  .map((g, i) => {
+    const won = g.winner === 0;
+    return {
+      gameId: g.id,
+      gameDate: g.gameDate,
+      gameType: g.gameType,
+      teamId: 10,
+      isHome: true,
+      opponent: (({ id, locationName, teamName, logoUri }) => ({
+        id,
+        locationName,
+        teamName,
+        logoUri,
+      }))(g.awayTeam),
+      teamGoals: g.homeTeam.goals,
+      opponentGoals: g.awayTeam.goals,
+      result: won ? 'W' : i % 2 ? 'OTL' : 'L',
+      stats: skaterLine(i % 3 === 0 ? 1 : 0, i % 2, 3 + i, won ? 1 : -1, 1150 + i * 20),
+    };
+  });
+
 const job = (status) => ({
   id: status,
   name: status,
@@ -176,6 +255,52 @@ const responses = {
     .slice(29, 41)
     .map((g) => ({ gameId: g.id, homeOdds: 0.52, awayOdds: 0.48 })),
   GetTeam: team(10, 'Toronto', 'Maple Leafs', 'TOR'),
+  GetTeamRoster: torRoster,
+  GetPlayer: {
+    ...rosterPlayer(8479318, 'Auston', 'Matthews', 'C', 34),
+    birthDate: '1997-09-17',
+    birthCity: 'San Ramon',
+    birthStateProvince: 'CA',
+    heightInInches: 75,
+    weightInPounds: 215,
+    currentTeam: {
+      id: 10,
+      locationName: 'Toronto',
+      teamName: 'Maple Leafs',
+      logoUri: 'https://assets.nhle.com/logos/nhl/svg/TOR_light.svg',
+    },
+    seasonStartYear: 2026,
+    games: playerGames,
+    seasonTotals: {
+      gamesPlayed: playerGames.length,
+      timeOnIceSeconds: playerGames.reduce((t, g) => t + g.stats.timeOnIceSeconds, 0),
+      goals: playerGames.reduce((t, g) => t + g.stats.goals, 0),
+      assists: playerGames.reduce((t, g) => t + g.stats.assists, 0),
+      points: playerGames.reduce((t, g) => t + g.stats.points, 0),
+      shotsOnGoal: playerGames.reduce((t, g) => t + g.stats.shotsOnGoal, 0),
+      plusMinus: playerGames.reduce((t, g) => t + g.stats.plusMinus, 0),
+      shotsAgainst: 0,
+      saves: 0,
+      goalsAgainst: 0,
+      savePct: null,
+      goalsAgainstAverage: null,
+    },
+  },
+  // The Game page's game (games[33]) was played, so it gets a box score
+  GetGamePlayers: {
+    gameId: games[33].id,
+    hasStats: true,
+    home: torRoster.map((p) =>
+      gamePlayer(p, p.position === 'G' ? goalieLine(28, 3) : skaterLine(1, 0, 4, 1, 1100)),
+    ),
+    away: bosRoster.map((p) =>
+      gamePlayer(p, p.position === 'G' ? goalieLine(30, 3) : skaterLine(0, 1, 3, -1, 1200)),
+    ),
+  },
+  GetActivePlayers: [...torRoster, ...bosRoster].map((p) => ({
+    id: p.id,
+    lastGameDate: games[34].gameDate,
+  })),
   GetBestStrategies: [
     {
       betType: 'moneyline',
@@ -487,8 +612,9 @@ export function mockApi(url) {
     const end = params.get('endDate');
     return games.filter((g) => g.gameDate.slice(0, 10) >= start && g.gameDate.slice(0, 10) <= end);
   }
-  const key = Object.keys(responses).find((k) => url.includes(`/${k}`));
-  return key ? responses[key] : {};
+  // By the action's exact name: GetTeam must not answer GetTeamRoster
+  const action = new URL(url).pathname.split('/').pop();
+  return Object.hasOwn(responses, action) ? responses[action] : {};
 }
 
 // One page of each type. The Lighthouse check (lighthouse/run.mjs) scores the same list, minus /admin
@@ -498,6 +624,7 @@ export function pagesFor() {
     '/teams',
     '/team/10',
     `/game/${games[33].id}`,
+    '/player/8479318',
     '/strategies',
     '/track-record',
     '/disagreements',

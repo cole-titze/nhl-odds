@@ -2,7 +2,11 @@
 // the site-wide WebSite and Organization, plus a WebPage for the page, on every
 // indexable page; pages add their own items (a SportsEvent, an FAQPage, ...)
 // through PageTitle's `schema` prop, built with the helpers here.
-import type { GameOddsVM, MatchupTeamVM } from '../types';
+//
+// Teams, players and games carry an `@id` that is their page's canonical URL
+// (#169), so the same entity marked up on different pages (a player on his own
+// page, on his team's roster and in a game) is recognisably one thing.
+import type { GameOddsVM, GamePlayersVM, MatchupTeamVM, PlayerVM } from '../types';
 import { SITE_URL } from './site';
 
 export type JsonLd = Record<string, unknown>;
@@ -68,40 +72,86 @@ export function breadcrumbs(items: { name: string; path: string }[]): JsonLd {
   };
 }
 
-export function sportsTeam(team: {
-  id: number;
-  locationName: string;
-  teamName: string;
-  logoUri?: string;
-}) {
+export const teamUrl = (id: number) => absoluteUrl(`/team/${id}`);
+export const playerUrl = (id: number) => absoluteUrl(`/player/${id}`);
+export const gameUrl = (id: number) => absoluteUrl(`/game/${id}`);
+
+type PersonRef = { id: number; firstName: string; lastName: string };
+
+/** A player as a short Person: enough to name him and point at his page */
+export function personRef(player: PersonRef): JsonLd {
+  const url = playerUrl(player.id);
+  return { '@type': 'Person', '@id': url, name: `${player.firstName} ${player.lastName}`, url };
+}
+
+/** A team, with its players as `athlete`s when they're known */
+export function sportsTeam(
+  team: {
+    id: number;
+    locationName: string;
+    teamName: string;
+    logoUri?: string;
+  },
+  athletes: PersonRef[] = [],
+): JsonLd {
+  const url = teamUrl(team.id);
   return {
     '@type': 'SportsTeam',
+    '@id': url,
     name: `${team.locationName} ${team.teamName}`,
     sport: 'Ice hockey',
-    url: absoluteUrl(`/team/${team.id}`),
+    url,
     ...(team.logoUri ? { logo: team.logoUri } : {}),
     memberOf: NHL,
+    ...(athletes.length ? { athlete: athletes.map(personRef) } : {}),
+  };
+}
+
+/** The Player page's Person, a member of the team of his latest game */
+export function person(player: PlayerVM): JsonLd {
+  const birthPlace = [player.birthCity, player.birthStateProvince].filter(Boolean).join(', ');
+  return {
+    ...personRef(player),
+    givenName: player.firstName,
+    familyName: player.lastName,
+    ...(player.headShot ? { image: player.headShot } : {}),
+    ...(player.birthDate ? { birthDate: player.birthDate } : {}),
+    ...(birthPlace ? { birthPlace: { '@type': 'Place', name: birthPlace } } : {}),
+    ...(player.heightInInches > 0
+      ? { height: { '@type': 'QuantitativeValue', value: player.heightInInches, unitCode: 'INH' } }
+      : {}),
+    ...(player.weightInPounds > 0
+      ? { weight: { '@type': 'QuantitativeValue', value: player.weightInPounds, unitCode: 'LBR' } }
+      : {}),
+    ...(player.currentTeam ? { memberOf: sportsTeam(player.currentTeam) } : {}),
   };
 }
 
 const matchupName = (home: MatchupTeamVM, away: MatchupTeamVM) =>
   `${away.locationName} ${away.teamName} at ${home.locationName} ${home.teamName}`;
 
-/** A game as a SportsEvent, with the final score once it has been played */
-export function sportsEvent(game: GameOddsVM): JsonLd | null {
+/**
+ * A game as a SportsEvent, with the final score once it has been played. The
+ * teams list their players when they're known (the box score, or the rosters
+ * before the game).
+ */
+export function sportsEvent(game: GameOddsVM, players?: GamePlayersVM | null): JsonLd | null {
   const { homeTeam, awayTeam } = game;
   if (!homeTeam || !awayTeam) return null;
-  const home = sportsTeam(homeTeam);
-  const away = sportsTeam(awayTeam);
+  const home = sportsTeam(homeTeam, players?.home);
+  const away = sportsTeam(awayTeam, players?.away);
+  const url = gameUrl(game.id);
   return {
     '@type': 'SportsEvent',
+    '@id': url,
     name: matchupName(homeTeam, awayTeam),
-    url: absoluteUrl(`/game/${game.id}`),
+    url,
     sport: 'Ice hockey',
     startDate: game.gameDate,
     eventStatus: 'https://schema.org/EventScheduled',
     homeTeam: home,
     awayTeam: away,
+    competitor: [{ '@id': away['@id'] }, { '@id': home['@id'] }],
     superEvent: NHL,
     ...(game.hasBeenPlayed
       ? {
