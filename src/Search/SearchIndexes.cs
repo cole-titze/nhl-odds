@@ -18,13 +18,17 @@ public record SearchIndex(string Alias, JsonObject Mappings, int Size)
 
     public string NewIndexName(DateTime nowUtc) => $"{Alias}-{nowUtc:yyyyMMddHHmmss}";
 
-    /// <summary>The create-index body: shared analysis settings, one shard, no replicas (it's a single node).</summary>
+    /// <summary>
+    /// The create-index body: shared analysis settings and one shard. auto_expand_replicas "0-1" keeps a replica of
+    /// it on a second node when there is one (the cluster's 3 nodes) and none on a single node (docker compose), so
+    /// the index stays green either way and survives losing a node.
+    /// </summary>
     public JsonObject CreateBody() => new()
     {
         ["settings"] = new JsonObject
         {
             ["number_of_shards"] = 1,
-            ["number_of_replicas"] = 0,
+            ["auto_expand_replicas"] = "0-1",
             ["analysis"] = SearchIndexes.Analysis(),
         },
         ["mappings"] = Mappings.DeepClone(),
