@@ -31,6 +31,8 @@ public static class ApiCache
     public static long SizeOf(TeamsVM teams) => teams.Teams.Sum(t => 1 + t.GameOddsVM.Count());
     public static long SizeOf(TeamVM? team) => team is null ? 1 : 1 + team.GameOddsVM.Count();
     public static long SizeOf(SeasonTeamsVM seasonTeams) => seasonTeams.Teams.Count() + seasonTeams.Games.Count();
+    public static long SizeOf(PlayerVM? player) => 1 + (player?.Games.Count() ?? 0);
+    public static long SizeOf(GamePlayersVM? players) => 1 + (players == null ? 0 : players.Home.Count() + players.Away.Count());
 
     // Keys shared by the controllers, MCP tools and StartupCacheWarmer so they all hit the same entries
     public static string AllTeamsKey(int seasonStartYear) => $"AllTeams_{seasonStartYear}";
@@ -44,6 +46,10 @@ public static class ApiCache
     public static string OddsMovementKey(int gameId) => $"OddsMovement_{gameId}";
     public static string TrackRecordKey(int seasonStartYear, bool liveOnly) => $"TrackRecord_{seasonStartYear}_{liveOnly}";
     public static string PredictionFactorsKey(int gameId) => $"PredictionFactors_{gameId}";
+    public static string PlayerKey(int playerId, int seasonStartYear) => $"Player_{playerId}_{seasonStartYear}";
+    public static string TeamRosterKey(int teamId, int seasonStartYear) => $"TeamRoster_{teamId}_{seasonStartYear}";
+    public static string GamePlayersKey(int gameId) => $"GamePlayers_{gameId}";
+    public static string ActivePlayersKey(int seasonStartYear) => $"ActivePlayers_{seasonStartYear}";
 
     public static async Task<T> GetOrSetAsync<T>(this IMemoryCache cache, string key, Func<Task<T>> create,
         Func<T, long> sizeOf, TimeSpan? lifetime = null)

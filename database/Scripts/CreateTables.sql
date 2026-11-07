@@ -348,6 +348,8 @@ CREATE TABLE "GameSkaterStats"
     FOREIGN KEY ("PlayerId") REFERENCES "Player"("Id"),
     FOREIGN KEY ("TeamId") REFERENCES "Team"("Id")
 );
+-- A player's latest game (the Player page's current team)
+CREATE INDEX "IX_GameSkaterStats_PlayerId" ON "GameSkaterStats"("PlayerId", "GameId");
 
 CREATE TABLE "GameGoalieStats"
 (
@@ -368,6 +370,7 @@ CREATE TABLE "GameGoalieStats"
     FOREIGN KEY ("PlayerId") REFERENCES "Player"("Id"),
     FOREIGN KEY ("TeamId") REFERENCES "Team"("Id")
 );
+CREATE INDEX "IX_GameGoalieStats_PlayerId" ON "GameGoalieStats"("PlayerId", "GameId");
 
 CREATE TABLE "TvBroadcaster"
 (

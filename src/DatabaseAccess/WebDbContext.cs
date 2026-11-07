@@ -27,6 +27,10 @@ public partial class GameDbContext : DbContext
     public virtual DbSet<DbUptimeDay> UptimeDay { get; set; } = null!;
     public virtual DbSet<DbLineupGame> LineupGame { get; set; } = null!;
     public virtual DbSet<DbLineupPlayer> LineupPlayer { get; set; } = null!;
+    public virtual DbSet<DbPlayer> Player { get; set; } = null!;
+    public virtual DbSet<DbGameSkaterStats> GameSkaterStats { get; set; } = null!;
+    public virtual DbSet<DbGameGoalieStats> GameGoalieStats { get; set; } = null!;
+    public virtual DbSet<DbGameRosterSpot> GameRosterSpot { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -54,5 +58,11 @@ public partial class GameDbContext : DbContext
             .HasKey(c => new { c.SectionHash, c.Side, c.Group, c.LineNumber, c.Slot });
         modelBuilder.Entity<DbSeasonTeam>()
             .HasKey(c => new { c.TeamId, c.SeasonStartYear });
+        modelBuilder.Entity<DbGameSkaterStats>()
+            .HasKey(c => new { c.GameId, c.PlayerId });
+        modelBuilder.Entity<DbGameGoalieStats>()
+            .HasKey(c => new { c.GameId, c.PlayerId });
+        modelBuilder.Entity<DbGameRosterSpot>()
+            .HasKey(c => new { c.GameId, c.PlayerId });
     }
 }
