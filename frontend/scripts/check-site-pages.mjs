@@ -17,7 +17,7 @@ const problems = [];
 for (const r of routes) {
   if (!(r in SITE_PAGES)) {
     problems.push(
-      `${r} is in src/routes.ts but not in src/sitePages.ts: add it there, as 'static' to list it in the sitemap or { exclude: '<reason>' } to leave it out`,
+      `${r} is in src/routes.ts but not in src/sitePages.ts: add it there, as 'daily' or 'static' to list it in the sitemap or { exclude: '<reason>' } to leave it out`,
     );
   }
 }

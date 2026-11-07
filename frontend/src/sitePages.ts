@@ -3,20 +3,25 @@
 // which fails while a route is missing (and checks the a11y scan covers it).
 //
 // Plain data (no imports), so that script can load it with Node.
+//
+// <lastmod> is only given where it's a real date (search engines stop trusting a
+// sitemap whose dates are just when it was built).
 export type SitemapEntry =
-  /** Listed as is */
+  /** Listed, lastmod the latest game day so far: the page changes with each day's games */
+  | 'daily'
+  /** Listed without lastmod: the content only changes when the site does */
   | 'static'
-  /** One URL per team, from the teams API */
+  /** One URL per team, each with lastmod its latest game day so far, from the teams API */
   | 'teams'
   /** Left out, with the reason */
   | { exclude: string };
 
 export const SITE_PAGES: Record<string, SitemapEntry> = {
-  '/': 'static',
-  '/strategies': 'static',
-  '/disagreements': 'static',
-  '/teams': 'static',
-  '/track-record': 'static',
+  '/': 'daily',
+  '/strategies': 'daily',
+  '/disagreements': 'daily',
+  '/teams': 'daily',
+  '/track-record': 'daily',
   '/about': 'static',
   '/team/:teamId': 'teams',
   '/game/:gameId': {
@@ -30,7 +35,7 @@ export const SITE_PAGES: Record<string, SitemapEntry> = {
   '/og/:file': { exclude: 'link preview image (og:image), not a page' },
 };
 
-/** The paths the sitemap lists as they are */
-export const STATIC_SITEMAP_PATHS = Object.entries(SITE_PAGES)
-  .filter(([, entry]) => entry === 'static')
-  .map(([path]) => path);
+/** The paths the sitemap lists as they are, and whether their lastmod is the latest game day */
+export const LISTED_PATHS = Object.entries(SITE_PAGES).flatMap(([path, entry]) =>
+  entry === 'static' || entry === 'daily' ? [{ path, daily: entry === 'daily' }] : [],
+);
