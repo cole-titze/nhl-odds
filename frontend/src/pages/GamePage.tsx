@@ -7,9 +7,9 @@ import {
   type LoaderFunctionArgs,
 } from 'react-router';
 import { useState, useEffect } from 'react';
-import type { GameOddsVM, BookmakerOddsVM } from '../types';
+import type { GameOddsVM, BookmakerOddsVM, PredictionFactorsVM } from '../types';
 import { Winner } from '../types';
-import { getGame } from '../api/gameOdds';
+import { getGame, getPredictionFactors } from '../api/gameOdds';
 import { forwardClientIp } from '../api/client';
 import { useDisplayTimeZone } from '../hooks/useDisplayTimeZone';
 import { useOddsFormatContext } from '../contexts/OddsFormatContext';
@@ -53,13 +53,22 @@ function formatPoint(point: number): string {
 // as before (usually not even that: game cards pass the game in location.state)
 export async function loader({ params, request }: LoaderFunctionArgs) {
   let game: GameOddsVM | undefined;
+  let factors: PredictionFactorsVM | null = null;
+  const init = forwardClientIp(request);
   try {
-    game = await getGame(params.gameId!, forwardClientIp(request));
+    // The prediction factors come with the first render, so their section doesn't push
+    // the rest of the page down when it arrives (a layout shift)
+    [game, factors] = await Promise.all([
+      getGame(params.gameId!, init),
+      /^\d+$/.test(params.gameId!)
+        ? getPredictionFactors(Number(params.gameId), init).catch(() => null)
+        : null,
+    ]);
   } catch {
     return null;
   }
   // The page still renders its "Game not found" message, with a real 404 status for crawlers
-  return game ? { game } : data({ game: null }, { status: 404 });
+  return game ? { game, factors } : data({ game: null, factors: null }, { status: 404 });
 }
 
 export async function clientLoader() {
@@ -239,7 +248,11 @@ export function GamePage() {
         )}
       </div>
 
-      <PredictionFactors game={game} />
+      <PredictionFactors
+        key={game.id}
+        game={game}
+        initial={loaded?.game?.id === game.id ? loaded.factors : undefined}
+      />
 
       {/* Spread & Total Predictions */}
       {(game.predictedSpread != null || game.predictedTotal != null) && (

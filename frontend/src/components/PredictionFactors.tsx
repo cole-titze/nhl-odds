@@ -10,12 +10,21 @@ const pts = (p: number) => `${p >= 0 ? '+' : '−'}${Math.abs(p * 100).toFixed(1
 /**
  * The main reasons behind the model's prediction (#155): how much each group of
  * features moved the home team's win probability from the average game's. Shows
- * nothing until loaded, or when the prediction has no saved factors.
+ * nothing until loaded, or when the prediction has no saved factors. The Game
+ * page's server loader passes them in, so a first load has them from the start.
  */
-export function PredictionFactors({ game }: { game: GameOddsVM }) {
-  const [data, setData] = useState<PredictionFactorsVM | null>(null);
+export function PredictionFactors({
+  game,
+  initial,
+}: {
+  game: GameOddsVM;
+  /** What the server loaded with the page (null: none saved); undefined fetches them here */
+  initial?: PredictionFactorsVM | null;
+}) {
+  const [data, setData] = useState<PredictionFactorsVM | null>(initial ?? null);
 
   useEffect(() => {
+    if (initial !== undefined) return;
     let current = true;
     getPredictionFactors(game.id)
       .then((d) => current && setData(d))
@@ -23,7 +32,7 @@ export function PredictionFactors({ game }: { game: GameOddsVM }) {
     return () => {
       current = false;
     };
-  }, [game.id]);
+  }, [game.id, initial]);
 
   if (!data || data.factors.length === 0 || !game.homeTeam || !game.awayTeam) return null;
 
