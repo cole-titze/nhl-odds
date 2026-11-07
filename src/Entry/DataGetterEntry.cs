@@ -277,7 +277,7 @@ public class DataGetterEntry
         await indexer.Rebuild(articlesIndex, articles, a => a.EntityId, now);
     }
 
-    // The first request loads the model (seconds on a Pi); a batch of 16 article openings on its CPU takes ~10-30 s
+    // The first request loads the model (seconds on a Pi); a batch of 4 article openings then takes a few seconds
     private static readonly TimeSpan EmbedRequestTimeout = TimeSpan.FromMinutes(3);
 
     // The job runs hourly and never overlaps itself; a first run that needs every article embedded stops here and

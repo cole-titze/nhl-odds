@@ -176,6 +176,27 @@ public class VectorSearchTests
     }
 
     [TestMethod]
+    public void EmbeddingKey_ChangesWithTheModelsPrefix()
+    {
+        // nomic-embed-text gets a "search_document: " prefix, all-minilm none; same text, different vectors
+        EmbeddingPrompts.Prefix("nomic-embed-text:v1.5", EmbeddingPurpose.Document).Should().NotBeEmpty();
+        ArticleEmbeddings.EmbeddingKey("nomic-embed-text:v1.5", "text")
+            .Should().NotBe(ArticleEmbeddings.EmbeddingKey("nomic-embed-text:v1.5", "other text"))
+            .And.NotBe(ArticleEmbeddings.EmbeddingKey("all-minilm", "text"));
+    }
+
+    [TestMethod]
+    public async Task Add_SendsSmallBatchesOneAtATime()
+    {
+        var embedder = new FakeEmbedder();
+        var articles = Enumerable.Range(1, 10).Select(i => Article($"a{i}", $"A{i}", i)).ToList();
+
+        await new ArticleEmbeddings(embedder, NullLogger.Instance).Add(articles, new Dictionary<string, PreviousEmbedding>(), TimeSpan.FromMinutes(1));
+
+        embedder.Batches.Select(b => b.Count).Should().Equal(4, 4, 2);
+    }
+
+    [TestMethod]
     public void EmbeddingText_KeepsTheOpeningOfALongArticle()
     {
         var article = Article("a", "Title", 1) with { Body = new string('x', 10_000) };
