@@ -290,6 +290,68 @@ public class WebPlayerRepository : IWebPlayerRepository
             .ToList();
     }
 
+    public async Task<List<PlayerName>> GetPlayerNames()
+    {
+        return await _dbContext.Player
+            .AsNoTracking()
+            .Select(p => new PlayerName { Id = p.Id, FirstName = p.FirstName, LastName = p.LastName })
+            .ToListAsync();
+    }
+
+    public async Task<List<PlayerLatestTeam>> GetLatestTeams(IReadOnlyCollection<int> playerIds)
+    {
+        if (playerIds.Count == 0)
+            return new List<PlayerLatestTeam>();
+        var ids = playerIds.Distinct().ToList();
+
+        var skaterLatest = await _dbContext.GameSkaterStats
+            .AsNoTracking()
+            .Where(s => ids.Contains(s.PlayerId))
+            .GroupBy(s => s.PlayerId)
+            .Select(g => new { PlayerId = g.Key, GameId = g.Max(s => s.GameId) })
+            .ToListAsync();
+        var goalieLatest = await _dbContext.GameGoalieStats
+            .AsNoTracking()
+            .Where(s => ids.Contains(s.PlayerId))
+            .GroupBy(s => s.PlayerId)
+            .Select(g => new { PlayerId = g.Key, GameId = g.Max(s => s.GameId) })
+            .ToListAsync();
+        var skaterGames = skaterLatest.Select(x => x.GameId).ToList();
+        var goalieGames = goalieLatest.Select(x => x.GameId).ToList();
+
+        var rows = (await _dbContext.GameSkaterStats
+                .AsNoTracking()
+                .Where(s => ids.Contains(s.PlayerId) && skaterGames.Contains(s.GameId))
+                .Select(s => new PlayerGameRef(s.PlayerId, s.GameId, s.TeamId, s.Position, s.TimeOnIceSeconds))
+                .ToListAsync())
+            .Concat(await _dbContext.GameGoalieStats
+                .AsNoTracking()
+                .Where(s => ids.Contains(s.PlayerId) && goalieGames.Contains(s.GameId))
+                .Select(s => new PlayerGameRef(s.PlayerId, s.GameId, s.TeamId, POSITION.Goalie, s.TimeOnIceSeconds))
+                .ToListAsync())
+            .GroupBy(r => r.PlayerId)
+            .Select(g => g.MaxBy(r => r.GameId)!)
+            .ToList();
+
+        var teamIds = rows.Select(r => r.TeamId).Distinct().ToList();
+        var seasonTeams = await _dbContext.SeasonTeam
+            .AsNoTracking()
+            .Where(t => teamIds.Contains(t.TeamId))
+            .Select(t => new { t.TeamId, t.SeasonStartYear, t.Abbreviation })
+            .ToListAsync();
+
+        return rows.Select(r => new PlayerLatestTeam
+        {
+            PlayerId = r.PlayerId,
+            Position = r.Position,
+            TeamId = r.TeamId,
+            // The team's abbreviation that season (or the latest before it: relocations change it)
+            TeamAbbreviation = seasonTeams
+                .Where(t => t.TeamId == r.TeamId && t.SeasonStartYear <= SeasonOf(r.GameId))
+                .MaxBy(t => t.SeasonStartYear)?.Abbreviation ?? string.Empty,
+        }).ToList();
+    }
+
     private async Task<Dictionary<(int GameId, int PlayerId), short?>> GetSweaterNumbers(List<(int GameId, int PlayerId)> keys)
     {
         if (keys.Count == 0)

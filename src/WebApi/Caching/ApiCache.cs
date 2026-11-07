@@ -50,6 +50,7 @@ public static class ApiCache
     public static string TeamRosterKey(int teamId, int seasonStartYear) => $"TeamRoster_{teamId}_{seasonStartYear}";
     public static string GamePlayersKey(int gameId) => $"GamePlayers_{gameId}";
     public static string ActivePlayersKey(int seasonStartYear) => $"ActivePlayers_{seasonStartYear}";
+    public static string FindPlayersKey(string foldedName, int seasonStartYear) => $"FindPlayers_{seasonStartYear}_{foldedName}";
 
     public static async Task<T> GetOrSetAsync<T>(this IMemoryCache cache, string key, Func<Task<T>> create,
         Func<T, long> sizeOf, TimeSpan? lifetime = null)

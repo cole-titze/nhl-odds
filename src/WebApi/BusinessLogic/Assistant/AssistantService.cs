@@ -17,12 +17,14 @@ public class AssistantService(
     IConfiguration config,
     GameOddsMcpTools gameTools,
     TeamMcpTools teamTools,
+    PlayerMcpTools playerTools,
     IGameOddsGetter gameOddsGetter,
     ILogger<AssistantService> logger) : IAssistantService
 {
     // Each round is a full model call on the Mac, so stop a model that keeps asking for tools
     private const int MaxToolRounds = 3;
-    // GetTeamStats returns a whole season of games; keep tool results inside the model's context
+    // GetTeamStats returns a whole season of games; keep tool results inside the model's context.
+    // get_player returns a compact shape (PlayerStatsVM) so a full season of a player's games fits
     private const int MaxToolResultChars = 24_000;
     private const int ContextTokens = 32768;
 
@@ -48,6 +50,14 @@ public class AssistantService(
         Tool("get_all_teams", "Get every team's season record, stats and model accuracy (standings). No games.",
             ("seasonStartYear", "integer", "Season start year")),
         Tool("get_team_stats", "Get one team's stats and game history by team ID (the number in a /team/{id} page URL).",
+            ("teamId", "integer", "The team ID"),
+            ("seasonStartYear", "integer", "Season start year")),
+        Tool("find_players", "Find players by name to get their player IDs. Part of a last name is enough. Call this before get_player.",
+            ("name", "string", "All or part of the player's name")),
+        Tool("get_player", "Get one player's season by player ID (from find_players, or the number in a /player/{id} page URL): totals, per-game averages and every game with his stats.",
+            ("playerId", "integer", "The player ID"),
+            ("seasonStartYear", "integer", "Season start year")),
+        Tool("get_team_roster", "Get a team's roster for a season: its players with their IDs, positions and games played.",
             ("teamId", "integer", "The team ID"),
             ("seasonStartYear", "integer", "Season start year")),
     ];
@@ -134,6 +144,9 @@ public class AssistantService(
                 "get_game" => await gameOddsGetter.GetGameOdds(Int(args, "gameId")),
                 "get_all_teams" => await teamTools.GetAllTeams(Int(args, "seasonStartYear")),
                 "get_team_stats" => await teamTools.GetTeamStats(Int(args, "teamId"), Int(args, "seasonStartYear")),
+                "find_players" => await playerTools.FindPlayers(args["name"]?.ToString() ?? ""),
+                "get_player" => await playerTools.GetPlayer(Int(args, "playerId"), Int(args, "seasonStartYear")),
+                "get_team_roster" => await playerTools.GetTeamRoster(Int(args, "teamId"), Int(args, "seasonStartYear")),
                 _ => throw new ArgumentException($"Unknown tool {name}"),
             };
             var node = JsonSerializer.SerializeToNode(result, JsonOptions);
@@ -200,16 +213,17 @@ public class AssistantService(
         var season = today >= new DateTime(today.Year, 9, 20) ? today.Year : today.Year - 1;
         return $"""
             You are a small assistant on an NHL odds website. The site shows its own machine-learning
-            model's win probabilities next to bookmaker odds (DraftKings and Kalshi), plus team stats.
+            model's win probabilities next to bookmaker odds (DraftKings and Kalshi), plus team and player stats.
             Answer briefly (a few sentences) in plain text. Use the tools for any facts about games,
-            teams or odds; never make numbers up. If the tools can't answer, say so.
+            teams, players or odds; never make numbers up. If the tools can't answer, say so.
 
             Today is {today:dddd yyyy-MM-dd} (US Central time, which game times use too). The current season is {season} ({season}-{(season + 1) % 100:00}).
             In game data, winner is HOME or AWAY and goals are each team's final score. A game with
             status "not played yet" has no result: never give a score or winner for it. Odds are win probabilities from 0 to 1. Log loss measures prediction accuracy; lower is
             better, and random guessing scores about 0.693.
-            The user is on the page "{page ?? "/"}". If it's /game/{"{id}"} or /team/{"{id}"}, that ID is
-            what "this game" or "this team" means.
+            For a player, call find_players with his name to get his ID, then get_player.
+            The user is on the page "{page ?? "/"}". If it's /game/{"{id}"}, /team/{"{id}"} or /player/{"{id}"}, that ID is
+            what "this game", "this team" or "this player" means.
             This is a hobby project; don't give betting advice beyond describing what the data shows.
             """;
     }

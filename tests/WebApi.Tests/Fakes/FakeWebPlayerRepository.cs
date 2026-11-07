@@ -24,4 +24,12 @@ public class FakeWebPlayerRepository : IWebPlayerRepository
         Task.FromResult(Games.FirstOrDefault(g => g.Game.Id == gameId));
 
     public Task<List<ActivePlayer>> GetActivePlayers(int seasonStartYear) => Task.FromResult(Active.ToList());
+
+    public List<PlayerLatestTeam> LatestTeams { get; } = new();
+
+    public Task<List<PlayerName>> GetPlayerNames() =>
+        Task.FromResult(Players.Select(p => new PlayerName { Id = p.Id, FirstName = p.FirstName, LastName = p.LastName }).ToList());
+
+    public Task<List<PlayerLatestTeam>> GetLatestTeams(IReadOnlyCollection<int> playerIds) =>
+        Task.FromResult(LatestTeams.Where(t => playerIds.Contains(t.PlayerId)).ToList());
 }

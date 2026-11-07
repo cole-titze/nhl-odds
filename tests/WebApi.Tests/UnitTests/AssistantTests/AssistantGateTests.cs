@@ -7,7 +7,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using WebApi.BusinessLogic.Assistant;
+using Entities.ViewModels;
 using WebApi.BusinessLogic.GameOddsGetter;
+using WebApi.BusinessLogic.PlayerGetter;
 using WebApi.BusinessLogic.TeamGetter;
 using WebApi.Caching;
 using WebApi.McpTools;
@@ -37,21 +39,42 @@ public class AssistantGateTests
             Encoding.UTF8, "application/json"),
     };
 
+    private static Func<HttpResponseMessage> ToolCall(string name, JsonObject arguments) => () => new HttpResponseMessage(HttpStatusCode.OK)
+    {
+        Content = new StringContent(
+            new JsonObject
+            {
+                ["message"] = new JsonObject
+                {
+                    ["role"] = "assistant",
+                    ["content"] = "",
+                    ["tool_calls"] = new JsonArray(new JsonObject
+                    {
+                        ["function"] = new JsonObject { ["name"] = name, ["arguments"] = arguments },
+                    }),
+                },
+            }.ToJsonString(),
+            Encoding.UTF8, "application/json"),
+    };
+
     private static HttpClient Client(FakeOllama ollama) => new(ollama) { BaseAddress = new Uri("http://ollama") };
 
     private static List<AssistantMessage> Ask(string question) => [new("user", question)];
 
-    private static AssistantService CreateService(FakeOllama ollama, Dictionary<string, string?>? settings = null)
+    private static AssistantService CreateService(FakeOllama ollama, Dictionary<string, string?>? settings = null,
+        IPlayerGetter? playerGetter = null)
     {
         var services = new ServiceCollection()
             .AddSingleton(A.Fake<ITeamGetter>())
             .AddSingleton(A.Fake<IGameOddsGetter>())
+            .AddSingleton(playerGetter ?? A.Fake<IPlayerGetter>())
             .AddKeyedSingleton(ApiCache.ServiceKey, (_, _) => ApiCache.Create())
             .BuildServiceProvider();
         var config = new ConfigurationBuilder().AddInMemoryCollection(settings ?? []).Build();
         return new AssistantService(Client(ollama), config,
             ActivatorUtilities.CreateInstance<GameOddsMcpTools>(services),
             ActivatorUtilities.CreateInstance<TeamMcpTools>(services),
+            ActivatorUtilities.CreateInstance<PlayerMcpTools>(services),
             services.GetRequiredService<IGameOddsGetter>(),
             NullLogger<AssistantService>.Instance);
     }
@@ -176,5 +199,48 @@ public class AssistantGateTests
         await CreateService(ollama).Chat(new AssistantRequest(Ask("hi"), "/"), CancellationToken.None);
 
         ollama.Requests.Should().HaveCount(2).And.OnlyContain(r => r["keep_alive"]!.GetValue<int>() == AssistantLimits.KeepAlive);
+    }
+
+    [TestMethod]
+    public void Tools_ShouldOfferThePlayerTools()
+    {
+        var ollama = new FakeOllama(Reply("ON"), Reply("answer"));
+
+        CreateService(ollama).Chat(new AssistantRequest(Ask("hi"), "/"), CancellationToken.None).Wait();
+
+        var names = ollama.Requests[1]["tools"]!.AsArray().Select(t => t!["function"]!["name"]!.GetValue<string>());
+        names.Should().Contain(new[] { "find_players", "get_player", "get_team_roster" });
+    }
+
+    [TestMethod]
+    public async Task Chat_FindPlayers_ShouldRunThePlayerTool()
+    {
+        var playerGetter = A.Fake<IPlayerGetter>();
+        A.CallTo(() => playerGetter.FindPlayers("mcdavid", A<int>._, A<int>._))
+            .Returns(new List<PlayerSearchResultVM> { new() { Id = 8478402, Name = "Connor McDavid", CurrentTeamAbbreviation = "EDM" } });
+        var ollama = new FakeOllama(Reply("ON"), ToolCall("find_players", new JsonObject { ["name"] = "McDavid" }), Reply("He plays for Edmonton."));
+
+        var reply = await CreateService(ollama, playerGetter: playerGetter)
+            .Chat(new AssistantRequest(Ask("Who does McDavid play for?"), "/"), CancellationToken.None);
+
+        reply.Should().Be("He plays for Edmonton.");
+        var toolMessage = ollama.Requests[2]["messages"]!.AsArray().Last()!;
+        toolMessage["role"]!.GetValue<string>().Should().Be("tool");
+        toolMessage["content"]!.GetValue<string>().Should().Contain("8478402").And.Contain("EDM");
+    }
+
+    [TestMethod]
+    public async Task Chat_GetPlayerUnknown_ShouldHandTheModelAnError()
+    {
+        var playerGetter = A.Fake<IPlayerGetter>();
+        A.CallTo(() => playerGetter.GetPlayer(A<int>._, A<int>._)).Returns((PlayerVM?)null);
+        var ollama = new FakeOllama(Reply("ON"),
+            ToolCall("get_player", new JsonObject { ["playerId"] = 1, ["seasonStartYear"] = 2026 }), Reply("No such player."));
+
+        await CreateService(ollama, playerGetter: playerGetter)
+            .Chat(new AssistantRequest(Ask("player 1?"), "/"), CancellationToken.None);
+
+        var toolMessage = ollama.Requests[2]["messages"]!.AsArray().Last()!;
+        toolMessage["content"]!.GetValue<string>().Should().StartWith("Error: No player with ID 1");
     }
 }

@@ -70,6 +70,7 @@ builder.Services.AddSingleton<ClientErrorThrottle>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<GameOddsMcpTools>();
 builder.Services.AddScoped<TeamMcpTools>();
+builder.Services.AddScoped<PlayerMcpTools>();
 builder.Services.AddHttpClient<IAssistantService, AssistantService>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["OLLAMA_URL"] ?? "http://localhost:11434");
@@ -170,6 +171,9 @@ static string BuildMcpInstructions(int currentSeason) => $"""
         - Use GetGamesInDateRange for historical results or a specific week/range.
         - Use GetAllTeams for standings, model accuracy comparisons, or league-wide stats (no games).
         - Use GetTeamStats when the user asks about a specific team — it includes full game history.
+        - For a player, call FindPlayers with his name first to get his player ID (there is no other
+          way to get one), then GetPlayer with that ID for his season: games, per-game stats, totals
+          and averages. GetTeamRoster lists a team's players with their IDs.
 
         Odds are win probabilities (0–1). Log loss measures prediction accuracy — lower is better;
         random guessing scores ~0.693.
