@@ -229,7 +229,13 @@ export function SearchBox() {
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={onKeyDown}
           onFocus={() => setOpen(true)}
-          className="w-40 lg:w-52 rounded-lg border border-surface-300 dark:border-white/15 bg-white/70 dark:bg-white/[0.04] py-1.5 pl-8 pr-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
+          // Grows on focus; with the list open, box and list are one panel: same solid background and accent
+          // border, the box's bottom corners squared off where the list hangs from it
+          className={`w-40 focus:w-48 lg:w-52 lg:focus:w-72 border py-1.5 pl-8 pr-2 text-sm transition-[width] duration-150 motion-reduce:transition-none focus:outline-none ${
+            showList
+              ? 'rounded-t-lg rounded-b-none border-accent-500 border-b-transparent bg-white dark:bg-surface-900'
+              : 'rounded-lg border-surface-300 dark:border-white/15 bg-white/70 dark:bg-white/[0.04] focus-visible:ring-2 focus-visible:ring-accent-500'
+          }`}
         />
         {/* Tells screen readers there's a list to arrow into, after each new set of suggestions */}
         <p role="status" className="sr-only">
@@ -242,7 +248,9 @@ export function SearchBox() {
           role="listbox"
           aria-label="Suggestions"
           hidden={!showList}
-          className="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-surface-200 dark:border-white/10 bg-white dark:bg-surface-900 py-1.5 shadow-xl shadow-black/10 dark:shadow-black/40"
+          // Straight off the box's bottom edge, its width from lg (where the box grows to w-72); below lg the box
+          // is narrower, so the list sticks out to the left with its own top edge and rounded corner there
+          className="absolute right-0 top-full z-10 w-72 max-w-[calc(100vw-2rem)] overflow-hidden rounded-b-xl rounded-tl-xl border border-accent-500 bg-white pb-1.5 shadow-xl shadow-black/10 before:mx-3 before:hidden lg:before:block before:border-t before:border-surface-200 before:content-[''] lg:rounded-tl-none lg:border-t-0 dark:bg-surface-900 dark:shadow-black/40 dark:before:border-white/10"
         >
           {options.map((o, i) => {
             const firstOfGroup = o.group !== 'all' && (i === 0 || options[i - 1].group !== o.group);
