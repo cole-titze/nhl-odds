@@ -1,6 +1,6 @@
 namespace Entities.Models.Web;
 
-/// <summary>A player who has played in a season, and when his last game that season started (UTC).</summary>
+/// <summary>A player who has played (in a season, or ever), and when their last such game started (UTC).</summary>
 public class ActivePlayer
 {
     public int Id { get; set; }

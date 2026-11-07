@@ -40,6 +40,11 @@ const bookmaker = (bookmakerName, homeOdds) => ({
   underPrice: -110,
 });
 
+/** A retired player in the sitemap fixture: dated their last game, years back */
+export const SITEMAP_RETIRED = { id: 8448208, lastGameDate: '2012-04-07T23:00:00Z', lastmod: '2012-04-07' };
+/** Players whose last game is in the future or unreadable: the sitemap leaves them out */
+export const SITEMAP_LEFT_OUT = [8400001, 8400002];
+
 // Five weeks of games either side of today, so the Games feed can load older
 // and newer chunks the way it does against the real API
 const games = [];
@@ -297,10 +302,14 @@ const responses = {
       gamePlayer(p, p.position === 'G' ? goalieLine(30, 3) : skaterLine(0, 1, 3, -1, 1200)),
     ),
   },
-  GetActivePlayers: [...torRoster, ...bosRoster].map((p) => ({
-    id: p.id,
-    lastGameDate: games[34].gameDate,
-  })),
+  // Everyone's last game (#171): this season's rosters, a retired player, and
+  // two bad rows the sitemap must leave out (SITEMAP_LEFT_OUT)
+  GetSitemapPlayers: [
+    ...[...torRoster, ...bosRoster].map((p) => ({ id: p.id, lastGameDate: games[34].gameDate })),
+    { id: SITEMAP_RETIRED.id, lastGameDate: SITEMAP_RETIRED.lastGameDate },
+    { id: SITEMAP_LEFT_OUT[0], lastGameDate: games[70].gameDate },
+    { id: SITEMAP_LEFT_OUT[1], lastGameDate: 'not a date' },
+  ],
   GetBestStrategies: [
     {
       betType: 'moneyline',

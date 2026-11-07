@@ -14,6 +14,8 @@ public interface IWebPlayerRepository
     Task<GamePlayers?> GetGamePlayers(int gameId);
     /// <summary>Every player with a game in the season, and when his last one started.</summary>
     Task<List<ActivePlayer>> GetActivePlayers(int seasonStartYear);
+    /// <summary>Every player with a page and at least one game, each with their last game (for /sitemap.xml)</summary>
+    Task<List<ActivePlayer>> GetPlayersLastGames();
     /// <summary>Every player's id and name, for finding players by name.</summary>
     Task<List<PlayerName>> GetPlayerNames();
     /// <summary>The team and position of each player's latest game; players without games are left out.</summary>

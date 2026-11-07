@@ -45,12 +45,13 @@ public class PlayerController
         return result is null ? Results.NotFound() : Results.Ok(result);
     }
 
-    // Everyone with a game in the season and the date of his last one, for /sitemap.xml
+    // Every player with a page and a game, and when their last game started, for /sitemap.xml (#171). It only
+    // changes when games are played, so an hour's cache is plenty; one row per player, a few thousand in all
     [HttpGet]
-    public async Task<IResult> GetActivePlayers(int seasonStartYear)
+    public async Task<IResult> GetSitemapPlayers()
     {
-        var result = await _cache.GetOrSetAsync(ApiCache.ActivePlayersKey(seasonStartYear),
-            () => _playerGetter.GetActivePlayers(seasonStartYear), r => r.Count / 50, ApiCache.DateRangeLifetime);
+        var result = await _cache.GetOrSetAsync(ApiCache.SitemapPlayersKey,
+            () => _playerGetter.GetSitemapPlayers(DateTime.UtcNow), r => r.Count / 50, ApiCache.DateRangeLifetime);
         return Results.Ok(result);
     }
 }

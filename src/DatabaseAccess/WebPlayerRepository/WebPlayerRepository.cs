@@ -261,11 +261,21 @@ public class WebPlayerRepository : IWebPlayerRepository
         return result;
     }
 
-    public async Task<List<ActivePlayer>> GetActivePlayers(int seasonStartYear)
-    {
-        var first = FirstGameId(seasonStartYear);
-        var next = FirstGameId(seasonStartYear + 1);
+    public Task<List<ActivePlayer>> GetActivePlayers(int seasonStartYear) =>
+        GetLastGames(FirstGameId(seasonStartYear), FirstGameId(seasonStartYear + 1));
 
+    public async Task<List<ActivePlayer>> GetPlayersLastGames()
+    {
+        // Only players with a page: a box score row for an id missing from Player would be a 404
+        var withPage = (await _dbContext.Player.AsNoTracking().Select(p => p.Id).ToListAsync()).ToHashSet();
+        var lastGames = await GetLastGames(0, int.MaxValue);
+        return lastGames.Where(p => withPage.Contains(p.Id)).ToList();
+    }
+
+    // Each player with a box score row in [first, next) game ids, and when the latest of those games started.
+    // Grouped in Postgres, so one row per player comes back, not one per game.
+    private async Task<List<ActivePlayer>> GetLastGames(int first, int next)
+    {
         var skaters = await (
             from s in _dbContext.GameSkaterStats.AsNoTracking()
             where s.GameId >= first && s.GameId < next

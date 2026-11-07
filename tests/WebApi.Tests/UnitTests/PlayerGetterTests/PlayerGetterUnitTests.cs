@@ -1,6 +1,7 @@
 using Entities.Models.Web;
 using Entities.Types;
 using Entities.Types.Enums;
+using Entities.ViewModels;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http.HttpResults;
 using WebApi.BusinessLogic.PlayerGetter;
@@ -263,18 +264,47 @@ public class PlayerGetterUnitTests
     }
 
     [TestMethod]
-    public async Task GetActivePlayers_MapsLastGameDate()
+    public async Task GetSitemapPlayers_MapsLastGameDate_SortedById()
     {
         var repo = new FakeWebPlayerRepository();
         var last = new DateTime(2026, 11, 5, 23, 0, 0, DateTimeKind.Utc);
-        repo.Active.Add(new ActivePlayer { Id = 8479318, LastGameDateUTC = last });
+        var retired = new DateTime(2012, 4, 7, 23, 0, 0, DateTimeKind.Utc);
+        repo.LastGames.Add(new ActivePlayer { Id = 8479318, LastGameDateUTC = last });
+        repo.LastGames.Add(new ActivePlayer { Id = 8448208, LastGameDateUTC = retired });
         var cut = new PlayerGetter(repo);
 
-        var result = await cut.GetActivePlayers(YEAR);
+        var result = await cut.GetSitemapPlayers(new DateTime(2026, 11, 7, 0, 0, 0, DateTimeKind.Utc));
 
-        result.Should().ContainSingle();
-        result[0].Id.Should().Be(8479318);
-        result[0].LastGameDate.Should().Be(last);
+        result.Select(p => p.Id).Should().Equal(8448208, 8479318);
+        result[0].LastGameDate.Should().Be(retired);
+        result[1].LastGameDate.Should().Be(last);
+    }
+
+    [TestMethod]
+    public async Task GetSitemapPlayers_LeavesOutFutureDates()
+    {
+        var repo = new FakeWebPlayerRepository();
+        var now = new DateTime(2026, 11, 7, 0, 0, 0, DateTimeKind.Utc);
+        repo.LastGames.Add(new ActivePlayer { Id = 1, LastGameDateUTC = now.AddDays(2) });
+        repo.LastGames.Add(new ActivePlayer { Id = 2, LastGameDateUTC = now.AddDays(-1) });
+        var cut = new PlayerGetter(repo);
+
+        var result = await cut.GetSitemapPlayers(now);
+
+        result.Should().ContainSingle().Which.Id.Should().Be(2);
+    }
+
+    [TestMethod]
+    public async Task Controller_GetSitemapPlayers_ReturnsEveryPlayerWithAGame()
+    {
+        var repo = new FakeWebPlayerRepository();
+        repo.LastGames.Add(new ActivePlayer { Id = 8479318, LastGameDateUTC = new DateTime(2026, 11, 5, 23, 0, 0, DateTimeKind.Utc) });
+        var controller = new PlayerController(new PlayerGetter(repo), ApiCache.Create());
+
+        var result = await controller.GetSitemapPlayers();
+
+        result.Should().BeOfType<Ok<List<ActivePlayerVM>>>()
+            .Which.Value.Should().ContainSingle().Which.Id.Should().Be(8479318);
     }
 
     [TestMethod]

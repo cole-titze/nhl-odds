@@ -34,10 +34,14 @@ public class PlayerGetter : IPlayerGetter
         return players == null ? null : RosterToRosterVmMapper.MapGame(players);
     }
 
-    public async Task<List<ActivePlayerVM>> GetActivePlayers(int seasonStartYear)
+    public async Task<List<ActivePlayerVM>> GetSitemapPlayers(DateTime nowUtc)
     {
-        var players = await _playerRepository.GetActivePlayers(seasonStartYear);
-        return players.Select(p => new ActivePlayerVM { Id = p.Id, LastGameDate = p.LastGameDateUTC }).ToList();
+        var players = await _playerRepository.GetPlayersLastGames();
+        return players
+            .Where(p => p.LastGameDateUTC <= nowUtc)
+            .OrderBy(p => p.Id)
+            .Select(p => new ActivePlayerVM { Id = p.Id, LastGameDate = p.LastGameDateUTC })
+            .ToList();
     }
 
     public async Task<List<PlayerSearchResultVM>> FindPlayers(string name, int seasonStartYear, int limit)

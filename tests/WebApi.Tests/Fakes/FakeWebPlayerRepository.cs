@@ -25,6 +25,10 @@ public class FakeWebPlayerRepository : IWebPlayerRepository
 
     public Task<List<ActivePlayer>> GetActivePlayers(int seasonStartYear) => Task.FromResult(Active.ToList());
 
+    public List<ActivePlayer> LastGames { get; } = new();
+
+    public Task<List<ActivePlayer>> GetPlayersLastGames() => Task.FromResult(LastGames.ToList());
+
     public List<PlayerLatestTeam> LatestTeams { get; } = new();
 
     public Task<List<PlayerName>> GetPlayerNames() =>

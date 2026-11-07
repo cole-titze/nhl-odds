@@ -44,8 +44,7 @@ export function getGamePlayers(
   );
 }
 
-export function getActivePlayers(seasonStartYear: number): Promise<ActivePlayerVM[]> {
-  return apiFetch<ActivePlayerVM[]>(
-    `/api/Player/GetActivePlayers?seasonStartYear=${seasonStartYear}`,
-  );
+/** Every player with a page and a game, each with their last game's start (for /sitemap.xml) */
+export function getSitemapPlayers(): Promise<ActivePlayerVM[]> {
+  return apiFetch<ActivePlayerVM[]>('/api/Player/GetSitemapPlayers');
 }

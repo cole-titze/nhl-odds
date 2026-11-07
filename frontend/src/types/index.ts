@@ -328,7 +328,7 @@ export interface GamePlayersVM {
   away: GamePlayerVM[];
 }
 
-/** A player with a game in the season, for the sitemap */
+/** A player and when their last game started, for the sitemap */
 export interface ActivePlayerVM {
   id: number;
   lastGameDate: string;

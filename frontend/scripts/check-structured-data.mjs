@@ -5,11 +5,13 @@
 // or if the About page's FAQ markup doesn't match its visible questions.
 // Teams, players and games must carry their page's URL as `@id` (#169), so the
 // markup on different pages points at the same entities.
+// It also checks /sitemap.xml (#171): every player page is listed with a real,
+// past <lastmod>, retired players included, and bad dates are left out.
 //
 //   npm run build && npm run check-schema
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
-import { mockApi, pagesFor } from '../a11y/fixtures.mjs';
+import { SITEMAP_LEFT_OUT, SITEMAP_RETIRED, mockApi, pagesFor } from '../a11y/fixtures.mjs';
 
 const PORT = 4183;
 const API_PORT = 4184;
@@ -112,6 +114,44 @@ async function checkPage(path, problems) {
   console.log(`${path}: ${types.join(', ')}`);
 }
 
+// One sitemap file holds 50,000 URLs and 50 MB (see SITEMAP_URL_LIMIT in routes/sitemap.ts)
+const SITEMAP_MAX_URLS = 50_000;
+const SITEMAP_MAX_BYTES = 50 * 1024 * 1024;
+
+async function checkSitemap(problems) {
+  const res = await fetch(`http://localhost:${PORT}/sitemap.xml`);
+  const xml = await res.text();
+  if (!res.ok) {
+    problems.push(`/sitemap.xml: HTTP ${res.status}`);
+    return;
+  }
+  const entries = [...xml.matchAll(/<url><loc>([^<]+)<\/loc>(?:<lastmod>([^<]+)<\/lastmod>)?<\/url>/g)].map(
+    ([, loc, lastmod]) => ({ loc, lastmod }),
+  );
+  const urlCount = (xml.match(/<url>/g) ?? []).length;
+  if (entries.length !== urlCount) problems.push(`/sitemap.xml: ${urlCount - entries.length} <url> entries didn't parse`);
+  if (urlCount > SITEMAP_MAX_URLS) problems.push(`/sitemap.xml: ${urlCount} URLs, over ${SITEMAP_MAX_URLS}`);
+  if (Buffer.byteLength(xml) > SITEMAP_MAX_BYTES) problems.push('/sitemap.xml: over 50 MB');
+  if (/<changefreq>|<priority>/.test(xml)) problems.push('/sitemap.xml: has changefreq or priority');
+
+  // A day of slack: lastmod is a Central-time day, and this is UTC's
+  const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+  const players = entries.filter((e) => e.loc.startsWith(`${SITE_URL}/player/`));
+  for (const { loc, lastmod } of players) {
+    const real = /^\d{4}-\d{2}-\d{2}$/.test(lastmod ?? '') && !Number.isNaN(Date.parse(lastmod));
+    if (!real) problems.push(`/sitemap.xml: ${loc} has no real <lastmod> (${lastmod})`);
+    else if (lastmod > tomorrow) problems.push(`/sitemap.xml: ${loc} <lastmod> ${lastmod} is in the future`);
+  }
+  const listed = new Map(players.map((e) => [Number(e.loc.split('/').pop()), e.lastmod]));
+  const expected = mockApi('http://localhost/api/Player/GetSitemapPlayers').length - SITEMAP_LEFT_OUT.length;
+  if (listed.size !== expected) problems.push(`/sitemap.xml: ${listed.size} player pages, expected ${expected}`);
+  if (listed.get(SITEMAP_RETIRED.id) !== SITEMAP_RETIRED.lastmod)
+    problems.push(`/sitemap.xml: retired player ${SITEMAP_RETIRED.id} isn't dated ${SITEMAP_RETIRED.lastmod}`);
+  for (const id of SITEMAP_LEFT_OUT)
+    if (listed.has(id)) problems.push(`/sitemap.xml: player ${id} (future or bad date) is listed`);
+  console.log(`/sitemap.xml: ${urlCount} URLs, ${players.length} player pages`);
+}
+
 const api = createServer((req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.end(JSON.stringify(mockApi(`http://localhost${req.url}`)));
@@ -125,6 +165,7 @@ try {
   await waitForServer();
   const problems = [];
   for (const path of pagesFor()) await checkPage(path, problems);
+  await checkSitemap(problems);
   for (const p of problems) console.error(`FAIL: ${p}`);
   process.exitCode = problems.length ? 1 : 0;
 } finally {

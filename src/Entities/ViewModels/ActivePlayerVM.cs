@@ -1,6 +1,6 @@
 namespace Entities.ViewModels;
 
-/// <summary>A player with a game in the season, for the sitemap: his page's lastmod is his last game.</summary>
+/// <summary>A player and when their last game started, for the sitemap: the page's lastmod is that game's day.</summary>
 public class ActivePlayerVM
 {
     public int Id { get; set; }
