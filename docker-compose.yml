@@ -35,7 +35,7 @@ services:
       - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD:-}
       # Semantic article search: EMBEDDING_URL=http://embeddings:11434 (the embeddings service below)
       - EMBEDDING_URL=${EMBEDDING_URL:-}
-      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-nomic-embed-text}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-nomic-embed-text:v1.5}
     depends_on:
       database:
         condition: service_healthy
@@ -55,7 +55,7 @@ services:
       - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD:-}
       # Semantic article search: EMBEDDING_URL=http://embeddings:11434 (the embeddings service below)
       - EMBEDDING_URL=${EMBEDDING_URL:-}
-      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-nomic-embed-text}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-nomic-embed-text:v1.5}
     depends_on:
       database:
         condition: service_healthy
@@ -117,7 +117,7 @@ services:
     restart: always
     environment:
       - OLLAMA_KEEP_ALIVE=-1
-    entrypoint: ["sh", "-c", "ollama serve & until ollama list >/dev/null 2>&1; do sleep 1; done; ollama pull ${EMBEDDING_MODEL:-nomic-embed-text} && wait"]
+    entrypoint: ["sh", "-c", "ollama serve & until ollama list >/dev/null 2>&1; do sleep 1; done; ollama pull ${EMBEDDING_MODEL:-nomic-embed-text:v1.5} && wait"]
     volumes:
       - ollama-models:/root/.ollama
 
