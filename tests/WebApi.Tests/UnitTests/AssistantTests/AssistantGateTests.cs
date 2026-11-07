@@ -167,4 +167,14 @@ public class AssistantGateTests
         ollama.Requests[0]["options"]!["num_ctx"]!.GetValue<int>()
             .Should().Be(ollama.Requests[1]["options"]!["num_ctx"]!.GetValue<int>());
     }
+
+    [TestMethod]
+    public async Task Chat_ShouldKeepTheModelLoadedOnEveryCall()
+    {
+        var ollama = new FakeOllama(Reply("ON"), Reply("answer"));
+
+        await CreateService(ollama).Chat(new AssistantRequest(Ask("hi"), "/"), CancellationToken.None);
+
+        ollama.Requests.Should().HaveCount(2).And.OnlyContain(r => r["keep_alive"]!.GetValue<int>() == AssistantLimits.KeepAlive);
+    }
 }
