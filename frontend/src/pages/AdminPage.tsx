@@ -24,6 +24,8 @@ import {
 import { formatSeasonLabel } from '../utils/season';
 import { JobCardSkeleton, HealthCheckTableSkeleton } from '../components/Skeleton';
 import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
+import { Spinner } from '../components/Loading';
+import { useDelayedFlag } from '../hooks/useDelayedFlag';
 import { UptimeHistory } from '../components/UptimeHistory';
 import { clearAdminKey, setAdminKey, useAdminKey } from '../hooks/useAdminKey';
 
@@ -95,7 +97,7 @@ function JobCard({
   note?: string;
   /** When it runs on its own: the cluster CronJob's schedule (ansible-setup nhl-odds-template.yml), or manual only */
   schedule: string;
-  onStart?: () => void;
+  onStart?: () => Promise<void>;
   startLabel?: string;
   /** Can run again after completing today (a job that also runs hourly on its own) */
   repeatable?: boolean;
@@ -104,6 +106,20 @@ function JobCard({
   const isRequested = job.status === 'requested';
   const ranToday = job.completedToday && !repeatable;
   const detailsRef = useRef<HTMLDetailsElement>(null);
+  // Between the click and the refreshed status: the button is disabled at once, and says so if it takes a while
+  const [starting, setStarting] = useState(false);
+  const slowStart = useDelayedFlag(starting);
+
+  async function start() {
+    if (!onStart) return;
+    setStarting(true);
+    try {
+      await onStart();
+    } finally {
+      setStarting(false);
+    }
+  }
+  const startDisabled = starting || isRunning || isRequested || ranToday;
 
   return (
     <div className={`glass rounded-xl p-6 relative overflow-hidden`}>
@@ -175,21 +191,28 @@ function JobCard({
       {onStart && (
         <button
           type="button"
-          onClick={onStart}
-          disabled={isRunning || isRequested || ranToday}
-          className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-all ${
-            isRunning || isRequested || ranToday
+          onClick={start}
+          disabled={startDisabled}
+          className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-all inline-flex items-center justify-center gap-2 ${
+            startDisabled && !starting
               ? 'bg-surface-200 dark:bg-white/[0.04] text-surface-500 dark:text-surface-400 cursor-not-allowed'
-              : 'bg-accent-600 hover:bg-accent-700 text-on-accent shadow-lg shadow-accent-500/25'
+              : 'bg-accent-600 hover:bg-accent-700 text-on-accent shadow-lg shadow-accent-500/25 disabled:cursor-wait'
           }`}
         >
-          {isRunning
-            ? 'Running...'
-            : isRequested
-              ? 'Requested...'
-              : ranToday
-                ? 'Completed Today'
-                : (startLabel ?? `Start ${label}`)}
+          {slowStart ? (
+            <>
+              <Spinner className="h-4 w-4" />
+              Starting…
+            </>
+          ) : isRunning ? (
+            'Running...'
+          ) : isRequested ? (
+            'Requested...'
+          ) : ranToday ? (
+            'Completed Today'
+          ) : (
+            (startLabel ?? `Start ${label}`)
+          )}
         </button>
       )}
     </div>
@@ -723,7 +746,11 @@ export function AdminPage() {
                 repeatable
                 onStart={() => handleStart(startSearchIndex)}
               />
-              <JobCard job={statuses.nextDayKalshi} label="Kalshi Fetch" schedule={SCHEDULES.nextDayKalshi} />
+              <JobCard
+                job={statuses.nextDayKalshi}
+                label="Kalshi Fetch"
+                schedule={SCHEDULES.nextDayKalshi}
+              />
               <JobCard job={statuses.oddsFetch} label="Odds Fetch" schedule={SCHEDULES.oddsFetch} />
               <JobCard
                 job={statuses.prediction}

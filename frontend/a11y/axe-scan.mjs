@@ -18,9 +18,14 @@
 //    through it (the box keeps focus), Escape closes it and Enter on a
 //    suggestion opens it, and a 503 shows "search isn't available"; axe also
 //    scans the open list and the message (desktop)
+// 7. Loading states, with the search API slowed down: the search page shows
+//    result placeholders for a first search and a progress bar over old
+//    results (still visible with reduced motion), the navbar box a spinner,
+//    each announced once ("Searching…"); axe scans each. With the API at full
+//    speed, nothing loading-shaped appears at all (indicators wait 300 ms)
 //
 // axe runs in Chromium only (its rules don't depend on the engine); checks
-// 2-6 run in every browser in A11Y_BROWSERS (comma-separated, default
+// 2-7 run in every browser in A11Y_BROWSERS (comma-separated, default
 // chromium,firefox,webkit), since scrolling and focus behave differently in
 // each. WebKit is driven with Option+Tab, as Safari's plain Tab skips links
 // and buttons. Set CHROMIUM_PATH to use an existing Chromium instead of
@@ -43,6 +48,8 @@ const VIEWPORTS = {
   phone: { width: 375, height: 812 },
 };
 const MAX_TABS = 80;
+// How long check 7 holds each search request, so the loading state can be inspected
+const SLOW_API_MS = 2500;
 const ENGINES = { chromium, firefox, webkit };
 const BROWSERS = (process.env.A11Y_BROWSERS || Object.keys(ENGINES).join(','))
   .split(',')
@@ -481,6 +488,99 @@ try {
       if (!status?.includes("isn't available")) problems.push(`status line says "${status}"`);
       if (engine === 'chromium') problems.push(...(await runAxe(page)));
       total += report('search suggestions on a 503 [desktop] /about', problems);
+      await ctx.close();
+    }
+
+    // 7. Loading states with a slow search API
+    {
+      const ctx = await newContext(browser, 'light', VIEWPORTS.desktop);
+      // Registered after newContext's mocks, so it wins for these URLs
+      await ctx.route('**/api/Search**', async (route) => {
+        await new Promise((r) => setTimeout(r, SLOW_API_MS));
+        // The page may have moved on (and closed the request) meanwhile
+        await route.fulfill({ json: mockApi(route.request().url()) }).catch(() => {});
+      });
+      const page = await ctx.newPage();
+      const status = page.locator('main [role="status"]');
+
+      // First search from an empty page: placeholders, not a blank space
+      await load(page, '/search');
+      let problems = [];
+      await page.locator('#search-page-input').fill('leafs');
+      await page
+        .locator('[data-loading="search"]')
+        .waitFor({ timeout: SLOW_API_MS })
+        .catch(() => problems.push('no result placeholders during a slow first search'));
+      if ((await status.textContent()) !== 'Searching…')
+        problems.push(`status line says "${await status.textContent()}", not "Searching…"`);
+      if (engine === 'chromium') problems.push(...(await runAxe(page)));
+      total += report('search page loading, first search [desktop] /search', problems);
+
+      // A new search with results on screen: they stay, under a progress bar
+      problems = [];
+      await page.locator('#results-teams').waitFor({ timeout: SLOW_API_MS * 2 });
+      await page.locator('#search-page-input').fill('bruins');
+      const bar = page.locator('[data-loading="progress"]:not(.invisible)');
+      await bar
+        .waitFor({ timeout: SLOW_API_MS })
+        .catch(() => problems.push('no progress bar over the old results'));
+      const barWidth = await bar
+        .locator('div')
+        .evaluate((el) => el.getBoundingClientRect().width)
+        .catch(() => 0);
+      if (barWidth < 1) problems.push('the progress bar is empty with reduced motion');
+      if ((await page.locator('#results-teams').count()) === 0)
+        problems.push('the old results disappeared while searching');
+      if ((await status.textContent()) !== 'Searching…')
+        problems.push(`status line says "${await status.textContent()}", not "Searching…"`);
+      if (engine === 'chromium') problems.push(...(await runAxe(page)));
+      total += report('search page loading, with old results [desktop] /search', problems);
+
+      // Navbar suggestions: a spinner where the search icon was
+      problems = [];
+      await load(page, '/about');
+      await page.locator('header [role="combobox"]').fill('leafs');
+      await page
+        .locator('header [data-loading="suggestions"]')
+        .waitFor({ timeout: SLOW_API_MS })
+        .catch(() => problems.push('no spinner while suggestions load'));
+      const boxStatus = await page.locator('header [role="status"]').textContent();
+      if (boxStatus !== 'Searching…')
+        problems.push(`status line says "${boxStatus}", not "Searching…"`);
+      if (engine === 'chromium') problems.push(...(await runAxe(page)));
+      total += report('search suggestions loading [desktop] /about', problems);
+      await ctx.close();
+    }
+
+    // 7b. Fast answers show no loading indicator at all
+    {
+      const ctx = await newContext(browser, 'light', VIEWPORTS.desktop);
+      const page = await ctx.newPage();
+      await load(page, '/search');
+      await page.evaluate(() => {
+        window.__sawLoading = false;
+        new MutationObserver(() => {
+          if (document.querySelector('[data-loading]:not(.invisible)')) window.__sawLoading = true;
+        }).observe(document.body, { subtree: true, childList: true, attributes: true });
+      });
+      await page.locator('#search-page-input').fill('leafs');
+      await page.locator('#results-teams').waitFor({ timeout: 5000 });
+      const problems = [];
+      if (await page.evaluate(() => window.__sawLoading))
+        problems.push('a loading indicator flashed on the search page');
+      // The navbar box isn't on the search page
+      await load(page, '/about');
+      await page.evaluate(() => {
+        window.__sawLoading = false;
+        new MutationObserver(() => {
+          if (document.querySelector('[data-loading]:not(.invisible)')) window.__sawLoading = true;
+        }).observe(document.body, { subtree: true, childList: true, attributes: true });
+      });
+      await page.locator('header [role="combobox"]').fill('leafs');
+      await page.locator('header [role="listbox"]:not([hidden])').waitFor({ timeout: 5000 });
+      if (await page.evaluate(() => window.__sawLoading))
+        problems.push('a loading indicator flashed in the navbar suggestions');
+      total += report('no loading flicker for fast answers [desktop] /search, /about', problems);
       await ctx.close();
     }
 

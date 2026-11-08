@@ -208,6 +208,37 @@ main [data-section]:focus {
   animation: progress-bar 1.5s ease-in-out infinite;
 }
 
+/* Spinner (components/Loading.tsx) */
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.spinner {
+  animation: spinner 0.8s linear infinite;
+}
+
+/* Reduced motion: loading indicators hold still rather than run once and stop wherever their last frame left
+   them (an indeterminate bar would end at 0% wide, a shimmer off the edge, the chat dots faded out) */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer {
+    animation: none !important;
+    opacity: 0;
+  }
+  .animate-progress-bar {
+    animation: none !important;
+    width: 100%;
+    opacity: 0.5;
+  }
+  .spinner {
+    animation: none !important;
+  }
+  .throbber-dot {
+    animation: none !important;
+    opacity: 0.6;
+  }
+}
+
 /* Table row hover glow */
 .table-row-hover {
   @apply transition-colors duration-150;

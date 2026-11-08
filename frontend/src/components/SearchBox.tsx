@@ -8,6 +8,8 @@ import {
   type SuggestResults,
 } from '../api/search';
 import { TeamLogo } from './TeamLogo';
+import { Spinner } from './Loading';
+import { useDelayedFlag } from '../hooks/useDelayedFlag';
 
 // The panel under the box, list or message: straight off the box's bottom edge, its width from lg (where the box
 // grows to w-72); below lg the box is narrower, so the panel sticks out to the left with its own top edge and
@@ -116,6 +118,8 @@ export function SearchBox() {
   const [results, setResults] = useState<SuggestResults | null>(null);
   // The text whose suggestions failed because search is down, so the message shows only for it
   const [unavailableFor, setUnavailableFor] = useState<string | null>(null);
+  // The text whose suggestions are being fetched right now
+  const [loadingFor, setLoadingFor] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -127,6 +131,8 @@ export function SearchBox() {
   const showUnavailable =
     open && !showList && unavailableFor !== null && unavailableFor === text.trim();
   const showPanel = showList || showUnavailable;
+  // A spinner replaces the search icon only when the request takes a while (not for every keystroke)
+  const slow = useDelayedFlag(loadingFor !== null && loadingFor === text.trim());
 
   function close() {
     setOpen(false);
@@ -143,6 +149,7 @@ export function SearchBox() {
     setText('');
     setResults(null);
     setUnavailableFor(null);
+    setLoadingFor(null);
     setOpen(false);
     setActive(-1);
   }
@@ -164,13 +171,16 @@ export function SearchBox() {
     if (value.trim().length < MIN_QUERY_CHARS) {
       setResults(null);
       setUnavailableFor(null);
+      setLoadingFor(null);
       return;
     }
     timer.current = setTimeout(async () => {
       const controller = new AbortController();
       request.current = controller;
+      setLoadingFor(value.trim());
       const found = await suggest(value, controller.signal);
       if (controller.signal.aborted) return;
+      setLoadingFor(null);
       setResults(found === 'unavailable' ? null : found);
       setUnavailableFor(found === 'unavailable' ? value.trim() : null);
     }, SUGGEST_DELAY_MS);
@@ -226,7 +236,16 @@ export function SearchBox() {
         Search teams, players, games and articles
       </label>
       <div className="relative">
-        <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-500 dark:text-surface-400" />
+        {slow ? (
+          <span
+            data-loading="suggestions"
+            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-accent-600 dark:text-accent-400"
+          >
+            <Spinner className="h-4 w-4" />
+          </span>
+        ) : (
+          <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-500 dark:text-surface-400" />
+        )}
         <input
           id={`${id}-input`}
           type="search"
@@ -256,11 +275,13 @@ export function SearchBox() {
         />
         {/* Tells screen readers there's a list to arrow into after each new set of suggestions, or that search is down */}
         <p role="status" className="sr-only">
-          {showList
-            ? `${count} suggestion${count === 1 ? '' : 's'}. Use the up and down arrows to choose.`
-            : showUnavailable
-              ? UNAVAILABLE
-              : ''}
+          {slow
+            ? 'Searching…'
+            : showList
+              ? `${count} suggestion${count === 1 ? '' : 's'}. Use the up and down arrows to choose.`
+              : showUnavailable
+                ? UNAVAILABLE
+                : ''}
         </p>
         <ul
           id={listId}

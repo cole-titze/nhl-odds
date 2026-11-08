@@ -9,6 +9,8 @@ import { getChipClasses } from '../utils/colorClass';
 import { dashFor, readableLineColor } from '../utils/chartSeries';
 import { useIsDarkTheme } from '../hooks/useRootTheme';
 import { LineKey } from './LineKey';
+import { Spinner } from './Loading';
+import { useDelayedFlag } from '../hooks/useDelayedFlag';
 import { ChartDataTable, type ChartTableRow } from './ChartDataTable';
 
 const HOMEGROWN = 'In-House Model';
@@ -85,6 +87,8 @@ export function LogLossChart({ games, unloadedBookmakers = NONE, onLoadBookmaker
   const lineDash = (name: string) => dashFor(allChips.indexOf(name));
 
   const [loading, setLoading] = useState<string | null>(null);
+  // A book whose odds take a while to load shows a spinner on its chip
+  const slowLoad = useDelayedFlag(loading !== null);
 
   const toggle = async (name: string) => {
     if (loading) return;
@@ -187,7 +191,11 @@ export function LogLossChart({ games, unloadedBookmakers = NONE, onLoadBookmaker
               onClick={() => toggle(name)}
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-medium transition-all ${getChipClasses(color, active)}`}
             >
-              <LineKey color={lineColor(name)} dash={lineDash(name)} active={active} />
+              {slowLoad && loading === name ? (
+                <Spinner className="h-3 w-3" />
+              ) : (
+                <LineKey color={lineColor(name)} dash={lineDash(name)} active={active} />
+              )}
               <span className={active ? '' : 'line-through'}>{name}</span>
             </button>
           );

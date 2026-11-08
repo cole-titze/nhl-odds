@@ -23,6 +23,8 @@ import {
 import { forwardClientIp } from '../api/client';
 import { TeamLogo } from '../components/TeamLogo';
 import { PageTitle } from '../components/A11y';
+import { ProgressBar, SearchResultsSkeleton } from '../components/Loading';
+import { useDelayedFlag } from '../hooks/useDelayedFlag';
 
 // Typing waits this long before searching, so each keystroke isn't a request
 const TYPING_DELAY_MS = 300;
@@ -93,11 +95,7 @@ function TeamResults({ teams }: { teams: TeamResult[] }) {
       <ul>
         {teams.map((t) => (
           <li key={t.teamId}>
-            <Link
-              to={`/team/${t.teamId}`}
-              className={linkRowClass}
-              aria-label={t.active ? t.name : `${t.name} (former team)`}
-            >
+            <Link to={`/team/${t.teamId}`} className={linkRowClass}>
               <TeamLogo src={t.logoUri} alt="" className="h-8 w-8 shrink-0" />
               <span className="font-medium">{t.name}</span>
               <span className={`text-xs font-mono ${mutedClass}`}>{t.abbreviation}</span>
@@ -127,16 +125,14 @@ function PlayerResults({ players }: { players: PlayerResult[] }) {
               {details && <span className={`text-sm ${mutedClass}`}>{details}</span>}
             </>
           );
-          // There's no player page, so a player links to their team
+          // There's no player page, so a player links to their team. Links are named by their visible text plus
+          // hidden words, never an aria-label that drops some of what's shown (WCAG 2.5.3, label in name)
           return (
             <li key={p.playerId}>
               {p.teamId != null ? (
-                <Link
-                  to={`/team/${p.teamId}`}
-                  className={linkRowClass}
-                  aria-label={`${p.name}${details ? `, ${details}` : ''}: go to ${p.teamName}`}
-                >
+                <Link to={`/team/${p.teamId}`} className={linkRowClass}>
                   {content}
+                  <span className="sr-only">, go to {p.teamName}</span>
                 </Link>
               ) : (
                 <div className="flex items-center gap-3 px-2 py-2 -mx-2">{content}</div>
@@ -162,9 +158,6 @@ function GameResults({ games }: { games: GameResult[] }) {
               to={`/game/${g.gameId}`}
               // Phones: the date on its own small line, then the matchup and score
               className={`${linkRowClass} flex-col items-start gap-0.5 sm:flex-row sm:items-center sm:gap-3`}
-              aria-label={`${formatDate(g.gameDate)}: ${g.away.name} at ${g.home.name}, ${
-                g.played ? `final ${g.away.goals} to ${g.home.goals}` : 'upcoming'
-              }`}
             >
               <span className={`text-xs sm:text-sm sm:w-32 sm:shrink-0 ${mutedClass}`}>
                 {formatDate(g.gameDate)}
@@ -174,6 +167,7 @@ function GameResults({ games }: { games: GameResult[] }) {
                   {g.away.name} at {g.home.name}
                 </span>
                 <span className={`text-sm font-mono ${g.played ? '' : mutedClass}`}>
+                  {g.played && <span className="sr-only">final </span>}
                   {g.played ? `${g.away.goals}–${g.home.goals}` : 'Upcoming'}
                 </span>
               </span>
@@ -285,6 +279,16 @@ export function SearchPage() {
   }
 
   const searching = navigation.state === 'loading' && navigation.location?.pathname === '/search';
+  // Nothing shows (or is announced) for a search that answers within LOADING_DELAY_MS
+  const slow = useDelayedFlag(searching);
+  const hasResults =
+    outcome.kind === 'results' &&
+    [
+      outcome.results.teams,
+      outcome.results.players,
+      outcome.results.games,
+      outcome.results.articles,
+    ].some((list) => list.length > 0);
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -318,13 +322,21 @@ export function SearchPage() {
           Search
         </button>
       </Form>
-      {/* Announces the result count after each search, including ones made while typing */}
+      {/* Announces a slow search once, then the result count after each search, including ones made while typing */}
       <p role="status" className="sr-only">
-        {searching ? 'Searching…' : summary(outcome, q)}
+        {slow ? 'Searching…' : searching ? '' : summary(outcome, q)}
       </p>
-      <div aria-busy={searching} className={searching ? 'opacity-60 transition-opacity' : ''}>
-        <Results outcome={outcome} q={q} />
-      </div>
+      {slow && !hasResults ? (
+        // Nothing worth keeping on screen (first search, no results, an error): result-shaped placeholders
+        <SearchResultsSkeleton />
+      ) : (
+        <div aria-busy={slow}>
+          {/* The bar's room is always kept, so the results don't jump when it comes and goes */}
+          <ProgressBar className={`-mt-4 mb-3.5 ${slow ? '' : 'invisible'}`} />
+          {/* No fade over the old results: dimmed, their muted text fails color contrast (the a11y scan checks) */}
+          <Results outcome={outcome} q={q} />
+        </div>
+      )}
     </div>
   );
 }
