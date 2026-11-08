@@ -105,7 +105,7 @@ const TOR_TEAM = {
   teamName: 'Maple Leafs',
   logoUri: 'https://assets.nhle.com/logos/nhl/svg/TOR_light.svg',
 };
-// A player on no NHL roster now (#170): the page says who they last played for
+// A player on no NHL roster now (#170): the page shows no team
 const retiredPlayer = {
   ...rosterPlayer(8448208, 'Jaromir', 'Retired', 'R', 68),
   birthDate: '1972-02-15',

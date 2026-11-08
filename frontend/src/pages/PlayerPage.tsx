@@ -131,16 +131,12 @@ export function PlayerPage() {
   const name = playerName(player);
   const team = player.currentTeam;
   const teamName = team ? `${team.locationName} ${team.teamName}` : null;
-  // On no NHL roster now (sent down, unsigned, retired): who they last played for
-  const lastTeam = team ? null : player.lastTeam;
-  const lastTeamName = lastTeam ? `${lastTeam.locationName} ${lastTeam.teamName}` : null;
-  const crumbTeam = team ?? lastTeam;
+  // A team only while they're on an NHL roster: a retired (or sent down,
+  // unsigned) player shows none
   const isGoalie = player.position === 'G';
   const crumbs: Crumb[] = [
     { name: 'Teams', path: '/teams' },
-    ...(crumbTeam
-      ? [{ name: `${crumbTeam.locationName} ${crumbTeam.teamName}`, path: `/team/${crumbTeam.id}` }]
-      : []),
+    ...(team && teamName ? [{ name: teamName, path: `/team/${team.id}` }] : []),
     { name, path: `/player/${player.id}` },
   ];
   const totals = player.seasonTotals;
@@ -160,7 +156,7 @@ export function PlayerPage() {
   ].filter(Boolean);
   const seasonLabel = formatSeasonLabel(season);
   const description = `${name}${positionName(player.position) ? `, ${positionName(player.position).toLowerCase()}` : ''}${
-    teamName ? ` for the ${teamName}` : lastTeamName ? `, last with the ${lastTeamName}` : ''
+    teamName ? ` for the ${teamName}` : ''
   }: ${seasonLabel} NHL game log and stats.`;
 
   return (
@@ -201,21 +197,6 @@ export function PlayerPage() {
                 </Link>
               )}
               {team && player.isInjuredReserve && <InjuredReserveBadge />}
-              {lastTeam && lastTeamName && (
-                <span className="inline-flex items-center gap-1.5">
-                  Last played for
-                  <Link
-                    to={`/team/${lastTeam.id}`}
-                    className="inline-flex items-center gap-1.5 py-0.5 font-medium underline-offset-2 hover:underline hover:text-accent-600 dark:hover:text-accent-400"
-                  >
-                    <TeamLogo src={lastTeam.logoUri} alt="" className="h-5 w-5 object-contain" />
-                    {lastTeamName}
-                  </Link>
-                  {player.lastSeasonStartYear != null &&
-                    player.lastSeasonStartYear !== getCurrentSeason() &&
-                    `in ${formatSeasonLabel(player.lastSeasonStartYear)}`}
-                </span>
-              )}
             </p>
             {bio.length > 0 && (
               <p className="mt-1 text-xs text-surface-500 dark:text-surface-400">
