@@ -255,7 +255,7 @@ public class DataGetterEntry
         await indexer.Rebuild(SearchIndexes.Teams, teams, t => t.TeamId.ToString(), now);
 
         var players = SearchDocumentMapper.MapPlayers(
-            (await source.GetPlayers()).Select(p => new PlayerRow(p.Player, p.Position)), teams);
+            (await source.GetPlayers(now)).Select(p => new PlayerRow(p.Player, p.Position, p.CurrentTeamId)), teams);
         await indexer.Rebuild(SearchIndexes.Players, players, p => p.PlayerId.ToString(), now);
 
         var games = SearchDocumentMapper.MapGames(await source.GetGames(), seasonTeams);

@@ -1,4 +1,5 @@
 using Entities.DbModels;
+using Entities.Types;
 using Microsoft.EntityFrameworkCore;
 
 namespace DatabaseAccess.SearchSourceRepository;
@@ -8,21 +9,51 @@ public class SearchSourceRepository(NhlDbContext db) : ISearchSourceRepository
     public Task<List<DbSeasonTeam>> GetSeasonTeams(CancellationToken ct = default) =>
         db.SeasonTeam.AsNoTracking().ToListAsync(ct);
 
-    public async Task<List<(DbPlayer Player, string? Position)>> GetPlayers(CancellationToken ct = default)
+    // NhlAdd saves a roster report snapshot daily; an older one means the job or the report is down. Same rule
+    // as the Player page's current team (WebPlayerRepository, #170)
+    public static readonly TimeSpan RosterReportMaxAge = TimeSpan.FromDays(3);
+
+    public async Task<List<(DbPlayer Player, string? Position, int? CurrentTeamId)>> GetPlayers(DateTime nowUtc, CancellationToken ct = default)
     {
         // Only the columns the index uses (several others are nullable in the table)
         var players = await db.Player.AsNoTracking()
             .Select(p => new DbPlayer
             {
-                Id = p.Id, FirstName = p.FirstName, LastName = p.LastName, IsActive = p.IsActive,
-                CurrentTeamId = p.CurrentTeamId, HeadShot = p.HeadShot,
+                Id = p.Id, FirstName = p.FirstName, LastName = p.LastName, IsActive = p.IsActive, HeadShot = p.HeadShot,
             })
             .ToListAsync(ct);
         var positions = await db.GameRosterSpot.AsNoTracking()
             .GroupBy(r => r.PlayerId)
             .Select(g => new { PlayerId = g.Key, Position = g.OrderByDescending(r => r.GameId).Select(r => r.PositionCode).First() })
             .ToDictionaryAsync(p => p.PlayerId, p => p.Position, ct);
-        return players.Select(p => (p, positions.GetValueOrDefault(p.Id))).ToList();
+        var currentTeams = await GetCurrentTeams(nowUtc, ct);
+        return players
+            .Select(p => (p, positions.GetValueOrDefault(p.Id), currentTeams.TryGetValue(p.Id, out var team) ? team : (int?)null))
+            .ToList();
+    }
+
+    private async Task<Dictionary<int, int>> GetCurrentTeams(DateTime nowUtc, CancellationToken ct)
+    {
+        // Compared here, not in SQL: SnapshotUTC is a plain timestamp column
+        var snapshot = await db.RosterStatus.AsNoTracking().MaxAsync(r => (DateTime?)r.SnapshotUTC, ct);
+        if (snapshot != null && snapshot.Value >= nowUtc - RosterReportMaxAge)
+        {
+            return await db.RosterStatus.AsNoTracking()
+                .Where(r => r.SnapshotUTC == snapshot.Value)
+                .ToDictionaryAsync(r => r.PlayerId, r => r.TeamId, ct);
+        }
+
+        // No recent report: the team of each player's latest game this season (game ids start with the season)
+        var first = NhlSeason.Current(nowUtc) * 1_000_000;
+        var rows = await db.GameSkaterStats.AsNoTracking()
+                .Where(s => s.GameId >= first)
+                .Select(s => new { s.PlayerId, s.GameId, s.TeamId })
+                .ToListAsync(ct);
+        rows.AddRange(await db.GameGoalieStats.AsNoTracking()
+                .Where(s => s.GameId >= first)
+                .Select(s => new { s.PlayerId, s.GameId, s.TeamId })
+                .ToListAsync(ct));
+        return rows.GroupBy(r => r.PlayerId).ToDictionary(g => g.Key, g => g.MaxBy(r => r.GameId)!.TeamId);
     }
 
     public Task<List<DbGameRaw>> GetGames(CancellationToken ct = default) =>

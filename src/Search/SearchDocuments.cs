@@ -22,8 +22,9 @@ public record GameDocument(int GameId, string GameDate, DateTime StartTimeUtc, i
 public record ArticleDocument(string EntityId, string Title, string? Summary, string Body, DateTime? Date, string Url,
     string? EmbeddingKey = null, float[]? Embedding = null);
 
-/// <summary>A player row and the position from their latest game roster, if any.</summary>
-public record PlayerRow(DbPlayer Player, string? Position);
+/// <summary>A player row, the position from their latest game roster and their current team (see
+/// ISearchSourceRepository.GetPlayers), if any.</summary>
+public record PlayerRow(DbPlayer Player, string? Position, int? CurrentTeamId);
 
 /// <summary>Builds the search documents from database rows.</summary>
 public static partial class SearchDocumentMapper
@@ -53,7 +54,7 @@ public static partial class SearchDocumentMapper
             .ToList();
     }
 
-    /// <summary>Players with their current team's latest name; a team id no team has (e.g. 0, unsigned) is left empty.</summary>
+    /// <summary>Players with their current team's latest name; no current team, or an id no team has, is left empty.</summary>
     public static List<PlayerDocument> MapPlayers(IEnumerable<PlayerRow> players, IReadOnlyList<TeamDocument> teams)
     {
         var teamsById = teams.ToDictionary(t => t.TeamId);
@@ -61,7 +62,7 @@ public static partial class SearchDocumentMapper
             .Where(p => !string.IsNullOrWhiteSpace(p.Player.FirstName) || !string.IsNullOrWhiteSpace(p.Player.LastName))
             .Select(p =>
             {
-                var team = teamsById.GetValueOrDefault(p.Player.CurrentTeamId);
+                var team = p.CurrentTeamId is { } id ? teamsById.GetValueOrDefault(id) : null;
                 return new PlayerDocument(p.Player.Id, $"{p.Player.FirstName} {p.Player.LastName}".Trim(),
                     string.IsNullOrEmpty(p.Position) ? null : p.Position, team?.TeamId, team?.Name, team?.Abbreviation,
                     p.Player.IsActive, p.Player.HeadShot);

@@ -64,17 +64,20 @@ public class SearchDocumentMapperTests
     }
 
     [TestMethod]
-    public void MapPlayers_LeavesAnUnknownTeamEmpty()
+    public void MapPlayers_UsesTheCurrentTeam_LeavesNoneOrUnknownEmpty()
     {
         var teams = SearchDocumentMapper.MapTeams([Team(22, 2026, "Edmonton", "Oilers", "EDM")]);
         var players = SearchDocumentMapper.MapPlayers([
-            new PlayerRow(new DbPlayer { Id = 1, FirstName = "Connor", LastName = "McDavid", CurrentTeamId = 22, IsActive = true }, "C"),
-            new PlayerRow(new DbPlayer { Id = 2, FirstName = "Free", LastName = "Agent", CurrentTeamId = 77 }, null),
+            // Player.CurrentTeamId is stale (set on first fetch); the row's current team wins
+            new PlayerRow(new DbPlayer { Id = 1, FirstName = "Connor", LastName = "McDavid", CurrentTeamId = 77, IsActive = true }, "C", 22),
+            new PlayerRow(new DbPlayer { Id = 2, FirstName = "Free", LastName = "Agent", CurrentTeamId = 22 }, null, null),
+            new PlayerRow(new DbPlayer { Id = 3, FirstName = "Gone", LastName = "Team" }, "D", 77),
         ], teams);
 
         players[0].Should().Be(new PlayerDocument(1, "Connor McDavid", "C", 22, "Edmonton Oilers", "EDM", true, ""));
         players[1].TeamId.Should().BeNull();
         players[1].Position.Should().BeNull();
+        players[2].TeamId.Should().BeNull();
     }
 
     [TestMethod]
