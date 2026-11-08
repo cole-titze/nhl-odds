@@ -2,7 +2,7 @@ using Entities.Types;
 
 namespace Entities.Models.Web;
 
-/// <summary>A player on a team's roster: his position and number in his latest game, and his games for the team that season.</summary>
+/// <summary>A player on a team's roster: their position and number in their latest game, and their games for the team that season.</summary>
 public class RosterPlayer
 {
     public int Id { get; set; }
@@ -13,4 +13,6 @@ public class RosterPlayer
     public POSITION Position { get; set; }
     public short? SweaterNumber { get; set; }
     public int GamesPlayed { get; set; }
+    // On the team's injured reserve list in the NHL's latest roster report (current season only)
+    public bool IsInjuredReserve { get; set; }
 }

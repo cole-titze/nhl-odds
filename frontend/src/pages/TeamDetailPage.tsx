@@ -11,7 +11,8 @@ import { useFetch } from '../hooks/useFetch';
 import { getTeam } from '../api/teams';
 import { getTeamRoster } from '../api/players';
 import { forwardClientIp } from '../api/client';
-import { getCurrentSeason } from '../utils/season';
+import { formatSeasonLabel, getCurrentSeason } from '../utils/season';
+import { InjuredReserveBadge } from '../components/InjuredReserveBadge';
 import { formatShortDate } from '../utils/dates';
 import { useDisplayTimeZone } from '../hooks/useDisplayTimeZone';
 import { wasCorrectlyPredicted, calculateLogLoss } from '../utils/predictions';
@@ -158,6 +159,7 @@ export function TeamDetailPage() {
       ? ((team.draftKingsAccurateGameCount / team.draftKingsGameCount) * 100).toFixed(1)
       : '0.0';
 
+  const isCurrentSeason = season === getCurrentSeason();
   const crumbs: Crumb[] = [
     { name: 'Teams', path: '/teams' },
     { name: `${team.locationName} ${team.teamName}`, path: `/team/${team.id}` },
@@ -168,7 +170,8 @@ export function TeamDetailPage() {
       <PageTitle
         title={`${team.locationName} ${team.teamName}`}
         description={`${team.locationName} ${team.teamName} games with NHL Odds model predictions, results, and betting record.`}
-        schema={[sportsTeam(team, roster ?? []), breadcrumbs(crumbs)]}
+        // A team's athletes are its players now: past seasons' rosters aren't listed
+        schema={[sportsTeam(team, isCurrentSeason ? (roster ?? []) : []), breadcrumbs(crumbs)]}
         imageAlt={`${team.locationName} ${team.teamName} logo with this season's record, how often the model picked their games right, and their next game`}
       />
       <Breadcrumbs items={crumbs} />
@@ -437,20 +440,31 @@ export function TeamDetailPage() {
         </div>
       )}
 
-      {roster && roster.length > 0 && <Roster players={roster} />}
+      {roster && roster.length > 0 && (
+        <Roster
+          players={roster}
+          heading={
+            isCurrentSeason
+              ? 'Roster'
+              : `Played for the ${team.teamName} in ${formatSeasonLabel(season)}`
+          }
+        />
+      )}
     </div>
   );
 }
 
-// The players whose latest game this season was for the team, each linked to his page
-function Roster({ players }: { players: RosterPlayerVM[] }) {
+// Each player linked to their page. This season: the NHL's latest roster report
+// for the team (injured reserve marked); past seasons: the players whose latest
+// game that season was for the team
+function Roster({ players, heading }: { players: RosterPlayerVM[]; heading: string }) {
   return (
     <section aria-labelledby="roster-heading" className="glass rounded-xl p-4 sm:p-5 mt-8">
       <h2
         id="roster-heading"
         className="text-xs font-mono font-bold tracking-widest uppercase text-surface-500 dark:text-surface-400 mb-4"
       >
-        Roster
+        {heading}
       </h2>
       <div className="space-y-5">
         {positionGroups(players).map((group) => (
@@ -482,6 +496,12 @@ function Roster({ players }: { players: RosterPlayerVM[] }) {
                       <span className="block text-xs text-surface-500 dark:text-surface-400">
                         {positionName(p.position)} · {p.gamesPlayed}{' '}
                         {p.gamesPlayed === 1 ? 'game' : 'games'}
+                        {p.isInjuredReserve && (
+                          <>
+                            {' '}
+                            <InjuredReserveBadge short />
+                          </>
+                        )}
                       </span>
                     </span>
                   </Link>

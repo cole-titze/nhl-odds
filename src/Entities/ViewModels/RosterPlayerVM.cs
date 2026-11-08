@@ -10,4 +10,6 @@ public class RosterPlayerVM
     public string Position { get; set; } = string.Empty;
     public short? SweaterNumber { get; set; }
     public int GamesPlayed { get; set; }
+    // On the team's injured reserve list (current season, from the NHL's roster report)
+    public bool IsInjuredReserve { get; set; }
 }

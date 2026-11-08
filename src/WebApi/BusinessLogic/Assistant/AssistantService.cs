@@ -54,10 +54,10 @@ public class AssistantService(
             ("seasonStartYear", "integer", "Season start year")),
         Tool("find_players", "Find players by name to get their player IDs. Part of a last name is enough. Call this before get_player.",
             ("name", "string", "All or part of the player's name")),
-        Tool("get_player", "Get one player's season by player ID (from find_players, or the number in a /player/{id} page URL): totals, per-game averages and every game with his stats.",
+        Tool("get_player", "Get one player's season by player ID (from find_players, or the number in a /player/{id} page URL): totals, per-game averages and their current team (null when on no NHL roster), every game with their stats.",
             ("playerId", "integer", "The player ID"),
             ("seasonStartYear", "integer", "Season start year")),
-        Tool("get_team_roster", "Get a team's roster for a season: its players with their IDs, positions and games played.",
+        Tool("get_team_roster", "Get a team's roster for a season: its players with their IDs, positions, games played and injured reserve (current season: the NHL's roster report).",
             ("teamId", "integer", "The team ID"),
             ("seasonStartYear", "integer", "Season start year")),
     ];

@@ -31,6 +31,7 @@ public partial class GameDbContext : DbContext
     public virtual DbSet<DbGameSkaterStats> GameSkaterStats { get; set; } = null!;
     public virtual DbSet<DbGameGoalieStats> GameGoalieStats { get; set; } = null!;
     public virtual DbSet<DbGameRosterSpot> GameRosterSpot { get; set; } = null!;
+    public virtual DbSet<DbRosterStatus> RosterStatus { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -64,5 +65,7 @@ public partial class GameDbContext : DbContext
             .HasKey(c => new { c.GameId, c.PlayerId });
         modelBuilder.Entity<DbGameRosterSpot>()
             .HasKey(c => new { c.GameId, c.PlayerId });
+        modelBuilder.Entity<DbRosterStatus>()
+            .HasKey(c => new { c.SnapshotUTC, c.PlayerId });
     }
 }

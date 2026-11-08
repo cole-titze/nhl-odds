@@ -107,7 +107,7 @@ export function sportsTeam(
   };
 }
 
-/** The Player page's Person, a member of the team of his latest game */
+/** The Player page's Person, a member of their current team (none when they're on no NHL roster) */
 export function person(player: PlayerVM): JsonLd {
   const birthPlace = [player.birthCity, player.birthStateProvince].filter(Boolean).join(', ');
   return {

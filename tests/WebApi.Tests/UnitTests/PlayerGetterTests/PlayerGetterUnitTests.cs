@@ -79,6 +79,25 @@ public class PlayerGetterUnitTests
     }
 
     [TestMethod]
+    public async Task GetPlayer_OffEveryRoster_MapsLastTeamAndSeason()
+    {
+        var repo = new FakeWebPlayerRepository();
+        repo.Players.Add(new PlayerProfile
+        {
+            Id = 8448208, FirstName = "Retired", LastName = "Player",
+            LastTeam = new Team { Id = TOR, LocationName = "Toronto", TeamName = "Maple Leafs" },
+            LastSeasonStartYear = 2011,
+        });
+        var cut = new PlayerGetter(repo);
+
+        var result = await cut.GetPlayer(8448208, YEAR);
+
+        result!.CurrentTeam.Should().BeNull();
+        result.LastTeam!.Id.Should().Be(TOR);
+        result.LastSeasonStartYear.Should().Be(2011);
+    }
+
+    [TestMethod]
     public async Task GetPlayer_KnownPlayer_MapsProfileAndCurrentTeam()
     {
         var cut = new PlayerGetter(RepoWithMatthews());

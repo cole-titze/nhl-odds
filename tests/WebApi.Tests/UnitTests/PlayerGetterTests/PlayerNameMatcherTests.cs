@@ -67,13 +67,18 @@ public class PlayerNameMatcherTests
         PlayerNameMatcher.Match(Players, "connor", new HashSet<int>(), 2).Should().HaveCount(2);
 
     [TestMethod]
-    public async Task FindPlayers_ShouldAddLatestTeamAndActiveFlag()
+    public async Task FindPlayers_ShouldAddCurrentAndLastTeamAndActiveFlag()
     {
         var repo = new FakeWebPlayerRepository();
         repo.Players.Add(new PlayerProfile { Id = 1, FirstName = "Connor", LastName = "McDavid" });
         repo.Players.Add(new PlayerProfile { Id = 2, FirstName = "Connor", LastName = "Bedard" });
         repo.Active.Add(new ActivePlayer { Id = 2 });
-        repo.LatestTeams.Add(new PlayerLatestTeam { PlayerId = 2, TeamId = 16, TeamAbbreviation = "CHI", Position = POSITION.Center });
+        // Traded since their last game: last played for CHI, now on BOS
+        repo.LatestTeams.Add(new PlayerLatestTeam
+        {
+            PlayerId = 2, TeamId = 16, TeamAbbreviation = "CHI", Position = POSITION.Center,
+            CurrentTeamId = 6, CurrentTeamAbbreviation = "BOS",
+        });
         var cut = new PlayerGetter(repo);
 
         var result = await cut.FindPlayers("connor", 2026, 10);
@@ -82,7 +87,9 @@ public class PlayerNameMatcherTests
         result[0].Name.Should().Be("Connor Bedard");
         result[0].IsActive.Should().BeTrue();
         result[0].Position.Should().Be("C");
-        result[0].CurrentTeamAbbreviation.Should().Be("CHI");
+        result[0].CurrentTeamId.Should().Be(6);
+        result[0].CurrentTeamAbbreviation.Should().Be("BOS");
+        result[0].LastTeamAbbreviation.Should().Be("CHI");
         result[1].IsActive.Should().BeFalse();
         result[1].CurrentTeamId.Should().BeNull();
     }

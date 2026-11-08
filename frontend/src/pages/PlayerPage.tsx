@@ -25,6 +25,7 @@ import { Skeleton } from '../components/Skeleton';
 import { SeasonSelector } from '../components/SeasonSelector';
 import { StatCard } from '../components/StatCard';
 import { TeamLogo } from '../components/TeamLogo';
+import { InjuredReserveBadge } from '../components/InjuredReserveBadge';
 import { Breadcrumbs, type Crumb } from '../components/Breadcrumbs';
 import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
 import { breadcrumbs, person } from '../utils/structuredData';
@@ -130,10 +131,16 @@ export function PlayerPage() {
   const name = playerName(player);
   const team = player.currentTeam;
   const teamName = team ? `${team.locationName} ${team.teamName}` : null;
+  // On no NHL roster now (sent down, unsigned, retired): who they last played for
+  const lastTeam = team ? null : player.lastTeam;
+  const lastTeamName = lastTeam ? `${lastTeam.locationName} ${lastTeam.teamName}` : null;
+  const crumbTeam = team ?? lastTeam;
   const isGoalie = player.position === 'G';
   const crumbs: Crumb[] = [
     { name: 'Teams', path: '/teams' },
-    ...(team && teamName ? [{ name: teamName, path: `/team/${team.id}` }] : []),
+    ...(crumbTeam
+      ? [{ name: `${crumbTeam.locationName} ${crumbTeam.teamName}`, path: `/team/${crumbTeam.id}` }]
+      : []),
     { name, path: `/player/${player.id}` },
   ];
   const totals = player.seasonTotals;
@@ -153,7 +160,7 @@ export function PlayerPage() {
   ].filter(Boolean);
   const seasonLabel = formatSeasonLabel(season);
   const description = `${name}${positionName(player.position) ? `, ${positionName(player.position).toLowerCase()}` : ''}${
-    teamName ? ` for the ${teamName}` : ''
+    teamName ? ` for the ${teamName}` : lastTeamName ? `, last with the ${lastTeamName}` : ''
   }: ${seasonLabel} NHL game log and stats.`;
 
   return (
@@ -192,6 +199,22 @@ export function PlayerPage() {
                   <TeamLogo src={team.logoUri} alt="" className="h-5 w-5 object-contain" />
                   {teamName}
                 </Link>
+              )}
+              {team && player.isInjuredReserve && <InjuredReserveBadge />}
+              {lastTeam && lastTeamName && (
+                <span className="inline-flex items-center gap-1.5">
+                  Last played for
+                  <Link
+                    to={`/team/${lastTeam.id}`}
+                    className="inline-flex items-center gap-1.5 py-0.5 font-medium underline-offset-2 hover:underline hover:text-accent-600 dark:hover:text-accent-400"
+                  >
+                    <TeamLogo src={lastTeam.logoUri} alt="" className="h-5 w-5 object-contain" />
+                    {lastTeamName}
+                  </Link>
+                  {player.lastSeasonStartYear != null &&
+                    player.lastSeasonStartYear !== getCurrentSeason() &&
+                    `in ${formatSeasonLabel(player.lastSeasonStartYear)}`}
+                </span>
               )}
             </p>
             {bio.length > 0 && (

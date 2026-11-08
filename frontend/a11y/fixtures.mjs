@@ -89,7 +89,7 @@ const team = (id, locationName, teamName, abbrev) => ({
 
 // Players for the Player page, the Team page's roster and the Game page's box score
 const headShot = (id) => `https://assets.nhle.com/mugs/nhl/20262027/TOR/${id}.png`;
-const rosterPlayer = (id, firstName, lastName, position, sweaterNumber, gamesPlayed) => ({
+const rosterPlayer = (id, firstName, lastName, position, sweaterNumber, gamesPlayed, isInjuredReserve = false) => ({
   id,
   firstName,
   lastName,
@@ -97,12 +97,49 @@ const rosterPlayer = (id, firstName, lastName, position, sweaterNumber, gamesPla
   position,
   sweaterNumber,
   gamesPlayed,
+  isInjuredReserve,
 });
+const TOR_TEAM = {
+  id: 10,
+  locationName: 'Toronto',
+  teamName: 'Maple Leafs',
+  logoUri: 'https://assets.nhle.com/logos/nhl/svg/TOR_light.svg',
+};
+// A player on no NHL roster now (#170): the page says who they last played for
+const retiredPlayer = {
+  ...rosterPlayer(8448208, 'Jaromir', 'Retired', 'R', 68),
+  birthDate: '1972-02-15',
+  birthCity: 'Kladno',
+  birthStateProvince: '',
+  heightInInches: 75,
+  weightInPounds: 230,
+  currentTeam: null,
+  isInjuredReserve: false,
+  lastTeam: TOR_TEAM,
+  lastSeasonStartYear: 2011,
+  seasonStartYear: 2026,
+  games: [],
+  seasonTotals: {
+    gamesPlayed: 0,
+    timeOnIceSeconds: 0,
+    goals: 0,
+    assists: 0,
+    points: 0,
+    shotsOnGoal: 0,
+    plusMinus: 0,
+    shotsAgainst: 0,
+    saves: 0,
+    goalsAgainst: 0,
+    savePct: null,
+    goalsAgainstAverage: null,
+  },
+};
 const torRoster = [
   rosterPlayer(8479318, 'Auston', 'Matthews', 'C', 34, 14),
   rosterPlayer(8478483, 'Mitch', 'Marner', 'R', 16, 14),
   rosterPlayer(8477939, 'William', 'Nylander', 'L', 88, 13),
-  rosterPlayer(8476853, 'Morgan', 'Rielly', 'D', 44, 14),
+  // On injured reserve (#170), so the roster shows the IR badge
+  rosterPlayer(8476853, 'Morgan', 'Rielly', 'D', 44, 14, true),
   rosterPlayer(8479361, 'Joseph', 'Woll', 'G', 60, 9),
 ];
 const bosRoster = [
@@ -137,7 +174,7 @@ const goalieLine = (saves, goalsAgainst) => ({
   isStarter: true,
 });
 const gamePlayer = (p, stats) => {
-  const { headShot: _h, gamesPlayed: _g, ...rest } = p;
+  const { headShot: _h, gamesPlayed: _g, isInjuredReserve: _ir, ...rest } = p;
   return { ...rest, stats };
 };
 // The Player page's games: the played ones among the team's games, newest first
@@ -268,12 +305,10 @@ const responses = {
     birthStateProvince: 'CA',
     heightInInches: 75,
     weightInPounds: 215,
-    currentTeam: {
-      id: 10,
-      locationName: 'Toronto',
-      teamName: 'Maple Leafs',
-      logoUri: 'https://assets.nhle.com/logos/nhl/svg/TOR_light.svg',
-    },
+    currentTeam: TOR_TEAM,
+    isInjuredReserve: false,
+    lastTeam: TOR_TEAM,
+    lastSeasonStartYear: 2026,
     seasonStartYear: 2026,
     games: playerGames,
     seasonTotals: {
@@ -623,6 +658,8 @@ export function mockApi(url) {
   }
   // By the action's exact name: GetTeam must not answer GetTeamRoster
   const action = new URL(url).pathname.split('/').pop();
+  if (action === 'GetPlayer' && new URL(url).searchParams.get('playerId') === String(retiredPlayer.id))
+    return retiredPlayer;
   return Object.hasOwn(responses, action) ? responses[action] : {};
 }
 
@@ -634,6 +671,7 @@ export function pagesFor() {
     '/team/10',
     `/game/${games[33].id}`,
     '/player/8479318',
+    `/player/${retiredPlayer.id}`,
     '/strategies',
     '/track-record',
     '/disagreements',

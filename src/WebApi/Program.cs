@@ -192,7 +192,7 @@ builder.Services.AddMcpServer(options =>
         // Built per session so the current season stays correct without a restart
         transport.ConfigureSessionOptions = (_, options, _) =>
         {
-            options.ServerInstructions = BuildMcpInstructions(Seasons.Current(DateTime.UtcNow));
+            options.ServerInstructions = BuildMcpInstructions(Entities.Types.NhlSeason.Current(DateTime.UtcNow));
             return Task.CompletedTask;
         };
     })

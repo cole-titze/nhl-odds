@@ -21,6 +21,11 @@ public static class PlayerVmToPlayerStatsVmMapper
             BirthDate = player.BirthDate,
             CurrentTeamId = player.CurrentTeam?.Id,
             CurrentTeam = player.CurrentTeam is { } team ? $"{team.LocationName} {team.TeamName}" : null,
+            IsInjuredReserve = player.IsInjuredReserve,
+            LastPlayedFor = player.LastTeam is { } last && player.LastSeasonStartYear is { } season
+                && (player.CurrentTeam?.Id != last.Id)
+                ? $"{last.LocationName} {last.TeamName} ({season}-{(season + 1) % 100:00})"
+                : null,
             SeasonStartYear = player.SeasonStartYear,
             SeasonTotals = Line(totals, isGoalie, 1),
             PerGameAverages = gp > 0 ? Line(totals, isGoalie, gp) : null,

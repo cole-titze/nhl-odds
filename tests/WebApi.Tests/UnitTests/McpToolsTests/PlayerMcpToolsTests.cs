@@ -1,3 +1,4 @@
+using WebApi.Mappers;
 using Entities.ViewModels;
 using FakeItEasy;
 using FluentAssertions;
@@ -110,6 +111,34 @@ public class PlayerMcpToolsTests
         var act = () => Create<PlayerMcpTools>().GetPlayer(1, YEAR);
 
         await act.Should().ThrowAsync<McpException>().WithMessage("No player with ID 1*FindPlayers*");
+    }
+
+    [TestMethod]
+    public void StatsMapper_OffEveryRoster_SaysWhoTheyLastPlayedFor()
+    {
+        var player = Matthews();
+        player.CurrentTeam = null;
+        player.LastTeam = new PlayerTeamVM { Id = 10, LocationName = "Toronto", TeamName = "Maple Leafs" };
+        player.LastSeasonStartYear = 2011;
+
+        var result = PlayerVmToPlayerStatsVmMapper.Map(player);
+
+        result.CurrentTeam.Should().BeNull();
+        result.LastPlayedFor.Should().Be("Toronto Maple Leafs (2011-12)");
+    }
+
+    [TestMethod]
+    public void StatsMapper_StillOnLastTeam_NoLastPlayedFor_InjuredReserveKept()
+    {
+        var player = Matthews();
+        player.LastTeam = player.CurrentTeam;
+        player.LastSeasonStartYear = YEAR;
+        player.IsInjuredReserve = true;
+
+        var result = PlayerVmToPlayerStatsVmMapper.Map(player);
+
+        result.LastPlayedFor.Should().BeNull();
+        result.IsInjuredReserve.Should().BeTrue();
     }
 
     [TestMethod]

@@ -21,6 +21,7 @@ public static class RosterToRosterVmMapper
                 Position = PlayerToPlayerVmMapper.PositionCode(p.Position),
                 SweaterNumber = p.SweaterNumber,
                 GamesPlayed = p.GamesPlayed,
+                IsInjuredReserve = p.IsInjuredReserve,
             })
             .ToList();
 

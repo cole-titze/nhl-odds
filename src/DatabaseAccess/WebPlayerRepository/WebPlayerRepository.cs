@@ -11,14 +11,62 @@ namespace DatabaseAccess.WebPlayerRepository;
 /// Players for the web API, from the box score tables (GameSkaterStats, GameGoalieStats: one row per player
 /// per played game, every season) and GameRosterSpot (sweater numbers, where fetched). A season's games are
 /// read by game id range (the id starts with the season's start year), which the tables' primary keys cover.
+/// Current teams and this season's rosters come from the NHL's roster report (RosterStatus, a snapshot saved by
+/// every NhlAdd run), since box scores can't tell a trade or a demotion until the player's next game (#170).
 /// </summary>
 public class WebPlayerRepository : IWebPlayerRepository
 {
-    private readonly GameDbContext _dbContext;
+    // NhlAdd saves a roster report snapshot daily; one older than this means the job or the report is down,
+    // and current teams fall back to the box scores
+    public static readonly TimeSpan RosterReportMaxAge = TimeSpan.FromDays(3);
 
-    public WebPlayerRepository(GameDbContext dbContext)
+    private readonly GameDbContext _dbContext;
+    private readonly TimeProvider _clock;
+
+    public WebPlayerRepository(GameDbContext dbContext, TimeProvider? clock = null)
     {
         _dbContext = dbContext;
+        _clock = clock ?? TimeProvider.System;
+    }
+
+    private int CurrentSeason => NhlSeason.Current(_clock.GetUtcNow().UtcDateTime);
+
+    // The latest roster report snapshot's time, or null when there's none from the last RosterReportMaxAge.
+    // Compared here, not in SQL: SnapshotUTC is a plain timestamp column
+    private async Task<DateTime?> FreshRosterSnapshot()
+    {
+        var latest = await _dbContext.RosterStatus.AsNoTracking().MaxAsync(r => (DateTime?)r.SnapshotUTC);
+        return latest != null && latest.Value >= _clock.GetUtcNow().UtcDateTime - RosterReportMaxAge ? latest : null;
+    }
+
+    private sealed record RosterReportRow(int PlayerId, int TeamId, bool IsInjuredReserve);
+
+    private async Task<List<RosterReportRow>> RosterReportRows(DateTime snapshot, IReadOnlyCollection<int>? playerIds = null, int? teamId = null)
+    {
+        var rows = _dbContext.RosterStatus.AsNoTracking().Where(r => r.SnapshotUTC == snapshot);
+        if (playerIds != null)
+            rows = rows.Where(r => playerIds.Contains(r.PlayerId));
+        if (teamId != null)
+            rows = rows.Where(r => r.TeamId == teamId);
+        return await rows.Select(r => new RosterReportRow(r.PlayerId, r.TeamId, r.IsInjuredReserve)).ToListAsync();
+    }
+
+    // The current team rule (PlayerProfile.CurrentTeam): the roster report when there's a recent one (not on it
+    // means on no NHL roster), else the team of the latest game if it was this season
+    private int? CurrentTeamId(bool freshReport, RosterReportRow? reportRow, PlayerGameRef? latest) =>
+        freshReport ? reportRow?.TeamId
+        : latest != null && SeasonOf(latest.GameId) == CurrentSeason ? latest.TeamId
+        : null;
+
+    // A team as it was named in a season (or the latest season before it: relocations change names)
+    private async Task<Team?> SeasonTeam(int teamId, int seasonStartYear)
+    {
+        var team = await _dbContext.SeasonTeam
+            .AsNoTracking()
+            .Where(t => t.TeamId == teamId && t.SeasonStartYear <= seasonStartYear)
+            .OrderByDescending(t => t.SeasonStartYear)
+            .FirstOrDefaultAsync();
+        return team != null ? DbSeasonTeamToTeamMapper.Map(team) : null;
     }
 
     private static int FirstGameId(int seasonStartYear) => seasonStartYear * 1_000_000;
@@ -61,25 +109,32 @@ public class WebPlayerRepository : IWebPlayerRepository
         };
 
         var latest = await GetLatestGame(playerId);
-        if (latest == null)
-            return profile;
+        if (latest != null)
+        {
+            profile.Position = latest.Position;
+            profile.SweaterNumber = await _dbContext.GameRosterSpot
+                .AsNoTracking()
+                .Where(r => r.GameId == latest.GameId && r.PlayerId == playerId)
+                .Select(r => r.SweaterNumber)
+                .FirstOrDefaultAsync();
+            profile.LastSeasonStartYear = SeasonOf(latest.GameId);
+            profile.LastTeam = await SeasonTeam(latest.TeamId, SeasonOf(latest.GameId));
+        }
 
-        profile.Position = latest.Position;
-        profile.SweaterNumber = await _dbContext.GameRosterSpot
-            .AsNoTracking()
-            .Where(r => r.GameId == latest.GameId && r.PlayerId == playerId)
-            .Select(r => r.SweaterNumber)
-            .FirstOrDefaultAsync();
-        var team = await _dbContext.SeasonTeam
-            .AsNoTracking()
-            .Where(t => t.TeamId == latest.TeamId && t.SeasonStartYear <= SeasonOf(latest.GameId))
-            .OrderByDescending(t => t.SeasonStartYear)
-            .FirstOrDefaultAsync();
-        profile.CurrentTeam = team != null ? DbSeasonTeamToTeamMapper.Map(team) : null;
+        var snapshot = await FreshRosterSnapshot();
+        var reportRow = snapshot != null ? (await RosterReportRows(snapshot.Value, playerIds: [playerId])).FirstOrDefault() : null;
+        var currentTeamId = CurrentTeamId(snapshot != null, reportRow, latest);
+        if (currentTeamId != null)
+        {
+            profile.CurrentTeam = currentTeamId == profile.LastTeam?.Id && profile.LastSeasonStartYear == CurrentSeason
+                ? profile.LastTeam
+                : await SeasonTeam(currentTeamId.Value, CurrentSeason);
+            profile.IsInjuredReserve = reportRow?.IsInjuredReserve ?? false;
+        }
         return profile;
     }
 
-    // His most recent game in the box scores (game ids grow through a season and from season to season)
+    // Their most recent game in the box scores (game ids grow through a season and from season to season)
     private async Task<PlayerGameRef?> GetLatestGame(int playerId)
     {
         var skater = await _dbContext.GameSkaterStats
@@ -138,6 +193,71 @@ public class WebPlayerRepository : IWebPlayerRepository
     }
 
     public async Task<List<RosterPlayer>> GetTeamRoster(int teamId, int seasonStartYear)
+    {
+        if (seasonStartYear == CurrentSeason && await FreshRosterSnapshot() is { } snapshot)
+            return await GetReportRoster(teamId, seasonStartYear, snapshot);
+        return await GetPlayedRoster(teamId, seasonStartYear);
+    }
+
+    // This season with a recent roster report: the players it lists for the team (injured reserve included and
+    // marked), with their games for the team this season (0 for one who hasn't played for them yet)
+    private async Task<List<RosterPlayer>> GetReportRoster(int teamId, int seasonStartYear, DateTime snapshot)
+    {
+        var report = await RosterReportRows(snapshot, teamId: teamId);
+        if (report.Count == 0)
+            return new List<RosterPlayer>();
+        var ids = report.Select(r => r.PlayerId).ToList();
+        var first = FirstGameId(seasonStartYear);
+        var next = FirstGameId(seasonStartYear + 1);
+
+        var gamesForTeam = (await _dbContext.GameSkaterStats
+                .AsNoTracking()
+                .Where(s => ids.Contains(s.PlayerId) && s.TeamId == teamId && s.GameId >= first && s.GameId < next && s.TimeOnIceSeconds > 0)
+                .Select(s => new { s.PlayerId, s.GameId })
+                .ToListAsync())
+            .Concat(await _dbContext.GameGoalieStats
+                .AsNoTracking()
+                .Where(s => ids.Contains(s.PlayerId) && s.TeamId == teamId && s.GameId >= first && s.GameId < next && s.TimeOnIceSeconds > 0)
+                .Select(s => new { s.PlayerId, s.GameId })
+                .ToListAsync())
+            .GroupBy(x => x.PlayerId)
+            .ToDictionary(g => g.Key, g => g.Select(x => x.GameId).Distinct().Count());
+
+        // Position and number from each one's latest game, wherever it was (the report has neither). The report
+        // only matches players with games, so everyone has one
+        var latest = (await LatestGames(ids)).ToDictionary(r => r.PlayerId);
+        var players = await _dbContext.Player
+            .AsNoTracking()
+            .Where(p => ids.Contains(p.Id))
+            .Select(p => new { p.Id, p.FirstName, p.LastName, p.HeadShot })
+            .ToDictionaryAsync(p => p.Id);
+        var numbers = await GetSweaterNumbers(latest.Values.Select(r => (r.GameId, r.PlayerId)).ToList());
+
+        return report
+            .Where(r => players.ContainsKey(r.PlayerId) && latest.ContainsKey(r.PlayerId))
+            .Select(r =>
+            {
+                var p = players[r.PlayerId];
+                var game = latest[r.PlayerId];
+                return new RosterPlayer
+                {
+                    Id = p.Id,
+                    FirstName = p.FirstName,
+                    LastName = p.LastName,
+                    HeadShot = p.HeadShot ?? string.Empty,
+                    TeamId = teamId,
+                    Position = game.Position,
+                    SweaterNumber = numbers.GetValueOrDefault((game.GameId, game.PlayerId)),
+                    GamesPlayed = gamesForTeam.GetValueOrDefault(r.PlayerId),
+                    IsInjuredReserve = r.IsInjuredReserve,
+                };
+            })
+            .ToList();
+    }
+
+    // Past seasons, or this one without a recent roster report: the players whose latest game that season was
+    // for the team
+    private async Task<List<RosterPlayer>> GetPlayedRoster(int teamId, int seasonStartYear)
     {
         var first = FirstGameId(seasonStartYear);
         var next = FirstGameId(seasonStartYear + 1);
@@ -233,8 +353,10 @@ public class WebPlayerRepository : IWebPlayerRepository
 
         if (result.Lines.Count == 0)
         {
+            // Injured reserve can't play, so a game's rosters leave them out
             result.Roster = (await GetTeamRoster(game.AwayTeamId, game.SeasonStartYear))
                 .Concat(await GetTeamRoster(game.HomeTeamId, game.SeasonStartYear))
+                .Where(p => !p.IsInjuredReserve)
                 .ToList();
             return result;
         }
@@ -284,7 +406,8 @@ public class WebPlayerRepository : IWebPlayerRepository
             select new { PlayerId = grp.Key, Last = grp.Max() }).ToListAsync();
         var goalies = await (
             from s in _dbContext.GameGoalieStats.AsNoTracking()
-            where s.GameId >= first && s.GameId < next
+            // A backup who dressed but never went in didn't play (as on the Player page)
+            where s.GameId >= first && s.GameId < next && s.TimeOnIceSeconds > 0
             join g in _dbContext.GameRaw.AsNoTracking() on s.GameId equals g.Id
             group g.GameDateUTC by s.PlayerId into grp
             select new { PlayerId = grp.Key, Last = grp.Max() }).ToListAsync();
@@ -312,8 +435,40 @@ public class WebPlayerRepository : IWebPlayerRepository
     {
         if (playerIds.Count == 0)
             return new List<PlayerLatestTeam>();
-        var ids = playerIds.Distinct().ToList();
+        var rows = await LatestGames(playerIds);
 
+        var snapshot = await FreshRosterSnapshot();
+        var report = snapshot != null
+            ? (await RosterReportRows(snapshot.Value, playerIds: rows.Select(r => r.PlayerId).ToList())).ToDictionary(r => r.PlayerId)
+            : new Dictionary<int, RosterReportRow>();
+        var current = rows.ToDictionary(r => r.PlayerId, r => CurrentTeamId(snapshot != null, report.GetValueOrDefault(r.PlayerId), r));
+
+        var teamIds = rows.Select(r => r.TeamId).Concat(current.Values.OfType<int>()).Distinct().ToList();
+        var seasonTeams = await _dbContext.SeasonTeam
+            .AsNoTracking()
+            .Where(t => teamIds.Contains(t.TeamId))
+            .Select(t => new { t.TeamId, t.SeasonStartYear, t.Abbreviation })
+            .ToListAsync();
+        // The team's abbreviation that season (or the latest before it: relocations change it)
+        string? Abbreviation(int teamId, int season) => seasonTeams
+            .Where(t => t.TeamId == teamId && t.SeasonStartYear <= season)
+            .MaxBy(t => t.SeasonStartYear)?.Abbreviation;
+
+        return rows.Select(r => new PlayerLatestTeam
+        {
+            PlayerId = r.PlayerId,
+            Position = r.Position,
+            TeamId = r.TeamId,
+            TeamAbbreviation = Abbreviation(r.TeamId, SeasonOf(r.GameId)) ?? string.Empty,
+            CurrentTeamId = current[r.PlayerId],
+            CurrentTeamAbbreviation = current[r.PlayerId] is { } id ? Abbreviation(id, CurrentSeason) : null,
+        }).ToList();
+    }
+
+    // Each player's latest box score row in any season; players without games are left out
+    private async Task<List<PlayerGameRef>> LatestGames(IReadOnlyCollection<int> playerIds)
+    {
+        var ids = playerIds.Distinct().ToList();
         var skaterLatest = await _dbContext.GameSkaterStats
             .AsNoTracking()
             .Where(s => ids.Contains(s.PlayerId))
@@ -329,7 +484,7 @@ public class WebPlayerRepository : IWebPlayerRepository
         var skaterGames = skaterLatest.Select(x => x.GameId).ToList();
         var goalieGames = goalieLatest.Select(x => x.GameId).ToList();
 
-        var rows = (await _dbContext.GameSkaterStats
+        return (await _dbContext.GameSkaterStats
                 .AsNoTracking()
                 .Where(s => ids.Contains(s.PlayerId) && skaterGames.Contains(s.GameId))
                 .Select(s => new PlayerGameRef(s.PlayerId, s.GameId, s.TeamId, s.Position, s.TimeOnIceSeconds))
@@ -342,24 +497,6 @@ public class WebPlayerRepository : IWebPlayerRepository
             .GroupBy(r => r.PlayerId)
             .Select(g => g.MaxBy(r => r.GameId)!)
             .ToList();
-
-        var teamIds = rows.Select(r => r.TeamId).Distinct().ToList();
-        var seasonTeams = await _dbContext.SeasonTeam
-            .AsNoTracking()
-            .Where(t => teamIds.Contains(t.TeamId))
-            .Select(t => new { t.TeamId, t.SeasonStartYear, t.Abbreviation })
-            .ToListAsync();
-
-        return rows.Select(r => new PlayerLatestTeam
-        {
-            PlayerId = r.PlayerId,
-            Position = r.Position,
-            TeamId = r.TeamId,
-            // The team's abbreviation that season (or the latest before it: relocations change it)
-            TeamAbbreviation = seasonTeams
-                .Where(t => t.TeamId == r.TeamId && t.SeasonStartYear <= SeasonOf(r.GameId))
-                .MaxBy(t => t.SeasonStartYear)?.Abbreviation ?? string.Empty,
-        }).ToList();
     }
 
     private async Task<Dictionary<(int GameId, int PlayerId), short?>> GetSweaterNumbers(List<(int GameId, int PlayerId)> keys)

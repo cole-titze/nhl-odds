@@ -282,7 +282,7 @@ export interface PlayerVM {
   firstName: string;
   lastName: string;
   headShot: string;
-  /** From his most recent game; null when he has none */
+  /** From their most recent game; null when they have none */
   position: PositionCode | null;
   sweaterNumber: number | null;
   /** yyyy-MM-dd */
@@ -291,15 +291,27 @@ export interface PlayerVM {
   birthStateProvince: string;
   heightInInches: number;
   weightInPounds: number;
-  /** The team of his most recent game */
+  /**
+   * The team listing them on the NHL's latest roster report (or, with no recent
+   * report, the team of their latest game if it was this season); null when
+   * they're on no NHL roster: then lastTeam is who they last played for
+   */
   currentTeam: PlayerTeamVM | null;
+  /** On currentTeam's injured reserve list */
+  isInjuredReserve: boolean;
+  /** The team of their most recent game, and its season; null with no games */
+  lastTeam: PlayerTeamVM | null;
+  lastSeasonStartYear: number | null;
   seasonStartYear: number;
   /** Newest first */
   games: PlayerGameVM[];
   seasonTotals: PlayerSeasonTotalsVM;
 }
 
-/** A player whose latest game in the season was for the team (GetTeamRoster) */
+/**
+ * A team's player (GetTeamRoster): this season, those on the NHL's latest
+ * roster report; past seasons, those whose latest game that season was for the team
+ */
 export interface RosterPlayerVM {
   id: number;
   firstName: string;
@@ -308,6 +320,8 @@ export interface RosterPlayerVM {
   position: PositionCode;
   sweaterNumber: number | null;
   gamesPlayed: number;
+  /** On the team's injured reserve list (this season only) */
+  isInjuredReserve: boolean;
 }
 
 export interface GamePlayerVM {

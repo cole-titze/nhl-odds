@@ -14,8 +14,14 @@ public class PlayerStatsVM
     public string? Position { get; set; }
     public short? SweaterNumber { get; set; }
     public string? BirthDate { get; set; }
+    // The team they're on now (the NHL's roster report); null when on no NHL roster
     public int? CurrentTeamId { get; set; }
     public string? CurrentTeam { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool IsInjuredReserve { get; set; }
+    // The team and season of their latest game, when it isn't CurrentTeam this season
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? LastPlayedFor { get; set; }
     public int SeasonStartYear { get; set; }
     public PlayerStatsLineVM SeasonTotals { get; set; } = new();
     public PlayerStatsLineVM? PerGameAverages { get; set; }

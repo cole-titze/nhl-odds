@@ -36,7 +36,10 @@ function checkEntities(path, graph, problems) {
   if (path.startsWith('/player/')) {
     const person = find('Person');
     if (person?.['@id'] !== pageUrl(path)) problems.push(`${path}: Person @id isn't the page URL`);
-    if (!isEntityUrl(person?.memberOf?.['@id'], 'team'))
+    // A player on no NHL roster (#170) is a member of no team; everyone else is of theirs
+    if (path === `/player/${SITEMAP_RETIRED.id}`) {
+      if (person?.memberOf) problems.push(`${path}: Person on no roster has a memberOf`);
+    } else if (!isEntityUrl(person?.memberOf?.['@id'], 'team'))
       problems.push(`${path}: Person has no memberOf SportsTeam with a team page @id`);
   } else if (path.startsWith('/team/')) {
     const team = find('SportsTeam');

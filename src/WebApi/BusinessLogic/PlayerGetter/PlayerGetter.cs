@@ -64,8 +64,9 @@ public class PlayerGetter : IPlayerGetter
                 Id = p.Id,
                 Name = $"{p.FirstName} {p.LastName}",
                 Position = team != null ? PlayerToPlayerVmMapper.PositionCode(team.Position) : null,
-                CurrentTeamId = team?.TeamId,
-                CurrentTeamAbbreviation = team?.TeamAbbreviation,
+                CurrentTeamId = team?.CurrentTeamId,
+                CurrentTeamAbbreviation = team?.CurrentTeamAbbreviation,
+                LastTeamAbbreviation = team?.TeamAbbreviation,
                 IsActive = activeIds.Contains(p.Id),
             };
         }).ToList();
