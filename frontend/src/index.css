@@ -841,4 +841,23 @@ html.scenic {
   :is(.scenic, .theme-contrast-light, .theme-contrast-dark) .assistant-panel {
     --chat-solid: var(--scene-base);
   }
+  /* Nothing shows through the full-screen chat, so its blurs (panel, header, glass bubbles) change
+     nothing on screen but each costs iOS Safari a screen-sized graphics layer, rebuilt on every
+     open; a few opens and closes ran the tab out of memory and Safari reloaded it. */
+  /* Two rules on purpose: the minifier treats the prefixed and unprefixed properties as one and
+     keeps only the last of the pair when they share a rule */
+  .assistant-panel,
+  .assistant-panel .assistant-header,
+  .assistant-panel .glass {
+    -webkit-backdrop-filter: none;
+  }
+  :is(.assistant-panel, .assistant-panel .assistant-header, .assistant-panel .glass) {
+    backdrop-filter: none;
+  }
+  /* Same for what the chat covers: the page (every card on it is blurred glass, and the Games feed
+     holds hundreds), the footer and the scenic themes' animated backdrop. Hidden, not removed, so
+     the page keeps its layout and scroll position for when the chat closes. */
+  body:has(.assistant-panel) :is(.app-shell > main, .app-shell > footer, .scene) {
+    visibility: hidden;
+  }
 }
