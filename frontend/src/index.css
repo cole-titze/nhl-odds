@@ -98,6 +98,15 @@ main .app-subbar :is(a, button, input, select, textarea, summary, [tabindex]) {
   scroll-margin: 0;
 }
 
+/* Sections a SectionNav jumps to: land below the sticky bars, and take focus
+   without a ring (they're focused only so keyboard users continue from there) */
+main [data-section] {
+  scroll-margin-top: var(--sticky-top, 7rem);
+}
+main [data-section]:focus {
+  outline: none;
+}
+
 /* <main> is focused programmatically on route changes and by the skip link */
 #main:focus {
   outline: none;

@@ -25,6 +25,8 @@ import { Skeleton } from '../components/Skeleton';
 import { SeasonSelector } from '../components/SeasonSelector';
 import { StatCard } from '../components/StatCard';
 import { TeamLogo } from '../components/TeamLogo';
+import { SectionNav } from '../components/SectionNav';
+import { sectionProps } from '../utils/sections';
 import { InjuredReserveBadge } from '../components/InjuredReserveBadge';
 import { Breadcrumbs, type Crumb } from '../components/Breadcrumbs';
 import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
@@ -208,8 +210,15 @@ export function PlayerPage() {
         <SeasonSelector value={season} onChange={(s) => setSearchParams({ season: String(s) })} />
       </div>
 
+      <SectionNav
+        sections={[
+          ...(totals.gamesPlayed > 0 ? [{ id: 'totals', label: 'Season totals' }] : []),
+          ...(player.games.length > 0 ? [{ id: 'games', label: 'Games' }] : []),
+        ]}
+      />
+
       {totals.gamesPlayed > 0 && (
-        <section aria-label={`${seasonLabel} totals`} className="mb-8">
+        <section {...sectionProps('totals')} aria-label={`${seasonLabel} totals`} className="mb-8">
           {isGoalie ? (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <StatCard label="Games" value={String(totals.gamesPlayed)} />
@@ -243,7 +252,7 @@ export function PlayerPage() {
       )}
 
       {player.games.length > 0 ? (
-        <div className="glass rounded-xl overflow-hidden">
+        <div {...sectionProps('games')} className="glass rounded-xl overflow-hidden">
           <h2 className="px-4 pt-4 pb-2 text-xs font-mono font-bold tracking-widest uppercase text-surface-500 dark:text-surface-400">
             {seasonLabel} games
           </h2>

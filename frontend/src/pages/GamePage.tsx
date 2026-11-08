@@ -36,6 +36,8 @@ import { GameLineups } from '../components/GameLineups';
 import { OddsMovementChart } from '../components/OddsMovementChart';
 import { TeamLogo } from '../components/TeamLogo';
 import { PredictionFactors } from '../components/PredictionFactors';
+import { SectionNav } from '../components/SectionNav';
+import { sectionProps, type PageSection } from '../utils/sections';
 import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
 import { breadcrumbs, sportsEvent } from '../utils/structuredData';
 import { Breadcrumbs, type Crumb } from '../components/Breadcrumbs';
@@ -176,6 +178,16 @@ export function GamePage() {
     { name: matchup, path: `/game/${game.id}` },
   ];
   const gamePlayers = players && players.gameId === game.id ? players : null;
+  const hasPredictions = game.predictedSpread != null || game.predictedTotal != null;
+  const hasPlayers = !!gamePlayers && (gamePlayers.away.length > 0 || gamePlayers.home.length > 0);
+  const sections: PageSection[] = [
+    { id: 'prediction', label: 'Prediction' },
+    ...(hasPredictions ? [{ id: 'spread-total', label: 'Spread & total' }] : []),
+    ...(game.bookmakerOdds?.length > 0 ? [{ id: 'odds', label: 'Odds' }] : []),
+    ...(hasPlayers
+      ? [{ id: 'players', label: gamePlayers!.hasStats ? 'Box score' : 'Rosters' }]
+      : []),
+  ];
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -244,8 +256,10 @@ export function GamePage() {
         </div>
       </div>
 
+      <SectionNav sections={sections} column="max-w-[calc(42rem+2.5rem)]" />
+
       {/* Model Prediction */}
-      <div className="glass rounded-xl px-6 py-5">
+      <div {...sectionProps('prediction')} className="glass rounded-xl px-6 py-5">
         <h2 className="text-xs font-mono font-bold tracking-widest uppercase text-surface-500 dark:text-surface-400 mb-4">
           Model Prediction
         </h2>
@@ -285,8 +299,8 @@ export function GamePage() {
       />
 
       {/* Spread & Total Predictions */}
-      {(game.predictedSpread != null || game.predictedTotal != null) && (
-        <div className="glass rounded-xl px-6 py-5">
+      {hasPredictions && (
+        <div {...sectionProps('spread-total')} className="glass rounded-xl px-6 py-5">
           <h2 className="text-xs font-mono font-bold tracking-widest uppercase text-surface-500 dark:text-surface-400 mb-4">
             Spread & Total Predictions
           </h2>
@@ -328,7 +342,7 @@ export function GamePage() {
 
       {/* Bookmaker Odds Table */}
       {game.bookmakerOdds?.length > 0 && (
-        <div className="glass rounded-xl overflow-hidden">
+        <div {...sectionProps('odds')} className="glass rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-surface-200/50 dark:border-white/[0.04] flex items-center justify-between">
             <h2 className="text-xs font-mono font-bold tracking-widest uppercase text-surface-500 dark:text-surface-400">
               Bookmaker Odds
@@ -398,9 +412,7 @@ export function GamePage() {
 
       <OddsMovementChart game={game} />
       <GameLineups game={game} />
-      {gamePlayers && (gamePlayers.away.length > 0 || gamePlayers.home.length > 0) && (
-        <GamePlayers game={game} players={gamePlayers} />
-      )}
+      {hasPlayers && <GamePlayers game={game} players={gamePlayers!} />}
     </div>
   );
 }
@@ -412,7 +424,7 @@ function GamePlayers({ game, players }: { game: GameOddsVM; players: GamePlayers
     { team: game.homeTeam, list: players.home },
   ].filter((s) => s.team && s.list.length > 0);
   return (
-    <section aria-labelledby="players-heading" className="space-y-4">
+    <section {...sectionProps('players')} aria-labelledby="players-heading" className="space-y-4">
       <h2
         id="players-heading"
         className="text-xs font-mono font-bold tracking-widest uppercase text-surface-500 dark:text-surface-400"
