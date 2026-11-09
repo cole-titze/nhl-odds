@@ -1,13 +1,13 @@
 using System.Net;
 using System.Text;
 using System.Text.Json.Nodes;
+using Entities.ViewModels;
 using FakeItEasy;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using WebApi.BusinessLogic.Assistant;
-using Entities.ViewModels;
 using WebApi.BusinessLogic.GameOddsGetter;
 using WebApi.BusinessLogic.PlayerGetter;
 using WebApi.BusinessLogic.TeamGetter;

@@ -1,4 +1,3 @@
-using WebApi.Mappers;
 using Entities.ViewModels;
 using FakeItEasy;
 using FluentAssertions;
@@ -7,6 +6,7 @@ using ModelContextProtocol;
 using WebApi.BusinessLogic.PlayerGetter;
 using WebApi.Caching;
 using WebApi.Controllers;
+using WebApi.Mappers;
 using WebApi.McpTools;
 
 namespace WebApi.Tests.BusinessLogic.UnitTests.McpToolsTests;
