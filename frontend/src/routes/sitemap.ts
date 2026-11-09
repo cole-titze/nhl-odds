@@ -1,17 +1,32 @@
-// /sitemap.xml: the pages src/sitePages.ts marks for it (the main pages and
-// every team page), with lastmod where it's a real date (utils/sitemap.ts).
+// /sitemap.xml: the pages src/sitePages.ts marks for it (the main pages, every
+// team page and every player page with a game), with lastmod where it's a real
+// date (utils/sitemap.ts). Game pages are left out on purpose.
 // New pages are added in sitePages.ts, not here.
 import { getAllTeams } from '../api/teams';
+import { getSitemapPlayers } from '../api/players';
 import { getCurrentSeason } from '../utils/season';
 import { buildSitemapXml } from '../utils/sitemap';
+import { playerSitemapEntries } from '../utils/playerSitemap';
 
-// Building it takes a full-season API call, so it's reused for an hour
+// Building it takes two API calls, so it's reused for an hour
 const MAX_AGE_MS = 60 * 60 * 1000;
 let cached: { xml: string; at: number } | null = null;
 
+// Without the players the sitemap still lists the rest
+async function sitemapPlayers() {
+  try {
+    return await getSitemapPlayers();
+  } catch {
+    return [];
+  }
+}
+
 async function buildSitemap(): Promise<string> {
-  const { teams } = await getAllTeams(getCurrentSeason());
-  return buildSitemapXml(teams);
+  const [{ teams }, players] = await Promise.all([
+    getAllTeams(getCurrentSeason()),
+    sitemapPlayers(),
+  ]);
+  return buildSitemapXml(teams, playerSitemapEntries(players));
 }
 
 export async function loader() {

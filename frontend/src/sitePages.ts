@@ -13,6 +13,8 @@ export type SitemapEntry =
   | 'static'
   /** One URL per team, each with lastmod its latest game day so far, from the teams API */
   | 'teams'
+  /** One URL per player with a game, dated their last game (utils/playerSitemap.ts) */
+  | 'players'
   /** Left out, with the reason */
   | { exclude: string };
 
@@ -24,6 +26,7 @@ export const SITE_PAGES: Record<string, SitemapEntry> = {
   '/track-record': 'daily',
   '/about': 'static',
   '/team/:teamId': 'teams',
+  '/player/:playerId': 'players',
   '/game/:gameId': {
     exclude:
       'thousands of near-identical pages add little; search engines still reach them through links',
