@@ -1,8 +1,11 @@
+import { Fragment } from 'react';
+import { Link } from 'react-router';
 import { useFetch } from '../hooks/useFetch';
 import { useDisplayTimeZone } from '../hooks/useDisplayTimeZone';
 import { getGameLineup } from '../api/lineup';
 import { Skeleton } from './Skeleton';
 import { LoadingStatus } from './A11y';
+import { playerPath } from '../utils/players';
 import type { GameOddsVM, LineupPlayerVM, MatchupTeamVM, TeamLineupVM } from '../types';
 
 const HEADING =
@@ -100,7 +103,7 @@ function TeamLineup({ team, lineup }: { team: MatchupTeamVM | null; lineup: Team
           <ol className="text-sm space-y-0.5">
             {lineup.goalies.map((g, i) => (
               <li key={g.name}>
-                {g.name}
+                <PlayerName player={g} />
                 {i === 0 && lineup.goalies.length > 1 && (
                   <span className="text-xs text-surface-600 dark:text-surface-400">
                     {' '}
@@ -120,7 +123,7 @@ function TeamLineup({ team, lineup }: { team: MatchupTeamVM | null; lineup: Team
           <ul className="text-sm space-y-0.5">
             {out.map((p) => (
               <li key={`${p.why}-${p.name}`}>
-                {p.name}{' '}
+                <PlayerName player={p} />{' '}
                 <span className="text-xs text-surface-600 dark:text-surface-400">({p.why})</span>
               </li>
             ))}
@@ -142,10 +145,30 @@ function Lines({ title, lines }: { title: string; lines: LineupPlayerVM[][] }) {
             <span className="font-mono text-xs text-surface-600 dark:text-surface-400 w-4 shrink-0 pt-0.5">
               {i + 1}
             </span>
-            <span>{line.map((p) => p.name).join(' – ')}</span>
+            <span>
+              {line.map((p, j) => (
+                <Fragment key={`${j}-${p.name}`}>
+                  {j > 0 && ' – '}
+                  <PlayerName player={p} />
+                </Fragment>
+              ))}
+            </span>
           </li>
         ))}
       </ol>
     </>
+  );
+}
+
+/** A player NHL.com's text was matched to links to their page; an unmatched name stays plain text */
+function PlayerName({ player }: { player: LineupPlayerVM }) {
+  if (player.playerId == null) return <>{player.name}</>;
+  return (
+    <Link
+      to={playerPath(player.playerId)}
+      className="font-medium hover:text-accent-600 dark:hover:text-accent-400 hover:underline"
+    >
+      {player.name}
+    </Link>
   );
 }

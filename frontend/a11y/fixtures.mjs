@@ -41,7 +41,11 @@ const bookmaker = (bookmakerName, homeOdds) => ({
 });
 
 /** A retired player in the sitemap fixture: dated their last game, years back */
-export const SITEMAP_RETIRED = { id: 8448208, lastGameDate: '2012-04-07T23:00:00Z', lastmod: '2012-04-07' };
+export const SITEMAP_RETIRED = {
+  id: 8448208,
+  lastGameDate: '2012-04-07T23:00:00Z',
+  lastmod: '2012-04-07',
+};
 /** Players whose last game is in the future or unreadable: the sitemap leaves them out */
 export const SITEMAP_LEFT_OUT = [8400001, 8400002];
 
@@ -89,7 +93,15 @@ const team = (id, locationName, teamName, abbrev) => ({
 
 // Players for the Player page, the Team page's roster and the Game page's box score
 const headShot = (id) => `https://assets.nhle.com/mugs/nhl/20262027/TOR/${id}.png`;
-const rosterPlayer = (id, firstName, lastName, position, sweaterNumber, gamesPlayed, isInjuredReserve = false) => ({
+const rosterPlayer = (
+  id,
+  firstName,
+  lastName,
+  position,
+  sweaterNumber,
+  gamesPlayed,
+  isInjuredReserve = false,
+) => ({
   id,
   firstName,
   lastName,
@@ -506,19 +518,23 @@ const responses = {
       statusReport:
         'Matthews took part in the morning skate and is expected to play.\nSwayman will start after Korpisalo started on Tuesday.',
       away: {
+        // Forwards and the first goalie are matched to player pages (links); the rest stay unmatched (plain
+        // text), so the scan covers both
         forwards: [
           ['Knies', 'Matthews', 'Marner'],
           ['Robertson', 'Tavares', 'Nylander'],
           ['McMann', 'Domi', 'Jarnkrok'],
           ['Lorentz', 'Kampf', 'Reaves'],
-        ].map((line) => line.map((name) => ({ name, playerId: null, note: null }))),
+        ].map((line, i) =>
+          line.map((name, j) => ({ name, playerId: 8470000 + i * 10 + j, note: null })),
+        ),
         defense: [
           ['Rielly', 'Tanev'],
           ['McCabe', 'Ekman-Larsson'],
           ['Benoit', 'Myers'],
         ].map((pair) => pair.map((name) => ({ name, playerId: null, note: null }))),
         goalies: [
-          { name: 'Stolarz', playerId: null, note: null },
+          { name: 'Stolarz', playerId: 8476932, note: null },
           { name: 'Woll', playerId: null, note: null },
         ],
         scratched: [{ name: 'Timmins', playerId: null, note: null }],
@@ -733,7 +749,10 @@ export function mockApi(url) {
   }
   // By the action's exact name: GetTeam must not answer GetTeamRoster
   const action = new URL(url).pathname.split('/').pop();
-  if (action === 'GetPlayer' && new URL(url).searchParams.get('playerId') === String(retiredPlayer.id))
+  if (
+    action === 'GetPlayer' &&
+    new URL(url).searchParams.get('playerId') === String(retiredPlayer.id)
+  )
     return retiredPlayer;
   return Object.hasOwn(responses, action) ? responses[action] : {};
 }
