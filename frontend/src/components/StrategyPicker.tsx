@@ -99,7 +99,7 @@ export function StrategyPicker({ betType, renameLabel }: Props) {
           if (onSuggested) {
             return (
               <span
-                className="px-2 py-1 rounded-full bg-accent-500/10 text-accent-600 dark:text-accent-400 text-[11px] font-semibold"
+                className="px-2 py-1 rounded-full bg-accent-500/10 text-accent-700 dark:text-accent-400 text-[11px] font-semibold"
                 title={title}
               >
                 <span aria-hidden="true">★ </span>Suggested · +{best.roi.toFixed(1)}% ROI
