@@ -32,6 +32,7 @@ export const SITE_PAGES: Record<string, SitemapEntry> = {
       'thousands of near-identical pages add little; search engines still reach them through links',
   },
   '/admin': { exclude: 'noindex: needs an admin key' },
+  '/search': { exclude: 'noindex: search results for whatever was typed' },
   '/sitemap.xml': { exclude: 'the sitemap itself' },
   '/og/game/:file': { exclude: 'link preview image (og:image), not a page' },
   '/og/team/:file': { exclude: 'link preview image (og:image), not a page' },
