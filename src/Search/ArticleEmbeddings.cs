@@ -19,11 +19,11 @@ public record PreviousEmbedding(string Key, float[] Vector);
 public class ArticleEmbeddings(IEmbedder embedder, ILogger logger)
 {
     /// <summary>
-    /// Articles per embed request. Small on purpose: the job shares the embedding server with live searches, and a
-    /// search's query must never wait out its 2 s timeout behind a long batch (on a Pi CPU, ~16 article openings
-    /// take tens of seconds). The server also keeps a second slot free for queries (OLLAMA_NUM_PARALLEL=2). The
-    /// requests run one after another, never in parallel: the model already uses every core, so more at once
-    /// would only slow the searches down without finishing sooner.
+    /// Articles per embed request. Small so each request stays short: in the cluster searches have their own
+    /// embedding server, but locally (docker compose) they share this one, and Ollama runs an embedding model with
+    /// a single slot, so a query waits behind the current batch (on a Pi CPU, ~16 article openings take tens of
+    /// seconds, past the 2 s query timeout). The requests run one after another, never in parallel: the model
+    /// already uses every core, so more at once would only slow everything down without finishing sooner.
     /// </summary>
     public const int BatchSize = 4;
 
