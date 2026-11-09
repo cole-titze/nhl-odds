@@ -22,6 +22,38 @@ public class OddsMovementCalculatorTests
     }
 
     [TestMethod]
+    public void Calculate_ShouldStartAtMidnightEasternOnGameDay_CarryingInTheLastEarlierValue()
+    {
+        // Start is 7 PM ET on Nov 3 (EST), so game day starts at 05:00 UTC Nov 3
+        var dayStart = new DateTime(2026, 11, 3, 5, 0, 0, DateTimeKind.Utc);
+        OddsMovementCalculator.GameDayStartUtc(Start).Should().Be(dayStart);
+        var game = Game();
+        game.ModelRuns =
+        [
+            new ModelRun(Start.AddDays(-20), 0.40),
+            new ModelRun(Start.AddDays(-2), 0.52),
+            new ModelRun(Morning, 0.55),
+        ];
+
+        var model = OddsMovementCalculator.Calculate(game).Series.Single().Points;
+
+        model.Select(p => p.TimeUTC).Should().Equal(dayStart, Morning);
+        model.Select(p => p.HomeProbability).Should().Equal(0.52, 0.55);
+    }
+
+    [TestMethod]
+    public void Calculate_OnlyEarlierRuns_ShouldKeepOnePointAtGameDayStart()
+    {
+        var game = Game();
+        game.ModelRuns = [new ModelRun(Start.AddDays(-3), 0.48), new ModelRun(Start.AddDays(-1), 0.5)];
+
+        var model = OddsMovementCalculator.Calculate(game).Series.Single().Points;
+
+        model.Should().ContainSingle().Which.HomeProbability.Should().Be(0.5);
+        model[0].TimeUTC.Should().Be(OddsMovementCalculator.GameDayStartUtc(Start));
+    }
+
+    [TestMethod]
     public void Calculate_ShouldLeaveOutAnythingAfterPuckDrop()
     {
         var game = Game();

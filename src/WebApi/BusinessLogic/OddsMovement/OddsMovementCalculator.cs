@@ -7,13 +7,25 @@ namespace WebApi.BusinessLogic.OddsMovement;
 /// <summary>
 /// Builds the Game page's odds movement chart: the home team's win probability over time from the model, each
 /// betting-partner widget, the sportsbooks' average (morning and close) and Kalshi (morning and close). Every price
-/// has its margin removed (home / (home + away)) so it's comparable with the model.
+/// has its margin removed (home / (home + away)) so it's comparable with the model. The chart covers game day only
+/// (from midnight Eastern): the model predicts every upcoming game each morning, so its runs go back weeks, and on
+/// that axis the market's few hours of prices were squeezed into the last pixels. A series with earlier points starts
+/// at midnight with the last of them, so the model's level going into game day still shows.
 /// </summary>
 public static class OddsMovementCalculator
 {
     public const string Model = "Model";
     public const string SportsbookAverage = "Sportsbooks' average";
     public const string Kalshi = "Kalshi";
+
+    private static readonly TimeZoneInfo Eastern = TimeZoneInfo.FindSystemTimeZoneById("America/New_York");
+
+    /// <summary>Midnight Eastern on the game's day, in UTC: where the chart starts</summary>
+    public static DateTime GameDayStartUtc(DateTime startUtc)
+    {
+        var eastern = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(startUtc, DateTimeKind.Utc), Eastern);
+        return TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(eastern.Date, DateTimeKind.Unspecified), Eastern);
+    }
 
     public static OddsMovementVM Calculate(OddsMovementGame game)
     {
@@ -44,7 +56,7 @@ public static class OddsMovementCalculator
         {
             GameId = game.GameId,
             StartUTC = game.StartUTC,
-            Series = series.Where(s => s.Points.Count > 0).ToList(),
+            Series = series.Select(s => FromGameDay(s, GameDayStartUtc(game.StartUTC))).Where(s => s.Points.Count > 0).ToList(),
             Move = Move(morningBooks, closingBooks, modelRuns.LastOrDefault()?.HomeOdds),
         };
     }
@@ -81,6 +93,16 @@ public static class OddsMovementCalculator
         return usable.Count == 0
             ? null
             : Point(usable.Max(p => p.TimeUTC), usable.Average(p => NoVig(p.HomeOdds, p.AwayOdds)));
+    }
+
+    // Points before game day collapse into one at its start, holding the last of their values
+    private static OddsSeriesVM FromGameDay(OddsSeriesVM series, DateTime dayStart)
+    {
+        var earlier = series.Points.LastOrDefault(p => p.TimeUTC < dayStart);
+        var points = series.Points.Where(p => p.TimeUTC >= dayStart).ToList();
+        if (earlier != null && (points.Count == 0 || points[0].TimeUTC > dayStart))
+            points.Insert(0, Point(dayStart, earlier.HomeProbability));
+        return new OddsSeriesVM { Name = series.Name, Kind = series.Kind, Points = points };
     }
 
     private static OddsPointVM Point(DateTime time, double home) => new() { TimeUTC = time, HomeProbability = home };
