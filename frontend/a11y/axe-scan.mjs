@@ -275,8 +275,21 @@ async function suggestionProblems(page) {
   await page
     .waitForURL('**/team/10', { timeout: 5000 })
     .catch(() => problems.push(`Enter went to ${page.url()}, not /team/10`));
-  if ((await box.inputValue()) !== '')
-    problems.push('the box kept its text after opening a suggestion');
+  // The box empties in the render that follows the navigation, which can land a little after the URL
+  // changes (the route's code loads first on a slow runner), so wait for it rather than read it once
+  await box
+    .evaluate(
+      (el) =>
+        new Promise((resolve, reject) => {
+          const end = Date.now() + 5000;
+          (function poll() {
+            if (el.value === '') resolve();
+            else if (Date.now() > end) reject(new Error('kept'));
+            else setTimeout(poll, 25);
+          })();
+        }),
+    )
+    .catch(() => problems.push('the box kept its text after opening a suggestion'));
   return problems;
 }
 
