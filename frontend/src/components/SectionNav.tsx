@@ -103,7 +103,7 @@ export function SectionNav({
               aria-current={active === s.id ? 'location' : undefined}
               className={`inline-flex items-center min-h-8 rounded-full border px-3 py-1 text-xs font-medium whitespace-nowrap transition-colors ${
                 active === s.id
-                  ? 'border-accent-500 bg-accent-500/10 text-accent-700 dark:text-accent-300'
+                  ? 'border-accent-500 bg-accent-500/10 text-accent-700 dark:text-accent-400'
                   : 'border-surface-300 dark:border-white/15 text-surface-700 dark:text-surface-300 hover:border-accent-500 hover:text-accent-700 dark:hover:text-accent-300'
               }`}
             >

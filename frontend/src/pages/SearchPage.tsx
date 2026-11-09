@@ -194,7 +194,7 @@ function ArticleResults({ articles }: { articles: ArticleResult[] }) {
               rel="noopener noreferrer"
               className={`${linkRowClass} flex-col items-start gap-1`}
             >
-              <span className="font-medium text-accent-700 dark:text-accent-300">
+              <span className="font-medium text-accent-700 dark:text-accent-400">
                 {a.title}
                 <span className="sr-only"> (opens NHL.com in a new tab)</span>
               </span>

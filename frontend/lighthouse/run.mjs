@@ -43,8 +43,9 @@ const THRESHOLDS = {
 };
 const CATEGORIES = Object.keys(THRESHOLDS);
 
-// /admin is noindex on purpose, so its SEO score means nothing
-const localPages = () => pagesFor().filter((p) => p !== '/admin');
+// /admin and /search are noindex on purpose, so their SEO scores mean nothing
+const NOINDEX = ['/admin', '/search'];
+const localPages = () => pagesFor().filter((p) => !NOINDEX.includes(p.split('?')[0]));
 
 async function livePages(base) {
   const sitemap = await (await fetch(`${base}/sitemap.xml`)).text();
