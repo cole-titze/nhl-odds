@@ -24,7 +24,7 @@ const PAGE_TYPES = [
   ['/teams', ['ItemList']],
   ['/about', ['FAQPage']],
 ];
-const NOINDEX = ['/admin'];
+const NOINDEX = ['/admin', '/search'];
 const SITE_URL = 'https://nhl.half-built.com';
 const pageUrl = (path) => SITE_URL + path;
 const isEntityUrl = (id, kind) => typeof id === 'string' && new RegExp(`^${SITE_URL}/${kind}/\\d+$`).test(id);
@@ -82,7 +82,7 @@ async function waitForServer() {
 async function checkPage(path, problems) {
   const html = await (await fetch(`http://localhost:${PORT}${path}`)).text();
   const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
-  if (NOINDEX.includes(path)) {
+  if (NOINDEX.includes(path.split('?')[0])) {
     if (blocks.length) problems.push(`${path}: noindex page has JSON-LD`);
     return;
   }
