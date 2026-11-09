@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
+import { useSearchParams } from 'react-router';
 import {
   CartesianGrid,
   ComposedChart,
@@ -20,7 +21,7 @@ import { useFetch } from '../hooks/useFetch';
 import { useHydrated } from '../hooks/useHydrated';
 import { useIsDarkTheme } from '../hooks/useRootTheme';
 import { getTrackRecord } from '../api/trackRecord';
-import { getCurrentSeason } from '../utils/season';
+import { formatSeasonLabel, getCurrentSeason } from '../utils/season';
 import { formatShortDate } from '../utils/dates';
 import { dashFor, readableLineColor } from '../utils/chartSeries';
 import type { CalibrationBinVM, ClosingLineVM, LogLossPointVM, TrackRecordVM } from '../types';
@@ -40,8 +41,18 @@ const pct = (v: number, digits = 1) => `${(v * 100).toFixed(digits)}%`;
 const ll = (v: number) => v.toFixed(4);
 
 export function TrackRecordPage() {
-  const [season, setSeason] = useState(getCurrentSeason());
-  const [liveOnly, setLiveOnly] = useState(false);
+  // In the URL (?season=2024&live=1), so a view can be linked and survives a reload; defaults are left out
+  const [searchParams, setSearchParams] = useSearchParams();
+  const season = Number(searchParams.get('season')) || getCurrentSeason();
+  const liveOnly = searchParams.get('live') === '1';
+  const setView = (next: { season?: number; liveOnly?: boolean }) => {
+    const s = next.season ?? season;
+    const live = next.liveOnly ?? liveOnly;
+    const params = new URLSearchParams();
+    if (s !== getCurrentSeason()) params.set('season', String(s));
+    if (live) params.set('live', '1');
+    setSearchParams(params, { preventScrollReset: true });
+  };
   const { data, loading, error } = useFetch(
     () => getTrackRecord(season, liveOnly),
     [season, liveOnly],
@@ -55,7 +66,7 @@ export function TrackRecordPage() {
       />
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
         <h1 className="font-display text-2xl font-bold tracking-tight">Track Record</h1>
-        <SeasonSelector value={season} onChange={setSeason} />
+        <SeasonSelector value={season} onChange={(s) => setView({ season: s })} />
       </div>
 
       <div
@@ -71,7 +82,7 @@ export function TrackRecordPage() {
             key={option.label}
             type="button"
             aria-pressed={liveOnly === option.live}
-            onClick={() => setLiveOnly(option.live)}
+            onClick={() => setView({ liveOnly: option.live })}
             className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
               liveOnly === option.live
                 ? 'bg-accent-600 text-on-accent'
@@ -114,8 +125,9 @@ function TrackRecord({ data }: { data: TrackRecordVM }) {
   if (data.gameCount === 0)
     return (
       <p className="glass rounded-xl text-center text-surface-600 dark:text-surface-400 py-8 px-4">
-        No played games with a {data.liveOnly ? 'prediction saved before puck drop' : 'prediction'}{' '}
-        yet this season.
+        {data.seasonStartYear === getCurrentSeason()
+          ? `No played games with a ${data.liveOnly ? 'prediction saved before puck drop' : 'prediction'} yet this season.`
+          : `No games in ${formatSeasonLabel(data.seasonStartYear)} had a ${data.liveOnly ? 'prediction saved before puck drop' : 'prediction'}.`}
       </p>
     );
 

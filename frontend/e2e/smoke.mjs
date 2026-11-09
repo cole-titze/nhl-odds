@@ -53,6 +53,23 @@ const PAGES = [
     allowApi: [404],
   },
   { path: '/strategies', title: 'Strategies', text: ['Strategies'] },
+  // The seed's three played games were all predicted the day before, so both views show them
+  {
+    path: '/track-record',
+    title: 'Track Record',
+    text: ['Track Record', 'Calibration', 'Against each market', 'DraftKings'],
+  },
+  {
+    path: '/track-record?live=1',
+    title: 'Track Record',
+    text: ['Calibration', 'Saved before puck drop'],
+  },
+  // A past season with no games says so for that season, not "yet this season"
+  {
+    path: '/track-record?season=2015',
+    title: 'Track Record',
+    text: ['No games in 2015-16 had a prediction.'],
+  },
   { path: '/about', title: 'About', text: ['About NHL Odds'] },
   // Without the admin key its endpoints answer 403, which the page shows as a prompt
   { path: '/admin', title: 'Admin', allowApi: [401, 403], allowAlert: true },
