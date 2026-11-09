@@ -30,8 +30,29 @@ export function Layout() {
     publish();
     const observer = new ResizeObserver(publish);
     observer.observe(footer);
+
+    // Browsers only scroll a newly focused element if it's off screen, and Firefox doesn't
+    // count its scroll-margin when deciding: a control that lands under the footer counts
+    // as on screen and stays hidden (WCAG 2.4.11). Move it clear ourselves. Main itself
+    // and SectionNav's sections are focused on purpose and can be taller than the screen.
+    const clearFooter = (e: FocusEvent) => {
+      const el = e.target;
+      if (!(el instanceof HTMLElement) || !el.closest('main')) return;
+      if (el.id === 'main' || el.hasAttribute('data-section')) return;
+      // After the browser's own scroll (if any), so only what it left covered moves
+      requestAnimationFrame(() => {
+        if (document.activeElement !== el) return;
+        const r = el.getBoundingClientRect();
+        const footerTop = window.innerHeight - footer.offsetHeight;
+        if (r.bottom > footerTop && r.top < window.innerHeight) {
+          window.scrollBy({ top: r.bottom - footerTop + 8, behavior: 'instant' });
+        }
+      });
+    };
+    document.addEventListener('focusin', clearFooter);
     return () => {
       observer.disconnect();
+      document.removeEventListener('focusin', clearFooter);
       root.style.removeProperty('--footer-height');
     };
   }, []);
