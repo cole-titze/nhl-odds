@@ -20,7 +20,19 @@ public static class OddsMovementCalculator
 
     private static readonly TimeZoneInfo Eastern = TimeZoneInfo.FindSystemTimeZoneById("America/New_York");
 
-    /// <summary>Midnight Eastern on the game's day, in UTC: where the chart starts</summary>
+    /// <summary>
+    /// Where the chart starts: midnight Eastern on game day, or for an upcoming game with nothing from game day yet,
+    /// midnight Eastern on the day of its latest price, so those show when they came in rather than all carried forward
+    /// to a game day that hasn't happened
+    /// </summary>
+    public static DateTime ChartStartUtc(DateTime startUtc, IEnumerable<OddsSeriesVM> series)
+    {
+        var dayStart = GameDayStartUtc(startUtc);
+        var latest = series.SelectMany(s => s.Points).Select(p => p.TimeUTC).DefaultIfEmpty(dayStart).Max();
+        return latest < dayStart ? GameDayStartUtc(latest) : dayStart;
+    }
+
+    /// <summary>Midnight Eastern on the day of a time, in UTC</summary>
     public static DateTime GameDayStartUtc(DateTime startUtc)
     {
         var eastern = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(startUtc, DateTimeKind.Utc), Eastern);
@@ -56,7 +68,7 @@ public static class OddsMovementCalculator
         {
             GameId = game.GameId,
             StartUTC = game.StartUTC,
-            Series = series.Select(s => FromGameDay(s, GameDayStartUtc(game.StartUTC))).Where(s => s.Points.Count > 0).ToList(),
+            Series = series.Select(s => FromGameDay(s, ChartStartUtc(game.StartUTC, series))).Where(s => s.Points.Count > 0).ToList(),
             Move = Move(morningBooks, closingBooks, modelRuns.LastOrDefault()?.HomeOdds),
         };
     }

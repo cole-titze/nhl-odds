@@ -75,6 +75,13 @@ function Chart({ game, movement }: { game: GameOddsVM; movement: OddsMovementVM 
     });
   }, [movement]);
 
+  // A narrow range (an upcoming game with a price or two) needs a decimal, or its ticks round to the same percent
+  const values = rows.flatMap((r) =>
+    movement.series.map((x) => r[x.name]).filter((v): v is number => v !== undefined),
+  );
+  const yDecimals =
+    values.length > 0 && (Math.max(...values) - Math.min(...values)) * 100 < 5 ? 1 : 0;
+
   const spansDays = rows.length > 1 && rows[rows.length - 1].t! - rows[0].t! > 20 * 3600 * 1000;
   const ticks = hourTicks(rows[0].t!, rows[rows.length - 1].t!);
   const formatTick = (t: number) =>
@@ -149,7 +156,7 @@ function Chart({ game, movement }: { game: GameOddsVM; movement: OddsMovementVM 
               />
               <YAxis
                 domain={['auto', 'auto']}
-                tickFormatter={(v: number) => `${Math.round(v * 100)}%`}
+                tickFormatter={(v: number) => `${(v * 100).toFixed(yDecimals)}%`}
                 tick={AXIS_TICK}
                 width={44}
                 stroke="#525252"

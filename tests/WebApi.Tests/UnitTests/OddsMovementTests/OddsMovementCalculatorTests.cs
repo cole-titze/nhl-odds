@@ -42,15 +42,18 @@ public class OddsMovementCalculatorTests
     }
 
     [TestMethod]
-    public void Calculate_OnlyEarlierRuns_ShouldKeepOnePointAtGameDayStart()
+    public void Calculate_UpcomingGameWithNothingOnGameDay_ShouldStartOnTheDayOfItsLatestPrice()
     {
         var game = Game();
-        game.ModelRuns = [new ModelRun(Start.AddDays(-3), 0.48), new ModelRun(Start.AddDays(-1), 0.5)];
+        var yesterdayMorning = Start.AddDays(-1).AddHours(-12);
+        game.ModelRuns = [new ModelRun(Start.AddDays(-3), 0.48), new ModelRun(yesterdayMorning, 0.5)];
 
         var model = OddsMovementCalculator.Calculate(game).Series.Single().Points;
 
-        model.Should().ContainSingle().Which.HomeProbability.Should().Be(0.5);
-        model[0].TimeUTC.Should().Be(OddsMovementCalculator.GameDayStartUtc(Start));
+        // Yesterday (Nov 2) starts at 05:00 UTC; the run keeps its own time
+        var yesterdayStart = new DateTime(2026, 11, 2, 5, 0, 0, DateTimeKind.Utc);
+        model.Select(p => p.TimeUTC).Should().Equal(yesterdayStart, yesterdayMorning);
+        model.Select(p => p.HomeProbability).Should().Equal(0.48, 0.5);
     }
 
     [TestMethod]
