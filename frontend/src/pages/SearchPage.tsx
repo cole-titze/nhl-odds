@@ -298,7 +298,8 @@ export function SearchPage() {
         noindex
       />
       <h1 className="font-display text-3xl font-bold tracking-tight mb-6">Search</h1>
-      {/* A plain GET form, so it works before the page's script loads */}
+      {/* A plain GET form, so it works before the page's script loads. No button: results update as you type,
+          and Enter (the phone keyboard's Search key) submits a one-field form without one */}
       <Form role="search" method="get" action="/search" className="mb-6 flex gap-2">
         <label htmlFor="search-page-input" className="sr-only">
           Search teams, players, games and articles
@@ -315,12 +316,6 @@ export function SearchPage() {
           placeholder="Teams, players, games, articles…"
           className="min-w-0 flex-1 rounded-lg border border-surface-300 dark:border-white/15 bg-white/80 dark:bg-white/[0.04] px-4 py-2.5 text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
         />
-        <button
-          type="submit"
-          className="rounded-lg bg-accent-600 px-4 py-2.5 font-semibold text-on-accent hover:bg-accent-700 cursor-pointer"
-        >
-          Search
-        </button>
       </Form>
       {/* Announces a slow search once, then the result count after each search, including ones made while typing */}
       <p role="status" className="sr-only">

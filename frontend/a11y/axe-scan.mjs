@@ -16,13 +16,15 @@
 // 5. Tabbing between the Games filter bar's controls must not scroll the feed
 // 6. Navbar search suggestions: typing opens the list, arrow keys move
 //    through it (the box keeps focus), Escape closes it and Enter on a
-//    suggestion opens it, and a 503 shows "search isn't available"; axe also
-//    scans the open list and the message (desktop)
+//    suggestion opens it, a 503 shows "search isn't available" and an empty
+//    answer a "no matches" line above the "see all results" row; axe also
+//    scans the open list and the messages (desktop)
 // 7. Loading states, with the search API slowed down: the search page shows
 //    result placeholders for a first search and a progress bar over old
 //    results (still visible with reduced motion), the navbar box a spinner,
 //    each announced once ("Searching…"); axe scans each. With the API at full
-//    speed, nothing loading-shaped appears at all (indicators wait 300 ms)
+//    speed, nothing loading-shaped appears on the search page (indicators wait
+//    300 ms); the navbar box's spinner shows from the first keystroke anyway
 //
 // axe runs in Chromium only (its rules don't depend on the engine); checks
 // 2-7 run in every browser in A11Y_BROWSERS (comma-separated, default
@@ -504,6 +506,39 @@ try {
       await ctx.close();
     }
 
+    // 6c. Nothing matches: the box says so and still offers the full search
+    {
+      const ctx = await newContext(browser, 'light', VIEWPORTS.desktop);
+      await ctx.route('**/api/Search/Suggest**', (route) =>
+        route.fulfill({
+          json: {
+            query: new URL(route.request().url()).searchParams.get('q'),
+            teams: [],
+            players: [],
+            games: [],
+          },
+        }),
+      );
+      const page = await ctx.newPage();
+      await load(page, '/about');
+      const problems = [];
+      await page.locator('header [role="combobox"]').fill('zzqx');
+      await page
+        .locator('header')
+        .getByText('No teams, players or games match')
+        .first()
+        .waitFor({ timeout: 5000 })
+        .catch(() => problems.push('no "no matches" message for an empty answer'));
+      if ((await page.locator('header [role="option"]').count()) !== 1)
+        problems.push('the "see all results" row is missing from the zero state');
+      const status = await page.locator('header [role="status"]').textContent();
+      if (!status?.includes('No teams, players or games match'))
+        problems.push(`status line says "${status}"`);
+      if (engine === 'chromium') problems.push(...(await runAxe(page)));
+      total += report('search suggestions with no matches [desktop] /about', problems);
+      await ctx.close();
+    }
+
     // 7. Loading states with a slow search API
     {
       const ctx = await newContext(browser, 'light', VIEWPORTS.desktop);
@@ -557,9 +592,15 @@ try {
         .locator('header [data-loading="suggestions"]')
         .waitFor({ timeout: SLOW_API_MS })
         .catch(() => problems.push('no spinner while suggestions load'));
-      const boxStatus = await page.locator('header [role="status"]').textContent();
-      if (boxStatus !== 'Searching…')
-        problems.push(`status line says "${boxStatus}", not "Searching…"`);
+      // The spinner shows at once; the status line waits LOADING_DELAY_MS so typing isn't read out per keystroke
+      await page
+        .locator('header [role="status"]', { hasText: /^Searching…$/ })
+        .waitFor({ state: 'attached', timeout: SLOW_API_MS })
+        .catch(async () =>
+          problems.push(
+            `status line says "${await page.locator('header [role="status"]').textContent()}", not "Searching…"`,
+          ),
+        );
       if (engine === 'chromium') problems.push(...(await runAxe(page)));
       total += report('search suggestions loading [desktop] /about', problems);
       await ctx.close();
@@ -581,19 +622,21 @@ try {
       const problems = [];
       if (await page.evaluate(() => window.__sawLoading))
         problems.push('a loading indicator flashed on the search page');
-      // The navbar box isn't on the search page
+      // The navbar box is the exception: its spinner shows from the first keystroke, even for fast answers,
+      // so a slow answer never looks like no matches
       await load(page, '/about');
       await page.evaluate(() => {
         window.__sawLoading = false;
         new MutationObserver(() => {
-          if (document.querySelector('[data-loading]:not(.invisible)')) window.__sawLoading = true;
+          if (document.querySelector('header [data-loading="suggestions"]'))
+            window.__sawLoading = true;
         }).observe(document.body, { subtree: true, childList: true, attributes: true });
       });
       await page.locator('header [role="combobox"]').fill('leafs');
       await page.locator('header [role="listbox"]:not([hidden])').waitFor({ timeout: 5000 });
-      if (await page.evaluate(() => window.__sawLoading))
-        problems.push('a loading indicator flashed in the navbar suggestions');
-      total += report('no loading flicker for fast answers [desktop] /search, /about', problems);
+      if (!(await page.evaluate(() => window.__sawLoading)))
+        problems.push('no spinner in the navbar box while its suggestions loaded');
+      total += report('loading indicators for fast answers [desktop] /search, /about', problems);
       await ctx.close();
     }
 

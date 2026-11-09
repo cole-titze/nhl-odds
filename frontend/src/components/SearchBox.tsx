@@ -68,6 +68,10 @@ function gameDetail(g: GameResult) {
     : date;
 }
 
+function noMatchesText(query: string) {
+  return `No teams, players or games match “${query}”.`;
+}
+
 /** The suggestion list's rows, in the order arrow keys move through them; the last one is the full search. */
 function optionsFor(results: SuggestResults, text: string): Option[] {
   const options: Option[] = [
@@ -82,8 +86,7 @@ function optionsFor(results: SuggestResults, text: string): Option[] {
     ...results.players.map((p) => ({
       key: `p${p.playerId}`,
       group: 'Players' as const,
-      // Players have no page of their own yet: their team's page, else a full search for their name
-      to: p.teamId != null ? `/team/${p.teamId}` : `/search?${new URLSearchParams({ q: p.name })}`,
+      to: `/player/${p.playerId}`,
       label: p.name,
       detail: [p.position, p.teamAbbreviation].filter(Boolean).join(' · ') || undefined,
     })),
@@ -125,14 +128,27 @@ export function SearchBox() {
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const request = useRef<AbortController>(undefined);
 
-  const options = results && results.query === text.trim() ? optionsFor(results, text) : [];
-  // Only the "see all" row means nothing matched: no list, just the form
-  const showList = open && options.length > 1;
-  const showUnavailable =
-    open && !showList && unavailableFor !== null && unavailableFor === text.trim();
-  const showPanel = showList || showUnavailable;
-  // A spinner replaces the search icon only when the request takes a while (not for every keystroke)
-  const slow = useDelayedFlag(loadingFor !== null && loadingFor === text.trim());
+  const query = text.trim();
+  const searchable = query.length >= MIN_QUERY_CHARS;
+  // Suggestions for exactly what's in the box
+  const fresh = results !== null && results.query === query;
+  // From the first keystroke until this text's suggestions (or the "unavailable" answer) arrive, including the
+  // wait before the request goes out, so it's always clear whether it's still looking or found nothing
+  const pending = searchable && !fresh && unavailableFor !== query;
+  const suggestionCount = results
+    ? results.teams.length + results.players.length + results.games.length
+    : 0;
+  // While the next suggestions load, the last ones stay up, dimmed, rather than the list blinking out
+  const stale = pending && suggestionCount > 0;
+  const options = searchable && (fresh || stale) ? optionsFor(results!, text) : [];
+  const showList = open && options.length > 0;
+  // The zero state: nothing matched, but the full search (articles too) is still a row away
+  const noMatches = showList && fresh && suggestionCount === 0;
+  const showSearching = open && pending && !stale;
+  const showUnavailable = open && searchable && unavailableFor === query;
+  const showPanel = showList || showSearching || showUnavailable;
+  // Screen readers hear "Searching…" only when it takes a while, not on every keystroke
+  const slow = useDelayedFlag(loadingFor !== null && loadingFor === query);
 
   function close() {
     setOpen(false);
@@ -195,7 +211,7 @@ export function SearchBox() {
 
   function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-      if (options.length <= 1) return;
+      if (options.length === 0) return;
       e.preventDefault();
       setOpen(true);
       const step = e.key === 'ArrowDown' ? 1 : -1;
@@ -236,7 +252,7 @@ export function SearchBox() {
         Search teams, players, games and articles
       </label>
       <div className="relative">
-        {slow ? (
+        {pending ? (
           <span
             data-loading="suggestions"
             className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-accent-600 dark:text-accent-400"
@@ -277,77 +293,98 @@ export function SearchBox() {
         <p role="status" className="sr-only">
           {slow
             ? 'Searching…'
-            : showList
-              ? `${count} suggestion${count === 1 ? '' : 's'}. Use the up and down arrows to choose.`
-              : showUnavailable
-                ? UNAVAILABLE
-                : ''}
+            : noMatches
+              ? `${noMatchesText(query)} Press Enter to search articles too.`
+              : showList && !stale
+                ? `${count} suggestion${count === 1 ? '' : 's'}. Use the up and down arrows to choose.`
+                : showUnavailable
+                  ? UNAVAILABLE
+                  : ''}
         </p>
-        <ul
-          id={listId}
-          role="listbox"
-          aria-label="Suggestions"
-          hidden={!showList}
-          className={`${PANEL_CLASS} pb-1.5`}
-        >
-          {options.map((o, i) => {
-            const firstOfGroup = o.group !== 'all' && (i === 0 || options[i - 1].group !== o.group);
-            return (
-              <li
-                key={o.key}
-                id={`${id}-opt-${i}`}
-                role="option"
-                aria-selected={i === active}
-                // Keeps focus in the box, so the click lands before blur closes the list
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => go(o)}
-                onMouseMove={() => setActive(i)}
-                className={`${o.group === 'all' ? 'mt-1 border-t border-surface-200 dark:border-white/10 pt-1' : ''}`}
-              >
-                {firstOfGroup && (
-                  // Visual only: each option says its group itself (GROUP_NAMES), since a heading inside an option would be read as part of it
-                  <div
-                    aria-hidden="true"
-                    className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-surface-600 dark:text-surface-400"
-                  >
-                    {o.group}
-                  </div>
-                )}
-                <div
-                  className={`mx-1.5 flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm ${
-                    i === active
-                      ? 'bg-surface-100 text-surface-900 dark:bg-white/[0.08] dark:text-white'
-                      : 'text-surface-800 dark:text-surface-200'
-                  }`}
-                >
-                  {o.logo && (
-                    <TeamLogo src={o.logo.src} alt={o.logo.alt} className="h-5 w-5 shrink-0" />
-                  )}
-                  <span
-                    className={`min-w-0 flex-1 truncate ${o.group === 'all' ? 'font-medium' : ''}`}
-                  >
-                    {o.label}
-                    {o.group !== 'all' && <span className="sr-only">, {GROUP_NAMES[o.group]}</span>}
-                  </span>
-                  {o.detail && (
-                    <span className="shrink-0 text-xs text-surface-600 dark:text-surface-400">
-                      {o.detail}
-                    </span>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-        {showUnavailable && (
-          // Not part of the listbox (it isn't a choice); the status line above reads it out
-          <div
-            aria-hidden="true"
-            className={`${PANEL_CLASS} px-3 py-2.5 text-sm text-red-700 dark:text-red-400`}
+        <div hidden={!showPanel} className={`${PANEL_CLASS} ${showList ? 'pb-1.5' : ''}`}>
+          {showSearching && (
+            // Not part of the listbox (it isn't a choice); the status line above reads it out when slow
+            <div
+              aria-hidden="true"
+              className="px-3 py-2.5 text-sm text-surface-600 dark:text-surface-400"
+            >
+              Searching…
+            </div>
+          )}
+          {noMatches && (
+            <div
+              aria-hidden="true"
+              className="px-3 pb-1 pt-2.5 text-sm text-surface-600 dark:text-surface-400"
+            >
+              {noMatchesText(query)}
+            </div>
+          )}
+          {showUnavailable && (
+            <div aria-hidden="true" className="px-3 py-2.5 text-sm text-red-700 dark:text-red-400">
+              {UNAVAILABLE}
+            </div>
+          )}
+          <ul
+            id={listId}
+            role="listbox"
+            aria-label="Suggestions"
+            aria-busy={stale}
+            hidden={!showList}
+            className={stale ? 'opacity-60' : undefined}
           >
-            {UNAVAILABLE}
-          </div>
-        )}
+            {options.map((o, i) => {
+              const firstOfGroup =
+                o.group !== 'all' && (i === 0 || options[i - 1].group !== o.group);
+              return (
+                <li
+                  key={o.key}
+                  id={`${id}-opt-${i}`}
+                  role="option"
+                  aria-selected={i === active}
+                  // Keeps focus in the box, so the click lands before blur closes the list
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => go(o)}
+                  onMouseMove={() => setActive(i)}
+                  className={`${o.group === 'all' && i > 0 ? 'mt-1 border-t border-surface-200 dark:border-white/10 pt-1' : o.group === 'all' ? 'pt-1' : ''}`}
+                >
+                  {firstOfGroup && (
+                    // Visual only: each option says its group itself (GROUP_NAMES), since a heading inside an option would be read as part of it
+                    <div
+                      aria-hidden="true"
+                      className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-surface-600 dark:text-surface-400"
+                    >
+                      {o.group}
+                    </div>
+                  )}
+                  <div
+                    className={`mx-1.5 flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm ${
+                      i === active
+                        ? 'bg-surface-100 text-surface-900 dark:bg-white/[0.08] dark:text-white'
+                        : 'text-surface-800 dark:text-surface-200'
+                    }`}
+                  >
+                    {o.logo && (
+                      <TeamLogo src={o.logo.src} alt={o.logo.alt} className="h-5 w-5 shrink-0" />
+                    )}
+                    <span
+                      className={`min-w-0 flex-1 truncate ${o.group === 'all' ? 'font-medium' : ''}`}
+                    >
+                      {o.label}
+                      {o.group !== 'all' && (
+                        <span className="sr-only">, {GROUP_NAMES[o.group]}</span>
+                      )}
+                    </span>
+                    {o.detail && (
+                      <span className="shrink-0 text-xs text-surface-600 dark:text-surface-400">
+                        {o.detail}
+                      </span>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       </div>
     </Form>
   );
