@@ -66,6 +66,9 @@ jobs:
         working-directory: frontend
     env:
       LIGHTHOUSE_URL: ${{ (inputs.target == 'live' || (github.event_name == 'schedule' && inputs.target == '')) && 'https://nhl.half-built.com' || '' }}
+      # The gate scores each page once: SEO, the only gated score, is the same every run; the median
+      # of 3 only steadies performance, which just warns. The live report keeps 3
+      LIGHTHOUSE_RUNS: ${{ (inputs.target == 'live' || (github.event_name == 'schedule' && inputs.target == '')) && '3' || '1' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
