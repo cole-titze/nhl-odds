@@ -27,6 +27,11 @@ from .prediction.experiments import (
 
 warnings.filterwarnings("ignore", message="X does not have valid feature names")
 
+# Prediction factors (#155) are worked out for games in the next this-many days only. Explaining every
+# remaining game of the season took 33 minutes each morning (11-10); a game further out gets its factors
+# once it's within this window, and the Game page hides the section until then
+EXPLAIN_DAYS = 7
+
 
 def _calculate_log_loss(winner: int, home_odds: float, away_odds: float) -> float:
     if home_odds <= 0 or away_odds <= 0:
@@ -91,17 +96,29 @@ def _save_unplayed_predictions(conn, save_pipeline, save_model, save_name, run_d
 
     print(f"Saving {len(unplayed_predictions)} unplayed game predictions to GameOdds...")
     save_predictions(conn, unplayed_predictions)
-    _save_prediction_factors(conn, unplayed_df, save_pipeline, save_model, run_date, train_df)
+    return unplayed_df
+
+
+def games_to_explain(unplayed_df: pd.DataFrame, run_date: datetime, days: int = EXPLAIN_DAYS) -> pd.DataFrame:
+    """The unplayed games starting within `days` of the run (#155's factors are slow to work out)."""
+    starts = pd.to_datetime(unplayed_df["GameDateUTC"], utc=True)
+    return unplayed_df[starts < pd.Timestamp(run_date) + pd.Timedelta(days=days)]
 
 
 def _save_prediction_factors(conn, unplayed_df, pipeline, model, run_date, train_df):
-    """The main factors behind each saved prediction (#155). A failure here is logged and doesn't
-    fail the run: the predictions are already saved."""
+    """The main factors behind each saved prediction in the next EXPLAIN_DAYS days (#155). Runs last, after
+    the spread and total predictions, and a failure here is logged and doesn't fail the run: the predictions
+    are already saved."""
     try:
         started = time.time()
-        factors = explain_games(unplayed_df, pipeline, model, background_sample(train_df))
+        games = games_to_explain(unplayed_df, run_date)
+        if games.empty:
+            print(f"No games in the next {EXPLAIN_DAYS} days to explain.")
+            return
+        factors = explain_games(games, pipeline, model, background_sample(train_df))
         save_prediction_factors(conn, factors, HOMEGROWN_MODEL_ID, run_date)
-        print(f"Saved prediction factors for {len(unplayed_df)} games in {time.time() - started:.0f}s.")
+        elapsed = time.time() - started
+        print(f"Saved prediction factors for {len(games)} games (next {EXPLAIN_DAYS} days) in {elapsed:.0f}s.")
     except Exception as e:  # noqa: BLE001 - explanations are optional
         conn.rollback()
         print(f"WARNING: could not save prediction factors: {e}")
@@ -364,7 +381,7 @@ def run(mode: str = "predict"):
         save_pipeline, save_model, save_name = result
         run_date = datetime.now(timezone.utc)
 
-        _save_unplayed_predictions(conn, save_pipeline, save_model, save_name, run_date, train_df)
+        unplayed_df = _save_unplayed_predictions(conn, save_pipeline, save_model, save_name, run_date, train_df)
 
         for target, model_id, exp_name in [
             ("spread", SPREAD_MODEL_ID, SAVE_SPREAD_EXPERIMENT),
@@ -377,6 +394,10 @@ def run(mode: str = "predict"):
                 continue
             reg_pipeline, reg_model, reg_name, residual_std = reg_result
             _save_unplayed_regression(conn, reg_pipeline, reg_model, residual_std, target, model_id, exp_name, run_date)
+
+        # Last: the slowest step, and the only optional one
+        if unplayed_df is not None:
+            _save_prediction_factors(conn, unplayed_df, save_pipeline, save_model, run_date, train_df)
 
     elapsed = time.time() - start
     minutes, seconds = divmod(int(elapsed), 60)

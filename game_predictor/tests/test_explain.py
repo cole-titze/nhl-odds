@@ -135,3 +135,23 @@ class ExplainGamesTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class GamesToExplainTest(unittest.TestCase):
+    """Only the next EXPLAIN_DAYS days of games are explained (all of them took 33 minutes)."""
+
+    def test_keeps_games_in_the_window(self):
+        from datetime import datetime, timezone
+
+        from game_predictor.workflow import games_to_explain
+
+        run = datetime(2026, 11, 10, 12, 30, tzinfo=timezone.utc)
+        games = pd.DataFrame(
+            {
+                "GameId": [1, 2, 3],
+                # Naive UTC, as Postgres returns GameDateUTC
+                "GameDateUTC": pd.to_datetime(["2026-11-11 00:00", "2026-11-17 12:00", "2026-11-17 13:00"]),
+            }
+        )
+
+        self.assertEqual(list(games_to_explain(games, run, days=7)["GameId"]), [1, 2])
