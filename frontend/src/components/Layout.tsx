@@ -51,9 +51,29 @@ export function Layout() {
       });
     };
     document.addEventListener('focusin', clearFooter);
+
+    // With the on-screen keyboard up, iOS keeps fixed-bottom things on the layout viewport, so
+    // the footer (and the chat button above it) float over the page above the keyboard. Hide
+    // them while a text field outside a dialog has focus on a touch screen.
+    const touch = window.matchMedia('(pointer: coarse)');
+    const isTyping = (el: Element | null) =>
+      el instanceof HTMLElement &&
+      el.matches(
+        'textarea, [contenteditable=""], [contenteditable="true"], input:not([type=checkbox], [type=radio], [type=button], [type=submit], [type=reset], [type=range], [type=color], [type=file], [type=image])',
+      ) &&
+      !el.closest('[role="dialog"]');
+    const syncTyping = () =>
+      root.classList.toggle('typing', touch.matches && isTyping(document.activeElement));
+    // Focus moving between fields fires focusout before focusin; check once it lands
+    const onFocusOut = () => setTimeout(syncTyping);
+    document.addEventListener('focusin', syncTyping);
+    document.addEventListener('focusout', onFocusOut);
     return () => {
       observer.disconnect();
       document.removeEventListener('focusin', clearFooter);
+      document.removeEventListener('focusin', syncTyping);
+      document.removeEventListener('focusout', onFocusOut);
+      root.classList.remove('typing');
       root.style.removeProperty('--footer-height');
     };
   }, []);
@@ -96,7 +116,7 @@ export function Layout() {
         {/* Fixed so it's always on screen: the games page scrolls forever and would never reach a footer */}
         <footer
           ref={footerRef}
-          className="fixed inset-x-0 bottom-0 z-30 border-t border-surface-200 dark:border-white/[0.05] bg-surface-50/95 dark:bg-surface-950/95 backdrop-blur px-4 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] text-center text-[11px] leading-snug text-surface-500 dark:text-surface-400 font-mono"
+          className="app-footer fixed inset-x-0 bottom-0 z-30 border-t border-surface-200 dark:border-white/[0.05] bg-surface-50/95 dark:bg-surface-950/95 backdrop-blur px-4 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] text-center text-[11px] leading-snug text-surface-500 dark:text-surface-400 font-mono"
         >
           Personal, non-commercial hobby project. Not affiliated with or endorsed by the NHL or any
           NHL team.

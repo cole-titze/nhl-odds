@@ -160,11 +160,29 @@ export function Assistant() {
     // A swipe with nothing to scroll goes to the page, and iOS shifts the whole screen (the
     // header jitters). Only the message list and a long message box may scroll, and only once
     // they overflow.
+    // A swipe that starts at the top or bottom edge of one that does overflow (where the list
+    // sits after each reply) also goes to the page, so the page scrolled behind and the chat
+    // jumped as the screen shifted; stop those too.
     const panel = panelRef.current;
-    const onTouchMove = (e: TouchEvent) => {
-      const scroller = (e.target as Element).closest<HTMLElement>('[data-scroll]');
-      if (!scroller || scroller.scrollHeight <= scroller.clientHeight) e.preventDefault();
+    let lastY = 0;
+    const onTouchStart = (e: TouchEvent) => {
+      lastY = e.touches[0]?.clientY ?? 0;
     };
+    const onTouchMove = (e: TouchEvent) => {
+      const y = e.touches[0]?.clientY ?? lastY;
+      const dy = y - lastY;
+      lastY = y;
+      const scroller = (e.target as Element).closest<HTMLElement>('[data-scroll]');
+      if (!scroller || scroller.scrollHeight <= scroller.clientHeight) {
+        if (e.cancelable) e.preventDefault();
+        return;
+      }
+      const atTop = scroller.scrollTop <= 0;
+      const atBottom = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1;
+      // Finger down scrolls toward the top; finger up toward the bottom
+      if (((dy > 0 && atTop) || (dy < 0 && atBottom)) && e.cancelable) e.preventDefault();
+    };
+    panel?.addEventListener('touchstart', onTouchStart, { passive: true });
     panel?.addEventListener('touchmove', onTouchMove, { passive: false });
     // The keyboard starts hiding as the box loses focus, but iOS reports the new size late, so
     // drop the box now and let it slide down alongside the keyboard
@@ -187,6 +205,7 @@ export function Assistant() {
       vv.removeEventListener('resize', settle);
       vv.removeEventListener('scroll', settle);
       window.removeEventListener('resize', settle);
+      panel?.removeEventListener('touchstart', onTouchStart);
       panel?.removeEventListener('touchmove', onTouchMove);
       panel?.removeEventListener('focusout', onFocusOut);
       panel?.removeEventListener('focusin', onFocusIn);
@@ -252,7 +271,7 @@ export function Assistant() {
 
   return (
     <div
-      className={`fixed right-4 bottom-[calc(var(--footer-height,2rem)+1rem)] z-40 flex flex-col items-end gap-3 ${open ? 'max-sm:z-[60]' : ''}`}
+      className={`assistant-dock fixed right-4 bottom-[calc(var(--footer-height,2rem)+1rem)] z-40 flex flex-col items-end gap-3 ${open ? 'max-sm:z-[60]' : ''}`}
     >
       {open && (
         <div

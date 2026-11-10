@@ -915,3 +915,11 @@ html.scenic {
     visibility: hidden;
   }
 }
+
+/* Touch screens with the keyboard up (a text field outside a dialog has focus, Layout.tsx):
+   iOS floats fixed-bottom things above the keyboard, so the footer and the chat button go away
+   until the field loses focus */
+.typing .app-footer,
+.typing .assistant-dock:not(:has([role='dialog'])) {
+  display: none;
+}
