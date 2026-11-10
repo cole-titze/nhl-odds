@@ -1,15 +1,16 @@
 import { useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { useFetch } from '../hooks/useFetch';
+import type { FetchState } from '../hooks/useFetch';
 import { useHydrated } from '../hooks/useHydrated';
 import { useIsDarkTheme } from '../hooks/useRootTheme';
 import { useDisplayTimeZone } from '../hooks/useDisplayTimeZone';
-import { getOddsMovement } from '../api/oddsMovement';
 import { dashFor, readableLineColor } from '../utils/chartSeries';
 import { LineKey } from './LineKey';
 import { ChartDataTable } from './ChartDataTable';
 import { Skeleton } from './Skeleton';
 import { LoadingStatus } from './A11y';
+import { sectionProps } from '../utils/sections';
+import { hasOddsMovement } from '../utils/oddsMovement';
 import type { GameOddsVM, OddsMovementVM } from '../types';
 
 const HEADING =
@@ -24,10 +25,17 @@ const PARTNER_COLORS = ['#22c55e', '#a855f7', '#e44d2e'];
 
 const pct = (v: number) => `${(v * 100).toFixed(1)}%`;
 
-/** The home team's win chance before puck drop: the model next to each market's prices */
-export function OddsMovementChart({ game }: { game: GameOddsVM }) {
-  const { data, loading } = useFetch(() => getOddsMovement(game.id), [game.id]);
-
+/**
+ * The home team's win chance before puck drop: the model next to each market's prices. The Game
+ * page fetches the data, so its chips know whether there's a chart.
+ */
+export function OddsMovementChart({
+  game,
+  movement: { data, loading },
+}: {
+  game: GameOddsVM;
+  movement: FetchState<OddsMovementVM>;
+}) {
   if (loading)
     return (
       <div className="glass rounded-xl p-6 space-y-3">
@@ -37,7 +45,7 @@ export function OddsMovementChart({ game }: { game: GameOddsVM }) {
       </div>
     );
   // Not worth an error box: the rest of the page already shows the odds
-  if (!data || data.series.length === 0) return null;
+  if (!data || !hasOddsMovement(data)) return null;
   return <Chart game={game} movement={data} />;
 }
 
@@ -100,7 +108,11 @@ function Chart({ game, movement }: { game: GameOddsVM; movement: OddsMovementVM 
 
   const move = movement.move;
   return (
-    <section className="glass rounded-xl p-6" aria-labelledby="odds-movement-heading">
+    <section
+      {...sectionProps('odds-movement')}
+      className="glass rounded-xl p-6"
+      aria-labelledby="odds-movement-heading"
+    >
       <h2 id="odds-movement-heading" className={HEADING}>
         Odds Movement
       </h2>

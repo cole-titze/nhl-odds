@@ -1,20 +1,36 @@
 import { Fragment } from 'react';
 import { Link } from 'react-router';
-import { useFetch } from '../hooks/useFetch';
+import type { FetchState } from '../hooks/useFetch';
 import { useDisplayTimeZone } from '../hooks/useDisplayTimeZone';
-import { getGameLineup } from '../api/lineup';
 import { Skeleton } from './Skeleton';
 import { LoadingStatus } from './A11y';
 import { playerPath } from '../utils/players';
-import type { GameOddsVM, LineupPlayerVM, MatchupTeamVM, TeamLineupVM } from '../types';
+import { sectionProps } from '../utils/sections';
+import type {
+  GameLineupResultVM,
+  GameOddsVM,
+  LineupPlayerVM,
+  MatchupTeamVM,
+  TeamLineupVM,
+} from '../types';
 
 const HEADING =
   'text-xs font-mono font-bold tracking-widest uppercase text-surface-600 dark:text-surface-400';
 const SUBHEADING = 'text-xs font-semibold text-surface-600 dark:text-surface-400 mt-4 mb-1.5';
 
-/** NHL.com's projected lines, goalies and absences for both teams (from the LineupSnapshot job) */
-export function GameLineups({ game }: { game: GameOddsVM }) {
-  const { data, loading, error } = useFetch(() => getGameLineup(game.id), [game.id]);
+/**
+ * NHL.com's projected lines, goalies and absences for both teams (from the LineupSnapshot job).
+ * The Game page fetches them (its chips and Rosters section depend on whether there's one) and
+ * only renders this while loading or with a lineup: an upcoming game without one shows its
+ * rosters instead (#170), and a played game NHL.com never projected shows nothing.
+ */
+export function GameLineups({
+  game,
+  lineup: { data, loading, error },
+}: {
+  game: GameOddsVM;
+  lineup: FetchState<GameLineupResultVM>;
+}) {
   const { locales, timeZone } = useDisplayTimeZone();
 
   if (loading)
@@ -27,57 +43,50 @@ export function GameLineups({ game }: { game: GameOddsVM }) {
     );
 
   const lineup = data?.lineup;
-  // Nothing to say about a played game NHL.com never projected
-  if (!lineup && game.hasBeenPlayed) return null;
+  if (error || !lineup) return null;
 
   return (
-    <section className="glass rounded-xl p-6" aria-labelledby="lineups-heading">
+    <section
+      {...sectionProps('lineups')}
+      className="glass rounded-xl p-6"
+      aria-labelledby="lineups-heading"
+    >
       <h2 id="lineups-heading" className={HEADING}>
         Projected Lineups
       </h2>
-      {error ? (
-        <p className="text-sm text-surface-600 dark:text-surface-400 mt-3">
-          Couldn&apos;t load the projected lineups.
+      <>
+        <p className="text-xs text-surface-600 dark:text-surface-400 mt-1">
+          From NHL.com&apos;s lineup projections,{' '}
+          {game.hasBeenPlayed ? 'final version before puck drop, ' : ''}
+          updated{' '}
+          {new Date(lineup.updatedUTC).toLocaleString(locales, {
+            weekday: 'short',
+            hour: 'numeric',
+            minute: '2-digit',
+            timeZone,
+          })}
+          {lineup.versionCount > 1 &&
+            `, revised ${lineup.versionCount === 2 ? 'once' : `${lineup.versionCount - 1} times`} since first posted`}
+          .
         </p>
-      ) : !lineup ? (
-        <p className="text-sm text-surface-600 dark:text-surface-400 mt-3">
-          No projection yet. NHL.com usually posts projected lineups on the afternoon of game day.
-        </p>
-      ) : (
-        <>
-          <p className="text-xs text-surface-600 dark:text-surface-400 mt-1">
-            From NHL.com&apos;s lineup projections,{' '}
-            {game.hasBeenPlayed ? 'final version before puck drop, ' : ''}
-            updated{' '}
-            {new Date(lineup.updatedUTC).toLocaleString(locales, {
-              weekday: 'short',
-              hour: 'numeric',
-              minute: '2-digit',
-              timeZone,
-            })}
-            {lineup.versionCount > 1 &&
-              `, revised ${lineup.versionCount === 2 ? 'once' : `${lineup.versionCount - 1} times`} since first posted`}
-            .
-          </p>
-          <div className="grid gap-6 sm:grid-cols-2 mt-2">
-            <TeamLineup team={game.awayTeam} lineup={lineup.away} />
-            <TeamLineup team={game.homeTeam} lineup={lineup.home} />
+        <div className="grid gap-6 sm:grid-cols-2 mt-2">
+          <TeamLineup team={game.awayTeam} lineup={lineup.away} />
+          <TeamLineup team={game.homeTeam} lineup={lineup.home} />
+        </div>
+        {lineup.statusReport && (
+          <div className="mt-6">
+            <h3 className={SUBHEADING}>Status report</h3>
+            {lineup.statusReport.split('\n').map((line, i) => (
+              <p
+                key={i}
+                className="text-sm text-surface-700 dark:text-surface-300 leading-relaxed mb-2"
+              >
+                {line}
+              </p>
+            ))}
           </div>
-          {lineup.statusReport && (
-            <div className="mt-6">
-              <h3 className={SUBHEADING}>Status report</h3>
-              {lineup.statusReport.split('\n').map((line, i) => (
-                <p
-                  key={i}
-                  className="text-sm text-surface-700 dark:text-surface-300 leading-relaxed mb-2"
-                >
-                  {line}
-                </p>
-              ))}
-            </div>
-          )}
-        </>
-      )}
+        )}
+      </>
     </section>
   );
 }

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
 import type { GameOddsVM, PredictionFactorsVM } from '../types';
-import { getPredictionFactors } from '../api/gameOdds';
+import { sectionProps } from '../utils/sections';
+import { hasFactors } from '../hooks/usePredictionFactors';
 
 // How many factors to list; the rest are summed into one line
 const SHOWN = 5;
@@ -15,26 +15,12 @@ const pts = (p: number) => `${p >= 0 ? '+' : '−'}${Math.abs(p * 100).toFixed(1
  */
 export function PredictionFactors({
   game,
-  initial,
+  data,
 }: {
   game: GameOddsVM;
-  /** What the server loaded with the page (null: none saved); undefined fetches them here */
-  initial?: PredictionFactorsVM | null;
+  data: PredictionFactorsVM | null;
 }) {
-  const [data, setData] = useState<PredictionFactorsVM | null>(initial ?? null);
-
-  useEffect(() => {
-    if (initial !== undefined) return;
-    let current = true;
-    getPredictionFactors(game.id)
-      .then((d) => current && setData(d))
-      .catch(() => current && setData(null));
-    return () => {
-      current = false;
-    };
-  }, [game.id, initial]);
-
-  if (!data || data.factors.length === 0 || !game.homeTeam || !game.awayTeam) return null;
+  if (!data || !hasFactors(game, data) || !game.homeTeam || !game.awayTeam) return null;
 
   const home = game.homeTeam.teamName;
   const away = game.awayTeam.teamName;
@@ -44,7 +30,11 @@ export function PredictionFactors({
   const largest = Math.max(...shown.map((f) => Math.abs(f.contribution)), 0.0001);
 
   return (
-    <section aria-labelledby="factors-heading" className="glass rounded-xl px-6 py-5">
+    <section
+      {...sectionProps('factors')}
+      aria-labelledby="factors-heading"
+      className="glass rounded-xl px-6 py-5"
+    >
       <h2
         id="factors-heading"
         className="text-xs font-mono font-bold tracking-widest uppercase text-surface-500 dark:text-surface-400 mb-1"

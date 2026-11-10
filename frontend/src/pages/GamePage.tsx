@@ -17,6 +17,8 @@ import type {
 import { Winner } from '../types';
 import { getGame, getPredictionFactors } from '../api/gameOdds';
 import { getGamePlayers } from '../api/players';
+import { getGameLineup } from '../api/lineup';
+import { getOddsMovement } from '../api/oddsMovement';
 import { useFetch } from '../hooks/useFetch';
 import { forwardClientIp } from '../api/client';
 import { useDisplayTimeZone } from '../hooks/useDisplayTimeZone';
@@ -34,8 +36,10 @@ import { StrategyPicker } from '../components/StrategyPicker';
 import { Skeleton } from '../components/Skeleton';
 import { GameLineups } from '../components/GameLineups';
 import { OddsMovementChart } from '../components/OddsMovementChart';
+import { hasOddsMovement } from '../utils/oddsMovement';
 import { TeamLogo } from '../components/TeamLogo';
 import { PredictionFactors } from '../components/PredictionFactors';
+import { hasFactors, usePredictionFactors } from '../hooks/usePredictionFactors';
 import { SectionNav } from '../components/SectionNav';
 import { sectionProps, type PageSection } from '../utils/sections';
 import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
@@ -118,6 +122,13 @@ export function GamePage() {
     [gameId],
     loaded?.players,
   );
+  // Fetched here rather than in their sections, so the chips list only the sections there are
+  const lineup = useFetch(() => getGameLineup(Number(gameId)), [gameId]);
+  const movement = useFetch(() => getOddsMovement(Number(gameId)), [gameId]);
+  const factors = usePredictionFactors(
+    Number(gameId),
+    loaded?.game && String(loaded.game.id) === gameId ? loaded.factors : undefined,
+  );
 
   useEffect(() => {
     if (game || error) return;
@@ -179,11 +190,20 @@ export function GamePage() {
   ];
   const gamePlayers = players && players.gameId === game.id ? players : null;
   const hasPredictions = game.predictedSpread != null || game.predictedTotal != null;
-  const hasPlayers = !!gamePlayers && (gamePlayers.away.length > 0 || gamePlayers.home.length > 0);
+  const hasLineup = !lineup.loading && !lineup.error && !!lineup.data?.lineup;
+  // An upcoming game's projected lineup replaces its rosters (#170), and while it loads neither
+  // shows, so the rosters don't flash up first. Played games show the box score either way
+  const hasPlayers =
+    !!gamePlayers &&
+    (gamePlayers.away.length > 0 || gamePlayers.home.length > 0) &&
+    (gamePlayers.hasStats || (!lineup.loading && !hasLineup));
   const sections: PageSection[] = [
     { id: 'prediction', label: 'Prediction' },
+    ...(hasFactors(game, factors) ? [{ id: 'factors', label: 'Why' }] : []),
     ...(hasPredictions ? [{ id: 'spread-total', label: 'Spread & total' }] : []),
     ...(game.bookmakerOdds?.length > 0 ? [{ id: 'odds', label: 'Odds' }] : []),
+    ...(hasOddsMovement(movement.data) ? [{ id: 'odds-movement', label: 'Odds movement' }] : []),
+    ...(hasLineup ? [{ id: 'lineups', label: 'Lineups' }] : []),
     ...(hasPlayers
       ? [{ id: 'players', label: gamePlayers!.hasStats ? 'Box score' : 'Rosters' }]
       : []),
@@ -292,11 +312,7 @@ export function GamePage() {
         )}
       </div>
 
-      <PredictionFactors
-        key={game.id}
-        game={game}
-        initial={loaded?.game?.id === game.id ? loaded.factors : undefined}
-      />
+      <PredictionFactors game={game} data={factors} />
 
       {/* Spread & Total Predictions */}
       {hasPredictions && (
@@ -410,8 +426,8 @@ export function GamePage() {
         </div>
       )}
 
-      <OddsMovementChart game={game} />
-      <GameLineups game={game} />
+      <OddsMovementChart game={game} movement={movement} />
+      <GameLineups game={game} lineup={lineup} />
       {hasPlayers && <GamePlayers game={game} players={gamePlayers!} />}
     </div>
   );
@@ -431,6 +447,12 @@ function GamePlayers({ game, players }: { game: GameOddsVM; players: GamePlayers
       >
         {players.hasStats ? 'Box Score' : 'Rosters'}
       </h2>
+      {!players.hasStats && (
+        <p className="text-sm text-surface-600 dark:text-surface-400">
+          Projected lineups replace these once NHL.com posts them, usually on the afternoon of game
+          day.
+        </p>
+      )}
       {sides.map(({ team, list }) => {
         const teamName = `${team!.locationName} ${team!.teamName}`;
         return (
