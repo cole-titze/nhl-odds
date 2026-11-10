@@ -47,15 +47,34 @@ const CATEGORIES = Object.keys(THRESHOLDS);
 const NOINDEX = ['/admin', '/search'];
 const localPages = () => pagesFor().filter((p) => !NOINDEX.includes(p.split('?')[0]));
 
+// A rollout or a Cloudflare hiccup can answer one request with an error page,
+// so each live lookup is retried a few times and fails naming the status
+async function fetchLive(url) {
+  let last;
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) return res;
+      last = `HTTP ${res.status}`;
+    } catch (e) {
+      last = e.message;
+    }
+    if (attempt < 4) await new Promise((r) => setTimeout(r, 15_000));
+  }
+  throw new Error(`${url} failed 4 times (last: ${last})`);
+}
+
 async function livePages(base) {
-  const sitemap = await (await fetch(`${base}/sitemap.xml`)).text();
+  const sitemap = await (await fetchLive(`${base}/sitemap.xml`)).text();
   const paths = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1]).pathname);
   const team = paths.find((p) => p.startsWith('/team/'));
   if (!team) throw new Error(`no /team/ page in ${base}/sitemap.xml`);
   // The newest played game of the last two weeks
   const day = (offset) => new Date(Date.now() + offset * 864e5).toISOString().slice(0, 10);
   const params = new URLSearchParams({ startDate: day(-14), endDate: day(0) });
-  const games = await (await fetch(`${base}/api/GameOdds/GetGameOddsInDateRange?${params}`)).json();
+  const games = await (
+    await fetchLive(`${base}/api/GameOdds/GetGameOddsInDateRange?${params}`)
+  ).json();
   const game = games.filter((g) => g.hasBeenPlayed).at(-1) ?? games.at(-1);
   if (!game) throw new Error('no games in the last two weeks to pick a Game page from');
   return ['/', '/teams', team, `/game/${game.id}`, '/strategies', '/about'];
