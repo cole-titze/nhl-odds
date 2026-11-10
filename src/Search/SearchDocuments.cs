@@ -98,13 +98,19 @@ public static partial class SearchDocumentMapper
         return documents;
     }
 
-    /// <summary>The newest version of each article, as plain text.</summary>
+    /// <summary>
+    /// The newest version of each article, as plain text, each story once: NHL.com reposts a story on team sites as
+    /// its own article whose slug is the original's plus <c>-x</c> and four digits (a game recap often three times),
+    /// so those count as one, the original's copy if there is one, else the newest.
+    /// </summary>
     public static List<ArticleDocument> MapArticles(IEnumerable<DbNhlArticle> versions)
     {
         return versions
             .GroupBy(a => a.EntityId)
             .Select(g => g.MaxBy(a => a.FirstSeenUTC)!)
             .Where(a => !string.IsNullOrWhiteSpace(a.Slug))
+            .GroupBy(a => RepostSuffixRegex().Replace(a.Slug, ""))
+            .Select(g => g.FirstOrDefault(a => a.Slug == g.Key) ?? g.MaxBy(a => a.ContentDate ?? a.LastUpdated ?? a.FirstSeenUTC)!)
             .Select(a => new ArticleDocument(a.EntityId, string.IsNullOrWhiteSpace(a.Headline) ? a.Title : a.Headline,
                 a.Summary, MarkdownToText(a.Body), a.ContentDate ?? a.LastUpdated ?? a.FirstSeenUTC, ArticleUrl(a.Slug)))
             .ToList();
@@ -130,6 +136,9 @@ public static partial class SearchDocumentMapper
         return text.Trim();
     }
 
+    // A team site's repost of a league story: the original's slug plus "-x" and four digits
+    [GeneratedRegex(@"-x\d{4}$")]
+    private static partial Regex RepostSuffixRegex();
     [GeneratedRegex(@"!\[[^\]]*\]\([^)]*\)")]
     private static partial Regex ImageRegex();
     [GeneratedRegex(@"\[([^\]]*)\]\([^)]*\)")]

@@ -95,6 +95,32 @@ public class SearchDocumentMapperTests
         articles[0].Url.Should().Be("https://www.nhl.com/news/trade-tracker");
     }
 
+    [TestMethod]
+    public void MapArticles_ATeamSiteRepostCountsOnce()
+    {
+        DbNhlArticle Article(string id, string slug, int day) => new()
+        {
+            EntityId = id, Slug = slug, Title = "Sharks at Senators recap", Body = id,
+            ContentDate = new DateTime(2026, 10, day), FirstSeenUTC = new DateTime(2026, 10, day),
+        };
+        var articles = SearchDocumentMapper.MapArticles([
+            // The league's original and two team-site reposts: the original is kept, though not the newest
+            Article("league", "sharks-senators-recap-october-22-2026", 22),
+            Article("team1", "sharks-senators-recap-october-22-2026-x7708", 23),
+            Article("team2", "sharks-senators-recap-october-22-2026-x0939", 24),
+            // Reposts whose original isn't stored: the newest
+            Article("old", "edge-stats-mcdavid-x2862", 2),
+            Article("new", "edge-stats-mcdavid-x1234", 7),
+            // Same title, another day: a different article
+            Article("other", "sharks-senators-recap-october-31-2026", 31),
+            // Not a repost suffix (5 digits, or no x)
+            Article("five", "story-x12345", 1),
+            Article("year", "season-preview-2026", 1),
+        ]);
+
+        articles.Select(a => a.EntityId).Should().BeEquivalentTo("league", "new", "other", "five", "year");
+    }
+
     [DataTestMethod]
     [DataRow("## Oilers 5, Flames 2\n\n**Connor McDavid** scored", "Oilers 5, Flames 2 Connor McDavid scored")]
     [DataRow("A [hat trick](https://nhl.com/x) for *Leon*", "A hat trick for Leon")]
