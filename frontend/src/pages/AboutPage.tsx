@@ -3,6 +3,7 @@ import { useLocation } from 'react-router';
 import { PageTitle } from '../components/A11y';
 import { faqPage } from '../utils/structuredData';
 import { FAQ } from '../content/faq';
+import { BUILD_SHA, BUILD_VERSION } from '../build';
 
 export function AboutPage() {
   const { hash, key } = useLocation();
@@ -180,6 +181,22 @@ export function AboutPage() {
           </ul>
         </section>
       </div>
+      {/* Which build is live; error reports carry the same version */}
+      <p className="mt-6 text-center text-xs font-mono text-surface-600 dark:text-surface-400">
+        Build{' '}
+        {BUILD_SHA ? (
+          <a
+            href={`https://github.com/cole-titze/nhl-odds/commit/${BUILD_SHA}`}
+            target="_blank"
+            rel="noreferrer"
+            className="underline hover:text-accent-600 dark:hover:text-accent-400"
+          >
+            {BUILD_VERSION}
+          </a>
+        ) : (
+          BUILD_VERSION
+        )}
+      </p>
     </div>
   );
 }
