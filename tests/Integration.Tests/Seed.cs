@@ -31,6 +31,9 @@ public static class Seed
         public int GameType { get; init; } = 2;
         /// <summary>0 regulation, 1 overtime, 2 shootout (Entities.Types.Enums.PeriodType)</summary>
         public int EndPeriod { get; init; }
+        /// <summary>The NHL's game summary venue; upcoming games have none ('')</summary>
+        public string VenueName { get; init; } = "";
+        public string VenueLocation { get; init; } = "";
     }
 
     // The predictor always writes Notes; null tests a row it left empty
@@ -77,11 +80,12 @@ public static class Seed
                     "Winner", "EndPeriod", "HasBeenPlayed", "GameType", "ThreeMinuteRecapVideoId",
                     "CondensedGameVideoId", "VenueName", "VenueLocation")
                 VALUES (@id, @home, @away, @season, @start, @homeGoals, @awayGoals, 0, 0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0, 0, 0, 0, @winner, @endPeriod, @played, @type, 0, 0, '', '')
+                    0, 0, 0, 0, 0, 0, 0, 0, @winner, @endPeriod, @played, @type, 0, 0, @venue, @venueLocation)
                 """,
                 ("id", g.Id), ("home", g.HomeTeamId), ("away", g.AwayTeamId), ("season", g.Season),
                 ("start", g.StartUtc), ("homeGoals", g.HomeGoals), ("awayGoals", g.AwayGoals),
-                ("winner", g.Winner), ("endPeriod", g.EndPeriod), ("played", g.Played), ("type", g.GameType));
+                ("winner", g.Winner), ("endPeriod", g.EndPeriod), ("played", g.Played), ("type", g.GameType),
+                ("venue", g.VenueName), ("venueLocation", g.VenueLocation));
         }
     }
 

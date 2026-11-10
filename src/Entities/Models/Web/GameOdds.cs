@@ -14,6 +14,8 @@ public class GameOdds
     public double? SpreadCoverProb { get; set; }
     public double? PredictedTotal { get; set; }
     public double? TotalOverProb { get; set; }
+    /// <summary>Only set for a single game (the Game page); null in lists.</summary>
+    public Venue? Venue { get; set; }
 
     public static double CalculateLogLoss(double homeOdds, double awayOdds, Winner winner)
     {

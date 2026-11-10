@@ -59,6 +59,7 @@ public static class GameOddsToViewModelsMapper
                 SpreadCoverProb = gameOdds.SpreadCoverProb,
                 PredictedTotal = gameOdds.PredictedTotal,
                 TotalOverProb = gameOdds.TotalOverProb,
+                Venue = gameOdds.Venue is { } v ? new VenueVM { Name = v.Name, City = v.City } : null,
             };
             viewModelGames.Add(viewModelGame);
         }

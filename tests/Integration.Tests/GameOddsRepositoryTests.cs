@@ -1,3 +1,4 @@
+using Entities.Models.Web;
 using Entities.Types;
 
 namespace Integration.Tests;
@@ -135,6 +136,56 @@ public class GameOddsRepositoryTests
 
         game!.BookmakerOdds.Select(b => b.BookmakerName).Should().BeEquivalentTo("DraftKings", "Kalshi");
         game.BookmakerOdds.Single(b => b.BookmakerName == "DraftKings").HomeOdds.Should().BeApproximately(0.52, 1e-9);
+    }
+
+    [TestMethod]
+    public async Task GetGameOdds_PlayedGame_ShouldUseItsOwnVenue()
+    {
+        await Seed.Games(new Seed.Game(1, Nov4Evening) { Played = true, VenueName = "Scotiabank Arena ", VenueLocation = "Toronto" });
+        await using var db = TestContexts.Web();
+
+        var game = await TestContexts.GameOdds(db).GetGameOdds(1);
+
+        game!.Venue.Should().Be(new Venue("Scotiabank Arena", "Toronto"));
+    }
+
+    [TestMethod]
+    public async Task GetGameOdds_UpcomingGame_ShouldUseTheHomeTeamsUsualArena()
+    {
+        var outdoor = new Seed.Game(2, Nov3Evening) { Played = true, VenueName = "Ohio Stadium", VenueLocation = "Columbus" };
+        await Seed.Games(
+            new Seed.Game(1, new DateTime(2026, 10, 20, 23, 0, 0)) { Played = true, VenueName = "Scotiabank Arena", VenueLocation = "Toronto" },
+            new Seed.Game(3, new DateTime(2026, 10, 25, 23, 0, 0)) { Played = true, VenueName = "Scotiabank Arena", VenueLocation = "Toronto" },
+            outdoor,
+            // The Bruins' home game doesn't count for the Leafs
+            new Seed.Game(4, Nov4Noon) { HomeTeamId = Seed.Bruins, AwayTeamId = Seed.Leafs, Played = true, VenueName = "TD Garden", VenueLocation = "Boston" },
+            new Seed.Game(5, Nov4Evening));
+        await using var db = TestContexts.Web();
+
+        var game = await TestContexts.GameOdds(db).GetGameOdds(5);
+
+        game!.Venue.Should().Be(new Venue("Scotiabank Arena", "Toronto"));
+    }
+
+    [TestMethod]
+    public async Task GetGameOdds_SeasonOpener_ShouldUseLastSeasonsArena()
+    {
+        await Seed.Teams(Seed.TorontoMapleLeafs with { Season = 2025 }, Seed.BostonBruins with { Season = 2025 });
+        await Seed.Games(
+            new Seed.Game(1, new DateTime(2026, 3, 1, 0, 0, 0)) { Season = 2025, Played = true, VenueName = "Scotiabank Arena", VenueLocation = "Toronto" },
+            new Seed.Game(2, Nov4Evening));
+        await using var db = TestContexts.Web();
+
+        (await TestContexts.GameOdds(db).GetGameOdds(2))!.Venue.Should().Be(new Venue("Scotiabank Arena", "Toronto"));
+    }
+
+    [TestMethod]
+    public async Task GetGameOdds_NoKnownArena_ShouldHaveNoVenue()
+    {
+        await Seed.Games(new Seed.Game(1, Nov4Evening));
+        await using var db = TestContexts.Web();
+
+        (await TestContexts.GameOdds(db).GetGameOdds(1))!.Venue.Should().BeNull();
     }
 
     [TestMethod]

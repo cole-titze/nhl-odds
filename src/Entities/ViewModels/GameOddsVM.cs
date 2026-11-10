@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Entities.Types;
 
 namespace Entities.ViewModels;
@@ -18,4 +19,7 @@ public class GameOddsVM
     public double? SpreadCoverProb { get; set; }
     public double? PredictedTotal { get; set; }
     public double? TotalOverProb { get; set; }
+    // The Game page's arena (schema.org SportsEvent location); left out of lists
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public VenueVM? Venue { get; set; }
 }

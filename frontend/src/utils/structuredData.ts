@@ -133,7 +133,8 @@ const matchupName = (home: MatchupTeamVM, away: MatchupTeamVM) =>
 /**
  * A game as a SportsEvent, with the final score once it has been played. The
  * teams list their players when they're known (the box score, or the rosters
- * before the game).
+ * before the game). The arena is its `location`, which Google needs for an
+ * event result (upcoming games get the home team's usual arena from the API).
  */
 export function sportsEvent(game: GameOddsVM, players?: GamePlayersVM | null): JsonLd | null {
   const { homeTeam, awayTeam } = game;
@@ -153,6 +154,15 @@ export function sportsEvent(game: GameOddsVM, players?: GamePlayersVM | null): J
     awayTeam: away,
     competitor: [{ '@id': away['@id'] }, { '@id': home['@id'] }],
     superEvent: NHL,
+    ...(game.venue
+      ? {
+          location: {
+            '@type': 'Place',
+            name: game.venue.name,
+            address: { '@type': 'PostalAddress', addressLocality: game.venue.city },
+          },
+        }
+      : {}),
     ...(game.hasBeenPlayed
       ? {
           description: `Final: ${awayTeam.teamName} ${awayTeam.goals}, ${homeTeam.teamName} ${homeTeam.goals}`,

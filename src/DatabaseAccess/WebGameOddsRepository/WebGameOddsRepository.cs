@@ -80,7 +80,32 @@ public class GameOddsRepository : IGameOddsRepository
 
         await AttachBookmakerOdds(gameOdds);
         await AttachSpreadTotalPredictions(gameOdds);
+        gameOdds[0].Venue = await GetVenue(games[0]);
         return gameOdds[0];
+    }
+
+    // The game's arena from the NHL's game summary. Upcoming games don't have one yet, so they get the home
+    // team's usual arena: the most common one of its played home games this season, else last season
+    // (a one-off outdoor game never outnumbers the home rink).
+    private async Task<Venue?> GetVenue(DbGameRaw game)
+    {
+        if (!string.IsNullOrWhiteSpace(game.VenueName))
+            return new Venue(game.VenueName.Trim(), game.VenueLocation.Trim());
+
+        foreach (var season in new[] { game.SeasonStartYear, game.SeasonStartYear - 1 })
+        {
+            var usual = await _dbContext.GameRaw
+                .AsNoTracking()
+                .Where(g => g.HomeTeamId == game.HomeTeamId && g.SeasonStartYear == season && g.VenueName != "")
+                .GroupBy(g => new { g.VenueName, g.VenueLocation })
+                .OrderByDescending(v => v.Count())
+                .ThenByDescending(v => v.Max(g => g.GameDateUTC))
+                .Select(v => v.Key)
+                .FirstOrDefaultAsync();
+            if (usual != null)
+                return new Venue(usual.VenueName.Trim(), usual.VenueLocation.Trim());
+        }
+        return null;
     }
 
     private async Task<Dictionary<int, DbGameOdds>> GetLatestOddsForGames(IEnumerable<DbGameRaw> games)

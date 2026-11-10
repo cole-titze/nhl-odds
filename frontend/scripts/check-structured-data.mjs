@@ -27,7 +27,8 @@ const PAGE_TYPES = [
 const NOINDEX = ['/admin', '/search'];
 const SITE_URL = 'https://nhl.half-built.com';
 const pageUrl = (path) => SITE_URL + path;
-const isEntityUrl = (id, kind) => typeof id === 'string' && new RegExp(`^${SITE_URL}/${kind}/\\d+$`).test(id);
+const isEntityUrl = (id, kind) =>
+  typeof id === 'string' && new RegExp(`^${SITE_URL}/${kind}/\\d+$`).test(id);
 
 // The entity links (#169): each page's main entity has its URL as @id and
 // links to the others by theirs
@@ -43,7 +44,8 @@ function checkEntities(path, graph, problems) {
       problems.push(`${path}: Person has no memberOf SportsTeam with a team page @id`);
   } else if (path.startsWith('/team/')) {
     const team = find('SportsTeam');
-    if (team?.['@id'] !== pageUrl(path)) problems.push(`${path}: SportsTeam @id isn't the page URL`);
+    if (team?.['@id'] !== pageUrl(path))
+      problems.push(`${path}: SportsTeam @id isn't the page URL`);
     const athletes = team?.athlete ?? [];
     if (!athletes.length) problems.push(`${path}: SportsTeam lists no athletes`);
     for (const a of athletes)
@@ -51,11 +53,21 @@ function checkEntities(path, graph, problems) {
         problems.push(`${path}: athlete ${a.name} isn't a Person with a player page @id`);
   } else if (path.startsWith('/game/')) {
     const event = find('SportsEvent');
-    if (event?.['@id'] !== pageUrl(path)) problems.push(`${path}: SportsEvent @id isn't the page URL`);
+    if (event?.['@id'] !== pageUrl(path))
+      problems.push(`${path}: SportsEvent @id isn't the page URL`);
     const competitors = (event?.competitor ?? []).map((c) => c['@id']);
     const teams = [event?.homeTeam?.['@id'], event?.awayTeam?.['@id']];
-    if (competitors.length !== 2 || !teams.every((t) => isEntityUrl(t, 'team') && competitors.includes(t)))
+    if (
+      competitors.length !== 2 ||
+      !teams.every((t) => isEntityUrl(t, 'team') && competitors.includes(t))
+    )
       problems.push(`${path}: SportsEvent competitors aren't its two teams by team page @id`);
+    // Google won't show an event without a location
+    const place = event?.location;
+    if (place?.['@type'] !== 'Place' || !place.name || !place.address?.addressLocality)
+      problems.push(
+        `${path}: SportsEvent has no location (a Place with a name and addressLocality)`,
+      );
   }
 }
 
@@ -99,7 +111,8 @@ async function checkPage(path, problems) {
   }
   const graph = data['@graph'] ?? [];
   const types = graph.map((item) => item['@type']);
-  if (data['@context'] !== 'https://schema.org') problems.push(`${path}: @context is not https://schema.org`);
+  if (data['@context'] !== 'https://schema.org')
+    problems.push(`${path}: @context is not https://schema.org`);
   const required = [...SITE_WIDE, ...(PAGE_TYPES.find(([p]) => path.startsWith(p))?.[1] ?? [])];
   for (const t of required) if (!types.includes(t)) problems.push(`${path}: no ${t} in JSON-LD`);
   if (graph.some((item) => !item['@type'])) problems.push(`${path}: a JSON-LD item has no @type`);
@@ -110,8 +123,10 @@ async function checkPage(path, problems) {
     const page = decode(html);
     const visible = new Set([...html.matchAll(/<h3[^>]*>([^<]+)<\/h3>/g)].map((m) => decode(m[1])));
     for (const q of faq.mainEntity) {
-      if (!visible.has(q.name)) problems.push(`${path}: FAQ question "${q.name}" isn't on the page`);
-      if (!page.includes(q.acceptedAnswer.text)) problems.push(`${path}: FAQ answer to "${q.name}" isn't on the page`);
+      if (!visible.has(q.name))
+        problems.push(`${path}: FAQ question "${q.name}" isn't on the page`);
+      if (!page.includes(q.acceptedAnswer.text))
+        problems.push(`${path}: FAQ answer to "${q.name}" isn't on the page`);
     }
   }
   console.log(`${path}: ${types.join(', ')}`);
@@ -128,14 +143,17 @@ async function checkSitemap(problems) {
     problems.push(`/sitemap.xml: HTTP ${res.status}`);
     return;
   }
-  const entries = [...xml.matchAll(/<url><loc>([^<]+)<\/loc>(?:<lastmod>([^<]+)<\/lastmod>)?<\/url>/g)].map(
-    ([, loc, lastmod]) => ({ loc, lastmod }),
-  );
+  const entries = [
+    ...xml.matchAll(/<url><loc>([^<]+)<\/loc>(?:<lastmod>([^<]+)<\/lastmod>)?<\/url>/g),
+  ].map(([, loc, lastmod]) => ({ loc, lastmod }));
   const urlCount = (xml.match(/<url>/g) ?? []).length;
-  if (entries.length !== urlCount) problems.push(`/sitemap.xml: ${urlCount - entries.length} <url> entries didn't parse`);
-  if (urlCount > SITEMAP_MAX_URLS) problems.push(`/sitemap.xml: ${urlCount} URLs, over ${SITEMAP_MAX_URLS}`);
+  if (entries.length !== urlCount)
+    problems.push(`/sitemap.xml: ${urlCount - entries.length} <url> entries didn't parse`);
+  if (urlCount > SITEMAP_MAX_URLS)
+    problems.push(`/sitemap.xml: ${urlCount} URLs, over ${SITEMAP_MAX_URLS}`);
   if (Buffer.byteLength(xml) > SITEMAP_MAX_BYTES) problems.push('/sitemap.xml: over 50 MB');
-  if (/<changefreq>|<priority>/.test(xml)) problems.push('/sitemap.xml: has changefreq or priority');
+  if (/<changefreq>|<priority>/.test(xml))
+    problems.push('/sitemap.xml: has changefreq or priority');
 
   // A day of slack: lastmod is a Central-time day, and this is UTC's
   const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
@@ -143,13 +161,18 @@ async function checkSitemap(problems) {
   for (const { loc, lastmod } of players) {
     const real = /^\d{4}-\d{2}-\d{2}$/.test(lastmod ?? '') && !Number.isNaN(Date.parse(lastmod));
     if (!real) problems.push(`/sitemap.xml: ${loc} has no real <lastmod> (${lastmod})`);
-    else if (lastmod > tomorrow) problems.push(`/sitemap.xml: ${loc} <lastmod> ${lastmod} is in the future`);
+    else if (lastmod > tomorrow)
+      problems.push(`/sitemap.xml: ${loc} <lastmod> ${lastmod} is in the future`);
   }
   const listed = new Map(players.map((e) => [Number(e.loc.split('/').pop()), e.lastmod]));
-  const expected = mockApi('http://localhost/api/Player/GetSitemapPlayers').length - SITEMAP_LEFT_OUT.length;
-  if (listed.size !== expected) problems.push(`/sitemap.xml: ${listed.size} player pages, expected ${expected}`);
+  const expected =
+    mockApi('http://localhost/api/Player/GetSitemapPlayers').length - SITEMAP_LEFT_OUT.length;
+  if (listed.size !== expected)
+    problems.push(`/sitemap.xml: ${listed.size} player pages, expected ${expected}`);
   if (listed.get(SITEMAP_RETIRED.id) !== SITEMAP_RETIRED.lastmod)
-    problems.push(`/sitemap.xml: retired player ${SITEMAP_RETIRED.id} isn't dated ${SITEMAP_RETIRED.lastmod}`);
+    problems.push(
+      `/sitemap.xml: retired player ${SITEMAP_RETIRED.id} isn't dated ${SITEMAP_RETIRED.lastmod}`,
+    );
   for (const id of SITEMAP_LEFT_OUT)
     if (listed.has(id)) problems.push(`/sitemap.xml: player ${id} (future or bad date) is listed`);
   console.log(`/sitemap.xml: ${urlCount} URLs, ${players.length} player pages`);

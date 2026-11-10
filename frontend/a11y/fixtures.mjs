@@ -228,8 +228,9 @@ const job = (status) => ({
 
 const responses = {
   GetAnchorDate: { anchorDate: ANCHOR_DATE },
-  // The Game page's game (pagesFor's /game/:id); without it the page rendered as TBD vs TBD
-  GetGame: games[33],
+  // The Game page's game (pagesFor's /game/:id); without it the page rendered as TBD vs TBD.
+  // The venue is its schema.org location (#167)
+  GetGame: { ...games[33], venue: { name: 'Scotiabank Arena', city: 'Toronto' } },
   // Game page "Why the model predicts this" (#155): both directions, a detail and a long one
   GetPredictionFactors: {
     factors: {

@@ -43,6 +43,13 @@ export interface GameOddsVM {
   spreadCoverProb: number | null;
   predictedTotal: number | null;
   totalOverProb: number | null;
+  /** The arena; only the single-game endpoint (the Game page) sends it */
+  venue?: VenueVM;
+}
+
+export interface VenueVM {
+  name: string;
+  city: string;
 }
 
 export interface SeasonTotalsVM {
