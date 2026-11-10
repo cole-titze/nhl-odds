@@ -9,9 +9,9 @@ public class SearchSourceRepository(NhlDbContext db) : ISearchSourceRepository
     public Task<List<DbSeasonTeam>> GetSeasonTeams(CancellationToken ct = default) =>
         db.SeasonTeam.AsNoTracking().ToListAsync(ct);
 
-    // NhlAdd saves a roster report snapshot daily; an older one means the job or the report is down. Same rule
-    // as the Player page's current team (WebPlayerRepository, #170)
-    public static readonly TimeSpan RosterReportMaxAge = TimeSpan.FromDays(3);
+    // NhlAdd saves a roster report snapshot daily; an older one means the job or the report is down. The Player
+    // page's rule (#170), shared so a player's team in search and on their page can't drift apart
+    public static readonly TimeSpan RosterReportMaxAge = WebPlayerRepository.WebPlayerRepository.RosterReportMaxAge;
 
     public async Task<List<(DbPlayer Player, string? Position, int? CurrentTeamId)>> GetPlayers(DateTime nowUtc, CancellationToken ct = default)
     {
