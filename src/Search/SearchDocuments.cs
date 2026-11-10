@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.RegularExpressions;
 using Entities.DbModels;
 using Entities.Types.Enums;
@@ -111,11 +112,18 @@ public static partial class SearchDocumentMapper
 
     public static string ArticleUrl(string slug) => $"https://www.nhl.com/news/{Uri.EscapeDataString(slug)}";
 
-    /// <summary>Removes the markdown the NHL's articles use: links and images keep their text, emphasis and headings their words.</summary>
+    /// <summary>
+    /// Removes the markdown the NHL's articles use: links and images keep their text, emphasis and headings their
+    /// words. Their inline HTML goes too (about half the articles link players with
+    /// <c>&lt;forge-entity&gt;</c>, and some use <c>&lt;a&gt;</c>, <c>&lt;sup&gt;</c> or <c>&lt;s&gt;</c>), keeping the text
+    /// inside, and entities like <c>&amp;amp;</c> become their characters, so snippets never show markup.
+    /// </summary>
     public static string MarkdownToText(string markdown)
     {
         var text = ImageRegex().Replace(markdown, "");
         text = LinkRegex().Replace(text, "$1");
+        text = HtmlTagRegex().Replace(text, "");
+        text = WebUtility.HtmlDecode(text);
         text = HeadingRegex().Replace(text, "");
         text = EmphasisRegex().Replace(text, "");
         text = WhitespaceRegex().Replace(text, " ");
@@ -126,6 +134,8 @@ public static partial class SearchDocumentMapper
     private static partial Regex ImageRegex();
     [GeneratedRegex(@"\[([^\]]*)\]\([^)]*\)")]
     private static partial Regex LinkRegex();
+    [GeneratedRegex(@"</?[a-zA-Z][a-zA-Z0-9-]*(\s[^<>]*)?/?>")]
+    private static partial Regex HtmlTagRegex();
     [GeneratedRegex(@"(?m)^\s{0,3}(#{1,6}|>|[-*+]|\d+\.)\s+")]
     private static partial Regex HeadingRegex();
     [GeneratedRegex(@"\*\*|__|(?<!\w)[*_](?!\s)|(?<!\s)[*_](?!\w)|`")]

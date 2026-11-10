@@ -100,6 +100,9 @@ public class SearchDocumentMapperTests
     [DataRow("A [hat trick](https://nhl.com/x) for *Leon*", "A hat trick for Leon")]
     [DataRow("![photo](https://img) - first\n- second", "first second")]
     [DataRow("St. Louis and 5*3 = 15", "St. Louis and 5*3 = 15")]
+    [DataRow("EDMONTON -- <forge-entity title=\"Connor McDavid\" slug=\"connor-mcdavid-8478402\" code=\"player\">Connor McDavid</forge-entity> is off", "EDMONTON -- Connor McDavid is off")]
+    [DataRow("his 1,000<sup>th</sup> point, <a href=\"https://nhl.com\">recap</a> &amp; <s>old</s> new", "his 1,000th point, recap & old new")]
+    [DataRow("a 3 < 4 lead, then 5 > 2", "a 3 < 4 lead, then 5 > 2")]
     public void MarkdownToText_RemovesFormatting(string markdown, string text)
     {
         SearchDocumentMapper.MarkdownToText(markdown).Should().Be(text);
