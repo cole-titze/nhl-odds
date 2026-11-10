@@ -98,7 +98,7 @@ public class SearchDocumentMapperTests
     [TestMethod]
     public void MapArticles_ATeamSiteRepostCountsOnce()
     {
-        DbNhlArticle Article(string id, string slug, int day) => new()
+        static DbNhlArticle Article(string id, string slug, int day) => new()
         {
             EntityId = id, Slug = slug, Title = "Sharks at Senators recap", Body = id,
             ContentDate = new DateTime(2026, 10, day), FirstSeenUTC = new DateTime(2026, 10, day),
