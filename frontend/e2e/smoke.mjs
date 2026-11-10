@@ -53,6 +53,13 @@ const PAGES = [
     allowApi: [404],
   },
   { path: '/strategies', title: 'Strategies', text: ['Strategies'] },
+  // Server-rendered from the season's games: the seed's played games fill the record
+  {
+    path: '/disagreements',
+    title: 'Model vs Market',
+    html: ['Model vs Market', 'biggest disagreements'],
+    text: ['Model vs Market', 'biggest disagreements', 'Every played game, by gap size'],
+  },
   // The seed's three played games were all predicted the day before, so both views show them
   {
     path: '/track-record',
