@@ -73,6 +73,20 @@ public class SiteSearchParseTests
     }
 
     [TestMethod]
+    public void BuildRequest_ArticleSnippetsArePlainHighlighterPassages()
+    {
+        // The unified highlighter's word scanner made each snippet a single word ("McDavid"), and its sentence
+        // scanner cut snippets at "vs."; the plain one cuts a fragment_size passage around the match
+        var articles = SiteSearch.BuildRequest(new ParsedQuery("mcdavid", null), new DateTime(2026, 11, 3, 12, 0, 0, DateTimeKind.Utc))
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries)[7];
+        var body = System.Text.Json.Nodes.JsonNode.Parse(articles)!["highlight"]!["fields"]!["body"]!;
+
+        body["type"]!.GetValue<string>().Should().Be("plain");
+        body["fragment_size"]!.GetValue<int>().Should().Be(160);
+        body["boundary_scanner"].Should().BeNull();
+    }
+
+    [TestMethod]
     public void BuildSuggestRequest_SearchesTeamsPlayersAndGamesOnly_AFewOfEach()
     {
         var lines = SiteSearch.BuildSuggestRequest(new ParsedQuery("lea", null), new DateTime(2026, 11, 3, 12, 0, 0, DateTimeKind.Utc))

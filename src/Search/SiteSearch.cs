@@ -363,12 +363,13 @@ public static partial class SiteSearch
     /// <param name="highlightQuery">What to mark in the snippet when the search itself has no words (a knn search)</param>
     private static JsonObject ArticleHighlight(JsonObject? highlightQuery)
     {
-        // Without a match, no_match_size gives the article's opening instead
-        // Word boundaries, not sentences: the sentence scanner never joins short sentences, so it cut
-        // snippets at an abbreviation's period ("PREVIEW: Oilers vs.")
+        // Without a match, no_match_size gives the article's opening instead.
+        // The plain highlighter, which cuts a fragment_size passage around the match: the default (unified) one's
+        // sentence scanner never joins short sentences, so it cut snippets at an abbreviation's period ("PREVIEW:
+        // Oilers vs."), and its word scanner makes each fragment a single word (the snippet was just "McDavid")
         var body = new JsonObject
         {
-            ["fragment_size"] = 160, ["number_of_fragments"] = 1, ["no_match_size"] = 160, ["boundary_scanner"] = "word",
+            ["type"] = "plain", ["fragment_size"] = 160, ["number_of_fragments"] = 1, ["no_match_size"] = 160,
         };
         if (highlightQuery != null)
             body["highlight_query"] = highlightQuery;
@@ -425,7 +426,8 @@ public static partial class SiteSearch
         var articles = FuseArticles(Hits(3), Hits(4)).Take(SearchIndexes.Articles.Size).Select(hit =>
         {
             var source = hit["_source"]!;
-            var snippet = hit["highlight"]?["body"]?[0]?.GetValue<string>();
+            // Trimmed: a plain-highlighter passage can start or end on the space between words
+            var snippet = hit["highlight"]?["body"]?[0]?.GetValue<string>().Trim();
             return new ArticleResult(source["title"]!.GetValue<string>(), source["summary"]?.GetValue<string>(),
                 source["url"]!.GetValue<string>(), source["date"]?.GetValue<DateTime>(), snippet);
         }).ToList();
