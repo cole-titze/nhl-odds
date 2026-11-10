@@ -561,22 +561,23 @@ try {
         .catch(() => problems.push('no result placeholders during a slow first search'));
       if ((await status.textContent()) !== 'Searching…')
         problems.push(`status line says "${await status.textContent()}", not "Searching…"`);
+      if ((await page.locator('main [data-loading="search-box"]').count()) === 0)
+        problems.push("no spinner in the search page's box during a slow search");
       if (engine === 'chromium') problems.push(...(await runAxe(page)));
       total += report('search page loading, first search [desktop] /search', problems);
 
-      // A new search with results on screen: they stay, under a progress bar
+      // A new search with results on screen: they stay, and the box's spinner shows it's searching
       problems = [];
       await page.locator('#results-teams').waitFor({ timeout: SLOW_API_MS * 2 });
       await page.locator('#search-page-input').fill('bruins');
-      const bar = page.locator('[data-loading="progress"]:not(.invisible)');
-      await bar
+      await page
+        .locator('main [data-loading="search-box"]')
         .waitFor({ timeout: SLOW_API_MS })
-        .catch(() => problems.push('no progress bar over the old results'));
-      const barWidth = await bar
-        .locator('div')
-        .evaluate((el) => el.getBoundingClientRect().width)
-        .catch(() => 0);
-      if (barWidth < 1) problems.push('the progress bar is empty with reduced motion');
+        .catch(() => problems.push("no spinner in the search page's box over the old results"));
+      await page
+        .locator('main [role="status"]', { hasText: /^Searching…$/ })
+        .waitFor({ state: 'attached', timeout: SLOW_API_MS })
+        .catch(() => {});
       if ((await page.locator('#results-teams').count()) === 0)
         problems.push('the old results disappeared while searching');
       if ((await status.textContent()) !== 'Searching…')
@@ -613,8 +614,17 @@ try {
       await load(page, '/search');
       await page.evaluate(() => {
         window.__sawLoading = false;
+        window.__sawBoxSpinner = false;
         new MutationObserver(() => {
-          if (document.querySelector('[data-loading]:not(.invisible)')) window.__sawLoading = true;
+          // The input's own spinner shows from the first keystroke, like the navbar box's
+          if (document.querySelector('main [data-loading="search-box"]'))
+            window.__sawBoxSpinner = true;
+          if (
+            document.querySelector(
+              '[data-loading]:not(.invisible):not([data-loading="search-box"])',
+            )
+          )
+            window.__sawLoading = true;
         }).observe(document.body, { subtree: true, childList: true, attributes: true });
       });
       await page.locator('#search-page-input').fill('leafs');
@@ -622,6 +632,10 @@ try {
       const problems = [];
       if (await page.evaluate(() => window.__sawLoading))
         problems.push('a loading indicator flashed on the search page');
+      if (!(await page.evaluate(() => window.__sawBoxSpinner)))
+        problems.push("no spinner in the search page's box while its results loaded");
+      if ((await page.locator('main [data-loading="search-box"]').count()) > 0)
+        problems.push("the search page box's spinner stayed after the results came");
       // The navbar box is the exception: its spinner shows from the first keystroke, even for fast answers,
       // so a slow answer never looks like no matches
       await load(page, '/about');

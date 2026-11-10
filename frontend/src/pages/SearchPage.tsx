@@ -23,7 +23,8 @@ import {
 import { forwardClientIp } from '../api/client';
 import { TeamLogo } from '../components/TeamLogo';
 import { PageTitle } from '../components/A11y';
-import { ProgressBar, SearchResultsSkeleton } from '../components/Loading';
+import { SearchResultsSkeleton, Spinner } from '../components/Loading';
+import { SearchIcon } from '../components/SearchBox';
 import { useDelayedFlag } from '../hooks/useDelayedFlag';
 import { playerPath } from '../utils/players';
 
@@ -278,6 +279,11 @@ export function SearchPage() {
   const searching = navigation.state === 'loading' && navigation.location?.pathname === '/search';
   // Nothing shows (or is announced) for a search that answers within LOADING_DELAY_MS
   const slow = useDelayedFlag(searching);
+  // Like the navbar box, the input's icon turns into a spinner from the first keystroke until that text's
+  // results arrive, so a search under way never looks like nothing happened. The status line and the first
+  // search's skeleton still wait LOADING_DELAY_MS
+  const typed = text.trim();
+  const pending = searching || (typed !== q.trim() && typed.length >= MIN_QUERY_CHARS);
   const hasResults =
     outcome.kind === 'results' &&
     [
@@ -301,18 +307,30 @@ export function SearchPage() {
         <label htmlFor="search-page-input" className="sr-only">
           Search teams, players, games and articles
         </label>
-        <input
-          id="search-page-input"
-          type="search"
-          name="q"
-          value={text}
-          onChange={(e) => onChange(e.target.value)}
-          maxLength={MAX_QUERY_CHARS}
-          autoComplete="off"
-          enterKeyHint="search"
-          placeholder="Teams, players, games, articles…"
-          className="min-w-0 flex-1 rounded-lg border border-surface-300 dark:border-white/15 bg-white/80 dark:bg-white/[0.04] px-4 py-2.5 text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
-        />
+        <div className="relative min-w-0 flex-1">
+          {pending ? (
+            <span
+              data-loading="search-box"
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-accent-600 dark:text-accent-400"
+            >
+              <Spinner className="h-4 w-4" />
+            </span>
+          ) : (
+            <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-500 dark:text-surface-400" />
+          )}
+          <input
+            id="search-page-input"
+            type="search"
+            name="q"
+            value={text}
+            onChange={(e) => onChange(e.target.value)}
+            maxLength={MAX_QUERY_CHARS}
+            autoComplete="off"
+            enterKeyHint="search"
+            placeholder="Teams, players, games, articles…"
+            className="w-full rounded-lg border border-surface-300 dark:border-white/15 bg-white/80 dark:bg-white/[0.04] pl-10 pr-4 py-2.5 text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
+          />
+        </div>
       </Form>
       {/* Announces a slow search once, then the result count after each search, including ones made while typing */}
       <p role="status" className="sr-only">
@@ -322,9 +340,8 @@ export function SearchPage() {
         // Nothing worth keeping on screen (first search, no results, an error): result-shaped placeholders
         <SearchResultsSkeleton />
       ) : (
+        // The old results stay while new ones load; the box's spinner says a search is under way
         <div aria-busy={slow}>
-          {/* The bar's room is always kept, so the results don't jump when it comes and goes */}
-          <ProgressBar className={`-mt-4 mb-3.5 ${slow ? '' : 'invisible'}`} />
           {/* No fade over the old results: dimmed, their muted text fails color contrast (the a11y scan checks) */}
           <Results outcome={outcome} q={q} />
         </div>

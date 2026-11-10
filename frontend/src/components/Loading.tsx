@@ -13,22 +13,6 @@ export function Spinner({ className = 'h-4 w-4' }: { className?: string }) {
   );
 }
 
-/**
- * A thin indeterminate bar for content that's being replaced (old results stay on screen while new ones load).
- * With reduced motion it's a still, dimmer full-width bar (`.animate-progress-bar` in index.css).
- */
-export function ProgressBar({ className = '' }: { className?: string }) {
-  return (
-    <div
-      aria-hidden="true"
-      data-loading="progress"
-      className={`h-0.5 overflow-hidden rounded-full bg-surface-200 dark:bg-white/[0.06] ${className}`}
-    >
-      <div className="h-full bg-accent-500 animate-progress-bar" />
-    </div>
-  );
-}
-
 const ROW_WIDTHS = ['w-40', 'w-52', 'w-36'];
 
 /** Stands in for the search page's results: a section of team-like rows and one of game-like rows. */
