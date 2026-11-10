@@ -585,6 +585,24 @@ try {
       if (engine === 'chromium') problems.push(...(await runAxe(page)));
       total += report('search page loading, with old results [desktop] /search', problems);
 
+      // Typing on while a search loads: its results arriving must not reset the box to the text it was for
+      // (letters typed since vanished, deleted ones came back)
+      problems = [];
+      await page.locator('#results-teams').waitFor({ timeout: SLOW_API_MS * 2 });
+      const input = page.locator('#search-page-input');
+      await input.fill('');
+      await input.pressSequentially('lea', { delay: 20 });
+      await page.waitForTimeout(400); // past the 300 ms typing delay: "lea" is searched
+      const typed = 'fs toronto';
+      for (const ch of typed) {
+        await page.keyboard.type(ch);
+        await page.waitForTimeout(250); // under the typing delay, so nothing newer is searched meanwhile
+      }
+      await page.waitForTimeout(SLOW_API_MS); // "lea" answered while typing went on
+      if ((await input.inputValue()) !== 'lea' + typed)
+        problems.push(`the box says "${await input.inputValue()}" after typing "lea${typed}"`);
+      total += report('search page typing while a search loads [desktop] /search', problems);
+
       // Navbar suggestions: a spinner where the search icon was
       problems = [];
       await load(page, '/about');

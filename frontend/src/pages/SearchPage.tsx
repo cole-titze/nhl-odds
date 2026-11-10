@@ -4,6 +4,7 @@ import {
   Link,
   useLoaderData,
   useNavigation,
+  useNavigationType,
   useSearchParams,
   type ClientLoaderFunctionArgs,
   type LoaderFunctionArgs,
@@ -252,15 +253,19 @@ export function SearchPage() {
   const { q, outcome } = useLoaderData<typeof clientLoader>();
   const [, setSearchParams] = useSearchParams();
   const navigation = useNavigation();
+  const navigationType = useNavigationType();
   const [text, setText] = useState(q);
   const [shownQ, setShownQ] = useState(q);
   const typingTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  // Back/forward or a new search changes the URL: show its query (adjusting state during render,
-  // as React recommends, instead of an effect that renders twice)
+  // Back/forward or a search from elsewhere (the navbar box, a link) changes the URL: show its query
+  // (adjusting state during render, as React recommends, instead of an effect that renders twice).
+  // Not when typing here made the change (typing's searches are the only REPLACE navigations): the box
+  // already has that text, and more typed since, which would be overwritten when an earlier search's
+  // results arrived (letters vanished while typing, deleted ones came back)
   if (q !== shownQ) {
     setShownQ(q);
-    if (q.trim() !== text.trim()) setText(q);
+    if (navigationType !== 'REPLACE' && q.trim() !== text.trim()) setText(q);
   }
   useEffect(() => () => clearTimeout(typingTimer.current), []);
 
@@ -268,7 +273,14 @@ export function SearchPage() {
     setText(value);
     clearTimeout(typingTimer.current);
     const trimmed = value.trim();
-    if (trimmed === q.trim() || (trimmed.length > 0 && trimmed.length < MIN_QUERY_CHARS)) return;
+    // Typing back to the shown query needs no search, unless another one is on its way (its results
+    // would then replace the shown ones)
+    const onItsWay = navigation.state === 'loading' && navigation.location?.pathname === '/search';
+    if (
+      (trimmed === q.trim() && !onItsWay) ||
+      (trimmed.length > 0 && trimmed.length < MIN_QUERY_CHARS)
+    )
+      return;
     // Results follow the typing; replace keeps one history entry per search, not per keystroke
     typingTimer.current = setTimeout(
       () => setSearchParams(trimmed ? { q: trimmed } : {}, { replace: true }),
