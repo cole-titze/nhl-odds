@@ -8,12 +8,14 @@ import { StatusBarTint } from './StatusBarTint';
 import { useOddsFormat } from '../hooks/useOddsFormat';
 import { useActiveThemeId } from '../hooks/useRootTheme';
 import { OddsFormatContext } from '../contexts/OddsFormatContext';
+import { useResumeNavigation } from '../hooks/useResumeNavigation';
 
 export function Layout() {
   const oddsFormat = useOddsFormat();
   const themeId = useActiveThemeId();
   const photo = themeId ? PHOTO_CREDITS[themeId] : undefined;
   const { pathname } = useLocation();
+  useResumeNavigation();
   const mainRef = useRef<HTMLElement>(null);
   const firstRender = useRef(true);
   const footerRef = useRef<HTMLElement>(null);
