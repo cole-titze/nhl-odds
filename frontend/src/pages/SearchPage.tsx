@@ -25,6 +25,7 @@ import { TeamLogo } from '../components/TeamLogo';
 import { PageTitle } from '../components/A11y';
 import { ProgressBar, SearchResultsSkeleton } from '../components/Loading';
 import { useDelayedFlag } from '../hooks/useDelayedFlag';
+import { playerPath } from '../utils/players';
 
 // Typing waits this long before searching, so each keystroke isn't a request
 const TYPING_DELAY_MS = 300;
@@ -125,18 +126,11 @@ function PlayerResults({ players }: { players: PlayerResult[] }) {
               {details && <span className={`text-sm ${mutedClass}`}>{details}</span>}
             </>
           );
-          // There's no player page, so a player links to their team. Links are named by their visible text plus
-          // hidden words, never an aria-label that drops some of what's shown (WCAG 2.5.3, label in name)
           return (
             <li key={p.playerId}>
-              {p.teamId != null ? (
-                <Link to={`/team/${p.teamId}`} className={linkRowClass}>
-                  {content}
-                  <span className="sr-only">, go to {p.teamName}</span>
-                </Link>
-              ) : (
-                <div className="flex items-center gap-3 px-2 py-2 -mx-2">{content}</div>
-              )}
+              <Link to={playerPath(p.playerId)} className={linkRowClass}>
+                {content}
+              </Link>
             </li>
           );
         })}
@@ -152,28 +146,31 @@ function GameResults({ games }: { games: GameResult[] }) {
         Games
       </h2>
       <ul>
-        {games.map((g) => (
-          <li key={g.gameId}>
-            <Link
-              to={`/game/${g.gameId}`}
-              // Phones: the date on its own small line, then the matchup and score
-              className={`${linkRowClass} flex-col items-start gap-0.5 sm:flex-row sm:items-center sm:gap-3`}
-            >
-              <span className={`text-xs sm:text-sm sm:w-32 sm:shrink-0 ${mutedClass}`}>
-                {formatDate(g.gameDate)}
-              </span>
-              <span className="flex flex-wrap items-baseline gap-x-3">
-                <span className="font-medium">
-                  {g.away.name} at {g.home.name}
+        {/* The API ranks games nearest today first; read in date order, they're easier to scan */}
+        {[...games]
+          .sort((a, b) => a.gameDate.localeCompare(b.gameDate))
+          .map((g) => (
+            <li key={g.gameId}>
+              <Link
+                to={`/game/${g.gameId}`}
+                // Phones: the date on its own small line, then the matchup and score
+                className={`${linkRowClass} flex-col items-start gap-0.5 sm:flex-row sm:items-center sm:gap-3`}
+              >
+                <span className={`text-xs sm:text-sm sm:w-32 sm:shrink-0 ${mutedClass}`}>
+                  {formatDate(g.gameDate)}
                 </span>
-                <span className={`text-sm font-mono ${g.played ? '' : mutedClass}`}>
-                  {g.played && <span className="sr-only">final </span>}
-                  {g.played ? `${g.away.goals}–${g.home.goals}` : 'Upcoming'}
+                <span className="flex flex-wrap items-baseline gap-x-3">
+                  <span className="font-medium">
+                    {g.away.name} at {g.home.name}
+                  </span>
+                  <span className={`text-sm font-mono ${g.played ? '' : mutedClass}`}>
+                    {g.played && <span className="sr-only">final </span>}
+                    {g.played ? `${g.away.goals}–${g.home.goals}` : 'Upcoming'}
+                  </span>
                 </span>
-              </span>
-            </Link>
-          </li>
-        ))}
+              </Link>
+            </li>
+          ))}
       </ul>
     </section>
   );

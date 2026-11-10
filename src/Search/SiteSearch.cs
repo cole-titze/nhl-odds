@@ -364,7 +364,12 @@ public static partial class SiteSearch
     private static JsonObject ArticleHighlight(JsonObject? highlightQuery)
     {
         // Without a match, no_match_size gives the article's opening instead
-        var body = new JsonObject { ["fragment_size"] = 160, ["number_of_fragments"] = 1, ["no_match_size"] = 160 };
+        // Word boundaries, not sentences: the sentence scanner never joins short sentences, so it cut
+        // snippets at an abbreviation's period ("PREVIEW: Oilers vs.")
+        var body = new JsonObject
+        {
+            ["fragment_size"] = 160, ["number_of_fragments"] = 1, ["no_match_size"] = 160, ["boundary_scanner"] = "word",
+        };
         if (highlightQuery != null)
             body["highlight_query"] = highlightQuery;
         return new JsonObject
