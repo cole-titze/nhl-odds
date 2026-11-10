@@ -68,6 +68,14 @@ function checkEntities(path, graph, problems) {
       problems.push(
         `${path}: SportsEvent has no location (a Place with a name and addressLocality)`,
       );
+    // Optional for Google, but known before puck drop, so always there
+    const performers = (event?.performer ?? []).map((p) => p['@id']);
+    if (performers.length !== 2 || !teams.every((t) => performers.includes(t)))
+      problems.push(`${path}: SportsEvent performers aren't its two teams by team page @id`);
+    if (event?.image !== pageUrl(`/og${path}.png`))
+      problems.push(`${path}: SportsEvent image isn't its link preview card`);
+    if (event?.organizer?.name !== 'National Hockey League')
+      problems.push(`${path}: SportsEvent organizer isn't the NHL`);
   }
 }
 

@@ -8,6 +8,7 @@
 // page, on his team's roster and in a game) is recognisably one thing.
 import type { GameOddsVM, GamePlayersVM, MatchupTeamVM, PlayerVM } from '../types';
 import { SITE_URL } from './site';
+import { shareImagePath } from '../og/paths';
 
 export type JsonLd = Record<string, unknown>;
 
@@ -135,6 +136,8 @@ const matchupName = (home: MatchupTeamVM, away: MatchupTeamVM) =>
  * teams list their players when they're known (the box score, or the rosters
  * before the game). The arena is its `location`, which Google needs for an
  * event result (upcoming games get the home team's usual arena from the API).
+ * Also the optional fields Google suggests that are known before puck drop: the
+ * link preview card as `image`, the NHL as `organizer` and the teams as `performer`s.
  */
 export function sportsEvent(game: GameOddsVM, players?: GamePlayersVM | null): JsonLd | null {
   const { homeTeam, awayTeam } = game;
@@ -153,6 +156,9 @@ export function sportsEvent(game: GameOddsVM, players?: GamePlayersVM | null): J
     homeTeam: home,
     awayTeam: away,
     competitor: [{ '@id': away['@id'] }, { '@id': home['@id'] }],
+    performer: [{ '@id': away['@id'] }, { '@id': home['@id'] }],
+    image: absoluteUrl(shareImagePath(`/game/${game.id}`)),
+    organizer: NHL,
     superEvent: NHL,
     ...(game.venue
       ? {
