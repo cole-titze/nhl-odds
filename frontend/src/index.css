@@ -107,6 +107,20 @@ main [data-section]:focus {
   outline: none;
 }
 
+/* Copy buttons (CalendarSubscribe.tsx): the "copied" label pops in. Reduced motion stops it
+   through the global rule above. */
+@keyframes copied-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  60% {
+    transform: scale(1.08);
+  }
+}
+.copied-pop {
+  animation: copied-pop 260ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
 /* <main> is focused programmatically on route changes and by the skip link */
 #main:focus {
   outline: none;
