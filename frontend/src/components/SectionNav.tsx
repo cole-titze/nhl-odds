@@ -91,8 +91,9 @@ export function SectionNav({
       id={NAV_ID}
       aria-label="On this page"
       // Spans the full window like the Games filter bar; the chips stay in the page's column and
-      // scroll sideways when they don't fit
-      className="app-subbar sticky top-14 md:top-16 z-40 mx-[calc(50%-50vw)] py-2 backdrop-blur bg-white/70 dark:bg-surface-950/70 border-b border-surface-200/60 dark:border-white/[0.06]"
+      // scroll sideways when they don't fit. mb-6 keeps the first section off the bar's bottom line
+      // on pages without space-y (Player); on the Game page it collapses into space-y-6's gap
+      className="app-subbar sticky top-14 md:top-16 z-40 mb-6 mx-[calc(50%-50vw)] py-2 backdrop-blur bg-white/70 dark:bg-surface-950/70 border-b border-surface-200/60 dark:border-white/[0.06]"
     >
       <ul className={`mx-auto ${column} px-5 flex gap-2 overflow-x-auto [scrollbar-width:none]`}>
         {sections.map((s) => (
