@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useLoaderData, type LoaderFunctionArgs } from 'react-router';
 import { parseISO } from 'date-fns';
-import { getGameOddsInDateRange } from '../api/gameOdds';
+import { fetchDisagreements } from '../api/disagreements';
 import { forwardClientIp } from '../api/client';
 import { SeasonSelector } from '../components/SeasonSelector';
 import { Skeleton } from '../components/Skeleton';
@@ -12,25 +12,19 @@ import { useOddsFormatContext } from '../contexts/OddsFormatContext';
 import { formatOdds } from '../utils/oddsFormat';
 import { formatDisplayDate } from '../utils/dates';
 import { getCurrentSeason } from '../utils/season';
+import { getDisagreements } from '../utils/disagreements.server';
 import {
   TOP_PER_DAY,
-  buildDisagreements,
   sideProbability,
   type DisagreementRecord,
   type DisagreementRow,
-  type DisagreementsData,
 } from '../utils/marketDisagreements';
 
-function loadDisagreements(season: number, init?: RequestInit): Promise<DisagreementsData> {
-  return getGameOddsInDateRange(`${season}-09-01`, `${season + 1}-07-31`, season, init).then(
-    (games) => buildDisagreements(games),
-  );
-}
-
 // First load renders on the server, sending only the rows the page shows rather
-// than the season's games. Client-side navigation skips it and the page fetches.
+// than the season's games. Client-side navigation skips it and the page fetches the
+// same rows from /disagreements/data.json.
 export async function loader({ request }: LoaderFunctionArgs) {
-  return loadDisagreements(getCurrentSeason(), forwardClientIp(request)).catch(() => null);
+  return getDisagreements(getCurrentSeason(), forwardClientIp(request)).catch(() => null);
 }
 
 export async function clientLoader() {
@@ -152,7 +146,7 @@ function RecordSummary({ record }: { record: DisagreementRecord }) {
 export function DisagreementsPage() {
   const initial = useLoaderData<typeof loader>();
   const [season, setSeason] = useState(getCurrentSeason);
-  const { data, loading, error } = useFetch(() => loadDisagreements(season), [season], initial);
+  const { data, loading, error } = useFetch(() => fetchDisagreements(season), [season], initial);
   const bands = useMemo(() => data?.bands.filter((b) => b.games > 0) ?? [], [data]);
 
   return (

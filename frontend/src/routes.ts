@@ -15,6 +15,7 @@ export default [
     route('admin', 'pages/AdminPage.tsx'),
   ]),
   route('sitemap.xml', 'routes/sitemap.ts'),
+  route('disagreements/data.json', 'routes/disagreements.data.ts'),
   // Link preview images (og:image) for the pages above
   route('og/game/:file', 'routes/og.game.tsx'),
   route('og/team/:file', 'routes/og.team.tsx'),

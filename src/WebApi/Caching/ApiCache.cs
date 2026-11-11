@@ -44,6 +44,7 @@ public static class ApiCache
     public static string GameKey(int gameId) => $"Game_{gameId}";
     public static string LineupKey(int gameId) => $"Lineup_{gameId}";
     public static string OddsMovementKey(int gameId) => $"OddsMovement_{gameId}";
+    public static string CalendarKey(int teamId, int seasonStartYear) => $"Calendar_{teamId}_{seasonStartYear}";
     public static string TrackRecordKey(int seasonStartYear, bool liveOnly) => $"TrackRecord_{seasonStartYear}_{liveOnly}";
     public static string PredictionFactorsKey(int gameId) => $"PredictionFactors_{gameId}";
     public static string PlayerKey(int playerId, int seasonStartYear) => $"Player_{playerId}_{seasonStartYear}";

@@ -62,6 +62,8 @@ const SEARCH_TERMS = [
   "overtime winner", "rookie of the year", "salary cap", "mcdavd",
 ];
 const OG_PAGES = ["games", "teams", "strategies", "about", "site"];
+const OG_GAMES = 20;
+const firstGameId = (currentSeason - 1) * 1000000 + 20001;
 
 const ACTIONS = [
   { label: "/", weight: 25, run: () => get("/", "/") },
@@ -85,15 +87,11 @@ const ACTIONS = [
   { label: "/track-record", weight: 4, run: () => get("/track-record", "/track-record") },
   { label: "/disagreements", weight: 4, run: () => get("/disagreements", "/disagreements") },
   {
-    // Opening Disagreements from another page: the browser downloads the season's games
-    label: "Disagreements season fetch",
+    // Opening Disagreements from another page: the browser fetches the rows it shows
+    label: "Disagreements data",
     weight: 3,
     run: () =>
-      get(
-        "/api/GameOdds (season)",
-        `/api/GameOdds/GetGameOddsInDateRange?startDate=${currentSeason}-09-01` +
-          `&endDate=${currentSeason + 1}-07-31&seasonStartYear=${currentSeason}`,
-      ),
+      get("/disagreements/data.json", `/disagreements/data.json?season=${currentSeason}`),
   },
   {
     // A shared or bookmarked search link: the search runs in the server render
@@ -104,14 +102,16 @@ const ACTIONS = [
   { label: "search box typing + search", weight: 8, run: typeAndSearch },
   { label: "calendar .ics", weight: 1, run: (d) => get("/api/Calendar .ics", `/api/Calendar/Team/${pick(d.teamIds)}.ics`) },
   {
-    // Link previews (chat apps and social sites fetch these)
+    // Link previews (chat apps and social sites fetch these). Shared links bunch up on a few
+    // games, so the game images come from a small set, like real traffic (each image is
+    // rendered once, then served from the frontend's cache)
     label: "/og/*.png",
     weight: 2,
     run: (d) => {
       const roll = Math.random();
       const path =
         roll < 0.5
-          ? `/og/game/${randomGameId()}.png`
+          ? `/og/game/${firstGameId + Math.floor(Math.random() * OG_GAMES)}.png`
           : roll < 0.8
             ? `/og/team/${pick(d.teamIds)}.png`
             : `/og/${pick(OG_PAGES)}.png`;
@@ -124,7 +124,7 @@ const TOTAL_WEIGHT = ACTIONS.reduce((sum, a) => sum + a.weight, 0);
 // Every request name above, for the per-name stats
 const REQUEST_NAMES = [
   "/", "/game/:id", "/api/Lineup", "/api/OddsMovement", "/team/:id", "/teams", "/strategies",
-  "/about", "/player/:id", "/track-record", "/disagreements", "/api/GameOdds (season)",
+  "/about", "/player/:id", "/track-record", "/disagreements", "/disagreements/data.json",
   "/search?q=", "/api/Search/Suggest", "/api/Search", "/api/Calendar .ics", "/og/*.png",
 ];
 

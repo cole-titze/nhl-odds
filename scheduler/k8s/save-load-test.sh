@@ -57,7 +57,9 @@ JOIN (
             row_number() OVER (PARTITION BY p."Page" ORDER BY p."LoadTestRunId" DESC) AS recent
         FROM "LoadTestRunPage" p
         JOIN "LoadTestRun" r ON r."Id" = p."LoadTestRunId"
+        -- Only runs with the same page mix: a new mix moves every page's numbers
         WHERE r."Preset" = 'light' AND r."Id" < :run_id
+            AND r."PageMix" = (SELECT "PageMix" FROM "LoadTestRun" WHERE "Id" = :run_id)
     ) previous
     WHERE recent <= 4
     GROUP BY "Page"

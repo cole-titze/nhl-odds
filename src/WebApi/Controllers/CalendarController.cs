@@ -17,22 +17,38 @@ public class CalendarController(
     // The public site the events link to; SITE_URL overrides it (say, for a staging copy)
     public const string DefaultSiteUrl = "https://nhl.half-built.com";
 
+    // Built feeds are kept this long: calendar apps poll each subscribed feed, and building one waits on
+    // GetAllTeams whenever the StartupCacheWarmer is rebuilding it
+    public static readonly TimeSpan FeedLifetime = TimeSpan.FromMinutes(15);
+
     // A team's games this season, built from the cached GetAllTeams response the StartupCacheWarmer keeps
     [HttpGet("Team/{teamId:int}.ics")]
     public async Task<IResult> Team(int teamId)
     {
         var now = DateTime.UtcNow;
         var season = Seasons.Current(now);
+        var feed = await cache.GetOrSetAsync(ApiCache.CalendarKey(teamId, season),
+            () => BuildFeed(teamId, season, now), SizeOf, FeedLifetime);
+        return feed is null ? Results.NotFound() : new CalendarResult(feed.Ics, feed.FileName);
+    }
+
+    private async Task<TeamFeed?> BuildFeed(int teamId, int season, DateTime now)
+    {
         var teamsVm = await cache.GetOrSetAsync(ApiCache.AllTeamsKey(season),
             () => teamGetter.GetAllTeamsStats(season), ApiCache.SizeOf);
         var team = teamsVm.Teams.FirstOrDefault(t => t.Id == teamId);
         if (team is null)
-            return Results.NotFound();
+            return null;
 
         var siteUrl = config["SITE_URL"] is { Length: > 0 } configured ? configured : DefaultSiteUrl;
-        var ics = TeamCalendarBuilder.Build(team, season, siteUrl, now);
-        return new CalendarResult(ics, $"{team.TeamName.ToLowerInvariant().Replace(' ', '-')}.ics");
+        return new TeamFeed(TeamCalendarBuilder.Build(team, season, siteUrl, now),
+            $"{team.TeamName.ToLowerInvariant().Replace(' ', '-')}.ics");
     }
+
+    private sealed record TeamFeed(string Ics, string FileName);
+
+    // The cache's units are ~6KB (ApiCache.SizeLimit)
+    private static long SizeOf(TeamFeed? feed) => 1 + (feed?.Ics.Length ?? 0) / 6000;
 
     private sealed class CalendarResult(string ics, string fileName) : IResult
     {
