@@ -77,7 +77,21 @@ async function livePages(base) {
   ).json();
   const game = games.filter((g) => g.hasBeenPlayed).at(-1) ?? games.at(-1);
   if (!game) throw new Error('no games in the last two weeks to pick a Game page from');
-  return ['/', '/teams', team, `/game/${game.id}`, '/strategies', '/about'];
+  const player = paths.find((p) => p.startsWith('/player/'));
+  if (!player) throw new Error(`no /player/ page in ${base}/sitemap.xml`);
+  // Search is noindex, so only its performance and accessibility scores mean anything
+  return [
+    '/',
+    '/teams',
+    team,
+    `/game/${game.id}`,
+    player,
+    '/strategies',
+    '/track-record',
+    '/disagreements',
+    '/search?q=McDavid',
+    '/about',
+  ];
 }
 
 async function waitFor(url, what) {
