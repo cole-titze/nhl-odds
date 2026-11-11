@@ -19,19 +19,44 @@ public record SearchIndex(string Alias, JsonObject Mappings, int Size)
     public string NewIndexName(DateTime nowUtc) => $"{Alias}-{nowUtc:yyyyMMddHHmmss}";
 
     /// <summary>
-    /// The create-index body: shared analysis settings and one shard. auto_expand_replicas "0-1" keeps a replica of
-    /// it on a second node when there is one (the cluster's 3 nodes) and none on a single node (docker compose), so
-    /// the index stays green either way and survives losing a node.
+    /// The create-index body: shared analysis settings and one shard, set up for a bulk build: no replica and no
+    /// periodic refresh, so the build writes each document once on one node instead of on two nodes with a refresh
+    /// every second, and searches on the live index stay fast meanwhile. <see cref="LiveSettings"/> turns both back
+    /// on once the documents are in. <paramref name="contentHash"/> goes in the mapping's _meta, so the next build
+    /// can tell nothing changed (see <see cref="SearchIndexer"/>).
     /// </summary>
-    public JsonObject CreateBody() => new()
+    public JsonObject CreateBody(string? contentHash = null)
     {
-        ["settings"] = new JsonObject
+        var mappings = Mappings.DeepClone().AsObject();
+        if (contentHash != null)
+            mappings["_meta"] = new JsonObject { [ContentHashKey] = contentHash };
+        return new JsonObject
         {
-            ["number_of_shards"] = 1,
+            ["settings"] = new JsonObject
+            {
+                ["number_of_shards"] = 1,
+                ["number_of_replicas"] = 0,
+                ["refresh_interval"] = "-1",
+                ["analysis"] = SearchIndexes.Analysis(),
+            },
+            ["mappings"] = mappings,
+        };
+    }
+
+    public const string ContentHashKey = "content_hash";
+
+    /// <summary>
+    /// The settings a built index is searched with. auto_expand_replicas "0-1" keeps a replica of it on a second
+    /// node when there is one (the cluster's 3 nodes) and none on a single node (docker compose), so the index stays
+    /// green either way and survives losing a node; refresh_interval back to the default.
+    /// </summary>
+    public static JsonObject LiveSettings() => new()
+    {
+        ["index"] = new JsonObject
+        {
             ["auto_expand_replicas"] = "0-1",
-            ["analysis"] = SearchIndexes.Analysis(),
+            ["refresh_interval"] = null,
         },
-        ["mappings"] = Mappings.DeepClone(),
     };
 }
 

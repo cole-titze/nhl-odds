@@ -86,6 +86,57 @@ public class ElasticsearchClient
         await EnsureSuccess(response, $"refresh {index}", ct);
     }
 
+    public async Task UpdateSettings(string index, JsonObject settings, CancellationToken ct = default)
+    {
+        using var response = await _http.PutAsync($"{index}/_settings", Json(settings), ct);
+        await EnsureSuccess(response, $"update settings {index}", ct);
+    }
+
+    /// <summary>
+    /// A value from the mapping's _meta of the index an alias points at; null if the alias, the index or the key
+    /// doesn't exist, or the alias points at more than one index.
+    /// </summary>
+    public async Task<string?> GetMappingMeta(string alias, string key, CancellationToken ct = default)
+    {
+        using var response = await _http.GetAsync($"{alias}/_mapping?filter_path=*.mappings._meta", ct);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+            return null;
+        await EnsureSuccess(response, $"get mapping {alias}", ct);
+        var indices = JsonNode.Parse(await response.Content.ReadAsStringAsync(ct)) as JsonObject;
+        if (indices is not { Count: 1 })
+            return null;
+        return indices.First().Value?["mappings"]?["_meta"]?[key]?.GetValue<string>();
+    }
+
+    /// <summary>
+    /// Waits until every copy of the index's shards the settings ask for (primary + number_of_replicas, which
+    /// auto_expand_replicas sets) is started. Reads shard-level _stats, an index privilege, because cluster health
+    /// needs the cluster monitor privilege the indexing user doesn't have. False if it timed out.
+    /// </summary>
+    public async Task<bool> WaitForShardCopies(string index, TimeSpan timeout, CancellationToken ct = default)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        while (true)
+        {
+            using (var settings = await _http.GetAsync($"{index}/_settings?filter_path=*.settings.index.number_of_replicas", ct))
+            using (var stats = await _http.GetAsync($"{index}/_stats/docs?level=shards&filter_path=indices.*.shards.*.routing.state", ct))
+            {
+                await EnsureSuccess(settings, $"get settings {index}", ct);
+                await EnsureSuccess(stats, $"shard stats {index}", ct);
+                var replicas = int.Parse(JsonNode.Parse(await settings.Content.ReadAsStringAsync(ct))!
+                    .AsObject().First().Value!["settings"]!["index"]!["number_of_replicas"]!.GetValue<string>());
+                var shards = JsonNode.Parse(await stats.Content.ReadAsStringAsync(ct))!["indices"]!
+                    .AsObject().First().Value!["shards"]!.AsObject();
+                if (shards.All(shard => shard.Value!.AsArray()
+                        .Count(copy => copy!["routing"]!["state"]!.GetValue<string>() == "STARTED") >= 1 + replicas))
+                    return true;
+            }
+            if (DateTime.UtcNow >= deadline)
+                return false;
+            await Task.Delay(TimeSpan.FromSeconds(1), ct);
+        }
+    }
+
     /// <summary>The indices an alias points at (none if the alias doesn't exist yet).</summary>
     public async Task<List<string>> GetAliasIndices(string alias, CancellationToken ct = default)
     {
