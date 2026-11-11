@@ -50,30 +50,109 @@ const currentSeason =
     : now.getUTCFullYear() - 1;
 const LAST_SEASON_GAMES = 1312;
 
-// Share of page loads per page; the game and team pages pick a random game or team each time
-const PAGE_MIX = [
-  { name: "/", weight: 35, path: () => "/" },
-  { name: "/game/:id", weight: 25, path: () => `/game/${randomGameId()}` },
-  {
-    name: "/team/:id",
-    weight: 15,
-    path: (teamIds) => `/team/${pick(teamIds)}`,
-  },
-  { name: "/teams", weight: 10, path: () => "/teams" },
-  { name: "/strategies", weight: 10, path: () => "/strategies" },
-  { name: "/about", weight: 5, path: () => "/about" },
+// What a visit does, and how often: most actions load one page (server-rendered), some make the API
+// calls a browser makes after a page loads or while someone types in the search box. Each request is
+// counted under its own name (the per-page rows in "LoadTestRunPage").
+const SEARCH_TERMS = [
+  "McDavid", "Matthews", "Crosby", "MacKinnon", "Makar", "Kucherov", "Ovechkin",
+  "Hughes", "Draisaitl", "Pastrnak", "Shesterkin", "Hellebuyck", "Bedard", "Celebrini",
+  "Maple Leafs", "Oilers", "Bruins", "Rangers", "Avalanche", "Golden Knights",
+  "Panthers", "Lightning", "Canadiens", "Kraken",
+  "injury update", "trade rumors", "starting goalie", "power play",
+  "overtime winner", "rookie of the year", "salary cap", "mcdavd",
 ];
-const TOTAL_WEIGHT = PAGE_MIX.reduce((sum, p) => sum + p.weight, 0);
+const OG_PAGES = ["games", "teams", "strategies", "about", "site"];
+
+const ACTIONS = [
+  { label: "/", weight: 25, run: () => get("/", "/") },
+  {
+    // The game page renders with its factors and players; the browser then asks for the
+    // lineup and odds movement
+    label: "/game/:id + lineup + odds movement",
+    weight: 16,
+    run: () => {
+      const gameId = randomGameId();
+      get("/game/:id", `/game/${gameId}`);
+      get("/api/Lineup", `/api/Lineup/GetGameLineup?gameId=${gameId}`);
+      get("/api/OddsMovement", `/api/OddsMovement/GetOddsMovement?gameId=${gameId}`);
+    },
+  },
+  { label: "/team/:id", weight: 9, run: (d) => get("/team/:id", `/team/${pick(d.teamIds)}`) },
+  { label: "/teams", weight: 6, run: () => get("/teams", "/teams") },
+  { label: "/strategies", weight: 5, run: () => get("/strategies", "/strategies") },
+  { label: "/about", weight: 3, run: () => get("/about", "/about") },
+  { label: "/player/:id", weight: 8, run: (d) => get("/player/:id", `/player/${pick(d.playerIds)}`) },
+  { label: "/track-record", weight: 4, run: () => get("/track-record", "/track-record") },
+  { label: "/disagreements", weight: 4, run: () => get("/disagreements", "/disagreements") },
+  {
+    // Opening Disagreements from another page: the browser downloads the season's games
+    label: "Disagreements season fetch",
+    weight: 3,
+    run: () =>
+      get(
+        "/api/GameOdds (season)",
+        `/api/GameOdds/GetGameOddsInDateRange?startDate=${currentSeason}-09-01` +
+          `&endDate=${currentSeason + 1}-07-31&seasonStartYear=${currentSeason}`,
+      ),
+  },
+  {
+    // A shared or bookmarked search link: the search runs in the server render
+    label: "/search?q=",
+    weight: 6,
+    run: () => get("/search?q=", `/search?q=${encodeURIComponent(pick(SEARCH_TERMS))}`),
+  },
+  { label: "search box typing + search", weight: 8, run: typeAndSearch },
+  { label: "calendar .ics", weight: 1, run: (d) => get("/api/Calendar .ics", `/api/Calendar/Team/${pick(d.teamIds)}.ics`) },
+  {
+    // Link previews (chat apps and social sites fetch these)
+    label: "/og/*.png",
+    weight: 2,
+    run: (d) => {
+      const roll = Math.random();
+      const path =
+        roll < 0.5
+          ? `/og/game/${randomGameId()}.png`
+          : roll < 0.8
+            ? `/og/team/${pick(d.teamIds)}.png`
+            : `/og/${pick(OG_PAGES)}.png`;
+      get("/og/*.png", path);
+    },
+  },
+];
+const TOTAL_WEIGHT = ACTIONS.reduce((sum, a) => sum + a.weight, 0);
+
+// Every request name above, for the per-name stats
+const REQUEST_NAMES = [
+  "/", "/game/:id", "/api/Lineup", "/api/OddsMovement", "/team/:id", "/teams", "/strategies",
+  "/about", "/player/:id", "/track-record", "/disagreements", "/api/GameOdds (season)",
+  "/search?q=", "/api/Search/Suggest", "/api/Search", "/api/Calendar .ics", "/og/*.png",
+];
+
+// The search box asks for suggestions once typing pauses for 200 ms (SUGGEST_DELAY_MS in
+// SearchBox.tsx); pressing Enter goes to the search page, which fetches the full results
+const SUGGEST_DELAY_MS = 200;
+function typeAndSearch() {
+  const term = pick(SEARCH_TERMS);
+  for (let length = 1; length <= term.length; length++) {
+    const pauseMs = 80 + Math.random() * 220;
+    const typed = term.slice(0, length).trim();
+    if (typed.length >= 2 && (pauseMs > SUGGEST_DELAY_MS || length === term.length)) {
+      get("/api/Search/Suggest", `/api/Search/Suggest?q=${encodeURIComponent(typed)}`);
+    }
+    sleep(pauseMs / 1000);
+  }
+  get("/api/Search", `/api/Search?q=${encodeURIComponent(term)}`);
+}
 
 const http5xx = new Counter("http_5xx");
 const http429 = new Counter("http_429");
 const otherErrors = new Counter("other_errors");
 
-// Stats are kept for all page loads (kind:page, which leaves out setup's sitemap request) and
-// for each page; k6 only reports a tag's numbers when a threshold names it, so these always pass
+// Stats are kept for all requests (kind:page, which leaves out setup's sitemap request) and
+// for each name; k6 only reports a tag's numbers when a threshold names it, so these always pass
 const SUBMETRIC_FILTERS = [
   "kind:page",
-  ...PAGE_MIX.map((p) => `name:${p.name}`),
+  ...REQUEST_NAMES.map((name) => `name:${name}`),
 ];
 const thresholds = {};
 for (const filter of SUBMETRIC_FILTERS) {
@@ -109,16 +188,35 @@ function randomGameId() {
   );
 }
 
-function pickPage() {
+function pickAction() {
   let roll = Math.random() * TOTAL_WEIGHT;
-  for (const page of PAGE_MIX) {
-    roll -= page.weight;
-    if (roll < 0) return page;
+  for (const action of ACTIONS) {
+    roll -= action.weight;
+    if (roll < 0) return action;
   }
-  return PAGE_MIX[0];
+  return ACTIONS[0];
 }
 
-// The team ids come from the sitemap, which lists every team page
+// One request, counted under its name, with its errors counted by kind
+function get(name, path) {
+  const tags = { name, kind: "page" };
+  const res = http.get(`${TARGET}${path}`, {
+    // The web API rate-limits per CF-Connecting-IP, so each VU gets its own address
+    // (198.18.0.0/15 is reserved for benchmarking) and is limited like one real visitor
+    // Browsers ask for compressed pages; without this k6 downloads them uncompressed (~6x the bytes)
+    headers: {
+      "CF-Connecting-IP": `198.18.${Math.floor(__VU / 256)}.${__VU % 256}`,
+      "Accept-Encoding": "gzip, br",
+    },
+    tags,
+    timeout: "30s",
+  });
+  if (res.status >= 500) http5xx.add(1, tags);
+  else if (res.status === 429) http429.add(1, tags);
+  else if (res.status === 0 || res.status >= 400) otherErrors.add(1, tags);
+}
+
+// The team and player ids come from the sitemap, which lists every team and player page
 export function setup() {
   const res = http.get(`${TARGET}/sitemap.xml`, {
     responseType: "text",
@@ -127,33 +225,19 @@ export function setup() {
   const teamIds = [...String(res.body || "").matchAll(/\/team\/(\d+)</g)].map(
     (m) => m[1],
   );
-  if (res.status !== 200 || teamIds.length === 0) {
+  const playerIds = [
+    ...String(res.body || "").matchAll(/\/player\/(\d+)</g),
+  ].map((m) => m[1]);
+  if (res.status !== 200 || teamIds.length === 0 || playerIds.length === 0) {
     throw new Error(
-      `Couldn't read team ids from ${TARGET}/sitemap.xml (status ${res.status})`,
+      `Couldn't read team and player ids from ${TARGET}/sitemap.xml (status ${res.status})`,
     );
   }
-  return { teamIds };
+  return { teamIds, playerIds };
 }
 
 export default function (data) {
-  const page = pickPage();
-  const res = http.get(`${TARGET}${page.path(data.teamIds)}`, {
-    // The web API rate-limits per CF-Connecting-IP, so each VU gets its own address
-    // (198.18.0.0/15 is reserved for benchmarking) and is limited like one real visitor
-    // Browsers ask for compressed pages; without this k6 downloads them uncompressed (~6x the bytes)
-    headers: {
-      "CF-Connecting-IP": `198.18.${Math.floor(__VU / 256)}.${__VU % 256}`,
-      "Accept-Encoding": "gzip, br",
-    },
-    tags: { name: page.name, kind: "page" },
-    timeout: "30s",
-  });
-
-  const tags = { name: page.name, kind: "page" };
-  if (res.status >= 500) http5xx.add(1, tags);
-  else if (res.status === 429) http429.add(1, tags);
-  else if (res.status === 0 || res.status >= 400) otherErrors.add(1, tags);
-
+  pickAction().run(data);
   sleep(
     THINK_TIME_MIN_SECONDS +
       Math.random() * (THINK_TIME_MAX_SECONDS - THINK_TIME_MIN_SECONDS),
@@ -187,8 +271,8 @@ export function handleSummary(data) {
   const finished = new Date();
   const started = new Date(finished.getTime() - data.state.testRunDurationMs);
   const durationSeconds = Math.max(data.state.testRunDurationMs / 1000, 1);
-  const pageMix = PAGE_MIX.map(
-    (p) => `${p.name} ${Math.round((p.weight / TOTAL_WEIGHT) * 100)}%`,
+  const pageMix = ACTIONS.map(
+    (a) => `${a.label} ${Math.round((a.weight / TOTAL_WEIGHT) * 100)}%`,
   ).join(", ");
 
   const result = {
@@ -209,10 +293,11 @@ export function handleSummary(data) {
     .map(([key, value]) => `${key}='${String(value).replace(/'/g, "")}'`)
     .join("\n");
 
-  const pages = PAGE_MIX.map((p) => ({
-    PAGE: p.name,
-    ...stats(m, `name:${p.name}`, durationSeconds),
-  }));
+  // Names with no requests (say, a new name in a short run) get no row
+  const pages = REQUEST_NAMES.map((name) => ({
+    PAGE: name,
+    ...stats(m, `name:${name}`, durationSeconds),
+  })).filter((p) => p.REQUESTS > 0);
   // Page names are the fixed ones above, so they're safe to put in a SQL string
   const pagesSql = pages
     .map(
