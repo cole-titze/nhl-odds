@@ -1,44 +1,28 @@
-import { type ReactNode } from 'react';
+import { lazy, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
-import {
-  CartesianGrid,
-  ComposedChart,
-  Line,
-  LineChart,
-  ReferenceLine,
-  ResponsiveContainer,
-  Scatter,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
 import { SeasonSelector } from '../components/SeasonSelector';
 import { Skeleton } from '../components/Skeleton';
 import { LineKey } from '../components/LineKey';
 import { ChartDataTable } from '../components/ChartDataTable';
+import { LazyChart } from '../components/LazyChart';
 import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
+import type { LogLossRow } from '../components/TrackRecordCharts';
 import { useFetch } from '../hooks/useFetch';
-import { useHydrated } from '../hooks/useHydrated';
 import { useIsDarkTheme } from '../hooks/useRootTheme';
 import { getTrackRecord } from '../api/trackRecord';
 import { formatSeasonLabel, getCurrentSeason } from '../utils/season';
 import { formatShortDate } from '../utils/dates';
 import { dashFor, readableLineColor } from '../utils/chartSeries';
+import { COIN_FLIP, MARKET, MARKET_COLOR, MODEL, MODEL_COLOR, ll, pct } from '../utils/trackRecord';
 import type { CalibrationBinVM, ClosingLineVM, LogLossPointVM, TrackRecordVM } from '../types';
 
-// Log loss of always saying 50%: a model has to beat this to be worth anything
-const COIN_FLIP = Math.log(2);
-const MODEL = 'Model';
-const MARKET = "Bookmakers' average";
-const MODEL_COLOR = '#3b82f6';
-const MARKET_COLOR = '#f97316';
-const AXIS_TICK = { fontSize: 11, fontFamily: 'JetBrains Mono Variable', fill: 'currentColor' };
-const AXIS_LABEL = { fontSize: 11, fill: 'currentColor' };
-const TOOLTIP_CLASS =
-  'bg-[rgba(10,10,10,0.9)] border border-white/8 rounded-lg font-mono text-xs text-white backdrop-blur-md py-2 px-3';
-
-const pct = (v: number, digits = 1) => `${(v * 100).toFixed(digits)}%`;
-const ll = (v: number) => v.toFixed(4);
+// Recharts (~100 KB) loads only when a chart scrolls near the screen (LazyChart), not with the page
+const CalibrationPlot = lazy(() =>
+  import('../components/TrackRecordCharts').then((m) => ({ default: m.CalibrationPlot })),
+);
+const LogLossPlot = lazy(() =>
+  import('../components/TrackRecordCharts').then((m) => ({ default: m.LogLossPlot })),
+);
 
 export function TrackRecordPage() {
   // In the URL (?season=2024&live=1), so a view can be linked and survives a reload; defaults are left out
@@ -230,7 +214,6 @@ function Stat({ label, value, note }: { label: string; value: string; note?: str
 }
 
 function CalibrationChart({ bins }: { bins: CalibrationBinVM[] }) {
-  const hydrated = useHydrated();
   const dark = useIsDarkTheme();
   const color = readableLineColor(MODEL_COLOR, dark);
   const data = bins.map((b) => ({ ...b, label: `${pct(b.low, 0)}–${pct(b.high, 0)}` }));
@@ -248,81 +231,9 @@ function CalibrationChart({ bins }: { bins: CalibrationBinVM[] }) {
         </span>
       </div>
       <div className="text-surface-600 dark:text-surface-400">
-        {/* Recharts sizes itself with inline styles, which the CSP blocks in server HTML */}
-        {!hydrated ? (
-          <div className="h-[300px]" />
-        ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 20, left: 8 }}>
-              <CartesianGrid stroke="currentColor" strokeOpacity={0.1} />
-              <XAxis
-                type="number"
-                dataKey="meanPredicted"
-                domain={[0, 1]}
-                ticks={[0, 0.2, 0.4, 0.6, 0.8, 1]}
-                tickFormatter={(v: number) => pct(v, 0)}
-                tick={AXIS_TICK}
-                stroke="#525252"
-                tickLine={false}
-                axisLine={false}
-                label={{
-                  ...AXIS_LABEL,
-                  value: 'Model: home win chance',
-                  position: 'bottom',
-                  offset: 4,
-                }}
-              />
-              <YAxis
-                type="number"
-                domain={[0, 1]}
-                ticks={[0, 0.2, 0.4, 0.6, 0.8, 1]}
-                tickFormatter={(v: number) => pct(v, 0)}
-                tick={AXIS_TICK}
-                stroke="#525252"
-                tickLine={false}
-                axisLine={false}
-                label={{
-                  ...AXIS_LABEL,
-                  value: 'Home team won',
-                  angle: -90,
-                  position: 'insideLeft',
-                  offset: 4,
-                }}
-              />
-              <ReferenceLine
-                segment={[
-                  { x: 0, y: 0 },
-                  { x: 1, y: 1 },
-                ]}
-                stroke="currentColor"
-                strokeDasharray="4 4"
-              />
-              <Tooltip
-                content={({ active, payload }) => {
-                  if (!active || !payload?.length) return null;
-                  const b = payload[0].payload as CalibrationBinVM & { label: string };
-                  return (
-                    <div className={TOOLTIP_CLASS}>
-                      <div>Predicted {b.label}</div>
-                      <div>Average prediction: {pct(b.meanPredicted)}</div>
-                      <div>Home won: {pct(b.homeWinRate)}</div>
-                      <div>{b.games.toLocaleString()} games</div>
-                    </div>
-                  );
-                }}
-              />
-              <Line
-                dataKey="homeWinRate"
-                stroke={color}
-                strokeWidth={2.5}
-                isAnimationActive={false}
-                dot={false}
-                activeDot={false}
-              />
-              <Scatter dataKey="homeWinRate" fill={color} isAnimationActive={false} />
-            </ComposedChart>
-          </ResponsiveContainer>
-        )}
+        <LazyChart boxClassName="h-[300px]">
+          <CalibrationPlot data={data} color={color} />
+        </LazyChart>
       </div>
       <ChartDataTable
         caption="Calibration by predicted home win probability"
@@ -344,13 +255,12 @@ function CalibrationChart({ bins }: { bins: CalibrationBinVM[] }) {
 }
 
 function LogLossChart({ points }: { points: LogLossPointVM[] }) {
-  const hydrated = useHydrated();
   const dark = useIsDarkTheme();
   const series = [
     { name: MODEL, color: readableLineColor(MODEL_COLOR, dark), dash: dashFor(0) },
     { name: MARKET, color: readableLineColor(MARKET_COLOR, dark), dash: dashFor(1) },
   ];
-  const data = points.map((p) => ({
+  const data: LogLossRow[] = points.map((p) => ({
     key: p.date.slice(0, 10),
     date: formatShortDate(p.date.slice(0, 10)),
     games: p.games,
@@ -376,74 +286,9 @@ function LogLossChart({ points }: { points: LogLossPointVM[] }) {
         ))}
       </div>
       <div className="text-surface-600 dark:text-surface-400">
-        {!hydrated ? (
-          <div className="h-[300px]" />
-        ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={data} margin={{ top: 8, right: 20, bottom: 8, left: 0 }}>
-              <XAxis
-                dataKey="date"
-                tick={AXIS_TICK}
-                interval="preserveStartEnd"
-                minTickGap={24}
-                stroke="#525252"
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                domain={['auto', 'auto']}
-                tickFormatter={(v: number) => v.toFixed(3)}
-                tick={AXIS_TICK}
-                stroke="#525252"
-                tickLine={false}
-                axisLine={false}
-              />
-              <ReferenceLine y={COIN_FLIP} stroke="currentColor" strokeDasharray="2 3" />
-              <Tooltip
-                content={({ active, payload, label }) => {
-                  if (!active || !payload?.length) return null;
-                  const d = payload[0].payload as Record<string, number | string | undefined>;
-                  return (
-                    <div className={TOOLTIP_CLASS}>
-                      <div>
-                        {label} · {(d.games as number).toLocaleString()} games
-                      </div>
-                      {series
-                        .filter((s) => d[s.name] != null)
-                        .map((s) => (
-                          <div key={s.name} className="flex items-center gap-1.5">
-                            <LineKey
-                              color={readableLineColor(
-                                s.name === MODEL ? MODEL_COLOR : MARKET_COLOR,
-                                true,
-                              )}
-                              dash={s.dash}
-                            />
-                            {s.name}: {ll(d[s.name] as number)}
-                          </div>
-                        ))}
-                    </div>
-                  );
-                }}
-              />
-              {series.map((s) => (
-                <Line
-                  key={s.name}
-                  type="monotone"
-                  dataKey={s.name}
-                  stroke={s.color}
-                  strokeDasharray={s.dash || undefined}
-                  // The draw-in animation overwrites strokeDasharray
-                  isAnimationActive={false}
-                  strokeWidth={2.5}
-                  dot={false}
-                  activeDot={{ r: 4, fill: s.color, stroke: '#141418', strokeWidth: 2 }}
-                  connectNulls
-                />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
-        )}
+        <LazyChart boxClassName="h-[300px]">
+          <LogLossPlot data={data} series={series} />
+        </LazyChart>
       </div>
       <ChartDataTable
         caption="Season-to-date log loss by game day"
@@ -452,7 +297,11 @@ function LogLossChart({ points }: { points: LogLossPointVM[] }) {
         rows={data.map((d) => ({
           key: d.key,
           label: d.date,
-          values: { Games: d.games, [MODEL]: d[MODEL], [MARKET]: d[MARKET] },
+          values: {
+            Games: d.games,
+            [MODEL]: d[MODEL] as number,
+            [MARKET]: d[MARKET] as number | undefined,
+          },
         }))}
         format={(v, column) => (column === 'Games' ? v.toLocaleString() : ll(v))}
       />

@@ -151,6 +151,16 @@ async function load(page, path) {
   page.off('console', onConsole);
   page.off('pageerror', onError);
   page.off('request', onRequest);
+  // Lazy charts (LazyChart) draw only near the screen: scroll through so axe checks them too. Only
+  // on pages that have them, since scrolling the home page's feed loads more days.
+  await page.evaluate(async () => {
+    if (!document.querySelector('[data-lazy-chart]')) return;
+    for (let y = 0; y < document.body.scrollHeight; y += window.innerHeight / 2) {
+      window.scrollTo(0, y);
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    window.scrollTo(0, 0);
+  });
   await page.waitForTimeout(500);
 }
 
