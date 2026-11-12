@@ -20,4 +20,6 @@ public interface IWebPlayerRepository
     Task<List<PlayerName>> GetPlayerNames();
     /// <summary>The team and position of each player's latest game; players without games are left out.</summary>
     Task<List<PlayerLatestTeam>> GetLatestTeams(IReadOnlyCollection<int> playerIds);
+    /// <summary>Every player's regular-season totals, with the team and position of their latest game (#182).</summary>
+    Task<List<PlayerSeasonTotals>> GetSeasonTotals(int seasonStartYear);
 }

@@ -354,3 +354,35 @@ export interface ActivePlayerVM {
   id: number;
   lastGameDate: string;
 }
+
+/** The league leaders in one stat for a regular season (#182; /api/Leaders/GetStatLeaders) */
+export interface StatLeadersVM {
+  seasonStartYear: number;
+  stat: string;
+  label: string;
+  group: 'skater' | 'goalie';
+  /** Goals against average: the lowest leads */
+  lowerIsBetter: boolean;
+  /** Rate stats only count players with at least this many games; 0 for totals */
+  minGamesPlayed: number;
+  /** Up to 50, best first */
+  leaders: StatLeaderVM[];
+}
+
+export interface StatLeaderVM {
+  /** Shared on ties (1, 2, 2, 4) */
+  rank: number;
+  playerId: number;
+  firstName: string;
+  lastName: string;
+  headShot: string;
+  position: PositionCode;
+  /** The team of their latest game that season */
+  teamId: number;
+  teamAbbreviation: string;
+  teamName: string;
+  teamLogoUri: string;
+  gamesPlayed: number;
+  /** Time on ice per game in seconds; save percentage as a fraction */
+  value: number;
+}

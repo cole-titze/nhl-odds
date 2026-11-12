@@ -21,7 +21,7 @@ export type SitemapEntry =
 export const SITE_PAGES: Record<string, SitemapEntry> = {
   '/': 'daily',
   '/strategies': 'daily',
-  '/disagreements': 'daily',
+  '/leaders': 'daily',
   '/teams': 'daily',
   '/track-record': 'daily',
   '/about': 'static',
@@ -34,7 +34,6 @@ export const SITE_PAGES: Record<string, SitemapEntry> = {
   '/admin': { exclude: 'noindex: needs an admin key' },
   '/search': { exclude: 'noindex: search results for whatever was typed' },
   '/sitemap.xml': { exclude: 'the sitemap itself' },
-  '/disagreements/data.json': { exclude: "the Disagreements page's rows as JSON, not a page" },
   '/og/game/:file': { exclude: 'link preview image (og:image), not a page' },
   '/og/team/:file': { exclude: 'link preview image (og:image), not a page' },
   '/og/:file': { exclude: 'link preview image (og:image), not a page' },

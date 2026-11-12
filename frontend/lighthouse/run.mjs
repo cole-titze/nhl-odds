@@ -88,7 +88,7 @@ async function livePages(base) {
     player,
     '/strategies',
     '/track-record',
-    '/disagreements',
+    '/leaders',
     '/search?q=McDavid',
     '/about',
   ];

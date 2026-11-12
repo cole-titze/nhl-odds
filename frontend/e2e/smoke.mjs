@@ -53,13 +53,21 @@ const PAGES = [
     allowApi: [404],
   },
   { path: '/strategies', title: 'Strategies', text: ['Strategies'] },
-  // Server-rendered from the season's games: the seed's played games fill the record
+  // Server-rendered from the seed's box scores (#182): Matthews leads points
   {
-    path: '/disagreements',
-    title: 'Model vs Market',
-    html: ['Model vs Market', 'biggest disagreements'],
-    text: ['Model vs Market', 'biggest disagreements', 'Every played game, by gap size'],
+    path: '/leaders',
+    title: 'Stat Leaders',
+    html: ['Stat Leaders', 'Auston Matthews'],
+    text: ['Stat Leaders', 'Auston Matthews', 'Mitch Marner'],
   },
+  {
+    path: '/leaders?stat=savePercentage',
+    title: 'Stat Leaders',
+    html: ['Joseph Woll', '.929'],
+    text: ['Save percentage', 'Joseph Woll'],
+  },
+  // The old Model vs Market page redirects to Leaders
+  { path: '/disagreements', title: 'Stat Leaders', text: ['Stat Leaders', 'Auston Matthews'] },
   // The seed's three played games were all predicted the day before, so both views show them
   {
     path: '/track-record',

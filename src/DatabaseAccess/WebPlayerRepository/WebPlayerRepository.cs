@@ -516,6 +516,140 @@ public class WebPlayerRepository : IWebPlayerRepository
             .ToDictionary(r => (r.GameId, r.PlayerId), r => r.SweaterNumber);
     }
 
+    // Regular season game ids: {season}02{number}
+    private static int FirstRegularSeasonGameId(int seasonStartYear) => FirstGameId(seasonStartYear) + 20_000;
+
+    public async Task<List<PlayerSeasonTotals>> GetSeasonTotals(int seasonStartYear)
+    {
+        var first = FirstRegularSeasonGameId(seasonStartYear);
+        var next = first + 10_000;
+
+        // Summed in the database: one row per player rather than one per game
+        var skaters = await _dbContext.GameSkaterStats
+            .AsNoTracking()
+            .Where(s => s.GameId >= first && s.GameId < next)
+            .GroupBy(s => s.PlayerId)
+            .Select(g => new
+            {
+                PlayerId = g.Key,
+                GamesPlayed = g.Sum(s => s.TimeOnIceSeconds > 0 ? 1 : 0),
+                TimeOnIceSeconds = g.Sum(s => s.TimeOnIceSeconds),
+                Goals = g.Sum(s => s.Goals),
+                Assists = g.Sum(s => s.Assists),
+                Shots = g.Sum(s => s.ShotsOnGoal),
+                PlusMinus = g.Sum(s => s.PlusMinus),
+                PenaltyMinutes = g.Sum(s => s.PenaltyMinutes),
+                PowerPlayGoals = g.Sum(s => s.PowerPlayGoals),
+                Hits = g.Sum(s => s.Hits),
+                BlockedShots = g.Sum(s => s.BlockedShots),
+                LatestGameId = g.Max(s => s.GameId),
+            })
+            .ToListAsync();
+
+        // A few thousand rows a season: shutouts need each game's goalies, so these are summed here
+        var goalieGames = await _dbContext.GameGoalieStats
+            .AsNoTracking()
+            .Where(s => s.GameId >= first && s.GameId < next)
+            .Select(s => new
+            {
+                s.PlayerId,
+                s.GameId,
+                s.TeamId,
+                s.TimeOnIceSeconds,
+                s.IsStarter,
+                Saves = s.EvenStrengthShotsSaved + s.PowerPlayShotsSaved + s.ShortHandedShotsSaved,
+                GoalsAgainst = s.EvenStrengthGoalsAllowed + s.PowerPlayGoalsAllowed + s.ShortHandedGoalsAllowed,
+            })
+            .ToListAsync();
+        var goaliesPerTeamGame = goalieGames
+            .Where(s => s.TimeOnIceSeconds > 0)
+            .GroupBy(s => (s.GameId, s.TeamId))
+            .ToDictionary(g => g.Key, g => g.Count());
+        var goalies = goalieGames
+            .GroupBy(s => s.PlayerId)
+            .Select(g => new
+            {
+                PlayerId = g.Key,
+                GamesPlayed = g.Count(s => s.TimeOnIceSeconds > 0),
+                TimeOnIceSeconds = g.Sum(s => s.TimeOnIceSeconds),
+                GamesStarted = g.Count(s => s.IsStarter),
+                Saves = g.Sum(s => s.Saves),
+                GoalsAgainst = g.Sum(s => s.GoalsAgainst),
+                Shutouts = g.Count(s => s.TimeOnIceSeconds > 0 && s.GoalsAgainst == 0
+                    && goaliesPerTeamGame.GetValueOrDefault((s.GameId, s.TeamId)) == 1),
+                LatestGameId = g.Max(s => s.GameId),
+            })
+            .ToList();
+
+        // Team and position from each player's latest game
+        var latestGames = skaters.Select(s => s.LatestGameId).Concat(goalies.Select(g => g.LatestGameId)).Distinct().ToList();
+        var skaterIds = skaters.Select(s => s.PlayerId).ToList();
+        var latestSkater = (await _dbContext.GameSkaterStats
+                .AsNoTracking()
+                .Where(s => latestGames.Contains(s.GameId) && skaterIds.Contains(s.PlayerId))
+                .Select(s => new { s.PlayerId, s.GameId, s.TeamId, s.Position })
+                .ToListAsync())
+            .ToDictionary(s => (s.PlayerId, s.GameId));
+        var latestGoalieTeam = goalieGames.ToDictionary(s => (s.PlayerId, s.GameId), s => s.TeamId);
+
+        var ids = skaterIds.Concat(goalies.Select(g => g.PlayerId)).Distinct().ToList();
+        var players = await _dbContext.Player
+            .AsNoTracking()
+            .Where(p => ids.Contains(p.Id))
+            .Select(p => new { p.Id, p.FirstName, p.LastName, p.HeadShot })
+            .ToDictionaryAsync(p => p.Id);
+        var teams = await GetSeasonTeams(seasonStartYear);
+
+        PlayerSeasonTotals Totals(int playerId, int teamId, POSITION position)
+        {
+            var p = players[playerId];
+            var team = teams.GetValueOrDefault(teamId);
+            return new PlayerSeasonTotals
+            {
+                PlayerId = playerId,
+                FirstName = p.FirstName,
+                LastName = p.LastName,
+                HeadShot = p.HeadShot ?? string.Empty,
+                Position = position,
+                IsGoalie = position == POSITION.Goalie,
+                TeamId = teamId,
+                TeamAbbreviation = team?.Abbreviation ?? string.Empty,
+                TeamName = team?.Name ?? string.Empty,
+                TeamLogoUri = team?.LogoUri ?? string.Empty,
+            };
+        }
+
+        var result = new List<PlayerSeasonTotals>();
+        foreach (var s in skaters.Where(s => players.ContainsKey(s.PlayerId)))
+        {
+            var latest = latestSkater.GetValueOrDefault((s.PlayerId, s.LatestGameId));
+            var t = Totals(s.PlayerId, latest?.TeamId ?? 0, latest?.Position ?? POSITION.Center);
+            t.GamesPlayed = s.GamesPlayed;
+            t.TimeOnIceSeconds = s.TimeOnIceSeconds;
+            t.Goals = s.Goals;
+            t.Assists = s.Assists;
+            t.Shots = s.Shots;
+            t.PlusMinus = s.PlusMinus;
+            t.PenaltyMinutes = s.PenaltyMinutes;
+            t.PowerPlayGoals = s.PowerPlayGoals;
+            t.Hits = s.Hits;
+            t.BlockedShots = s.BlockedShots;
+            result.Add(t);
+        }
+        foreach (var g in goalies.Where(g => players.ContainsKey(g.PlayerId)))
+        {
+            var t = Totals(g.PlayerId, latestGoalieTeam.GetValueOrDefault((g.PlayerId, g.LatestGameId)), POSITION.Goalie);
+            t.GamesPlayed = g.GamesPlayed;
+            t.TimeOnIceSeconds = g.TimeOnIceSeconds;
+            t.GamesStarted = g.GamesStarted;
+            t.Saves = g.Saves;
+            t.GoalsAgainst = g.GoalsAgainst;
+            t.Shutouts = g.Shutouts;
+            result.Add(t);
+        }
+        return result;
+    }
+
     private async Task<Dictionary<int, DbSeasonTeam>> GetSeasonTeams(int seasonStartYear)
     {
         return await _dbContext.SeasonTeam

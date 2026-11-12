@@ -54,14 +54,58 @@ const LAST_SEASON_GAMES = 1312;
 // calls a browser makes after a page loads or while someone types in the search box. Each request is
 // counted under its own name (the per-page rows in "LoadTestRunPage").
 const SEARCH_TERMS = [
-  "McDavid", "Matthews", "Crosby", "MacKinnon", "Makar", "Kucherov", "Ovechkin",
-  "Hughes", "Draisaitl", "Pastrnak", "Shesterkin", "Hellebuyck", "Bedard", "Celebrini",
-  "Maple Leafs", "Oilers", "Bruins", "Rangers", "Avalanche", "Golden Knights",
-  "Panthers", "Lightning", "Canadiens", "Kraken",
-  "injury update", "trade rumors", "starting goalie", "power play",
-  "overtime winner", "rookie of the year", "salary cap", "mcdavd",
+  "McDavid",
+  "Matthews",
+  "Crosby",
+  "MacKinnon",
+  "Makar",
+  "Kucherov",
+  "Ovechkin",
+  "Hughes",
+  "Draisaitl",
+  "Pastrnak",
+  "Shesterkin",
+  "Hellebuyck",
+  "Bedard",
+  "Celebrini",
+  "Maple Leafs",
+  "Oilers",
+  "Bruins",
+  "Rangers",
+  "Avalanche",
+  "Golden Knights",
+  "Panthers",
+  "Lightning",
+  "Canadiens",
+  "Kraken",
+  "injury update",
+  "trade rumors",
+  "starting goalie",
+  "power play",
+  "overtime winner",
+  "rookie of the year",
+  "salary cap",
+  "mcdavd",
 ];
-const OG_PAGES = ["games", "teams", "strategies", "about", "site"];
+const OG_PAGES = ["games", "teams", "strategies", "leaders", "about", "site"];
+// The Leaders page's stats (frontend/src/utils/leaders.ts)
+const LEADER_STATS = [
+  "points",
+  "goals",
+  "assists",
+  "shots",
+  "plusMinus",
+  "powerPlayGoals",
+  "penaltyMinutes",
+  "hits",
+  "blockedShots",
+  "timeOnIcePerGame",
+  "savePercentage",
+  "goalsAgainstAverage",
+  "saves",
+  "shutouts",
+  "gamesStarted",
+];
 const OG_GAMES = 20;
 const firstGameId = (currentSeason - 1) * 1000000 + 20001;
 
@@ -76,31 +120,68 @@ const ACTIONS = [
       const gameId = randomGameId();
       get("/game/:id", `/game/${gameId}`);
       get("/api/Lineup", `/api/Lineup/GetGameLineup?gameId=${gameId}`);
-      get("/api/OddsMovement", `/api/OddsMovement/GetOddsMovement?gameId=${gameId}`);
+      get(
+        "/api/OddsMovement",
+        `/api/OddsMovement/GetOddsMovement?gameId=${gameId}`,
+      );
     },
   },
-  { label: "/team/:id", weight: 9, run: (d) => get("/team/:id", `/team/${pick(d.teamIds)}`) },
-  { label: "/teams", weight: 6, run: () => get("/teams", "/teams") },
-  { label: "/strategies", weight: 5, run: () => get("/strategies", "/strategies") },
-  { label: "/about", weight: 3, run: () => get("/about", "/about") },
-  { label: "/player/:id", weight: 8, run: (d) => get("/player/:id", `/player/${pick(d.playerIds)}`) },
-  { label: "/track-record", weight: 4, run: () => get("/track-record", "/track-record") },
-  { label: "/disagreements", weight: 4, run: () => get("/disagreements", "/disagreements") },
   {
-    // Opening Disagreements from another page: the browser fetches the rows it shows
-    label: "Disagreements data",
+    label: "/team/:id",
+    weight: 9,
+    run: (d) => get("/team/:id", `/team/${pick(d.teamIds)}`),
+  },
+  { label: "/teams", weight: 6, run: () => get("/teams", "/teams") },
+  {
+    label: "/strategies",
+    weight: 5,
+    run: () => get("/strategies", "/strategies"),
+  },
+  { label: "/about", weight: 3, run: () => get("/about", "/about") },
+  {
+    label: "/player/:id",
+    weight: 8,
+    run: (d) => get("/player/:id", `/player/${pick(d.playerIds)}`),
+  },
+  {
+    label: "/track-record",
+    weight: 4,
+    run: () => get("/track-record", "/track-record"),
+  },
+  {
+    // The Leaders page (#182), server-rendered for a stat from the URL (shared links)
+    label: "/leaders",
+    weight: 4,
+    run: () =>
+      get(
+        "/leaders",
+        `/leaders${Math.random() < 0.5 ? "" : `?stat=${pick(LEADER_STATS)}`}`,
+      ),
+  },
+  {
+    // Picking another stat or season on the page: the browser asks the API for that list
+    label: "Leaders stat switch",
     weight: 3,
     run: () =>
-      get("/disagreements/data.json", `/disagreements/data.json?season=${currentSeason}`),
+      get(
+        "/api/Leaders",
+        `/api/Leaders/GetStatLeaders?stat=${pick(LEADER_STATS)}&seasonStartYear=${currentSeason - (Math.random() < 0.8 ? 0 : 1)}`,
+      ),
   },
   {
     // A shared or bookmarked search link: the search runs in the server render
     label: "/search?q=",
     weight: 6,
-    run: () => get("/search?q=", `/search?q=${encodeURIComponent(pick(SEARCH_TERMS))}`),
+    run: () =>
+      get("/search?q=", `/search?q=${encodeURIComponent(pick(SEARCH_TERMS))}`),
   },
   { label: "search box typing + search", weight: 8, run: typeAndSearch },
-  { label: "calendar .ics", weight: 1, run: (d) => get("/api/Calendar .ics", `/api/Calendar/Team/${pick(d.teamIds)}.ics`) },
+  {
+    label: "calendar .ics",
+    weight: 1,
+    run: (d) =>
+      get("/api/Calendar .ics", `/api/Calendar/Team/${pick(d.teamIds)}.ics`),
+  },
   {
     // Link previews (chat apps and social sites fetch these). Shared links bunch up on a few
     // games, so the game images come from a small set, like real traffic (each image is
@@ -123,9 +204,23 @@ const TOTAL_WEIGHT = ACTIONS.reduce((sum, a) => sum + a.weight, 0);
 
 // Every request name above, for the per-name stats
 const REQUEST_NAMES = [
-  "/", "/game/:id", "/api/Lineup", "/api/OddsMovement", "/team/:id", "/teams", "/strategies",
-  "/about", "/player/:id", "/track-record", "/disagreements", "/disagreements/data.json",
-  "/search?q=", "/api/Search/Suggest", "/api/Search", "/api/Calendar .ics", "/og/*.png",
+  "/",
+  "/game/:id",
+  "/api/Lineup",
+  "/api/OddsMovement",
+  "/team/:id",
+  "/teams",
+  "/strategies",
+  "/about",
+  "/player/:id",
+  "/track-record",
+  "/leaders",
+  "/api/Leaders",
+  "/search?q=",
+  "/api/Search/Suggest",
+  "/api/Search",
+  "/api/Calendar .ics",
+  "/og/*.png",
 ];
 
 // The search box asks for suggestions once typing pauses for 200 ms (SUGGEST_DELAY_MS in
@@ -136,8 +231,14 @@ function typeAndSearch() {
   for (let length = 1; length <= term.length; length++) {
     const pauseMs = 80 + Math.random() * 220;
     const typed = term.slice(0, length).trim();
-    if (typed.length >= 2 && (pauseMs > SUGGEST_DELAY_MS || length === term.length)) {
-      get("/api/Search/Suggest", `/api/Search/Suggest?q=${encodeURIComponent(typed)}`);
+    if (
+      typed.length >= 2 &&
+      (pauseMs > SUGGEST_DELAY_MS || length === term.length)
+    ) {
+      get(
+        "/api/Search/Suggest",
+        `/api/Search/Suggest?q=${encodeURIComponent(typed)}`,
+      );
     }
     sleep(pauseMs / 1000);
   }

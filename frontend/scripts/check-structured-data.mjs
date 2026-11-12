@@ -22,6 +22,7 @@ const PAGE_TYPES = [
   ['/player/', ['Person', 'BreadcrumbList']],
   ['/team/', ['SportsTeam', 'BreadcrumbList']],
   ['/teams', ['ItemList']],
+  ['/leaders', ['ItemList']],
   ['/about', ['FAQPage']],
 ];
 const NOINDEX = ['/admin', '/search'];

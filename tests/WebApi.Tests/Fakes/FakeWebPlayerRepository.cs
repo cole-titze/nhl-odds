@@ -36,4 +36,13 @@ public class FakeWebPlayerRepository : IWebPlayerRepository
 
     public Task<List<PlayerLatestTeam>> GetLatestTeams(IReadOnlyCollection<int> playerIds) =>
         Task.FromResult(LatestTeams.Where(t => playerIds.Contains(t.PlayerId)).ToList());
+
+    public List<PlayerSeasonTotals> SeasonTotals { get; } = new();
+    public int SeasonTotalsCalls { get; private set; }
+
+    public Task<List<PlayerSeasonTotals>> GetSeasonTotals(int seasonStartYear)
+    {
+        SeasonTotalsCalls++;
+        return Task.FromResult(SeasonTotals.ToList());
+    }
 }

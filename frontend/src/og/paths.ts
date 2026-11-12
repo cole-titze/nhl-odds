@@ -9,7 +9,8 @@ export function shareImagePath(pathname: string): string {
   if (game) return `/og/game/${game[1]}.png`;
   const team = path.match(/^\/team\/(\d+)$/);
   if (team) return `/og/team/${team[1]}.png`;
-  if (path === '/teams' || path === '/strategies' || path === '/about') return `/og${path}.png`;
+  if (path === '/teams' || path === '/strategies' || path === '/about' || path === '/leaders')
+    return `/og${path}.png`;
   return '/og/site.png';
 }
 

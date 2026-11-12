@@ -24,6 +24,7 @@ using WebApi.BusinessLogic.JobService;
 using WebApi.BusinessLogic.PlayerGetter;
 using WebApi.BusinessLogic.SearchGetter;
 using WebApi.BusinessLogic.StartupCacheWarmer;
+using WebApi.BusinessLogic.StatLeaders;
 using WebApi.BusinessLogic.StrategyBacktester;
 using WebApi.BusinessLogic.TeamGetter;
 using WebApi.BusinessLogic.TrackRecord;
@@ -56,6 +57,7 @@ builder.Services.AddScoped<IGameOddsGetter, GameOddsGetter>();
 builder.Services.AddScoped<IStrategyBacktester, StrategyBacktester>();
 builder.Services.AddScoped<ITeamRepository, TeamRepository>();
 builder.Services.AddScoped<IPlayerGetter, PlayerGetter>();
+builder.Services.AddScoped<IStatLeadersGetter, StatLeadersGetter>();
 builder.Services.AddScoped<IWebPlayerRepository, WebPlayerRepository>();
 builder.Services.AddScoped<IWebBookmakerOddsRepository, WebBookmakerOddsRepository>();
 builder.Services.AddScoped<IWebLineupRepository, WebLineupRepository>();
@@ -198,6 +200,8 @@ static string BuildMcpInstructions(int currentSeason) => $"""
         - For a player, call FindPlayers with his name first to get his player ID (there is no other
           way to get one), then GetPlayer with that ID for his season: games, per-game stats, totals
           and averages. GetTeamRoster lists a team's players with their IDs.
+        - Use GetStatLeaders for league leaders in a stat (points, goals, save percentage, ...) for a
+          regular season; it also returns the leaders' player IDs for GetPlayer.
 
         Odds are win probabilities (0–1). Log loss measures prediction accuracy — lower is better;
         random guessing scores ~0.693.

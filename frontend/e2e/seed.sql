@@ -53,4 +53,22 @@ BEGIN
             (season * 1000000 + 20000 + g.n, 'Kalshi', 'kalshi', g.home_odds - 0.01, 1.01 - g.home_odds,
                 today + (g.days - 1) * interval '1 day');
     END LOOP;
+
+    -- Box scores for the Leaders page (#182): game 1 (TOR 4, BOS 2)
+    INSERT INTO "Player" ("Id", "FirstName", "LastName", "IsActive", "CurrentTeamId", "HeadShot", "HeroImage",
+        "HeightInInches", "WeightInPounds", "IsInTopOneHundredAllTime", "IsInHallOfFame") VALUES
+        (8479318, 'Auston', 'Matthews', TRUE, 10, '/favicon.svg', '', 75, 215, FALSE, FALSE),
+        (8478483, 'Mitch', 'Marner', TRUE, 10, '/favicon.svg', '', 72, 180, FALSE, FALSE),
+        (8479361, 'Joseph', 'Woll', TRUE, 10, '/favicon.svg', '', 76, 203, FALSE, FALSE),
+        (8473419, 'Brad', 'Marchand', TRUE, 6, '/favicon.svg', '', 69, 181, FALSE, FALSE);
+    INSERT INTO "GameSkaterStats" ("GameId", "PlayerId", "TeamId", "Goals", "Assists", "PlusMinus", "PenaltyMinutes",
+        "Hits", "PowerPlayGoals", "ShotsOnGoal", "FaceOffWinningPctg", "BlockedShots", "Giveaways", "Takeaways",
+        "TimeOnIceSeconds", "Position") VALUES
+        (season * 1000000 + 20001, 8479318, 10, 2, 1, 2, 0, 1, 1, 6, 55, 0, 1, 1, 1215, 0),
+        (season * 1000000 + 20001, 8478483, 10, 1, 1, 1, 2, 0, 0, 3, 0, 1, 0, 2, 1180, 1),
+        (season * 1000000 + 20001, 8473419, 6, 1, 0, -2, 4, 3, 0, 4, 0, 0, 2, 0, 1105, 2);
+    INSERT INTO "GameGoalieStats" ("GameId", "PlayerId", "TeamId", "EvenStrengthShotsSaved", "PowerPlayShotsSaved",
+        "ShortHandedShotsSaved", "EvenStrengthGoalsAllowed", "PowerPlayGoalsAllowed", "ShortHandedGoalsAllowed",
+        "TimeOnIceSeconds", "IsStarter", "Position") VALUES
+        (season * 1000000 + 20001, 8479361, 10, 22, 4, 0, 2, 0, 0, 3600, TRUE, 4);
 END $$;

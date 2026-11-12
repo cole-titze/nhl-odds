@@ -1,4 +1,4 @@
-// /og/{games,teams,strategies,about,site}.png: link previews for the pages that aren't
+// /og/{games,teams,strategies,leaders,about,site}.png: link previews for the pages that aren't
 // one game or team. Games shows the day the page opens on; Teams the season's totals.
 import type { LoaderFunctionArgs } from 'react-router';
 import { getAnchorDate, getGameOddsInDateRange } from '../api/gameOdds';
@@ -15,6 +15,11 @@ const PAGES: Record<string, { label?: string; title: string; text: string }> = {
     label: 'Strategies',
     title: 'Betting strategies, backtested',
     text: "The model's win probabilities against sportsbook and Kalshi odds, season by season.",
+  },
+  leaders: {
+    label: 'Leaders',
+    title: 'NHL stat leaders',
+    text: 'Points, goals, save percentage and more for every regular season since 2009.',
   },
   about: {
     label: 'About',

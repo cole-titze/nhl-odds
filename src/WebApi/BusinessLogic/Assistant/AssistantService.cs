@@ -60,6 +60,10 @@ public class AssistantService(
         Tool("get_team_roster", "Get a team's roster for a season: its players with their IDs, positions, games played and injured reserve (current season: the NHL's roster report).",
             ("teamId", "integer", "The team ID"),
             ("seasonStartYear", "integer", "Season start year")),
+        Tool("get_stat_leaders", "Get the league leaders in one stat for a regular season (who leads the NHL in goals, save percentage, ...), ranked, with player IDs, teams and games played. Stats: " + string.Join(", ", StatLeaders.StatLeaders.Stats.Select(s => s.Key)) + ".",
+            ("stat", "string", "The stat key, e.g. points, goals or savePercentage"),
+            ("seasonStartYear", "integer", "Season start year"),
+            ("limit", "integer", "How many leaders, 1-50 (10 if unsure)")),
     ];
 
     public async Task<string> Chat(AssistantRequest request, CancellationToken cancellationToken)
@@ -147,6 +151,8 @@ public class AssistantService(
                 "find_players" => await playerTools.FindPlayers(args["name"]?.ToString() ?? ""),
                 "get_player" => await playerTools.GetPlayer(Int(args, "playerId"), Int(args, "seasonStartYear")),
                 "get_team_roster" => await playerTools.GetTeamRoster(Int(args, "teamId"), Int(args, "seasonStartYear")),
+                "get_stat_leaders" => await playerTools.GetStatLeaders(args["stat"]?.ToString() ?? "",
+                    Int(args, "seasonStartYear"), args["limit"] is null ? 10 : Int(args, "limit")),
                 _ => throw new ArgumentException($"Unknown tool {name}"),
             };
             var node = JsonSerializer.SerializeToNode(result, JsonOptions);
@@ -222,6 +228,7 @@ public class AssistantService(
             status "not played yet" has no result: never give a score or winner for it. Odds are win probabilities from 0 to 1. Log loss measures prediction accuracy; lower is
             better, and random guessing scores about 0.693.
             For a player, call find_players with his name to get his ID, then get_player.
+            For "who leads the league in ..." questions (and the /leaders page), call get_stat_leaders.
             The user is on the page "{page ?? "/"}". If it's /game/{"{id}"}, /team/{"{id}"} or /player/{"{id}"}, that ID is
             what "this game", "this team" or "this player" means.
             This is a hobby project; don't give betting advice beyond describing what the data shows.

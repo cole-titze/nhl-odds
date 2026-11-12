@@ -350,6 +350,32 @@ const responses = {
       gamePlayer(p, p.position === 'G' ? goalieLine(30, 3) : skaterLine(0, 1, 3, -1, 1200)),
     ),
   },
+  // The Leaders page (#182): the mock answers every stat with the same ranked skaters, a tie
+  // included, and more than the 10 shown so the "Show top" button renders
+  GetStatLeaders: {
+    seasonStartYear: 2026,
+    stat: 'points',
+    label: 'Points',
+    group: 'skater',
+    lowerIsBetter: false,
+    minGamesPlayed: 0,
+    leaders: [...torRoster, ...bosRoster, ...torRoster, ...bosRoster]
+      .filter((p) => p.position !== 'G')
+      .map((p, i) => ({
+        rank: i === 2 ? 2 : i + 1,
+        playerId: p.id + i,
+        firstName: p.firstName,
+        lastName: p.lastName,
+        headShot: p.headShot,
+        position: p.position,
+        teamId: i % 2 ? 6 : 10,
+        teamAbbreviation: i % 2 ? 'BOS' : 'TOR',
+        teamName: i % 2 ? 'Boston Bruins' : 'Toronto Maple Leafs',
+        teamLogoUri: '/favicon.svg',
+        gamesPlayed: 14,
+        value: i === 2 ? 20 : 22 - i,
+      })),
+  },
   // Everyone's last game (#171): this season's rosters, a retired player, and
   // two bad rows the sitemap must leave out (SITEMAP_LEFT_OUT)
   GetSitemapPlayers: [
@@ -769,7 +795,7 @@ export function pagesFor() {
     `/player/${retiredPlayer.id}`,
     '/strategies',
     '/track-record',
-    '/disagreements',
+    '/leaders',
     '/about',
     '/admin',
     '/search?q=leafs',

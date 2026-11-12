@@ -17,6 +17,10 @@ app.disable('x-powered-by');
 // or slow API doesn't take the frontend out of rotation
 app.get('/healthz', (_req, res) => res.type('text/plain').send('ok'));
 
+// Model vs Market (/disagreements) was replaced by the Leaders page (#182): a permanent redirect,
+// so old links and search results land there
+app.get(['/disagreements', '/disagreements/'], (_req, res) => res.redirect(301, '/leaders'));
+
 // The API rate-limits per CF-Connecting-IP. Cloudflare sets it on public traffic; on the LAN
 // route Traefik strips it and sends X-Real-IP, so key on that instead of this pod's address.
 const setRealIp = (proxyReq, req) => {

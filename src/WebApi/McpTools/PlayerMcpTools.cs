@@ -5,13 +5,16 @@ using Microsoft.Extensions.Caching.Memory;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
 using WebApi.BusinessLogic.PlayerGetter;
+using WebApi.BusinessLogic.StatLeaders;
 using WebApi.Caching;
+using WebApi.Controllers;
 using WebApi.Mappers;
 
 namespace WebApi.McpTools;
 
 [McpServerToolType]
-public class PlayerMcpTools(IPlayerGetter playerGetter, [FromKeyedServices(ApiCache.ServiceKey)] IMemoryCache cache)
+public class PlayerMcpTools(IPlayerGetter playerGetter, [FromKeyedServices(ApiCache.ServiceKey)] IMemoryCache cache,
+    IStatLeadersGetter? statLeadersGetter = null)
 {
     private const int MaxMatches = 10;
 
@@ -46,4 +49,20 @@ public class PlayerMcpTools(IPlayerGetter playerGetter, [FromKeyedServices(ApiCa
         [Description("The season start year (e.g. 2024 for the 2024-25 season)")] int seasonStartYear)
         => await cache.GetOrSetAsync(ApiCache.TeamRosterKey(teamId, seasonStartYear),
             () => playerGetter.GetTeamRoster(teamId, seasonStartYear), r => r.Count, ApiCache.DateRangeLifetime);
+
+    [McpServerTool, Description("Get the NHL's regular-season leaders in one stat (the site's /leaders page), ranked best first with ties sharing a rank: player ID, name, position, team of their latest game, games played and the value. Skater stats: points, goals, assists, shots, plusMinus, powerPlayGoals, penaltyMinutes, hits, blockedShots, timeOnIcePerGame (seconds). Goalie stats: savePercentage (a fraction, e.g. 0.915), goalsAgainstAverage (lowest leads), saves, shutouts, gamesStarted. Per-game and percentage stats only count players with at least MinGamesPlayed games (a quarter of the most anyone has played). Goalie wins aren't available.")]
+    public async Task<StatLeadersVM> GetStatLeaders(
+        [Description("The stat, e.g. \"points\", \"goals\" or \"savePercentage\"")] string stat,
+        [Description("The season start year (e.g. 2024 for the 2024-25 season)")] int seasonStartYear,
+        [Description("How many leaders to return, 1 to 50 (default 10)")] int limit = 10)
+    {
+        if (statLeadersGetter is null)
+            throw new McpException("Stat leaders aren't available.");
+        var current = NhlSeason.Current(DateTime.UtcNow);
+        if (seasonStartYear < LeadersController.FirstSeason || seasonStartYear > current)
+            throw new McpException($"Seasons go from {LeadersController.FirstSeason} to {current}.");
+        // Shares the Leaders page's cached season totals
+        return await statLeadersGetter.GetStatLeaders(stat, seasonStartYear, Math.Clamp(limit, 1, StatLeaders.MaxLeaders))
+            ?? throw new McpException($"Unknown stat \"{stat}\". Use one of: {string.Join(", ", StatLeaders.Stats.Select(s => s.Key))}.");
+    }
 }
