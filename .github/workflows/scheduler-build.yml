@@ -12,7 +12,7 @@ on:
       - 'scheduler/**'
       - '.github/workflows/scheduler-build.yml'
   schedule:
-    - cron: '0 8 * * 0'
+    - cron: '0 8 * * 6'
   workflow_dispatch:
 
 env:
