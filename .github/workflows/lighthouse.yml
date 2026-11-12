@@ -9,8 +9,8 @@ on:
       - 'frontend/**'
       - '.github/workflows/lighthouse.yml'
   schedule:
-    # Mondays 13:17 UTC (7:17/8:17 AM Central)
-    - cron: '17 13 * * 1'
+    # Saturdays 13:17 UTC (7:17/8:17 AM Central): after the 4:00 image rollout, before the 10:00 weekly upgrade reads it
+    - cron: '17 13 * * 6'
   workflow_dispatch:
     inputs:
       target:
