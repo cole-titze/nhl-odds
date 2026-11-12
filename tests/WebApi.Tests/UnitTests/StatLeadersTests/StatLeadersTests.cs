@@ -74,6 +74,17 @@ public class StatLeadersTests
     }
 
     [TestMethod]
+    public void SavePercentage_TiesAsShown()
+    {
+        var vm = Rank("savePercentage",
+            Goalie(1, "A", 10, 9254, 746, 36000),  // .9254 -> .925
+            Goalie(2, "B", 10, 9246, 754, 36000),  // .9246 -> .925
+            Goalie(3, "C", 10, 9100, 900, 36000)).Vm; // .910
+
+        vm.Leaders.Select(l => (l.PlayerId, l.Rank)).Should().Equal((1, 1), (2, 1), (3, 3));
+    }
+
+    [TestMethod]
     public void GoalsAgainstAverage_LowestLeads()
     {
         var vm = Rank("goalsAgainstAverage",

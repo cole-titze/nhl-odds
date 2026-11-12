@@ -8,8 +8,9 @@ namespace WebApi.BusinessLogic.StatLeaders;
 /// <param name="Key">The API and URL name, e.g. "points"</param>
 /// <param name="IsRate">Per game or a percentage: only players with enough games count (see <see cref="StatLeaders.MinGames"/>)</param>
 /// <param name="Value">The stat from a player's totals, or null when it doesn't apply (no shots faced)</param>
+/// <param name="Digits">Decimal places the page shows it with; values equal to that many places share a rank</param>
 public record LeaderStat(string Key, string Label, bool Goalie, bool IsRate, bool LowerIsBetter,
-    Func<PlayerSeasonTotals, double?> Value);
+    Func<PlayerSeasonTotals, double?> Value, int Digits = 0);
 
 /// <summary>
 /// League leaders by stat from regular-season totals (#182). Wins aren't offered: the box scores don't record
@@ -35,11 +36,11 @@ public static class StatLeaders
         new("hits", "Hits", false, false, false, t => t.Hits),
         new("blockedShots", "Blocked shots", false, false, false, t => t.BlockedShots),
         new("timeOnIcePerGame", "Time on ice per game", false, true, false,
-            t => t.GamesPlayed > 0 ? (double)t.TimeOnIceSeconds / t.GamesPlayed : null),
+            t => t.GamesPlayed > 0 ? (double)t.TimeOnIceSeconds / t.GamesPlayed : null),  // m:ss, to the second
         new("savePercentage", "Save percentage", true, true, false,
-            t => t.Saves + t.GoalsAgainst > 0 ? (double)t.Saves / (t.Saves + t.GoalsAgainst) : null),
+            t => t.Saves + t.GoalsAgainst > 0 ? (double)t.Saves / (t.Saves + t.GoalsAgainst) : null, Digits: 3),
         new("goalsAgainstAverage", "Goals against average", true, true, true,
-            t => t.TimeOnIceSeconds > 0 ? t.GoalsAgainst * 3600.0 / t.TimeOnIceSeconds : null),
+            t => t.TimeOnIceSeconds > 0 ? t.GoalsAgainst * 3600.0 / t.TimeOnIceSeconds : null, Digits: 2),
         new("saves", "Saves", true, false, false, t => t.Saves),
         new("shutouts", "Shutouts", true, false, false, t => t.Shutouts),
         new("gamesStarted", "Games started", true, false, false, t => t.GamesStarted),
@@ -79,8 +80,8 @@ public static class StatLeaders
         for (var i = 0; i < ranked.Count; i++)
         {
             var (t, value) = ranked[i];
-            // Shared ranks: the same value as the row above keeps its rank (1, 2, 2, 4)
-            var rank = i > 0 && SameValue(ranked[i - 1].Value, value) ? leaders[i - 1].Rank : i + 1;
+            // Shared ranks: the same value as shown as the row above keeps its rank (1, 2, 2, 4)
+            var rank = i > 0 && Shown(stat, ranked[i - 1].Value) == Shown(stat, value) ? leaders[i - 1].Rank : i + 1;
             leaders.Add(new StatLeaderVM
             {
                 Rank = rank,
@@ -111,5 +112,6 @@ public static class StatLeaders
     }
 
     // Rates are compared as shown (save percentage to 3 places, GAA to 2, time on ice to the second)
-    private static bool SameValue(double a, double b) => Math.Abs(a - b) < 1e-9;
+    private static double Shown(LeaderStat stat, double value) =>
+        Math.Round(value, stat.Digits, MidpointRounding.AwayFromZero);
 }
