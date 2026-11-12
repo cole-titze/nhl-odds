@@ -5,6 +5,8 @@ import { addDaysIso, formatDate, gameDateBucket } from '../utils/dates';
 import { whenPageFree } from '../utils/pageScroll';
 
 const HALF_CHUNK = 7;
+// Past days the feed opens with, like the server's first render; "Show earlier games" adds more
+const INITIAL_PAST_DAYS = 1;
 const CHUNK_DAYS = 14;
 const MAX_CONSECUTIVE_EMPTY = 3;
 
@@ -73,9 +75,15 @@ export interface InitialChunk {
   games: GameOddsVM[];
 }
 
-/** The dates the first chunk covers around an anchor date. */
+/**
+ * The dates the first chunk covers around an anchor date: one day before (as the server renders)
+ * and a week after.
+ */
 export function initialChunkRange(anchor: string): { lower: string; upper: string } {
-  return { lower: addDaysIso(anchor, -HALF_CHUNK), upper: addDaysIso(anchor, HALF_CHUNK) };
+  return {
+    lower: addDaysIso(anchor, -INITIAL_PAST_DAYS),
+    upper: addDaysIso(anchor, HALF_CHUNK),
+  };
 }
 
 /**
@@ -83,7 +91,7 @@ export function initialChunkRange(anchor: string): { lower: string; upper: strin
  * keep the first response small; the feed loads the rest around it as usual.
  */
 export function serverChunkRange(anchor: string): { lower: string; upper: string } {
-  return { lower: addDaysIso(anchor, -1), upper: addDaysIso(anchor, 1) };
+  return { lower: addDaysIso(anchor, -INITIAL_PAST_DAYS), upper: addDaysIso(anchor, 1) };
 }
 
 function groupByDate(games: GameOddsVM[]): Map<string, GameOddsVM[]> {
