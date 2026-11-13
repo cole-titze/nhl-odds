@@ -7,6 +7,10 @@ public class ModeSettings
 {
     public ModeType Mode { get; set; } = ModeType.NhlAdd;
     public string ConnectionString { get; set; } = string.Empty;
+    // Where SearchIndex reads its documents (NHL_DATABASE_READ, a read-only replica): each hourly build reads
+    // every team, player, game and article, which took the primary to a full core and slowed the site. The job's
+    // lock, JobStatus and ErrorLog stay on ConnectionString. Empty means ConnectionString.
+    public string ReadConnectionString { get; set; } = string.Empty;
     public int ThrottleTimeMs { get; set; }
     public string OddsApiKey { get; set; } = string.Empty;
     public string OddsApiBackfillKey { get; set; } = string.Empty;
