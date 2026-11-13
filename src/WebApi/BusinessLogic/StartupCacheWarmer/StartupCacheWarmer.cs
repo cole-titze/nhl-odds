@@ -58,10 +58,12 @@ public class StartupCacheWarmer : BackgroundService
         {
             var teamGetter = scope.ServiceProvider.GetRequiredService<ITeamGetter>();
             var teamsVm = await teamGetter.GetAllTeamsStats(seasonStartYear);
-            _cache.Set(ApiCache.AllTeamsKey(seasonStartYear), teamsVm, ApiCache.Entry(ApiCache.SizeOf(teamsVm)));
+            _cache.Set(ApiCache.AllTeamsKey(seasonStartYear), teamsVm,
+                ApiCache.Entry(ApiCache.SizeOf(teamsVm), priority: ApiCache.SeasonPriority(seasonStartYear)));
             // Built from AllTeams, so it's replaced with it rather than kept from yesterday
             var seasonTeams = TeamsVmToSeasonTeamsVmMapper.Map(teamsVm);
-            _cache.Set(ApiCache.SeasonTeamsKey(seasonStartYear), seasonTeams, ApiCache.Entry(ApiCache.SizeOf(seasonTeams)));
+            _cache.Set(ApiCache.SeasonTeamsKey(seasonStartYear), seasonTeams,
+                ApiCache.Entry(ApiCache.SizeOf(seasonTeams), priority: ApiCache.SeasonPriority(seasonStartYear)));
         }
         catch (Exception ex)
         {

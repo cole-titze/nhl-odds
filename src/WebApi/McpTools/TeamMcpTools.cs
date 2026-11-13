@@ -15,8 +15,8 @@ public class TeamMcpTools(ITeamGetter teamGetter, [FromKeyedServices(ApiCache.Se
     public async Task<TeamsSummaryVM> GetAllTeams(
         [Description("The season start year (e.g. 2024 for the 2024-25 season)")] int seasonStartYear)
     {
-        var teamsVm = await cache.GetOrSetAsync(ApiCache.AllTeamsKey(seasonStartYear),
-            () => teamGetter.GetAllTeamsStats(seasonStartYear), ApiCache.SizeOf);
+        var teamsVm = await cache.GetOrSetAllTeamsAsync(seasonStartYear,
+            () => teamGetter.GetAllTeamsStats(seasonStartYear));
         return TeamsVmToTeamsSummaryVmMapper.Map(teamsVm);
     }
 

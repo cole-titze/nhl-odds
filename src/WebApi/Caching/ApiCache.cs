@@ -22,11 +22,19 @@ public static class ApiCache
 
     public static IMemoryCache Create() => new MemoryCache(new MemoryCacheOptions { SizeLimit = SizeLimit });
 
-    public static MemoryCacheEntryOptions Entry(long size, TimeSpan? lifetime = null) => new()
+    public static MemoryCacheEntryOptions Entry(long size, TimeSpan? lifetime = null,
+        CacheItemPriority priority = CacheItemPriority.Normal) => new()
     {
         Size = Math.Max(1, size),
         AbsoluteExpirationRelativeToNow = lifetime,
+        Priority = priority,
     };
+
+    // The current season's AllTeams and SeasonTeams stay until the StartupCacheWarmer replaces them: under load
+    // the player and game entries pushed them out (nothing but Calendar feeds read AllTeams then), and every feed
+    // built after that waited ~1s on GetAllTeamsStats. Past seasons aren't pinned, so they can't fill the cache.
+    public static CacheItemPriority SeasonPriority(int seasonStartYear) =>
+        seasonStartYear == Seasons.Current(DateTime.UtcNow) ? CacheItemPriority.NeverRemove : CacheItemPriority.Normal;
 
     public static long SizeOf(TeamsVM teams) => teams.Teams.Sum(t => 1 + t.GameOddsVM.Count());
     public static long SizeOf(TeamVM? team) => team is null ? 1 : 1 + team.GameOddsVM.Count();
@@ -55,13 +63,17 @@ public static class ApiCache
     public static string FindPlayersKey(string foldedName, int seasonStartYear) => $"FindPlayers_{seasonStartYear}_{foldedName}";
 
     public static async Task<T> GetOrSetAsync<T>(this IMemoryCache cache, string key, Func<Task<T>> create,
-        Func<T, long> sizeOf, TimeSpan? lifetime = null)
+        Func<T, long> sizeOf, TimeSpan? lifetime = null, CacheItemPriority priority = CacheItemPriority.Normal)
     {
         if (cache.TryGetValue(key, out T? cached) && cached is not null)
             return cached;
 
         var value = await create();
-        cache.Set(key, value, Entry(sizeOf(value), lifetime));
+        cache.Set(key, value, Entry(sizeOf(value), lifetime, priority));
         return value;
     }
+
+    public static Task<TeamsVM> GetOrSetAllTeamsAsync(this IMemoryCache cache, int seasonStartYear,
+        Func<Task<TeamsVM>> create) =>
+        cache.GetOrSetAsync(AllTeamsKey(seasonStartYear), create, SizeOf, priority: SeasonPriority(seasonStartYear));
 }

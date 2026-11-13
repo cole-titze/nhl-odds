@@ -34,8 +34,8 @@ public class CalendarController(
 
     private async Task<TeamFeed?> BuildFeed(int teamId, int season, DateTime now)
     {
-        var teamsVm = await cache.GetOrSetAsync(ApiCache.AllTeamsKey(season),
-            () => teamGetter.GetAllTeamsStats(season), ApiCache.SizeOf);
+        var teamsVm = await cache.GetOrSetAllTeamsAsync(season,
+            () => teamGetter.GetAllTeamsStats(season));
         var team = teamsVm.Teams.FirstOrDefault(t => t.Id == teamId);
         if (team is null)
             return null;
