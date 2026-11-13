@@ -23,6 +23,7 @@ var runModeEnv = Environment.GetEnvironmentVariable("RUN_MODE");
 var settings = new ModeSettings()
 {
     ConnectionString = Environment.GetEnvironmentVariable("NHL_DATABASE") ?? string.Empty,
+    ReadConnectionString = Environment.GetEnvironmentVariable("NHL_DATABASE_READ") ?? string.Empty,
     Mode = ModeTypeParser.ParseFromString(runModeEnv),
     OddsApiKey = Environment.GetEnvironmentVariable("ODDS_API_KEY") ?? string.Empty,
     OddsApiBackfillKey = Environment.GetEnvironmentVariable("API_BACKFILL_KEY") ?? string.Empty,

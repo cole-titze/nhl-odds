@@ -245,7 +245,10 @@ public class DataGetterEntry
     {
         var settings = modeSettings.Elasticsearch
             ?? throw new ArgumentException("ELASTICSEARCH_URL must be set for SearchIndex mode");
-        var source = new SearchSourceRepository(new NhlDbContext(modeSettings.ConnectionString));
+        var readConnection = string.IsNullOrEmpty(modeSettings.ReadConnectionString)
+            ? modeSettings.ConnectionString
+            : modeSettings.ReadConnectionString;
+        var source = new SearchSourceRepository(new NhlDbContext(readConnection));
         using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(2) };
         var indexer = new SearchIndexer(new ElasticsearchClient(http, settings), _loggerFactory.CreateLogger<SearchIndexer>());
         var now = DateTime.UtcNow;
