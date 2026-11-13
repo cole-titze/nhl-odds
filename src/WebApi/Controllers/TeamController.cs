@@ -22,8 +22,8 @@ public class TeamController
     [HttpGet]
     public async Task<IResult> GetAllTeams(int seasonStartYear)
     {
-        var teamsVm = await _cache.GetOrSetAsync(ApiCache.AllTeamsKey(seasonStartYear),
-            () => _teamGetter.GetAllTeamsStats(seasonStartYear), ApiCache.SizeOf);
+        var teamsVm = await _cache.GetOrSetAllTeamsAsync(seasonStartYear,
+            () => _teamGetter.GetAllTeamsStats(seasonStartYear));
         return Results.Ok(teamsVm);
     }
 
@@ -33,10 +33,10 @@ public class TeamController
     {
         var seasonTeams = await _cache.GetOrSetAsync(ApiCache.SeasonTeamsKey(seasonStartYear), async () =>
         {
-            var teamsVm = await _cache.GetOrSetAsync(ApiCache.AllTeamsKey(seasonStartYear),
-                () => _teamGetter.GetAllTeamsStats(seasonStartYear), ApiCache.SizeOf);
+            var teamsVm = await _cache.GetOrSetAllTeamsAsync(seasonStartYear,
+                () => _teamGetter.GetAllTeamsStats(seasonStartYear));
             return TeamsVmToSeasonTeamsVmMapper.Map(teamsVm);
-        }, ApiCache.SizeOf);
+        }, ApiCache.SizeOf, priority: ApiCache.SeasonPriority(seasonStartYear));
         return Results.Ok(seasonTeams);
     }
 
@@ -44,8 +44,8 @@ public class TeamController
     [HttpGet]
     public async Task<IResult> GetSeasonBookmakerOdds(int seasonStartYear, string bookmaker)
     {
-        var teamsVm = await _cache.GetOrSetAsync(ApiCache.AllTeamsKey(seasonStartYear),
-            () => _teamGetter.GetAllTeamsStats(seasonStartYear), ApiCache.SizeOf);
+        var teamsVm = await _cache.GetOrSetAllTeamsAsync(seasonStartYear,
+            () => _teamGetter.GetAllTeamsStats(seasonStartYear));
         return Results.Ok(TeamsVmToSeasonTeamsVmMapper.MapBookmakerOdds(teamsVm, bookmaker));
     }
 
