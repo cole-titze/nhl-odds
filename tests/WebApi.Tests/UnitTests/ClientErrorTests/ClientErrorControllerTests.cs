@@ -44,7 +44,7 @@ public class ClientErrorControllerTests
         repo.Added[0].Message.Should().Be("x is undefined");
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("api")]
     [DataRow("chunk")]
     public async Task Post_ApiAndChunkReports_AreSaved(string kind)
@@ -59,7 +59,7 @@ public class ClientErrorControllerTests
         repo.Added.Should().ContainSingle().Which.StackTrace.Should().StartWith($"Kind: {kind}\nVersion: 2026.11.03-abc1234\n");
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("bogus", "msg", "/")]
     [DataRow("error", "", "/")]
     [DataRow("error", "   ", "/")]

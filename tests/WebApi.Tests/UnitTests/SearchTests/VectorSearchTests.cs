@@ -204,7 +204,7 @@ public class VectorSearchTests
         ArticleEmbeddings.EmbeddingText(article).Should().StartWith("Title\n").And.HaveLength(ArticleEmbeddings.MaxTextChars);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("nomic-embed-text", "search_query: ")]
     [DataRow("nomic-embed-text:v1.5", "search_query: ")]
     [DataRow("embeddinggemma:300m", "task: search result | query: ")]

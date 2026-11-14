@@ -121,7 +121,7 @@ public class SearchDocumentMapperTests
         articles.Select(a => a.EntityId).Should().BeEquivalentTo("league", "new", "other", "five", "year");
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("## Oilers 5, Flames 2\n\n**Connor McDavid** scored", "Oilers 5, Flames 2 Connor McDavid scored")]
     [DataRow("A [hat trick](https://nhl.com/x) for *Leon*", "A hat trick for Leon")]
     [DataRow("![photo](https://img) - first\n- second", "first second")]
