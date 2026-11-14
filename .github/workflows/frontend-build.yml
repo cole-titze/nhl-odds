@@ -101,8 +101,6 @@ jobs:
   lighthouse:
     if: github.event_name != 'pull_request'
     uses: ./.github/workflows/lighthouse.yml
-    with:
-      target: build
 
   smoke:
     needs: build
