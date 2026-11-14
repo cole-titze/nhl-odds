@@ -35,7 +35,7 @@ updates:
       npm-majors:
         update-types: [major]
     ignore:
-      # Types follow the Node major the frontend builds with (node:24 in the Dockerfile)
+      # Types follow the Node major the frontend builds with (node:26 in the Dockerfile)
       - dependency-name: "@types/node"
         update-types: [version-update:semver-major]
       # ESLint 10 waits for eslint-plugin-react and eslint-plugin-jsx-a11y to support it
