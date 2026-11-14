@@ -25,7 +25,7 @@ public class SchemaTests
         .Select(p => new object[] { p.Name });
 
     [TestMethod]
-    [DynamicData(nameof(GameDbContextSets), DynamicDataSourceType.Method)]
+    [DynamicData(nameof(GameDbContextSets))]
     public async Task GameDbContext_DbSet_ShouldMatchTheSchema(string dbSet)
     {
         await using var context = TestContexts.Web();
@@ -33,7 +33,7 @@ public class SchemaTests
     }
 
     [TestMethod]
-    [DynamicData(nameof(NhlDbContextSets), DynamicDataSourceType.Method)]
+    [DynamicData(nameof(NhlDbContextSets))]
     public async Task NhlDbContext_DbSet_ShouldMatchTheSchema(string dbSet)
     {
         await using var context = new NhlDbContext(TestDatabase.ConnectionString);

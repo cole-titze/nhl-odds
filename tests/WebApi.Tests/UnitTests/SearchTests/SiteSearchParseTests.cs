@@ -8,7 +8,7 @@ public class SiteSearchParseTests
 {
     private static readonly DateOnly Today = new(2026, 11, 3);
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("oilers march 3", "oilers", "2027-03-03")]   // next March is nearer than last March
     [DataRow("oilers oct 30", "oilers", "2026-10-30")]    // last week, not next October
     [DataRow("Oct. 30th leafs", "leafs", "2026-10-30")]
@@ -28,7 +28,7 @@ public class SiteSearchParseTests
         parsed.Date.Should().Be(DateOnly.Parse(date));
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("connor mcdavid")]
     [DataRow("trade deadline")]
     [DataRow("may")]            // a month without a day

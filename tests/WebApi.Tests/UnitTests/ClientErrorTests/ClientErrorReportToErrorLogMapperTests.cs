@@ -33,7 +33,7 @@ public class ClientErrorReportToErrorLogMapperTests
         log.StackTrace.Should().Be("Kind: error\nVersion: unknown\nPage: \nUser agent: ");
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(2026, 9, 19, 2025)]
     [DataRow(2026, 9, 20, 2026)]
     [DataRow(2027, 3, 1, 2026)]

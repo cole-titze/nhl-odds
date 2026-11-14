@@ -49,7 +49,7 @@ public class SearchControllerTests
         result.Should().BeAssignableTo<IStatusCodeHttpResult>().Which.StatusCode.Should().Be(404);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(null)]
     [DataRow(" a ")]
     [DataRow("this query is far too long for anyone to type into a search box on a hockey site honestly, really it is")]
@@ -90,7 +90,7 @@ public class SearchControllerTests
         result.Should().BeAssignableTo<IStatusCodeHttpResult>().Which.StatusCode.Should().Be(404);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(null)]
     [DataRow("l")]
     public async Task Suggest_TooShort_ReturnsBadRequest(string? q)
