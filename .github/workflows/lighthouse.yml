@@ -1,30 +1,17 @@
 name: Lighthouse
 
 # No push trigger: on main, Frontend Container runs this as its promotion gate.
-# The weekly run scores the live site and only reports.
+# The weekly live-site report runs on the backup Pi instead (ansible-setup's
+# homelab-weekly-lighthouse timer): Cloudflare answers GitHub's runners with 403s.
 on:
   pull_request:
     branches: [main]
     paths:
       - 'frontend/**'
       - '.github/workflows/lighthouse.yml'
-  schedule:
-    # Saturdays 13:17 UTC (7:17/8:17 AM Central): after the 4:00 image rollout, before the 10:00 weekly upgrade reads it
-    - cron: '17 13 * * 6'
   workflow_dispatch:
-    inputs:
-      target:
-        description: 'build: gate the production build (mocked API); live: report on https://nhl.half-built.com'
-        type: choice
-        options: [build, live]
-        default: build
-  # Frontend Container runs this as a promotion gate. It passes target: build, since a called
-  # workflow sees the caller's event, and its own weekly schedule would otherwise mean live
+  # Frontend Container runs this as a promotion gate
   workflow_call:
-    inputs:
-      target:
-        type: string
-        default: build
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -51,9 +38,8 @@ jobs:
         run: echo "version=$(jq -r '.packages["node_modules/playwright"].version' frontend/package-lock.json)" >> "$GITHUB_OUTPUT"
 
   lighthouse:
-    # Gate: fails if any page's SEO score is under 95 (the other categories only warn).
-    # Live: the same pages on the real site, report only.
-    name: Lighthouse (${{ (inputs.target == 'live' || (github.event_name == 'schedule' && inputs.target == '')) && 'live site' || 'build' }})
+    # Gate: fails if any page's SEO score is under 95 (the other categories only warn)
+    name: Lighthouse (build)
     needs: playwright
     runs-on: ubuntu-latest
     container:
@@ -65,10 +51,9 @@ jobs:
       run:
         working-directory: frontend
     env:
-      LIGHTHOUSE_URL: ${{ (inputs.target == 'live' || (github.event_name == 'schedule' && inputs.target == '')) && 'https://nhl.half-built.com' || '' }}
-      # The gate scores each page once: SEO, the only gated score, is the same every run; the median
-      # of 3 only steadies performance, which just warns. The live report keeps 3
-      LIGHTHOUSE_RUNS: ${{ (inputs.target == 'live' || (github.event_name == 'schedule' && inputs.target == '')) && '3' || '1' }}
+      # Each page once: SEO, the only gated score, is the same every run; more runs only steady
+      # performance, which just warns
+      LIGHTHOUSE_RUNS: '1'
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -84,7 +69,6 @@ jobs:
         run: npm ci
 
       - name: Build
-        if: env.LIGHTHOUSE_URL == ''
         run: npm run build
 
       - name: Run Lighthouse

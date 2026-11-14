@@ -9,8 +9,10 @@
 //     performance on shared CI runners varies too much to gate on.
 //
 //   LIGHTHOUSE_URL=https://nhl.half-built.com npm run lighthouse
-//     Scores the live site instead (the weekly report). Team and game pages
-//     come from its sitemap and games API. Never fails on scores, only reports.
+//     Scores the live site instead (the weekly report, run on the backup Pi by
+//     ansible-setup's homelab-weekly-lighthouse timer: Cloudflare blocks GitHub's
+//     runners). Team and game pages come from its sitemap and games API. Never
+//     fails on scores, only reports.
 //
 // Each page is scored LIGHTHOUSE_RUNS times (default 3), and the median of each
 // category counts. The scores go to the console and, in CI, to the job summary
