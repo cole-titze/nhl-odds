@@ -151,7 +151,7 @@ function Lines({ title, lines }: { title: string; lines: LineupPlayerVM[][] }) {
       <ol className="text-sm space-y-0.5">
         {lines.map((line, i) => (
           <li key={i} className="flex gap-2">
-            <span className="font-mono text-xs text-surface-600 dark:text-surface-400 w-4 shrink-0 pt-0.5">
+            <span className="font-mono text-xs text-surface-600 dark:text-surface-400 w-4 shrink-0 pt-1">
               {i + 1}
             </span>
             <span>
@@ -175,7 +175,8 @@ function PlayerName({ player }: { player: LineupPlayerVM }) {
   return (
     <Link
       to={playerPath(player.playerId)}
-      className="font-medium hover:text-accent-600 dark:hover:text-accent-400 hover:underline"
+      // inline-block + py-0.5: 24px tall, the minimum touch target (WCAG 2.5.8), like the box score's links
+      className="inline-block py-0.5 font-medium hover:text-accent-600 dark:hover:text-accent-400 hover:underline"
     >
       {player.name}
     </Link>
