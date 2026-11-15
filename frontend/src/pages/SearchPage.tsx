@@ -28,6 +28,7 @@ import { SearchResultsSkeleton, Spinner } from '../components/Loading';
 import { SearchIcon } from '../components/SearchBox';
 import { useDelayedFlag } from '../hooks/useDelayedFlag';
 import { playerPath } from '../utils/players';
+import { compareText } from '../utils/compareText';
 
 // Typing waits this long before searching, so each keystroke isn't a request
 const TYPING_DELAY_MS = 300;
@@ -150,7 +151,7 @@ function GameResults({ games }: { games: GameResult[] }) {
       <ul>
         {/* The API ranks games nearest today first; read in date order, they're easier to scan */}
         {[...games]
-          .sort((a, b) => a.gameDate.localeCompare(b.gameDate))
+          .sort((a, b) => compareText(a.gameDate, b.gameDate))
           .map((g) => (
             <li key={g.gameId}>
               <Link

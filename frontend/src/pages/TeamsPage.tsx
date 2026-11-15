@@ -13,6 +13,7 @@ import { getCurrentSeason } from '../utils/season';
 import { calculateLogLoss } from '../utils/predictions';
 import { Winner } from '../types';
 import type { SeasonBookmakerOddsVM, SeasonTeamGameVM, TeamSummaryVM } from '../types';
+import { compareText } from '../utils/compareText';
 
 type SortKey =
   | 'name'
@@ -82,10 +83,18 @@ function computeKalshiStats(games: SeasonTeamGameVM[]) {
   };
 }
 
+// The page only uses played games (the chart and Kalshi's record). The API sends the whole
+// schedule, three quarters of it unplayed early in the season, and the server-rendered page
+// carries its data as an inline script the phone has to parse, so the rest is dropped.
+async function getPlayedSeasonTeams(season: number, init?: RequestInit) {
+  const data = await getSeasonTeams(season, init);
+  return { ...data, games: data.games.filter((g) => g.hasBeenPlayed) };
+}
+
 // First load renders on the server with this season's data. Client-side
 // navigation skips it (clientLoader) and the page fetches as before.
 export async function loader({ request }: LoaderFunctionArgs) {
-  return getSeasonTeams(getCurrentSeason(), forwardClientIp(request)).catch(() => null);
+  return getPlayedSeasonTeams(getCurrentSeason(), forwardClientIp(request)).catch(() => null);
 }
 
 export async function clientLoader() {
@@ -98,7 +107,7 @@ export function TeamsPage() {
   const [sortKey, setSortKey] = useState<SortKey>('points');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
-  const { data, loading, error } = useFetch(() => getSeasonTeams(season), [season], initial);
+  const { data, loading, error } = useFetch(() => getPlayedSeasonTeams(season), [season], initial);
 
   const kalshi = useMemo(() => computeKalshiStats(data?.games ?? []), [data]);
 
@@ -141,7 +150,10 @@ export function TeamsPage() {
     }
     return games.map((g) =>
       byGame.has(g.id)
-        ? { ...g, bookmakerOdds: [...(g.bookmakerOdds ?? []), ...byGame.get(g.id)!] }
+        ? {
+            ...g,
+            bookmakerOdds: [...(g.bookmakerOdds ?? []), ...byGame.get(g.id)!],
+          }
         : g,
     );
   }, [data, loadedBooks]);
@@ -155,7 +167,7 @@ export function TeamsPage() {
       let cmp = 0;
       switch (sortKey) {
         case 'name':
-          cmp = `${a.locationName} ${a.teamName}`.localeCompare(`${b.locationName} ${b.teamName}`);
+          cmp = compareText(`${a.locationName} ${a.teamName}`, `${b.locationName} ${b.teamName}`);
           break;
         case 'points':
         case 'record':
@@ -238,7 +250,7 @@ export function TeamsPage() {
                 itemList(
                   'NHL teams',
                   [...data.teams]
-                    .sort((a, b) => a.teamName.localeCompare(b.teamName))
+                    .sort((a, b) => compareText(a.teamName, b.teamName))
                     .map((t) => ({
                       name: `${t.locationName} ${t.teamName}`,
                       path: `/team/${t.id}`,

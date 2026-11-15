@@ -8,13 +8,21 @@ export function formatDisplayDate(date: Date): string {
   return format(date, 'EEEE, MMMM d, yyyy');
 }
 
+// Building an Intl.DateTimeFormat costs far more than formatting with one, and charts format
+// every game of a season (on a phone that was most of the Teams page's load time), so each
+// zone's formatter is made once
+const shortDateFormats = new Map<string, Intl.DateTimeFormat>();
+
 // timeZone formats in that zone instead of the local one (see useDisplayTimeZone)
 export function formatShortDate(dateStr: string, timeZone?: string): string {
   const iso = dateStr.length === 10 ? dateStr + 'T12:00:00' : dateStr;
   if (timeZone) {
-    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone }).format(
-      parseISO(iso),
-    );
+    let formatter = shortDateFormats.get(timeZone);
+    if (!formatter) {
+      formatter = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone });
+      shortDateFormats.set(timeZone, formatter);
+    }
+    return formatter.format(parseISO(iso));
   }
   return format(parseISO(iso), 'MMM d');
 }
@@ -38,12 +46,16 @@ export function enumerateDateRange(startIso: string, endIso: string): string[] {
   return out;
 }
 
+// Made on first use, not when the module loads: creating one is the expensive part
+let centralDate: Intl.DateTimeFormat | undefined;
+
 // Bucket a game's UTC datetime to a yyyy-MM-dd string in Central time (DST-aware).
 export function gameDateBucket(isoGameDate: string): string {
-  return new Intl.DateTimeFormat('en-CA', {
+  centralDate ??= new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Chicago',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  }).format(new Date(isoGameDate));
+  });
+  return centralDate.format(new Date(isoGameDate));
 }

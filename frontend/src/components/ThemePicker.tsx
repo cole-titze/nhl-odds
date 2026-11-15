@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { useTheme, type Theme } from '../hooks/useTheme';
 import { TEAMS, THEMES, teamLogo } from '../themes';
+import { compareText } from '../utils/compareText';
 
 const svgProps = {
   xmlns: 'http://www.w3.org/2000/svg',
@@ -75,7 +76,7 @@ const ICONS: Record<Theme, ReactNode> = {
   ),
 };
 
-const TEAMS_BY_NAME = [...TEAMS].sort((a, b) => a.name.localeCompare(b.name));
+const TEAMS_BY_NAME = [...TEAMS].sort((a, b) => compareText(a.name, b.name));
 
 // Shared look for the icon buttons. Each one is an icon with an invisible
 // native <select> stretched over it, so tapping opens the platform picker

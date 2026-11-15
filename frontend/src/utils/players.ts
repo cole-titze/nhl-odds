@@ -1,4 +1,5 @@
 import type { PositionCode } from '../types';
+import { gameDateBucket } from './dates';
 
 const POSITION_NAMES: Record<PositionCode, string> = {
   C: 'Center',
@@ -42,15 +43,9 @@ export function formatHeight(inches: number): string {
   return inches > 0 ? `${Math.floor(inches / 12)}′${inches % 12}″` : '';
 }
 
-const CENTRAL_DAY = new Intl.DateTimeFormat('en-CA', {
-  timeZone: 'America/Chicago',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-});
-
 /** A UTC game time's day in Central time (yyyy-MM-dd), the day the Games feed lists it under */
 export function centralDay(utc: string): string {
   const iso = /(?:[zZ]|[+-]\d\d:\d\d)$/.test(utc) ? utc : `${utc}Z`;
-  return CENTRAL_DAY.format(new Date(iso));
+  // Same Central-time formatter as gameDateBucket, made on first use rather than at page load
+  return gameDateBucket(iso);
 }

@@ -11,7 +11,9 @@ export interface LeaderStatOption {
   format: (value: number) => string;
 }
 
-const whole = (v: number) => v.toLocaleString('en-US');
+// One formatter, made on first use: toLocaleString builds a new one per call
+let wholeFormat: Intl.NumberFormat | undefined;
+const whole = (v: number) => (wholeFormat ??= new Intl.NumberFormat('en-US')).format(v);
 const signed = (v: number) => (v > 0 ? `+${v}` : v < 0 ? `−${Math.abs(v)}` : '0');
 const minutes = (seconds: number) => {
   const s = Math.round(seconds);

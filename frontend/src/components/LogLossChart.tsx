@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
-import { useHydrated } from '../hooks/useHydrated';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { lazy, useState, useMemo } from 'react';
+import { LazyChart } from './LazyChart';
+import type { LogLossLine, LogLossPoint } from './LogLossLines';
 import { formatShortDate } from '../utils/dates';
 import { useDisplayTimeZone } from '../hooks/useDisplayTimeZone';
 import { calculateLogLoss } from '../utils/predictions';
@@ -12,6 +12,9 @@ import { LineKey } from './LineKey';
 import { Spinner } from './Loading';
 import { useDelayedFlag } from '../hooks/useDelayedFlag';
 import { ChartDataTable, type ChartTableRow } from './ChartDataTable';
+
+// Recharts (~100 KB) loads only when the chart scrolls near the screen (LazyChart), not with the page
+const LogLossLines = lazy(() => import('./LogLossLines'));
 
 const HOMEGROWN = 'In-House Model';
 
@@ -59,7 +62,6 @@ interface Props {
 const NONE: string[] = [];
 
 export function LogLossChart({ games, unloadedBookmakers = NONE, onLoadBookmaker }: Props) {
-  const hydrated = useHydrated();
   const { timeZone } = useDisplayTimeZone();
   const playedGames = useMemo(
     () => games.filter((g) => g.hasBeenPlayed && g.logLoss != null && g.logLoss > 0),
@@ -120,12 +122,12 @@ export function LogLossChart({ games, unloadedBookmakers = NONE, onLoadBookmaker
     let count = 0;
     const cumByBookmaker: Record<string, { sum: number; count: number }> = {};
 
-    const points: Record<string, string | number | undefined>[] = [];
+    const points: LogLossPoint[] = [];
     for (const g of sorted) {
       cumLogLoss += g.logLoss ?? 0;
       count++;
 
-      const point: Record<string, string | number | undefined> = {
+      const point: LogLossPoint = {
         date: formatShortDate(g.gameDate, timeZone),
         [HOMEGROWN]: +(cumLogLoss / count).toFixed(4),
         games: count,
@@ -161,6 +163,13 @@ export function LogLossChart({ games, unloadedBookmakers = NONE, onLoadBookmaker
     }
     return [...byDate.values()];
   }, [chartData, allChips]);
+
+  const lines: LogLossLine[] = shown.map((name) => ({
+    name,
+    color: lineColor(name),
+    tooltipColor: readableLineColor(getColor(name, allChips.indexOf(name)), true),
+    dash: lineDash(name),
+  }));
 
   if (chartData.length <= 1) return null;
 
@@ -203,78 +212,9 @@ export function LogLossChart({ games, unloadedBookmakers = NONE, onLoadBookmaker
       </div>
       <p className="sr-only">{summary}</p>
       <div className="text-surface-600 dark:text-surface-400">
-        {/* Recharts sizes itself with inline style attributes, which the CSP blocks
-            in server HTML, so the chart waits for the browser */}
-        {!hydrated ? (
-          <div className="h-[250px]" />
-        ) : (
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={chartData}>
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 11, fontFamily: 'JetBrains Mono Variable', fill: 'currentColor' }}
-                interval="preserveStartEnd"
-                stroke="#525252"
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 11, fontFamily: 'JetBrains Mono Variable', fill: 'currentColor' }}
-                domain={['auto', 'auto']}
-                stroke="#525252"
-                tickLine={false}
-                axisLine={false}
-              />
-              <Tooltip
-                content={({ active, payload, label }) => {
-                  if (!active || !payload?.length) return null;
-                  const d = payload[0].payload as Record<string, unknown>;
-                  return (
-                    <div className="bg-[rgba(10,10,10,0.9)] border border-white/8 rounded-lg font-mono text-xs text-white backdrop-blur-md py-2 px-3">
-                      <div>{label}</div>
-                      {allChips
-                        .filter((name) => enabled.has(name) && d[name] != null)
-                        .map((name) => (
-                          <div key={name} className="flex items-center gap-1.5">
-                            <LineKey
-                              color={readableLineColor(
-                                getColor(name, allChips.indexOf(name)),
-                                true,
-                              )}
-                              dash={lineDash(name)}
-                            />
-                            {name}: {d[name] as number}
-                          </div>
-                        ))}
-                      <div>games: {d.games as number}</div>
-                    </div>
-                  );
-                }}
-              />
-              {allChips
-                .filter((name) => enabled.has(name))
-                .map((name) => {
-                  const color = lineColor(name);
-                  return (
-                    <Line
-                      key={name}
-                      type="monotone"
-                      dataKey={name}
-                      stroke={color}
-                      strokeDasharray={lineDash(name) || undefined}
-                      // Recharts' draw-in animation overwrites strokeDasharray (and
-                      // blanks it under prefers-reduced-motion), erasing the patterns
-                      isAnimationActive={false}
-                      strokeWidth={2.5}
-                      dot={false}
-                      activeDot={{ r: 4, fill: color, stroke: '#141418', strokeWidth: 2 }}
-                      connectNulls
-                    />
-                  );
-                })}
-            </LineChart>
-          </ResponsiveContainer>
-        )}
+        <LazyChart boxClassName="h-[250px]">
+          <LogLossLines data={chartData} lines={lines} />
+        </LazyChart>
       </div>
       <ChartDataTable
         caption="Cumulative average log loss by date (lower is better)"

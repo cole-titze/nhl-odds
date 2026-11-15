@@ -16,6 +16,7 @@ import { dashFor, readableLineColor } from '../utils/chartSeries';
 import { useIsDarkTheme } from '../hooks/useRootTheme';
 import { LineKey } from './LineKey';
 import { ChartDataTable } from './ChartDataTable';
+import { compareText } from '../utils/compareText';
 
 const STRATEGY_COLORS: Record<string, string> = {
   'In-House Winner': '#3b82f6',
@@ -76,7 +77,7 @@ export function StrategyChart({ results }: Props) {
     }
 
     return Array.from(allDates.values()).sort((a, b) =>
-      (a.sortKey as string).localeCompare(b.sortKey as string),
+      compareText(a.sortKey as string, b.sortKey as string),
     );
   }, [results]);
 
