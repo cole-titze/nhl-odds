@@ -33,7 +33,23 @@ import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
 import { breadcrumbs, person } from '../utils/structuredData';
 
 function seasonFrom(searchParams: URLSearchParams) {
-  return Number(searchParams.get('season')) || getCurrentSeason();
+  return Number(searchParams.get('season')) || undefined;
+}
+
+// With no season asked for: the current season, or their last season with a
+// game when they have none this season (so a retired player's page isn't empty)
+async function getPlayerForPage(playerId: string, season?: number, init?: RequestInit) {
+  const player = await getPlayer(playerId, season ?? getCurrentSeason(), init);
+  const last = player?.lastSeasonStartYear;
+  if (
+    season ||
+    !player ||
+    player.games.length > 0 ||
+    last == null ||
+    last === player.seasonStartYear
+  )
+    return player;
+  return (await getPlayer(playerId, last, init)) ?? player;
 }
 
 // First load renders on the server; client-side navigation fetches in the page.
@@ -43,7 +59,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   const season = seasonFrom(new URL(request.url).searchParams);
   let player: PlayerVM | undefined;
   try {
-    player = await getPlayer(params.playerId!, season, forwardClientIp(request));
+    player = await getPlayerForPage(params.playerId!, season, forwardClientIp(request));
   } catch {
     return null;
   }
@@ -95,7 +111,7 @@ export function PlayerPage() {
     loading,
     error,
   } = useFetch(
-    async () => ({ player: (await getPlayer(playerId ?? '', season)) ?? null }),
+    async () => ({ player: (await getPlayerForPage(playerId ?? '', season)) ?? null }),
     [playerId, season],
     loaded,
   );
@@ -156,7 +172,7 @@ export function PlayerPage() {
     formatHeight(player.heightInInches),
     player.weightInPounds > 0 && `${player.weightInPounds} lb`,
   ].filter(Boolean);
-  const seasonLabel = formatSeasonLabel(season);
+  const seasonLabel = formatSeasonLabel(player.seasonStartYear);
   const description = `${name}${positionName(player.position) ? `, ${positionName(player.position).toLowerCase()}` : ''}${
     teamName ? ` for the ${teamName}` : ''
   }: ${seasonLabel} NHL game log and stats.`;
@@ -207,7 +223,10 @@ export function PlayerPage() {
             )}
           </div>
         </div>
-        <SeasonSelector value={season} onChange={(s) => setSearchParams({ season: String(s) })} />
+        <SeasonSelector
+          value={player.seasonStartYear}
+          onChange={(s) => setSearchParams({ season: String(s) })}
+        />
       </div>
 
       <SectionNav
