@@ -13,6 +13,9 @@ const RANGES = [
 // A day missing more probes than this (a cluster or Prometheus outage, not a pod restart) is gray
 // even with no failures: the site may well have been down too
 const MAX_MISSING_PROBES = 15;
+// A few scattered failed minutes a day (the public probe timing out on a busy home internet link) stay
+// green; the bar's tooltip and the data table still count them
+const MAX_BLIP_PROBES = 5;
 const SELECT_CLASS =
   "pl-3 pr-8 py-2 rounded-lg glass text-sm font-mono font-medium cursor-pointer appearance-none bg-[url('/chevron-down.svg')] bg-[length:16px] bg-[right_8px_center] bg-no-repeat";
 
@@ -20,7 +23,7 @@ type DayState = 'up' | 'partial' | 'down' | 'none';
 
 // Status colors, the same in both modes; each bar's tooltip and the data table say it in words
 const STATE_STYLES: Record<DayState, { bar: string; label: string }> = {
-  up: { bar: 'bg-emerald-600', label: 'No downtime' },
+  up: { bar: 'bg-emerald-600', label: 'No downtime (5m or less)' },
   partial: { bar: 'bg-amber-500', label: 'Some downtime' },
   down: { bar: 'bg-red-600 dark:bg-red-500', label: 'Major downtime' },
   none: { bar: 'bg-surface-300 dark:bg-white/[0.12]', label: 'No data, or 15m+ missing' },
@@ -74,7 +77,7 @@ function toBar(day: string, data: UptimeDay | undefined): DayBar {
   const state: DayState =
     uptime < 0.97
       ? 'down'
-      : downProbes > 0
+      : downProbes > MAX_BLIP_PROBES
         ? 'partial'
         : missingProbes > MAX_MISSING_PROBES
           ? 'none'
