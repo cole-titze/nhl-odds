@@ -809,13 +809,23 @@ export const slug = (...words) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
+/** A game's day in Central time (yyyy-MM-dd), as its URL has it */
+const centralDay = (utc) =>
+  new Date(/(?:[zZ]|[+-]\d\d:\d\d)$/.test(utc) ? utc : `${utc}Z`).toLocaleDateString('en-CA', {
+    timeZone: 'America/Chicago',
+  });
+
+/** A game's named URL (src/utils/pagePaths.ts gamePagePath) */
+export const gameUrlPath = (g) =>
+  `/game/${g.id}-${slug(...(g.awayTeam && g.homeTeam ? [g.awayTeam.teamName, 'at', g.homeTeam.teamName] : []), centralDay(g.gameDate))}`;
+
 // One page of each type, by their named URLs (an id-only one redirects). The Lighthouse check (lighthouse/run.mjs) scores the same list, minus /admin
 export function pagesFor() {
   return [
     '/',
     '/teams',
     '/team/10',
-    `/game/${games[33].id}-${slug(games[33].awayTeam.teamName, 'at', games[33].homeTeam.teamName)}`,
+    gameUrlPath(games[33]),
     '/player/8479318-auston-matthews',
     `/player/${retiredPlayer.id}-${slug(retiredPlayer.firstName, retiredPlayer.lastName)}`,
     '/strategies',

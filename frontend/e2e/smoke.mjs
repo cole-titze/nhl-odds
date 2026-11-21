@@ -34,13 +34,14 @@ const PAGES = [
     text: ['Toronto Maple Leafs', '1-0-0', 'Bruins', 'Oilers'],
   },
   {
-    path: `/game/${gameId(1)}-bruins-at-maple-leafs`,
+    // Id only: fetch and the browser follow the redirect to the named URL
+    path: `/game/${gameId(1)}`,
     title: 'Boston Bruins at Toronto Maple Leafs',
     html: ['Boston Bruins at Toronto Maple Leafs', 'DraftKings'],
     text: ['Final', 'DraftKings', 'Kalshi', 'Correct'],
   },
   {
-    path: `/game/${gameId(5)}-flames-at-maple-leafs`,
+    path: `/game/${gameId(5)}`,
     title: 'Calgary Flames at Toronto Maple Leafs',
     html: ['Calgary Flames at Toronto Maple Leafs'],
     text: ['VS', 'DraftKings'],
@@ -173,16 +174,17 @@ try {
         : 'no /team/10 entry',
   );
   // Old id-only links (and wrong names) move to the page's named URL, query string kept
+  const DAY = '\\d{4}-\\d{2}-\\d{2}';
   const redirects = [
-    [`/game/${gameId(1)}`, `/game/${gameId(1)}-bruins-at-maple-leafs`],
-    [`/game/${gameId(1)}-old-name?x=1`, `/game/${gameId(1)}-bruins-at-maple-leafs?x=1`],
-    ['/player/8479318', '/player/8479318-auston-matthews'],
+    [`/game/${gameId(1)}`, `^/game/${gameId(1)}-bruins-at-maple-leafs-${DAY}$`],
+    [`/game/${gameId(1)}-old-name?x=1`, `^/game/${gameId(1)}-bruins-at-maple-leafs-${DAY}\\?x=1$`],
+    ['/player/8479318', '^/player/8479318-auston-matthews$'],
   ];
   for (const [from, to] of redirects)
     await checkResource(
       from,
       (res) =>
-        res.status === 301 && res.headers.get('location') === to
+        res.status === 301 && new RegExp(to).test(res.headers.get('location') ?? '')
           ? null
           : `status ${res.status} to ${res.headers.get('location')}, expected 301 to ${to}`,
       { redirect: 'manual' },

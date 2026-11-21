@@ -95,10 +95,10 @@ public class TeamCalendarTests
 
         lines.Should().Contain("SUMMARY:Bruins at Maple Leafs (Maple Leafs 58%)");
         lines.Should().Contain("LOCATION:Toronto");
-        lines.Should().Contain("URL:https://nhl.example.com/game/2026020150-bruins-at-maple-leafs");
+        lines.Should().Contain("URL:https://nhl.example.com/game/2026020150-bruins-at-maple-leafs-2026-11-04");
         lines.Single(l => l.StartsWith("DESCRIPTION:")).Should().Be(
             "DESCRIPTION:The NHL Odds model gives the Bruins 42% and the Maple Leafs 58%.\\n" +
-            "Odds and analysis: https://nhl.example.com/game/2026020150-bruins-at-maple-leafs");
+            "Odds and analysis: https://nhl.example.com/game/2026020150-bruins-at-maple-leafs-2026-11-04");
     }
 
     [TestMethod]
@@ -216,7 +216,8 @@ public class TeamCalendarTests
         context.Response.Headers.CacheControl.ToString().Should().Be("public, max-age=3600");
         var body = await new StreamReader(context.Response.Body).ReadToEndAsync();
         body.Should().StartWith("BEGIN:VCALENDAR\r\n");
-        body.Should().Contain("URL:https://nhl.half-built.com/game/2026020150-bruins-at-maple-leafs");
+        // Long lines fold (CRLF + space)
+        body.Replace("\r\n ", "").Should().Contain("URL:https://nhl.half-built.com/game/2026020150-bruins-at-maple-leafs-2026-11-04");
     }
 
     [TestMethod]
@@ -227,7 +228,8 @@ public class TeamCalendarTests
         var context = await Execute(await cut.Team(10));
 
         var body = await new StreamReader(context.Response.Body).ReadToEndAsync();
-        body.Should().Contain("URL:https://staging.example.com/game/2026020150-bruins-at-maple-leafs");
+        // Long lines fold (CRLF + space)
+        body.Replace("\r\n ", "").Should().Contain("URL:https://staging.example.com/game/2026020150-bruins-at-maple-leafs-2026-11-04");
     }
 
     [TestMethod]

@@ -18,6 +18,7 @@ import { Winner } from '../types';
 import { getGame, getPredictionFactors } from '../api/gameOdds';
 import { getGamePlayers } from '../api/players';
 import { gamePagePath, idParam, redirectToPath } from '../utils/pagePaths';
+import { longGameDay } from '../utils/dates';
 import { useCanonicalPath } from '../hooks/useCanonicalPath';
 import { getGameLineup } from '../api/lineup';
 import { getOddsMovement } from '../api/oddsMovement';
@@ -220,7 +221,8 @@ export function GamePage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <PageTitle
-        title={matchup}
+        // The date too, so search results tell this season's games against a team apart
+        title={`${matchup}, ${longGameDay(game.gameDate)}`}
         description={`${matchup}: the NHL Odds model's win probability compared with sportsbook and Kalshi odds.`}
         schema={[sportsEvent(game, gamePlayers), breadcrumbs(crumbs)]}
         imageAlt={shareImageAlt(game, matchup)}

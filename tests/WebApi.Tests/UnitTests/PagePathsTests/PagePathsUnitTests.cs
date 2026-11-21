@@ -21,14 +21,24 @@ public class PagePathsUnitTests
     }
 
     [TestMethod]
-    public void Game_NamesTheTeams_AwayFirst()
+    public void Game_NamesTheTeams_AwayFirst_ThenTheDay()
     {
-        PagePaths.Game(2026020123, "Oilers", "Maple Leafs").Should().Be("/game/2026020123-oilers-at-maple-leafs");
+        PagePaths.Game(2026020123, "Oilers", "Maple Leafs", new DateTime(2026, 11, 21, 18, 0, 0, DateTimeKind.Utc))
+            .Should().Be("/game/2026020123-oilers-at-maple-leafs-2026-11-21");
     }
 
     [TestMethod]
-    public void Game_TeamTbd_IsIdOnly()
+    public void Game_DayIsCentralTime()
     {
-        PagePaths.Game(2026030411, null, "Oilers").Should().Be("/game/2026030411");
+        // 9:30pm Central on the 20th is 3:30am UTC on the 21st
+        PagePaths.Game(2026020123, "Oilers", "Kraken", new DateTime(2026, 11, 21, 3, 30, 0, DateTimeKind.Utc))
+            .Should().Be("/game/2026020123-oilers-at-kraken-2026-11-20");
+    }
+
+    [TestMethod]
+    public void Game_TeamTbd_HasOnlyTheDay()
+    {
+        PagePaths.Game(2026030411, null, "Oilers", new DateTime(2027, 6, 1, 0, 0, 0, DateTimeKind.Utc))
+            .Should().Be("/game/2026030411-2027-05-31");
     }
 }

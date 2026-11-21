@@ -1,8 +1,10 @@
 import { redirect } from 'react-router';
+import { centralDay } from './dates';
 
 // Readable page URLs: the id, then the names, e.g. /player/8478402-connor-mcdavid and
-// /game/2026020123-oilers-at-maple-leafs. Only the id counts when a page loads; a URL
-// with other words (or none, as old links have) redirects to the one these build.
+// /game/2026020123-oilers-at-maple-leafs-2026-11-21 (the game's day in Central time, like
+// the Games feed). Only the id counts when a page loads; a URL with other words (or none:
+// /game/2026020123 works) redirects to the one these build.
 
 // Letters NFKD doesn't split into a plain letter and an accent
 const LETTERS: Record<string, string> = {
@@ -41,17 +43,28 @@ export function playerPath(id: number, name?: string | PlayerNames | null): stri
   return withSlug('/player', id, words);
 }
 
-/** A game's page, from the teams' names ("Oilers", or "Edmonton Oilers"); a team still TBD leaves the names out */
-export function gamePath(id: number, awayName?: string | null, homeName?: string | null): string {
-  return withSlug('/game', id, awayName && homeName ? `${awayName} at ${homeName}` : '');
+/**
+ * A game's page, from the teams' names ("Oilers") and its UTC start time; a team still TBD leaves
+ * the names out. Without the time, no date.
+ */
+export function gamePath(
+  id: number,
+  awayName?: string | null,
+  homeName?: string | null,
+  gameDate?: string | null,
+): string {
+  const teams = awayName && homeName ? `${awayName} at ${homeName}` : '';
+  const day = gameDate && !Number.isNaN(Date.parse(gameDate)) ? centralDay(gameDate) : '';
+  return withSlug('/game', id, `${teams} ${day}`);
 }
 
 /** The page path for a game with its matchup teams (GameOddsVM) */
 export const gamePagePath = (game: {
   id: number;
+  gameDate: string;
   awayTeam: { teamName: string } | null;
   homeTeam: { teamName: string } | null;
-}) => gamePath(game.id, game.awayTeam?.teamName, game.homeTeam?.teamName);
+}) => gamePath(game.id, game.awayTeam?.teamName, game.homeTeam?.teamName, game.gameDate);
 
 /** The id at the start of a :gameId / :playerId route param ("8478402-connor-mcdavid" → "8478402"); other params as they are */
 export function idParam(param: string | undefined): string | undefined {

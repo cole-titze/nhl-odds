@@ -85,8 +85,8 @@ const tdNum = `${td} text-center stat-number`;
 /** A game row's page: his team and the opponent, away team first */
 const playerGamePath = (g: PlayerGameVM) =>
   g.isHome
-    ? gamePath(g.gameId, g.opponent.teamName, g.team?.teamName)
-    : gamePath(g.gameId, g.team?.teamName, g.opponent.teamName);
+    ? gamePath(g.gameId, g.opponent.teamName, g.team?.teamName, g.gameDate)
+    : gamePath(g.gameId, g.team?.teamName, g.opponent.teamName, g.gameDate);
 
 const RESULT_LABELS = { W: 'Win', L: 'Loss', OTL: 'Overtime loss' } as const;
 
