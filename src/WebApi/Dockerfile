@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:11.0 AS build
 WORKDIR /src
 
 COPY src/WebApi/WebApi.csproj src/WebApi/
@@ -13,7 +13,7 @@ COPY src/Entities/ src/Entities/
 COPY src/Search/ src/Search/
 RUN dotnet publish src/WebApi/WebApi.csproj -c Release -o /app/publish
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine
+FROM mcr.microsoft.com/dotnet/aspnet:11.0-alpine
 RUN apk upgrade --no-cache && apk add --no-cache icu-libs krb5-libs tzdata
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 WORKDIR /app
