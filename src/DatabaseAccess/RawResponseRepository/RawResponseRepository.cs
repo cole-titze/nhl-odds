@@ -39,7 +39,7 @@ public class RawResponseRepository : IRawResponseStore
         await using var db = _dbContextFactory();
         var hash = Hash(body);
         var gzipped = Compress(body);
-        await db.Database.ExecuteSqlInterpolatedAsync($"""
+        await db.Database.ExecuteSqlAsync($"""
             INSERT INTO "NhlApiResponse" ("Url", "ContentHash", "GameId", "FirstSeenUTC", "LastSeenUTC", "Body")
             VALUES ({url}, {hash}, {gameId}, {fetchedUtc}, {fetchedUtc}, {gzipped})
             ON CONFLICT ("Url", "ContentHash") DO UPDATE SET "LastSeenUTC" = EXCLUDED."LastSeenUTC"
