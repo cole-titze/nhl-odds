@@ -26,8 +26,8 @@ export const SITE_PAGES: Record<string, SitemapEntry> = {
   '/track-record': 'daily',
   '/about': 'static',
   '/team/:teamId': 'teams',
-  '/player/:playerId': 'players',
-  '/game/:gameId': {
+  '/player/:playerId/:slug?': 'players',
+  '/game/:gameId/:slug?': {
     exclude:
       'thousands of near-identical pages add little; search engines still reach them through links',
   },

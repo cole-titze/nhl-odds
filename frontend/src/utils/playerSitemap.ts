@@ -11,7 +11,7 @@ export function playerSitemapEntries(players: ActivePlayerVM[], now = new Date()
   const today = centralDay(now.toISOString());
   return players
     .filter((p) => p.lastGameDate && !Number.isNaN(Date.parse(p.lastGameDate)))
-    .map((p) => ({ id: p.id, path: playerPath(p.id), lastmod: centralDay(p.lastGameDate) }))
+    .map((p) => ({ id: p.id, path: playerPath(p.id, p), lastmod: centralDay(p.lastGameDate) }))
     .filter((p) => p.lastmod <= today)
     .sort((a, b) => a.id - b.id)
     .map(({ path, lastmod }) => ({ path, lastmod }));

@@ -29,6 +29,7 @@ import { SearchIcon } from '../components/SearchBox';
 import { useDelayedFlag } from '../hooks/useDelayedFlag';
 import { playerPath } from '../utils/players';
 import { compareText } from '../utils/compareText';
+import { gamePath } from '../utils/pagePaths';
 
 // Typing waits this long before searching, so each keystroke isn't a request
 const TYPING_DELAY_MS = 300;
@@ -131,7 +132,7 @@ function PlayerResults({ players }: { players: PlayerResult[] }) {
           );
           return (
             <li key={p.playerId}>
-              <Link to={playerPath(p.playerId)} className={linkRowClass}>
+              <Link to={playerPath(p.playerId, p.name)} className={linkRowClass}>
                 {content}
               </Link>
             </li>
@@ -155,7 +156,8 @@ function GameResults({ games }: { games: GameResult[] }) {
           .map((g) => (
             <li key={g.gameId}>
               <Link
-                to={`/game/${g.gameId}`}
+                // Search names teams by season (Coyotes), the Game page by today's name; it fixes the URL itself
+                to={gamePath(g.gameId)}
                 // Phones: the date on its own small line, then the matchup and score
                 className={`${linkRowClass} flex-col items-start gap-0.5 sm:flex-row sm:items-center sm:gap-3`}
               >

@@ -8,6 +8,8 @@ public class PlayerGameVM
     public int GameType { get; set; }
     public int TeamId { get; set; }
     public bool IsHome { get; set; }
+    /// <summary>His team in that game (its names make the game page's URL)</summary>
+    public PlayerTeamVM Team { get; set; } = new();
     public PlayerTeamVM Opponent { get; set; } = new();
     public int TeamGoals { get; set; }
     public int OpponentGoals { get; set; }

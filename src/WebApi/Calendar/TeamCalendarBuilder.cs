@@ -42,7 +42,7 @@ public static class TeamCalendarBuilder
         foreach (var game in team.GameOddsVM.OrderBy(g => g.GameDate).ThenBy(g => g.Id))
         {
             var start = DateTime.SpecifyKind(game.GameDate, DateTimeKind.Utc);
-            var url = $"{siteUrl}/game/{game.Id}";
+            var url = siteUrl + PagePaths.Game(game.Id, game.AwayTeam?.TeamName, game.HomeTeam?.TeamName, game.GameDate);
             lines.Add("BEGIN:VEVENT");
             lines.Add($"UID:game-{game.Id}@{host}");
             lines.Add($"DTSTAMP:{stamp}");

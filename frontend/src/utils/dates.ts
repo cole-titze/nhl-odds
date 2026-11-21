@@ -59,3 +59,21 @@ export function gameDateBucket(isoGameDate: string): string {
   });
   return centralDate.format(new Date(isoGameDate));
 }
+
+/** A UTC game time's day in Central time (yyyy-MM-dd), the day the Games feed lists it under */
+export function centralDay(utc: string): string {
+  const iso = /(?:[zZ]|[+-]\d\d:\d\d)$/.test(utc) ? utc : `${utc}Z`;
+  // Same Central-time formatter as gameDateBucket, made on first use rather than at page load
+  return gameDateBucket(iso);
+}
+
+/** A UTC game time's day in Central time, as people write it: "November 21, 2026" */
+export function longGameDay(utc: string): string {
+  const iso = /(?:[zZ]|[+-]\d\d:\d\d)$/.test(utc) ? utc : `${utc}Z`;
+  return new Date(iso).toLocaleDateString('en-US', {
+    timeZone: 'America/Chicago',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}

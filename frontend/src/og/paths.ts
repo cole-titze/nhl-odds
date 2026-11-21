@@ -5,7 +5,7 @@
 export function shareImagePath(pathname: string): string {
   const path = pathname.replace(/\/+$/, '') || '/';
   if (path === '/') return '/og/games.png';
-  const game = path.match(/^\/game\/(\d+)$/);
+  const game = path.match(/^\/game\/(\d+)(?:\/[a-z0-9-]*)?$/);
   if (game) return `/og/game/${game[1]}.png`;
   const team = path.match(/^\/team\/(\d+)$/);
   if (team) return `/og/team/${team[1]}.png`;

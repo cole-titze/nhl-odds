@@ -17,6 +17,9 @@ import type {
 import { Winner } from '../types';
 import { getGame, getPredictionFactors } from '../api/gameOdds';
 import { getGamePlayers } from '../api/players';
+import { gamePagePath, idParam, redirectToPath } from '../utils/pagePaths';
+import { longGameDay } from '../utils/dates';
+import { useCanonicalPath } from '../hooks/useCanonicalPath';
 import { getGameLineup } from '../api/lineup';
 import { getOddsMovement } from '../api/oddsMovement';
 import { useFetch } from '../hooks/useFetch';
@@ -76,20 +79,24 @@ function formatPoint(point: number): string {
 // as before (usually not even that: game cards pass the game in location.state)
 export async function loader({ params, request }: LoaderFunctionArgs) {
   const init = forwardClientIp(request);
-  const playersRequest = getGamePlayers(params.gameId!, init).catch(() => null);
+  const gameId = idParam(params.gameId)!;
+  const playersRequest = getGamePlayers(gameId, init).catch(() => null);
   let game: GameOddsVM | undefined;
   let factors: PredictionFactorsVM | null = null;
   try {
     // The prediction factors come with the first render, so their section doesn't push
     // the rest of the page down when it arrives (a layout shift)
     [game, factors] = await Promise.all([
-      getGame(params.gameId!, init),
-      /^\d+$/.test(params.gameId!)
-        ? getPredictionFactors(Number(params.gameId), init).catch(() => null)
-        : null,
+      getGame(gameId, init),
+      /^\d+$/.test(gameId) ? getPredictionFactors(Number(gameId), init).catch(() => null) : null,
     ]);
   } catch {
     return null;
+  }
+  // Old id-only links (and a renamed team's) move to the page's named URL
+  if (game) {
+    const moved = redirectToPath(request, gamePagePath(game));
+    if (moved) throw moved;
   }
   const players = (await playersRequest) ?? null;
   // The page still renders its "Game not found" message, with a real 404 status for crawlers
@@ -104,7 +111,7 @@ export async function clientLoader() {
 
 export function GamePage() {
   const loaded = useLoaderData<typeof loader>();
-  const { gameId } = useParams();
+  const gameId = idParam(useParams().gameId);
   const location = useLocation();
   const { format } = useOddsFormatContext();
   const { strategy } = useStrategy();
@@ -146,6 +153,8 @@ export function GamePage() {
       .finally(() => setLoading(false));
   }, [gameId, game, error]);
 
+  useCanonicalPath(game && String(game.id) === gameId ? gamePagePath(game) : null);
+
   if (loading) {
     return (
       <div className="space-y-4 max-w-2xl mx-auto">
@@ -186,7 +195,7 @@ export function GamePage() {
 
   const crumbs: Crumb[] = [
     { name: 'Games', path: '/' },
-    { name: matchup, path: `/game/${game.id}` },
+    { name: matchup, path: gamePagePath(game) },
   ];
   const gamePlayers = players && players.gameId === game.id ? players : null;
   const hasPredictions = game.predictedSpread != null || game.predictedTotal != null;
@@ -212,7 +221,8 @@ export function GamePage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <PageTitle
-        title={matchup}
+        // The date too, so search results tell this season's games against a team apart
+        title={`${matchup}, ${longGameDay(game.gameDate)}`}
         description={`${matchup}: the NHL Odds model's win probability compared with sportsbook and Kalshi odds.`}
         schema={[sportsEvent(game, gamePlayers), breadcrumbs(crumbs)]}
         imageAlt={shareImageAlt(game, matchup)}
@@ -494,7 +504,7 @@ function GamePlayers({ game, players }: { game: GameOddsVM; players: GamePlayers
 function PlayerLink({ player }: { player: GamePlayerVM }) {
   return (
     <Link
-      to={playerPath(player.id)}
+      to={playerPath(player.id, player)}
       className="inline-block py-0.5 font-medium hover:text-accent-600 dark:hover:text-accent-400 hover:underline"
     >
       {playerName(player)}

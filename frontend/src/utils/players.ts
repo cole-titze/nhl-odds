@@ -1,5 +1,4 @@
 import type { PositionCode } from '../types';
-import { gameDateBucket } from './dates';
 
 const POSITION_NAMES: Record<PositionCode, string> = {
   C: 'Center',
@@ -14,7 +13,8 @@ export const positionName = (code: PositionCode | null) => (code ? POSITION_NAME
 export const playerName = (p: { firstName: string; lastName: string }) =>
   `${p.firstName} ${p.lastName}`;
 
-export const playerPath = (id: number) => `/player/${id}`;
+export { playerPath } from './pagePaths';
+export { centralDay } from './dates';
 
 /** Rosters come forwards, then defense, then goalies; this splits them for headings */
 export function positionGroups<T extends { position: PositionCode }>(players: T[]) {
@@ -41,11 +41,4 @@ export const formatPlusMinus = (n: number) => (n > 0 ? `+${n}` : String(n));
 
 export function formatHeight(inches: number): string {
   return inches > 0 ? `${Math.floor(inches / 12)}′${inches % 12}″` : '';
-}
-
-/** A UTC game time's day in Central time (yyyy-MM-dd), the day the Games feed lists it under */
-export function centralDay(utc: string): string {
-  const iso = /(?:[zZ]|[+-]\d\d:\d\d)$/.test(utc) ? utc : `${utc}Z`;
-  // Same Central-time formatter as gameDateBucket, made on first use rather than at page load
-  return gameDateBucket(iso);
 }

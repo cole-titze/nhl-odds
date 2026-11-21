@@ -26,7 +26,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import lighthouse from 'lighthouse';
 import { chromium } from 'playwright';
-import { mockApi, pagesFor } from '../a11y/fixtures.mjs';
+import { gameUrlPath, mockApi, pagesFor } from '../a11y/fixtures.mjs';
 
 const LIVE_URL = process.env.LIGHTHOUSE_URL?.replace(/\/$/, '') || undefined;
 const RUNS = Number(process.env.LIGHTHOUSE_RUNS) || 3;
@@ -86,7 +86,8 @@ async function livePages(base) {
     '/',
     '/teams',
     team,
-    `/game/${game.id}`,
+    // The named URL, so the score doesn't count a redirect
+    gameUrlPath(game),
     player,
     '/strategies',
     '/track-record',

@@ -125,6 +125,8 @@ public class PlayerGetterUnitTests
         games.Select(g => g.Result).Should().Equal("OTL", "L", "W");
         games[2].IsHome.Should().BeTrue();
         games[2].Opponent.Id.Should().Be(BOS);
+        games[2].Team.Id.Should().Be(TOR);
+        games.Select(g => g.Team.Id).Should().OnlyContain(id => id == TOR);
         games[2].TeamGoals.Should().Be(4);
         games[2].OpponentGoals.Should().Be(1);
         games[2].Stats.Points.Should().Be(3);
@@ -297,6 +299,23 @@ public class PlayerGetterUnitTests
         result.Select(p => p.Id).Should().Equal(8448208, 8479318);
         result[0].LastGameDate.Should().Be(retired);
         result[1].LastGameDate.Should().Be(last);
+    }
+
+    [TestMethod]
+    public async Task GetSitemapPlayers_HasNames()
+    {
+        var repo = new FakeWebPlayerRepository();
+        repo.Players.Add(new PlayerProfile { Id = 8479318, FirstName = "Auston", LastName = "Matthews" });
+        repo.LastGames.Add(new ActivePlayer { Id = 8479318, LastGameDateUTC = new DateTime(2026, 11, 5, 23, 0, 0, DateTimeKind.Utc) });
+        repo.LastGames.Add(new ActivePlayer { Id = 1, LastGameDateUTC = new DateTime(2026, 11, 5, 23, 0, 0, DateTimeKind.Utc) });
+        var cut = new PlayerGetter(repo);
+
+        var result = await cut.GetSitemapPlayers(new DateTime(2026, 11, 7, 0, 0, 0, DateTimeKind.Utc));
+
+        result[1].FirstName.Should().Be("Auston");
+        result[1].LastName.Should().Be("Matthews");
+        // No name: still listed, with the id-only URL
+        result[0].FirstName.Should().BeEmpty();
     }
 
     [TestMethod]

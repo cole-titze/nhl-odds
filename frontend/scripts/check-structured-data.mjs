@@ -28,8 +28,9 @@ const PAGE_TYPES = [
 const NOINDEX = ['/admin', '/search'];
 const SITE_URL = 'https://nhl.half-built.com';
 const pageUrl = (path) => SITE_URL + path;
+// Player and game pages have names after the id (/player/8479318/auston-matthews)
 const isEntityUrl = (id, kind) =>
-  typeof id === 'string' && new RegExp(`^${SITE_URL}/${kind}/\\d+$`).test(id);
+  typeof id === 'string' && new RegExp(`^${SITE_URL}/${kind}/\\d+(/[a-z0-9-]+)?$`).test(id);
 
 // The entity links (#169): each page's main entity has its URL as @id and
 // links to the others by theirs
@@ -39,7 +40,7 @@ function checkEntities(path, graph, problems) {
     const person = find('Person');
     if (person?.['@id'] !== pageUrl(path)) problems.push(`${path}: Person @id isn't the page URL`);
     // A player on no NHL roster (#170) is a member of no team; everyone else is of theirs
-    if (path === `/player/${SITEMAP_RETIRED.id}`) {
+    if (path.startsWith(`/player/${SITEMAP_RETIRED.id}/`)) {
       if (person?.memberOf) problems.push(`${path}: Person on no roster has a memberOf`);
     } else if (!isEntityUrl(person?.memberOf?.['@id'], 'team'))
       problems.push(`${path}: Person has no memberOf SportsTeam with a team page @id`);
@@ -73,7 +74,8 @@ function checkEntities(path, graph, problems) {
     const performers = (event?.performer ?? []).map((p) => p['@id']);
     if (performers.length !== 2 || !teams.every((t) => performers.includes(t)))
       problems.push(`${path}: SportsEvent performers aren't its two teams by team page @id`);
-    if (event?.image !== pageUrl(`/og${path}.png`))
+    // The card is named by the game id alone (/og/game/2026020098.png)
+    if (event?.image !== pageUrl(`/og/game/${path.match(/^\/game\/(\d+)/)?.[1]}.png`))
       problems.push(`${path}: SportsEvent image isn't its link preview card`);
     if (event?.organizer?.name !== 'National Hockey League')
       problems.push(`${path}: SportsEvent organizer isn't the NHL`);
@@ -168,12 +170,16 @@ async function checkSitemap(problems) {
   const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
   const players = entries.filter((e) => e.loc.startsWith(`${SITE_URL}/player/`));
   for (const { loc, lastmod } of players) {
+    if (!/\/player\/\d+\/[a-z0-9-]+$/.test(loc))
+      problems.push(`/sitemap.xml: ${loc} has no name in its URL`);
     const real = /^\d{4}-\d{2}-\d{2}$/.test(lastmod ?? '') && !Number.isNaN(Date.parse(lastmod));
     if (!real) problems.push(`/sitemap.xml: ${loc} has no real <lastmod> (${lastmod})`);
     else if (lastmod > tomorrow)
       problems.push(`/sitemap.xml: ${loc} <lastmod> ${lastmod} is in the future`);
   }
-  const listed = new Map(players.map((e) => [Number(e.loc.split('/').pop()), e.lastmod]));
+  const listed = new Map(
+    players.map((e) => [Number(e.loc.match(/\/player\/(\d+)/)?.[1]), e.lastmod]),
+  );
   const expected =
     mockApi('http://localhost/api/Player/GetSitemapPlayers').length - SITEMAP_LEFT_OUT.length;
   if (listed.size !== expected)

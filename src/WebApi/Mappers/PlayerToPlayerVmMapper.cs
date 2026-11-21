@@ -81,6 +81,7 @@ public static class PlayerToPlayerVmMapper
             GameType = (int)game.GameType,
             TeamId = line.TeamId,
             IsHome = isHome,
+            Team = MapTeam(isHome ? game.HomeTeam : game.AwayTeam),
             Opponent = MapTeam(isHome ? game.AwayTeam : game.HomeTeam),
             TeamGoals = isHome ? game.HomeGoals : game.AwayGoals,
             OpponentGoals = isHome ? game.AwayGoals : game.HomeGoals,

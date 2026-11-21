@@ -174,7 +174,7 @@ function PlayerName({ player }: { player: LineupPlayerVM }) {
   if (player.playerId == null) return <>{player.name}</>;
   return (
     <Link
-      to={playerPath(player.playerId)}
+      to={playerPath(player.playerId, player.name)}
       // inline-block + py-0.5: 24px tall, the minimum touch target (WCAG 2.5.8), like the box score's links
       className="inline-block py-0.5 font-medium hover:text-accent-600 dark:hover:text-accent-400 hover:underline"
     >

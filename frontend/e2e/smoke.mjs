@@ -34,6 +34,7 @@ const PAGES = [
     text: ['Toronto Maple Leafs', '1-0-0', 'Bruins', 'Oilers'],
   },
   {
+    // Id only: fetch and the browser follow the redirect to the named URL
     path: `/game/${gameId(1)}`,
     title: 'Boston Bruins at Toronto Maple Leafs',
     html: ['Boston Bruins at Toronto Maple Leafs', 'DraftKings'],
@@ -93,8 +94,8 @@ const PAGES = [
 const failures = [];
 const fail = (where, message) => failures.push(`${where}: ${message}`);
 
-async function checkResource(path, check) {
-  const res = await fetch(BASE + path);
+async function checkResource(path, check, init) {
+  const res = await fetch(BASE + path, init);
   const body = await res.text();
   const problem = check(res, body);
   if (problem) fail(path, problem);
@@ -172,6 +173,26 @@ try {
         ? null
         : 'no /team/10 entry',
   );
+  // The pages above use up most of the API's rate limit (60 requests, 2 more a second), and a
+  // rate-limited page renders without the redirect; a full bucket first
+  await new Promise((r) => setTimeout(r, 30_000));
+  // Old id-only links (and wrong names) move to the page's named URL, query string kept
+  const DAY = '\\d{4}-\\d{2}-\\d{2}';
+  const redirects = [
+    [`/game/${gameId(1)}`, `^/game/${gameId(1)}/bruins-at-maple-leafs-${DAY}$`],
+    [`/game/${gameId(1)}/old-name?x=1`, `^/game/${gameId(1)}/bruins-at-maple-leafs-${DAY}\\?x=1$`],
+    [`/game/${gameId(1)}/`, `^/game/${gameId(1)}/bruins-at-maple-leafs-${DAY}$`],
+    ['/player/8479318', '^/player/8479318/auston-matthews$'],
+  ];
+  for (const [from, to] of redirects)
+    await checkResource(
+      from,
+      (res) =>
+        res.status === 301 && new RegExp(to).test(res.headers.get('location') ?? '')
+          ? null
+          : `status ${res.status} to ${res.headers.get('location')}, expected 301 to ${to}`,
+      { redirect: 'manual' },
+    );
   // The API through the frontend's /api proxy, the way the browser reaches it
   await checkResource(`/api/GameOdds/GetGame?gameId=${gameId(1)}`, (res, body) => {
     if (res.status !== 200) return `status ${res.status}`;

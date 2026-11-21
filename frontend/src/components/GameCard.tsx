@@ -17,6 +17,7 @@ import {
 import { useStrategy } from '../contexts/StrategyContext';
 import { TeamLogo } from './TeamLogo';
 import { useDisplayTimeZone } from '../hooks/useDisplayTimeZone';
+import { gamePagePath } from '../utils/pagePaths';
 
 type BetOutcome = 'won' | 'lost' | 'push';
 
@@ -238,7 +239,7 @@ export function GameCard({ game, oddsType = 'moneyline' }: GameCardProps) {
 
   return (
     <Link
-      to={`/game/${game.id}`}
+      to={gamePagePath(game)}
       state={{ game }}
       className={`card-hover glass rounded-xl px-5 py-4 block transition-all duration-200 active:scale-[0.98] border-surface-200 dark:border-white/[0.06]`}
       // Pointer (not mouse) events, so a touch sets the origin where the finger lands

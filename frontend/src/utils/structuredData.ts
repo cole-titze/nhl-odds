@@ -6,6 +6,7 @@
 // Teams, players and games carry an `@id` that is their page's canonical URL
 // (#169), so the same entity marked up on different pages (a player on his own
 // page, on his team's roster and in a game) is recognisably one thing.
+import { gamePagePath, playerPath } from './pagePaths';
 import type { GameOddsVM, GamePlayersVM, MatchupTeamVM, PlayerVM } from '../types';
 import { SITE_URL } from './site';
 import { shareImagePath } from '../og/paths';
@@ -74,14 +75,13 @@ export function breadcrumbs(items: { name: string; path: string }[]): JsonLd {
 }
 
 export const teamUrl = (id: number) => absoluteUrl(`/team/${id}`);
-export const playerUrl = (id: number) => absoluteUrl(`/player/${id}`);
-export const gameUrl = (id: number) => absoluteUrl(`/game/${id}`);
+export const playerUrl = (player: PersonRef) => absoluteUrl(playerPath(player.id, player));
 
 type PersonRef = { id: number; firstName: string; lastName: string };
 
 /** A player as a short Person: enough to name him and point at his page */
 export function personRef(player: PersonRef): JsonLd {
-  const url = playerUrl(player.id);
+  const url = playerUrl(player);
   return { '@type': 'Person', '@id': url, name: `${player.firstName} ${player.lastName}`, url };
 }
 
@@ -144,7 +144,7 @@ export function sportsEvent(game: GameOddsVM, players?: GamePlayersVM | null): J
   if (!homeTeam || !awayTeam) return null;
   const home = sportsTeam(homeTeam, players?.home);
   const away = sportsTeam(awayTeam, players?.away);
-  const url = gameUrl(game.id);
+  const url = absoluteUrl(gamePagePath(game));
   return {
     '@type': 'SportsEvent',
     '@id': url,
@@ -157,7 +157,7 @@ export function sportsEvent(game: GameOddsVM, players?: GamePlayersVM | null): J
     awayTeam: away,
     competitor: [{ '@id': away['@id'] }, { '@id': home['@id'] }],
     performer: [{ '@id': away['@id'] }, { '@id': home['@id'] }],
-    image: absoluteUrl(shareImagePath(`/game/${game.id}`)),
+    image: absoluteUrl(shareImagePath(gamePagePath(game))),
     organizer: NHL,
     superEvent: NHL,
     ...(game.venue

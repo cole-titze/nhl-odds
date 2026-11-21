@@ -11,6 +11,7 @@ import { DEFAULT_LEADER_STAT, LEADER_STATS, leadersView } from '../utils/leaders
 import { formatSeasonLabel, getCurrentSeason } from '../utils/season';
 import { itemList } from '../utils/structuredData';
 import type { StatLeaderVM } from '../types';
+import { playerPath } from '../utils/pagePaths';
 
 const SHOWN = 10;
 
@@ -34,7 +35,10 @@ function LeaderRow({ leader, format }: { leader: StatLeaderVM; format: (v: numbe
         {leader.rank}
       </td>
       <th scope="row" className="py-2 px-3 text-left font-normal">
-        <Link to={`/player/${leader.playerId}`} className="flex items-center gap-3 group min-w-0">
+        <Link
+          to={playerPath(leader.playerId, leader)}
+          className="flex items-center gap-3 group min-w-0"
+        >
           <img
             src={leader.headShot}
             alt=""
@@ -115,7 +119,7 @@ export function LeadersPage() {
                   `NHL leaders in ${data.label.toLowerCase()}`,
                   data.leaders.slice(0, SHOWN).map((l) => ({
                     name: `${l.firstName} ${l.lastName}`,
-                    path: `/player/${l.playerId}`,
+                    path: playerPath(l.playerId, l),
                   })),
                 ),
               ]

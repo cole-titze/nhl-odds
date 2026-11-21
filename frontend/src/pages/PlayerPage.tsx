@@ -9,6 +9,8 @@ import {
 import { useFetch } from '../hooks/useFetch';
 import { getPlayer } from '../api/players';
 import { forwardClientIp } from '../api/client';
+import { gamePath, idParam, playerPath, redirectToPath } from '../utils/pagePaths';
+import { useCanonicalPath } from '../hooks/useCanonicalPath';
 import { getCurrentSeason, formatSeasonLabel } from '../utils/season';
 import { formatShortDate } from '../utils/dates';
 import { useDisplayTimeZone } from '../hooks/useDisplayTimeZone';
@@ -59,9 +61,14 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   const season = seasonFrom(new URL(request.url).searchParams);
   let player: PlayerVM | undefined;
   try {
-    player = await getPlayerForPage(params.playerId!, season, forwardClientIp(request));
+    player = await getPlayerForPage(idParam(params.playerId)!, season, forwardClientIp(request));
   } catch {
     return null;
+  }
+  // Old id-only links move to the page's named URL
+  if (player) {
+    const moved = redirectToPath(request, playerPath(player.id, player));
+    if (moved) throw moved;
   }
   return player ? { player } : data({ player: null }, { status: 404 });
 }
@@ -74,6 +81,12 @@ const th = 'py-3 px-3 font-semibold';
 const thNum = `${th} text-center`;
 const td = 'py-2.5 px-3';
 const tdNum = `${td} text-center stat-number`;
+
+/** A game row's page: his team and the opponent, away team first */
+const playerGamePath = (g: PlayerGameVM) =>
+  g.isHome
+    ? gamePath(g.gameId, g.opponent.teamName, g.team?.teamName, g.gameDate)
+    : gamePath(g.gameId, g.team?.teamName, g.opponent.teamName, g.gameDate);
 
 const RESULT_LABELS = { W: 'Win', L: 'Loss', OTL: 'Overtime loss' } as const;
 
@@ -100,7 +113,7 @@ function ResultBadge({ game }: { game: PlayerGameVM }) {
 
 export function PlayerPage() {
   const loaded = useLoaderData<typeof loader>();
-  const { playerId } = useParams();
+  const playerId = idParam(useParams().playerId);
   const { timeZone, locales } = useDisplayTimeZone();
   const [searchParams, setSearchParams] = useSearchParams();
   const season = seasonFrom(searchParams);
@@ -116,6 +129,7 @@ export function PlayerPage() {
     loaded,
   );
   const player = fetched?.player;
+  useCanonicalPath(player && String(player.id) === playerId ? playerPath(player.id, player) : null);
 
   if (loading) {
     return (
@@ -155,7 +169,7 @@ export function PlayerPage() {
   const crumbs: Crumb[] = [
     { name: 'Teams', path: '/teams' },
     ...(team && teamName ? [{ name: teamName, path: `/team/${team.id}` }] : []),
-    { name, path: `/player/${player.id}` },
+    { name, path: playerPath(player.id, player) },
   ];
   const totals = player.seasonTotals;
   const born = player.birthDate
@@ -356,7 +370,7 @@ export function PlayerPage() {
                   >
                     <td className={`${td} font-mono text-xs`}>
                       <Link
-                        to={`/game/${g.gameId}`}
+                        to={playerGamePath(g)}
                         className="inline-block py-0.5 hover:text-accent-600 dark:hover:text-accent-400 hover:underline"
                       >
                         {formatShortDate(g.gameDate, timeZone)}
