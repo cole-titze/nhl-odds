@@ -54,14 +54,15 @@ BEGIN
                 today + (g.days - 1) * interval '1 day');
     END LOOP;
 
-    -- Box scores for the Leaders page (#182): game 1 (TOR 4, BOS 2). Every real player has a BirthDate (the
-    -- Player page fails without one), so these do too
+    -- Box scores for the Leaders page (#182): game 1 (TOR 4, BOS 2). Every real player has a birth date
+    -- and place (the Player page fails on a null one), so these do too
     INSERT INTO "Player" ("Id", "FirstName", "LastName", "IsActive", "CurrentTeamId", "HeadShot", "HeroImage",
-        "HeightInInches", "WeightInPounds", "IsInTopOneHundredAllTime", "IsInHallOfFame", "BirthDate") VALUES
-        (8479318, 'Auston', 'Matthews', TRUE, 10, '/favicon.svg', '', 75, 215, FALSE, FALSE, '1997-09-17'),
-        (8478483, 'Mitch', 'Marner', TRUE, 10, '/favicon.svg', '', 72, 180, FALSE, FALSE, '1997-09-17'),
-        (8479361, 'Joseph', 'Woll', TRUE, 10, '/favicon.svg', '', 76, 203, FALSE, FALSE, '1997-09-17'),
-        (8473419, 'Brad', 'Marchand', TRUE, 6, '/favicon.svg', '', 69, 181, FALSE, FALSE, '1997-09-17');
+        "HeightInInches", "WeightInPounds", "IsInTopOneHundredAllTime", "IsInHallOfFame", "BirthDate",
+        "BirthCity", "BirthStateProvince", "BirthCountry", "ShopLink", "TwitterLink", "WatchLink", "PlayerSlug") VALUES
+        (8479318, 'Auston', 'Matthews', TRUE, 10, '/favicon.svg', '', 75, 215, FALSE, FALSE, '1997-09-17', 'Toronto', 'ON', 'CAN', '', '', '', ''),
+        (8478483, 'Mitch', 'Marner', TRUE, 10, '/favicon.svg', '', 72, 180, FALSE, FALSE, '1997-09-17', 'Toronto', 'ON', 'CAN', '', '', '', ''),
+        (8479361, 'Joseph', 'Woll', TRUE, 10, '/favicon.svg', '', 76, 203, FALSE, FALSE, '1997-09-17', 'Toronto', 'ON', 'CAN', '', '', '', ''),
+        (8473419, 'Brad', 'Marchand', TRUE, 6, '/favicon.svg', '', 69, 181, FALSE, FALSE, '1997-09-17', 'Toronto', 'ON', 'CAN', '', '', '', '');
     INSERT INTO "GameSkaterStats" ("GameId", "PlayerId", "TeamId", "Goals", "Assists", "PlusMinus", "PenaltyMinutes",
         "Hits", "PowerPlayGoals", "ShotsOnGoal", "FaceOffWinningPctg", "BlockedShots", "Giveaways", "Takeaways",
         "TimeOnIceSeconds", "Position") VALUES
