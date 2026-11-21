@@ -14,7 +14,7 @@ export const positionName = (code: PositionCode | null) => (code ? POSITION_NAME
 export const playerName = (p: { firstName: string; lastName: string }) =>
   `${p.firstName} ${p.lastName}`;
 
-export const playerPath = (id: number) => `/player/${id}`;
+export { playerPath } from './pagePaths';
 
 /** Rosters come forwards, then defense, then goalies; this splits them for headings */
 export function positionGroups<T extends { position: PositionCode }>(players: T[]) {

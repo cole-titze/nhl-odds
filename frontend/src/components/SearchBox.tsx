@@ -10,6 +10,7 @@ import {
 import { TeamLogo } from './TeamLogo';
 import { Spinner } from './Loading';
 import { useDelayedFlag } from '../hooks/useDelayedFlag';
+import { gamePath, playerPath } from '../utils/pagePaths';
 
 // The panel under the box, list or message: straight off the box's bottom edge, its width from lg (where the box
 // grows to w-72); below lg the box is narrower, so the panel sticks out to the left with its own top edge and
@@ -86,14 +87,14 @@ function optionsFor(results: SuggestResults, text: string): Option[] {
     ...results.players.map((p) => ({
       key: `p${p.playerId}`,
       group: 'Players' as const,
-      to: `/player/${p.playerId}`,
+      to: playerPath(p.playerId, p.name),
       label: p.name,
       detail: [p.position, p.teamAbbreviation].filter(Boolean).join(' · ') || undefined,
     })),
     ...results.games.map((g) => ({
       key: `g${g.gameId}`,
       group: 'Games' as const,
-      to: `/game/${g.gameId}`,
+      to: gamePath(g.gameId),
       label: `${g.away.abbreviation} @ ${g.home.abbreviation}`,
       detail: gameDetail(g),
     })),

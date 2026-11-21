@@ -29,6 +29,7 @@ import { Breadcrumbs, type Crumb } from '../components/Breadcrumbs';
 import { StatCard } from '../components/StatCard';
 import { playerName, playerPath, positionGroups, positionName } from '../utils/players';
 import type { RosterPlayerVM } from '../types';
+import { gamePagePath } from '../utils/pagePaths';
 
 // The game log starts with the games around the last one played; the rest are behind a button
 const LOG_GAMES_SHOWN = 10;
@@ -310,7 +311,7 @@ export function TeamDetailPage() {
                       key={game.id}
                       onClick={(e) => {
                         if (!(e.target as HTMLElement).closest('a'))
-                          navigate(`/game/${game.id}`, { state: { game } });
+                          navigate(gamePagePath(game), { state: { game } });
                       }}
                       className={`border-b border-surface-100 dark:border-white/[0.03] transition-colors cursor-pointer ${
                         correct
@@ -322,7 +323,7 @@ export function TeamDetailPage() {
                     >
                       <td className="py-3 px-4 font-mono text-xs">
                         <Link
-                          to={`/game/${game.id}`}
+                          to={gamePagePath(game)}
                           state={{ game }}
                           className="hover:text-accent-600 dark:hover:text-accent-400 hover:underline"
                         >
@@ -474,7 +475,7 @@ function Roster({ players, heading }: { players: RosterPlayerVM[]; heading: stri
               {group.players.map((p) => (
                 <li key={p.id}>
                   <Link
-                    to={playerPath(p.id)}
+                    to={playerPath(p.id, p)}
                     className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-surface-100 dark:hover:bg-white/[0.04] group"
                   >
                     <img

@@ -260,6 +260,8 @@ export interface PlayerGameVM {
   gameType: number;
   teamId: number;
   isHome: boolean;
+  /** His team in that game */
+  team: PlayerTeamVM;
   opponent: PlayerTeamVM;
   teamGoals: number;
   opponentGoals: number;
@@ -352,6 +354,8 @@ export interface GamePlayersVM {
 /** A player and when their last game started, for the sitemap */
 export interface ActivePlayerVM {
   id: number;
+  firstName: string;
+  lastName: string;
   lastGameDate: string;
 }
 

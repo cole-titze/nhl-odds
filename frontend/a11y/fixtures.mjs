@@ -202,6 +202,7 @@ const playerGames = games
       gameType: g.gameType,
       teamId: 10,
       isHome: true,
+      team: TOR_TEAM,
       opponent: (({ id, locationName, teamName, logoUri }) => ({
         id,
         locationName,
@@ -379,10 +380,25 @@ const responses = {
   // Everyone's last game (#171): this season's rosters, a retired player, and
   // two bad rows the sitemap must leave out (SITEMAP_LEFT_OUT)
   GetSitemapPlayers: [
-    ...[...torRoster, ...bosRoster].map((p) => ({ id: p.id, lastGameDate: games[34].gameDate })),
-    { id: SITEMAP_RETIRED.id, lastGameDate: SITEMAP_RETIRED.lastGameDate },
-    { id: SITEMAP_LEFT_OUT[0], lastGameDate: games[70].gameDate },
-    { id: SITEMAP_LEFT_OUT[1], lastGameDate: 'not a date' },
+    ...[...torRoster, ...bosRoster].map((p) => ({
+      id: p.id,
+      firstName: p.firstName,
+      lastName: p.lastName,
+      lastGameDate: games[34].gameDate,
+    })),
+    {
+      id: SITEMAP_RETIRED.id,
+      firstName: retiredPlayer.firstName,
+      lastName: retiredPlayer.lastName,
+      lastGameDate: SITEMAP_RETIRED.lastGameDate,
+    },
+    {
+      id: SITEMAP_LEFT_OUT[0],
+      firstName: 'Future',
+      lastName: 'Game',
+      lastGameDate: games[70].gameDate,
+    },
+    { id: SITEMAP_LEFT_OUT[1], firstName: 'Bad', lastName: 'Date', lastGameDate: 'not a date' },
   ],
   GetBestStrategies: [
     {
@@ -784,15 +800,24 @@ export function mockApi(url) {
   return Object.hasOwn(responses, action) ? responses[action] : {};
 }
 
-// One page of each type. The Lighthouse check (lighthouse/run.mjs) scores the same list, minus /admin
+/** A page's readable URL words, as src/utils/pagePaths.ts makes them (plain ASCII names only) */
+export const slug = (...words) =>
+  words
+    .join(' ')
+    .toLowerCase()
+    .replace(/['.]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+// One page of each type, by their named URLs (an id-only one redirects). The Lighthouse check (lighthouse/run.mjs) scores the same list, minus /admin
 export function pagesFor() {
   return [
     '/',
     '/teams',
     '/team/10',
-    `/game/${games[33].id}`,
-    '/player/8479318',
-    `/player/${retiredPlayer.id}`,
+    `/game/${games[33].id}-${slug(games[33].awayTeam.teamName, 'at', games[33].homeTeam.teamName)}`,
+    '/player/8479318-auston-matthews',
+    `/player/${retiredPlayer.id}-${slug(retiredPlayer.firstName, retiredPlayer.lastName)}`,
     '/strategies',
     '/track-record',
     '/leaders',

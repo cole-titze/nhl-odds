@@ -34,13 +34,13 @@ const PAGES = [
     text: ['Toronto Maple Leafs', '1-0-0', 'Bruins', 'Oilers'],
   },
   {
-    path: `/game/${gameId(1)}`,
+    path: `/game/${gameId(1)}-bruins-at-maple-leafs`,
     title: 'Boston Bruins at Toronto Maple Leafs',
     html: ['Boston Bruins at Toronto Maple Leafs', 'DraftKings'],
     text: ['Final', 'DraftKings', 'Kalshi', 'Correct'],
   },
   {
-    path: `/game/${gameId(5)}`,
+    path: `/game/${gameId(5)}-flames-at-maple-leafs`,
     title: 'Calgary Flames at Toronto Maple Leafs',
     html: ['Calgary Flames at Toronto Maple Leafs'],
     text: ['VS', 'DraftKings'],
@@ -93,8 +93,8 @@ const PAGES = [
 const failures = [];
 const fail = (where, message) => failures.push(`${where}: ${message}`);
 
-async function checkResource(path, check) {
-  const res = await fetch(BASE + path);
+async function checkResource(path, check, init) {
+  const res = await fetch(BASE + path, init);
   const body = await res.text();
   const problem = check(res, body);
   if (problem) fail(path, problem);
@@ -172,6 +172,21 @@ try {
         ? null
         : 'no /team/10 entry',
   );
+  // Old id-only links (and wrong names) move to the page's named URL, query string kept
+  const redirects = [
+    [`/game/${gameId(1)}`, `/game/${gameId(1)}-bruins-at-maple-leafs`],
+    [`/game/${gameId(1)}-old-name?x=1`, `/game/${gameId(1)}-bruins-at-maple-leafs?x=1`],
+    ['/player/8479318', '/player/8479318-auston-matthews'],
+  ];
+  for (const [from, to] of redirects)
+    await checkResource(
+      from,
+      (res) =>
+        res.status === 301 && res.headers.get('location') === to
+          ? null
+          : `status ${res.status} to ${res.headers.get('location')}, expected 301 to ${to}`,
+      { redirect: 'manual' },
+    );
   // The API through the frontend's /api proxy, the way the browser reaches it
   await checkResource(`/api/GameOdds/GetGame?gameId=${gameId(1)}`, (res, body) => {
     if (res.status !== 200) return `status ${res.status}`;
