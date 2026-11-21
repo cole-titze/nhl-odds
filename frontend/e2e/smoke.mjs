@@ -173,6 +173,9 @@ try {
         ? null
         : 'no /team/10 entry',
   );
+  // The pages above use up most of the API's rate limit (60 requests, 2 more a second), and a
+  // rate-limited page renders without the redirect; a full bucket first
+  await new Promise((r) => setTimeout(r, 30_000));
   // Old id-only links (and wrong names) move to the page's named URL, query string kept
   const DAY = '\\d{4}-\\d{2}-\\d{2}';
   const redirects = [
