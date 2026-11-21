@@ -1,4 +1,5 @@
 import argparse
+import os
 from datetime import datetime, timezone
 
 from .config import get_db_config
@@ -44,10 +45,14 @@ parser = argparse.ArgumentParser(description="NHL Game Predictor")
 parser.add_argument(
     "--mode",
     choices=["predict", "backfill", "test"],
-    default="predict",
+    # The container image sets the mode through PREDICTOR_MODE (it has no shell to expand it)
+    default=os.environ.get("PREDICTOR_MODE", "predict"),
     help="predict: upcoming games. backfill: walk-forward all history. test: experiment with all models.",
 )
 args = parser.parse_args()
+# argparse only checks choices for values given on the command line, not the env default
+if args.mode not in ("predict", "backfill", "test"):
+    parser.error(f"invalid PREDICTOR_MODE: {args.mode!r}")
 
 job_name = _MODE_TO_JOB.get(args.mode)
 _update_job_status(job_name, "running")
