@@ -176,9 +176,10 @@ try {
   // Old id-only links (and wrong names) move to the page's named URL, query string kept
   const DAY = '\\d{4}-\\d{2}-\\d{2}';
   const redirects = [
-    [`/game/${gameId(1)}`, `^/game/${gameId(1)}-bruins-at-maple-leafs-${DAY}$`],
-    [`/game/${gameId(1)}-old-name?x=1`, `^/game/${gameId(1)}-bruins-at-maple-leafs-${DAY}\\?x=1$`],
-    ['/player/8479318', '^/player/8479318-auston-matthews$'],
+    [`/game/${gameId(1)}`, `^/game/${gameId(1)}/bruins-at-maple-leafs-${DAY}$`],
+    [`/game/${gameId(1)}/old-name?x=1`, `^/game/${gameId(1)}/bruins-at-maple-leafs-${DAY}\\?x=1$`],
+    [`/game/${gameId(1)}/`, `^/game/${gameId(1)}/bruins-at-maple-leafs-${DAY}$`],
+    ['/player/8479318', '^/player/8479318/auston-matthews$'],
   ];
   for (const [from, to] of redirects)
     await checkResource(

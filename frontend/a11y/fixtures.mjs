@@ -817,7 +817,7 @@ const centralDay = (utc) =>
 
 /** A game's named URL (src/utils/pagePaths.ts gamePagePath) */
 export const gameUrlPath = (g) =>
-  `/game/${g.id}-${slug(...(g.awayTeam && g.homeTeam ? [g.awayTeam.teamName, 'at', g.homeTeam.teamName] : []), centralDay(g.gameDate))}`;
+  `/game/${g.id}/${slug(...(g.awayTeam && g.homeTeam ? [g.awayTeam.teamName, 'at', g.homeTeam.teamName] : []), centralDay(g.gameDate))}`;
 
 // One page of each type, by their named URLs (an id-only one redirects). The Lighthouse check (lighthouse/run.mjs) scores the same list, minus /admin
 export function pagesFor() {
@@ -826,8 +826,8 @@ export function pagesFor() {
     '/teams',
     '/team/10',
     gameUrlPath(games[33]),
-    '/player/8479318-auston-matthews',
-    `/player/${retiredPlayer.id}-${slug(retiredPlayer.firstName, retiredPlayer.lastName)}`,
+    '/player/8479318/auston-matthews',
+    `/player/${retiredPlayer.id}/${slug(retiredPlayer.firstName, retiredPlayer.lastName)}`,
     '/strategies',
     '/track-record',
     '/leaders',

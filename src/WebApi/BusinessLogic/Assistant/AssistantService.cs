@@ -230,7 +230,7 @@ public class AssistantService(
             For a player, call find_players with his name to get his ID, then get_player.
             For "who leads the league in ..." questions (and the /leaders page), call get_stat_leaders.
             The user is on the page "{page ?? "/"}". If it's /game/{"{id}"}, /team/{"{id}"} or /player/{"{id}"} (game and player
-            pages add names after the ID, e.g. /player/8478402-connor-mcdavid), that ID is what "this game", "this team"
+            pages add names after the ID as another part, e.g. /player/8478402/connor-mcdavid), that ID is what "this game", "this team"
             or "this player" means.
             This is a hobby project; don't give betting advice beyond describing what the data shows.
             """;

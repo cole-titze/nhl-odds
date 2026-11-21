@@ -37,7 +37,7 @@ public class PlayerGetter : IPlayerGetter
     public async Task<List<ActivePlayerVM>> GetSitemapPlayers(DateTime nowUtc)
     {
         var players = await _playerRepository.GetPlayersLastGames();
-        // Names for the pages' URLs (/player/8478402-connor-mcdavid)
+        // Names for the pages' URLs (/player/8478402/connor-mcdavid)
         var names = (await _playerRepository.GetPlayerNames()).ToDictionary(n => n.Id);
         return players
             .Where(p => p.LastGameDateUTC <= nowUtc)

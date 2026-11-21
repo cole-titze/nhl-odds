@@ -1,8 +1,8 @@
 import { redirect } from 'react-router';
 import { centralDay } from './dates';
 
-// Readable page URLs: the id, then the names, e.g. /player/8478402-connor-mcdavid and
-// /game/2026020123-oilers-at-maple-leafs-2026-11-21 (the game's day in Central time, like
+// Readable page URLs: the id, then the names as another part of the path, e.g. /player/8478402/connor-mcdavid and
+// /game/2026020123/oilers-at-maple-leafs-2026-11-21 (the game's day in Central time, like
 // the Games feed). Only the id counts when a page loads; a URL with other words (or none:
 // /game/2026020123 works) redirects to the one these build.
 
@@ -32,7 +32,7 @@ export function slugify(text: string): string {
 
 function withSlug(base: string, id: number, words: string): string {
   const slug = slugify(words);
-  return slug ? `${base}/${id}-${slug}` : `${base}/${id}`;
+  return slug ? `${base}/${id}/${slug}` : `${base}/${id}`;
 }
 
 type PlayerNames = { firstName: string; lastName: string };
@@ -66,7 +66,7 @@ export const gamePagePath = (game: {
   homeTeam: { teamName: string } | null;
 }) => gamePath(game.id, game.awayTeam?.teamName, game.homeTeam?.teamName, game.gameDate);
 
-/** The id at the start of a :gameId / :playerId route param ("8478402-connor-mcdavid" → "8478402"); other params as they are */
+/** The id in a :gameId / :playerId route param (digits; anything after a hyphen is dropped); other params as they are */
 export function idParam(param: string | undefined): string | undefined {
   return param?.match(/^(\d+)(?:-|$)/)?.[1] ?? param;
 }
