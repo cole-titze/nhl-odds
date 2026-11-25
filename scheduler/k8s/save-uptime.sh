@@ -3,6 +3,9 @@
 # into one "UptimeDay" row per Central Time day, today (so far) and the days before it that Prometheus
 # still has (it keeps 15). Rows are only replaced by counts with at least as many probes, so a
 # Prometheus that lost history can't wipe out a day already saved. A day with no probes gets no row.
+# A failed probe only counts as down when the probe before or after it failed too: a lone failure is
+# one slow request through the home link and Cloudflare (it times out at 10s), not an outage, and a
+# real outage still shows up from its first minute once the second probe fails.
 set -eu
 
 PROM="${PROMETHEUS_URL:-http://cluster-monitoring-kube-pr-prometheus.default:9090}"
@@ -15,6 +18,22 @@ query() {
     curl -sSf --max-time 30 "$PROM/api/v1/query" \
         --data-urlencode "query=$1" --data-urlencode "time=$2" \
         | jq -er '.data.result[0].value[1] // ""'
+}
+
+# Probes in the SPAN seconds before END that count as up: successes plus lone failures (the probes
+# on either side succeeded). Reads two extra minutes on each side so a run of failures that crosses
+# midnight counts on both days.
+up_probes() {
+    curl -sSf --max-time 30 "$PROM/api/v1/query" \
+        --data-urlencode "query=probe_success{instance=\"$TARGET\"}[$(($2 + 240))s]" \
+        --data-urlencode "time=$(($1 + 120))" \
+        | jq -er --argjson end "$1" --argjson start "$(($1 - $2))" '
+            [.data.result[0].values[] | {t: .[0], up: (.[1] == "1")}] as $p
+            | [range($p | length) as $i | $p[$i]
+                | select(.t > $start and .t <= $end)
+                | select(.up
+                    or (($i == 0 or $p[$i - 1].up) and ($i == ($p | length) - 1 or $p[$i + 1].up)))]
+            | length'
 }
 
 # Each day, when it ends (the next Central midnight, or now for today) and how many seconds of it
@@ -36,7 +55,7 @@ while read -r DAY END SPAN; do
     SELECTOR="{instance=\"$TARGET\"}[${SPAN}s]"
     PROBES=$(query "count_over_time(probe_success$SELECTOR)" "$END")
     [ -n "$PROBES" ] || { echo "$DAY: no probes"; continue; }
-    SUCCESSFUL=$(query "sum_over_time(probe_success$SELECTOR)" "$END")
+    SUCCESSFUL=$(up_probes "$END" "$SPAN")
     AVG_MS=$(query "avg_over_time(probe_duration_seconds$SELECTOR) * 1000" "$END")
     EXPECTED=$((SPAN / INTERVAL))
     echo "$DAY: $SUCCESSFUL/$PROBES probes up ($EXPECTED expected), ${AVG_MS:-?} ms average"
