@@ -81,7 +81,7 @@ async function startPreview() {
   );
   if (inUse) throw new Error(`port ${PORT} is already in use; stop whatever is serving ${BASE}`);
   // The production server, with an API address nothing answers on: the
-  // loaders fail, so pages fetch in the browser, where the mocks answer
+  // loaders fail (pages answer 503), so pages fetch in the browser, where the mocks answer
   const server = spawn(process.execPath, ['server.mjs'], {
     // stderr shows server-side render errors in the scan's output
     stdio: ['ignore', 'ignore', 'inherit'],
@@ -89,7 +89,9 @@ async function startPreview() {
   });
   for (let i = 0; i < 60; i++) {
     try {
-      if ((await fetch(BASE)).ok) return server;
+      // Any answer means it's up: with no API the pages are 503s
+      await fetch(BASE);
+      return server;
     } catch {
       /* not up yet */
     }
