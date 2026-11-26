@@ -17,13 +17,13 @@ import type {
 import { Winner } from '../types';
 import { getGame, getPredictionFactors } from '../api/gameOdds';
 import { getGamePlayers } from '../api/players';
-import { gamePagePath, idParam, redirectToPath } from '../utils/pagePaths';
+import { gamePagePath, idParam, redirectToPath, seasonOfGame, teamPath } from '../utils/pagePaths';
 import { longGameDay } from '../utils/dates';
 import { useCanonicalPath } from '../hooks/useCanonicalPath';
 import { getGameLineup } from '../api/lineup';
 import { getOddsMovement } from '../api/oddsMovement';
 import { useFetch } from '../hooks/useFetch';
-import { forwardClientIp } from '../api/client';
+import { apiUnavailable, forwardClientIp } from '../api/client';
 import { useDisplayTimeZone } from '../hooks/useDisplayTimeZone';
 import { useOddsFormatContext } from '../contexts/OddsFormatContext';
 import { formatOdds, formatAmericanOdds } from '../utils/oddsFormat';
@@ -91,7 +91,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
       /^\d+$/.test(gameId) ? getPredictionFactors(Number(gameId), init).catch(() => null) : null,
     ]);
   } catch {
-    return null;
+    return apiUnavailable();
   }
   // Old id-only links (and a renamed team's) move to the page's named URL
   if (game) {
@@ -238,6 +238,7 @@ export function GamePage() {
             team={game.awayTeam}
             isWinner={game.hasBeenPlayed && game.winner === Winner.AWAY}
             played={game.hasBeenPlayed}
+            season={seasonOfGame(game.id)}
           />
           <div className="flex flex-col items-center gap-1">
             <div
@@ -282,6 +283,7 @@ export function GamePage() {
             team={game.homeTeam}
             isWinner={game.hasBeenPlayed && game.winner === Winner.HOME}
             played={game.hasBeenPlayed}
+            season={seasonOfGame(game.id)}
           />
         </div>
       </div>
@@ -623,9 +625,11 @@ function TeamHeader({
   team,
   isWinner,
   played,
+  season,
 }: {
   team: GameOddsVM['homeTeam'];
   isWinner: boolean;
+  season: number;
   played: boolean;
 }) {
   if (!team)
@@ -653,7 +657,7 @@ function TeamHeader({
         )}
       </div>
       <Link
-        to={`/team/${team.id}`}
+        to={teamPath(team.id, season)}
         className="text-center leading-tight hover:text-accent-600 dark:hover:text-accent-400 transition-colors"
       >
         <div className="text-xs text-surface-600 dark:text-surface-400">{team.locationName}</div>

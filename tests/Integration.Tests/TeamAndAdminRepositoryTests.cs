@@ -50,6 +50,20 @@ public class TeamAndAdminRepositoryTests
     }
 
     [TestMethod]
+    public async Task GetLastSeason_FormerTeam_ShouldBeItsLatestSeason()
+    {
+        await Seed.Teams(
+            new Seed.Team(27, "PHX", "Phoenix", "Coyotes", Season: 2012),
+            new Seed.Team(27, "PHX", "Phoenix", "Coyotes", Season: 2013));
+        await using var db = TestContexts.Web();
+        var repo = new TeamRepository(db);
+
+        (await repo.GetLastSeason(27)).Should().Be(2013);
+        (await repo.GetLastSeason(Seed.Leafs)).Should().Be(Seed.Season);
+        (await repo.GetLastSeason(99)).Should().BeNull();
+    }
+
+    [TestMethod]
     public async Task GetHealthChecks_ShouldCountWhatEachSeasonIsMissing()
     {
         await Seed.Games(

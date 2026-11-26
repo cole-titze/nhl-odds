@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
+  data,
   Link,
   useLoaderData,
   useParams,
@@ -8,9 +9,9 @@ import {
   type LoaderFunctionArgs,
 } from 'react-router';
 import { useFetch } from '../hooks/useFetch';
-import { getTeam } from '../api/teams';
+import { getTeamPage } from '../api/teams';
 import { getTeamRoster } from '../api/players';
-import { forwardClientIp } from '../api/client';
+import { apiUnavailable, forwardClientIp } from '../api/client';
 import { formatSeasonLabel, getCurrentSeason } from '../utils/season';
 import { InjuredReserveBadge } from '../components/InjuredReserveBadge';
 import { formatShortDate } from '../utils/dates';
@@ -47,19 +48,30 @@ function recentGames<T extends { hasBeenPlayed: boolean }>(games: T[]): T[] {
   return games.slice(start, start + LOG_GAMES_SHOWN);
 }
 
-function seasonFrom(searchParams: URLSearchParams) {
-  return Number(searchParams.get('season')) || getCurrentSeason();
+/** The ?season asked for; none means this season (or a former team's last one) */
+function seasonParam(searchParams: URLSearchParams) {
+  return Number(searchParams.get('season')) || null;
 }
 
 // First load renders on the server; client-side navigation fetches in the page as before
 export async function loader({ params, request }: LoaderFunctionArgs) {
-  const season = seasonFrom(new URL(request.url).searchParams);
+  const asked = seasonParam(new URL(request.url).searchParams);
+  const teamId = Number(params.teamId);
   const init = forwardClientIp(request);
-  const [team, roster] = await Promise.all([
-    getTeam(Number(params.teamId), season, init).catch(() => null),
-    getTeamRoster(Number(params.teamId), season, init).catch(() => null),
-  ]);
-  return { team, roster };
+  const rosterFor = (season: number) => getTeamRoster(teamId, season, init).catch(() => null);
+  const askedRoster = rosterFor(asked ?? getCurrentSeason());
+  let page;
+  try {
+    page = await getTeamPage(teamId, asked, init);
+  } catch {
+    return apiUnavailable();
+  }
+  // The page still renders its "Team not found" message, with a real 404 status for crawlers
+  if (!page.team) return data({ page, roster: null }, { status: 404 });
+  const roster = await (page.season === (asked ?? getCurrentSeason())
+    ? askedRoster
+    : rosterFor(page.season));
+  return { page, roster };
 }
 
 export async function clientLoader() {
@@ -73,17 +85,20 @@ export function TeamDetailPage() {
   const { timeZone } = useDisplayTimeZone();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const season = seasonFrom(searchParams);
+  const asked = seasonParam(searchParams);
 
   const {
-    data: team,
+    data: page,
     loading,
     error,
-  } = useFetch(() => getTeam(Number(teamId), season), [teamId, season], initial?.team);
+  } = useFetch(() => getTeamPage(Number(teamId), asked), [teamId, asked], initial?.page);
+  const team = page?.team;
+  // The season shown: the one asked for, or the one getTeamPage settled on
+  const season = page?.season ?? asked ?? getCurrentSeason();
   const { data: roster } = useFetch(
-    () => getTeamRoster(Number(teamId), season),
-    [teamId, season],
-    initial?.roster,
+    () => (page?.team ? getTeamRoster(Number(teamId), page.season) : Promise.resolve(null)),
+    [teamId, page?.season],
+    initial?.page.season === page?.season ? initial?.roster : null,
   );
 
   const kalshiStats = useMemo(() => {
@@ -134,7 +149,7 @@ export function TeamDetailPage() {
   if (error)
     return (
       <>
-        <PageTitle title={error === 'Team not found.' ? 'Team not found' : 'Team'} noindex />
+        <PageTitle title="Team" noindex />
         <div
           role="alert"
           className="glass rounded-xl text-center text-red-700 dark:text-red-400 py-8"

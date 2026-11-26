@@ -1,3 +1,4 @@
+import { data } from 'react-router';
 import { reportApiFailure } from '../utils/errorReporting';
 
 // In the browser the API is same-origin (/api is proxied). On the server it's
@@ -38,4 +39,13 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
 export function forwardClientIp(request: Request): RequestInit | undefined {
   const ip = request.headers.get('CF-Connecting-IP') ?? request.headers.get('X-Real-IP');
   return ip ? { headers: { 'CF-Connecting-IP': ip } } : undefined;
+}
+
+/**
+ * For a page loader whose API call failed: the page still renders and fetches in the
+ * browser, but with a 503 so crawlers come back later. A 200 would leave them the page's
+ * error state (noindex), and Googlebot can't fetch the data itself (robots.txt blocks /api/).
+ */
+export function apiUnavailable() {
+  return data(null, { status: 503, headers: { 'Retry-After': '600' } });
 }

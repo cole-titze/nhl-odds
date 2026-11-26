@@ -19,4 +19,9 @@ public class FakeTeamRepository : ITeamRepository
     {
         return Task.FromResult(_teams.FirstOrDefault(t => t.Team.Id == teamId));
     }
+
+    public Task<int?> GetLastSeason(int teamId)
+    {
+        return Task.FromResult(_teams.Any(t => t.Team.Id == teamId) ? (int?)2025 : null);
+    }
 }

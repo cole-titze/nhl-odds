@@ -8,7 +8,7 @@ import { Skeleton, StatCardSkeleton } from '../components/Skeleton';
 import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
 import { useFetch } from '../hooks/useFetch';
 import { getSeasonBookmakerOdds, getSeasonTeams } from '../api/teams';
-import { forwardClientIp } from '../api/client';
+import { apiUnavailable, forwardClientIp } from '../api/client';
 import { getCurrentSeason } from '../utils/season';
 import { calculateLogLoss } from '../utils/predictions';
 import { Winner } from '../types';
@@ -94,7 +94,7 @@ async function getPlayedSeasonTeams(season: number, init?: RequestInit) {
 // First load renders on the server with this season's data. Client-side
 // navigation skips it (clientLoader) and the page fetches as before.
 export async function loader({ request }: LoaderFunctionArgs) {
-  return getPlayedSeasonTeams(getCurrentSeason(), forwardClientIp(request)).catch(() => null);
+  return getPlayedSeasonTeams(getCurrentSeason(), forwardClientIp(request)).catch(apiUnavailable);
 }
 
 export async function clientLoader() {

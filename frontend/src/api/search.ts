@@ -6,6 +6,8 @@ export interface TeamResult {
   abbreviation: string;
   logoUri: string;
   active: boolean;
+  /** The latest season it played */
+  lastSeason: number;
 }
 
 export interface PlayerResult {

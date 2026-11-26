@@ -29,7 +29,7 @@ import { SearchIcon } from '../components/SearchBox';
 import { useDelayedFlag } from '../hooks/useDelayedFlag';
 import { playerPath } from '../utils/players';
 import { compareText } from '../utils/compareText';
-import { gamePath } from '../utils/pagePaths';
+import { gamePath, teamPath } from '../utils/pagePaths';
 
 // Typing waits this long before searching, so each keystroke isn't a request
 const TYPING_DELAY_MS = 300;
@@ -100,7 +100,7 @@ function TeamResults({ teams }: { teams: TeamResult[] }) {
       <ul>
         {teams.map((t) => (
           <li key={t.teamId}>
-            <Link to={`/team/${t.teamId}`} className={linkRowClass}>
+            <Link to={teamPath(t.teamId, t.active ? null : t.lastSeason)} className={linkRowClass}>
               <TeamLogo src={t.logoUri} alt="" className="h-8 w-8 shrink-0" />
               <span className="font-medium">{t.name}</span>
               <span className={`text-xs font-mono ${mutedClass}`}>{t.abbreviation}</span>

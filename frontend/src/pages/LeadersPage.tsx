@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLoaderData, useSearchParams, type LoaderFunctionArgs } from 'react-router';
 import { getStatLeaders } from '../api/leaders';
-import { forwardClientIp } from '../api/client';
+import { apiUnavailable, forwardClientIp } from '../api/client';
 import { SeasonSelector } from '../components/SeasonSelector';
 import { Skeleton } from '../components/Skeleton';
 import { TeamLogo } from '../components/TeamLogo';
@@ -11,7 +11,7 @@ import { DEFAULT_LEADER_STAT, LEADER_STATS, leadersView } from '../utils/leaders
 import { formatSeasonLabel, getCurrentSeason } from '../utils/season';
 import { itemList } from '../utils/structuredData';
 import type { StatLeaderVM } from '../types';
-import { playerPath } from '../utils/pagePaths';
+import { playerPath, teamPath } from '../utils/pagePaths';
 
 const SHOWN = 10;
 
@@ -19,7 +19,7 @@ const SHOWN = 10;
 // navigation and picking another stat or season fetch in the page
 export async function loader({ request }: LoaderFunctionArgs) {
   const { stat, season } = leadersView(new URL(request.url).searchParams);
-  return getStatLeaders(stat.key, season, forwardClientIp(request)).catch(() => null);
+  return getStatLeaders(stat.key, season, forwardClientIp(request)).catch(apiUnavailable);
 }
 
 export async function clientLoader() {
@@ -28,7 +28,15 @@ export async function clientLoader() {
 
 const th = 'py-2 px-3 font-semibold';
 
-function LeaderRow({ leader, format }: { leader: StatLeaderVM; format: (v: number) => string }) {
+function LeaderRow({
+  leader,
+  format,
+  season,
+}: {
+  leader: StatLeaderVM;
+  format: (v: number) => string;
+  season: number;
+}) {
   return (
     <tr className="border-t border-surface-200 dark:border-white/[0.06]">
       <td className="py-2 pr-3 text-right stat-number text-surface-500 dark:text-surface-400">
@@ -63,7 +71,7 @@ function LeaderRow({ leader, format }: { leader: StatLeaderVM; format: (v: numbe
       <td className="py-2 px-3">
         {leader.teamId ? (
           <Link
-            to={`/team/${leader.teamId}`}
+            to={teamPath(leader.teamId, season)}
             className="inline-flex items-center gap-1.5 hover:underline"
             title={leader.teamName}
           >
@@ -216,7 +224,7 @@ export function LeadersPage() {
                   </thead>
                   <tbody>
                     {shown.map((l) => (
-                      <LeaderRow key={l.playerId} leader={l} format={stat.format} />
+                      <LeaderRow key={l.playerId} leader={l} format={stat.format} season={season} />
                     ))}
                   </tbody>
                 </table>

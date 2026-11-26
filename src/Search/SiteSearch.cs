@@ -9,7 +9,7 @@ namespace Search;
 /// <summary>The text of a search and the date it names, if any ("oilers march 3" → "oilers", March 3).</summary>
 public record ParsedQuery(string Text, DateOnly? Date);
 
-public record TeamResult(int TeamId, string Name, string Abbreviation, string LogoUri, bool Active);
+public record TeamResult(int TeamId, string Name, string Abbreviation, string LogoUri, bool Active, int LastSeason);
 public record PlayerResult(int PlayerId, string Name, string? Position, int? TeamId, string? TeamName, string? TeamAbbreviation, bool IsActive, string Headshot);
 public record GameSideResult(int TeamId, string Name, string Abbreviation, int? Goals);
 public record GameResult(int GameId, string GameDate, DateTime StartTimeUtc, bool Played, GameSideResult Home, GameSideResult Away);
@@ -416,7 +416,7 @@ public static partial class SiteSearch
         T Source<T>(JsonNode hit) => hit["_source"].Deserialize<T>(SearchJson.Options)!;
 
         var teams = Hits(0).Select(Source<TeamDocument>)
-            .Select(t => new TeamResult(t.TeamId, t.Name, t.Abbreviation, t.LogoUri, t.Active)).ToList();
+            .Select(t => new TeamResult(t.TeamId, t.Name, t.Abbreviation, t.LogoUri, t.Active, t.LastSeason)).ToList();
         var players = Hits(1).Select(Source<PlayerDocument>)
             .Select(p => new PlayerResult(p.PlayerId, p.FullName, p.Position, p.TeamId, p.TeamName, p.TeamAbbreviation, p.IsActive, p.Headshot)).ToList();
         var games = Hits(2).Select(Source<GameDocument>)

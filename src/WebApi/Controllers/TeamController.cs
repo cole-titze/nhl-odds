@@ -56,4 +56,13 @@ public class TeamController
             () => _teamGetter.GetTeamStats(teamId, seasonStartYear), ApiCache.SizeOf, ApiCache.DateRangeLifetime);
         return teamVm is null ? Results.NotFound() : Results.Ok(teamVm);
     }
+
+    // A former team's page (no season asked for) shows its last season rather than a 404
+    [HttpGet]
+    public async Task<IResult> GetTeamLastSeason(int teamId)
+    {
+        var season = await _cache.GetOrSetAsync(ApiCache.TeamLastSeasonKey(teamId),
+            () => _teamGetter.GetLastSeason(teamId), _ => 1, ApiCache.DateRangeLifetime);
+        return season is null ? Results.NotFound() : Results.Ok(season);
+    }
 }

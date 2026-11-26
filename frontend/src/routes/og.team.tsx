@@ -1,12 +1,11 @@
 // /og/team/:teamId.png: a team's link preview (record, model accuracy, next game) for
-// the current season
+// the current season (a former team's last one)
 import type { LoaderFunctionArgs } from 'react-router';
 import { ApiError } from '../api/client';
-import { getTeam } from '../api/teams';
+import { getTeamPage } from '../api/teams';
 import { TeamCard, teamAbbrev, type TeamCardData } from '../og/cards';
 import { imageId } from '../og/paths';
 import { imageResponse, logoDataUri } from '../og/render.server';
-import { getCurrentSeason } from '../utils/season';
 import type { TeamVM } from '../types';
 
 function nextGame(team: TeamVM): TeamCardData['next'] {
@@ -27,11 +26,12 @@ function nextGame(team: TeamVM): TeamCardData['next'] {
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
   const id = imageId(params.file);
-  const season = getCurrentSeason();
   let team: TeamVM | null = null;
+  let season = 0;
   if (id != null) {
     try {
-      team = await getTeam(id, season);
+      // This season's, or a former team's last one, like its page
+      ({ team, season } = await getTeamPage(id, null));
     } catch (e) {
       if (!(e instanceof ApiError && (e.status === 404 || e.status === 400))) throw e;
     }

@@ -31,4 +31,6 @@ public class TeamGetter : ITeamGetter
         team = await _gameOddsGetter.BuildTeamGameOdds(team, seasonStartYear);
         return TeamToTeamVmMapper.Map(team);
     }
+
+    public Task<int?> GetLastSeason(int teamId) => _teamRepository.GetLastSeason(teamId);
 }

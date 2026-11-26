@@ -12,7 +12,7 @@ import {
   type InitialChunk,
 } from '../hooks/useBidirectionalGames';
 import { getAnchorDate, getGameOddsInDateRange } from '../api/gameOdds';
-import { forwardClientIp } from '../api/client';
+import { apiUnavailable, forwardClientIp } from '../api/client';
 import { formatDate, toDateInputValue } from '../utils/dates';
 import { getCurrentSeason } from '../utils/season';
 
@@ -91,7 +91,7 @@ type HomePosition = 'visible' | 'above' | 'below' | 'unloaded';
 // First load renders on the server with the games from the day before to the
 // day after today (or the nearest game day). Client-side navigation skips it
 // (clientLoader) and the feed loads in the browser as before.
-export async function loader({ request }: LoaderFunctionArgs): Promise<InitialChunk | null> {
+export async function loader({ request }: LoaderFunctionArgs) {
   const seasonStartYear = getCurrentSeason();
   const init = forwardClientIp(request);
   try {
@@ -99,9 +99,9 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<InitialCh
     const anchor = anchorDate ?? formatDate(new Date());
     const { lower, upper } = serverChunkRange(anchor);
     const games = await getGameOddsInDateRange(lower, upper, seasonStartYear, init);
-    return { seasonStartYear, anchorDate: anchor, lower, upper, games };
+    return { seasonStartYear, anchorDate: anchor, lower, upper, games } satisfies InitialChunk;
   } catch {
-    return null;
+    return apiUnavailable();
   }
 }
 

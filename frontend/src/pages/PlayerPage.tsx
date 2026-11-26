@@ -8,8 +8,15 @@ import {
 } from 'react-router';
 import { useFetch } from '../hooks/useFetch';
 import { getPlayer } from '../api/players';
-import { forwardClientIp } from '../api/client';
-import { gamePath, idParam, playerPath, redirectToPath } from '../utils/pagePaths';
+import { apiUnavailable, forwardClientIp } from '../api/client';
+import {
+  gamePath,
+  idParam,
+  playerPath,
+  redirectToPath,
+  seasonOfGame,
+  teamPath,
+} from '../utils/pagePaths';
 import { useCanonicalPath } from '../hooks/useCanonicalPath';
 import { getCurrentSeason, formatSeasonLabel } from '../utils/season';
 import { formatShortDate } from '../utils/dates';
@@ -63,7 +70,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   try {
     player = await getPlayerForPage(idParam(params.playerId)!, season, forwardClientIp(request));
   } catch {
-    return null;
+    return apiUnavailable();
   }
   // Old id-only links move to the page's named URL
   if (player) {
@@ -378,7 +385,7 @@ export function PlayerPage() {
                     </td>
                     <td className={td}>
                       <Link
-                        to={`/team/${g.opponent.id}`}
+                        to={teamPath(g.opponent.id, seasonOfGame(g.gameId))}
                         className="inline-flex items-center gap-2 py-0.5 hover:text-accent-600 dark:hover:text-accent-400 hover:underline"
                       >
                         <span className="w-4 text-xs text-surface-500 dark:text-surface-400">

@@ -10,7 +10,7 @@ import {
 import { TeamLogo } from './TeamLogo';
 import { Spinner } from './Loading';
 import { useDelayedFlag } from '../hooks/useDelayedFlag';
-import { gamePath, playerPath } from '../utils/pagePaths';
+import { gamePath, playerPath, teamPath } from '../utils/pagePaths';
 
 // The panel under the box, list or message: straight off the box's bottom edge, its width from lg (where the box
 // grows to w-72); below lg the box is narrower, so the panel sticks out to the left with its own top edge and
@@ -79,7 +79,7 @@ function optionsFor(results: SuggestResults, text: string): Option[] {
     ...results.teams.map((t) => ({
       key: `t${t.teamId}`,
       group: 'Teams' as const,
-      to: `/team/${t.teamId}`,
+      to: teamPath(t.teamId, t.active ? null : t.lastSeason),
       label: t.name,
       detail: t.active ? undefined : 'Former team',
       logo: { src: t.logoUri, alt: '' },

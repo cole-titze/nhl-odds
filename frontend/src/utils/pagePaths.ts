@@ -1,5 +1,6 @@
 import { redirect } from 'react-router';
 import { centralDay } from './dates';
+import { getCurrentSeason } from './season';
 
 // Readable page URLs: the id, then the names as another part of the path, e.g. /player/8478402/connor-mcdavid and
 // /game/2026020123/oilers-at-maple-leafs-2026-11-21 (the game's day in Central time, like
@@ -56,6 +57,17 @@ export function gamePath(
   const teams = awayName && homeName ? `${awayName} at ${homeName}` : '';
   const day = gameDate && !Number.isNaN(Date.parse(gameDate)) ? centralDay(gameDate) : '';
   return withSlug('/game', id, `${teams} ${day}`);
+}
+
+/** A game's season, from its id (2011020056 → 2011) */
+export const seasonOfGame = (gameId: number) => Math.floor(gameId / 1_000_000);
+
+/**
+ * A team's page for a season; this season (or none) leaves the query out. Links from past games
+ * name their season, so a former team's link doesn't land on a season it didn't play.
+ */
+export function teamPath(id: number, season?: number | null): string {
+  return season && season !== getCurrentSeason() ? `/team/${id}?season=${season}` : `/team/${id}`;
 }
 
 /** The page path for a game with its matchup teams (GameOddsVM) */

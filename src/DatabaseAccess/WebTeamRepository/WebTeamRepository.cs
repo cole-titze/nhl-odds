@@ -29,4 +29,12 @@ public class TeamRepository : ITeamRepository
             .FirstOrDefaultAsync();
         return dbTeam is null ? null : DbSeasonTeamToTeamStatsMapper.Map(dbTeam);
     }
+
+    public async Task<int?> GetLastSeason(int teamId)
+    {
+        return await _dbContext.SeasonTeam
+            .AsNoTracking()
+            .Where(x => x.TeamId == teamId)
+            .MaxAsync(x => (int?)x.SeasonStartYear);
+    }
 }

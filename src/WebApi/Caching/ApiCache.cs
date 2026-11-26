@@ -46,6 +46,7 @@ public static class ApiCache
     public static string AllTeamsKey(int seasonStartYear) => $"AllTeams_{seasonStartYear}";
     public static string SeasonTeamsKey(int seasonStartYear) => $"SeasonTeams_{seasonStartYear}";
     public static string TeamKey(int teamId, int seasonStartYear) => $"Team_{teamId}_{seasonStartYear}";
+    public static string TeamLastSeasonKey(int teamId) => $"TeamLastSeason_{teamId}";
     public static string GameOddsKey(DateRange dateRange, int seasonStartYear) =>
         $"GameOdds_{dateRange.StartDate:yyyy-MM-dd}_{dateRange.EndDate:yyyy-MM-dd}_{seasonStartYear}";
     public static string AnchorDateKey(int seasonStartYear) => $"AnchorDate_{seasonStartYear}";
