@@ -46,10 +46,14 @@ jobs:
       contents: read
     services:
       postgres:
-        image: postgres:18-alpine
+        # Debian rather than Alpine: Alpine has no `locale`, so initdb logs "no usable system
+        # locales were found" (prod's CNPG image is Debian too). --auth-local names the
+        # entrypoint's default, so initdb doesn't warn that it picked "trust" itself
+        image: postgres:18
         env:
           POSTGRES_PASSWORD: e2e
           POSTGRES_DB: nhl_e2e
+          POSTGRES_INITDB_ARGS: --auth-local=trust --auth-host=scram-sha-256
         ports:
           - 5432:5432
         options: >-
