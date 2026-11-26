@@ -5,13 +5,21 @@
 // or if the About page's FAQ markup doesn't match its visible questions.
 // Teams, players and games must carry their page's URL as `@id` (#169), so the
 // markup on different pages points at the same entities.
-// It also checks /sitemap.xml (#171): every player page is listed with a real,
-// past <lastmod>, retired players included, and bad dates are left out.
+// It also checks /sitemap.xml, a sitemap index: every file it lists answers and is
+// well formed; the pages file lists every player page with a real, past <lastmod>,
+// retired players included, and leaves bad dates out (#171); each season's file
+// lists its played games dated their day, and a past season's its team pages.
 //
 //   npm run build && npm run check-schema
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
-import { SITEMAP_LEFT_OUT, SITEMAP_RETIRED, mockApi, pagesFor } from '../a11y/fixtures.mjs';
+import {
+  SITEMAP_LEFT_OUT,
+  SITEMAP_OLD_GAME,
+  SITEMAP_RETIRED,
+  mockApi,
+  pagesFor,
+} from '../a11y/fixtures.mjs';
 
 const PORT = 4183;
 const API_PORT = 4184;
@@ -143,39 +151,48 @@ async function checkPage(path, problems) {
   console.log(`${path}: ${types.join(', ')}`);
 }
 
-// One sitemap file holds 50,000 URLs and 50 MB (see SITEMAP_URL_LIMIT in routes/sitemap.ts)
+// One sitemap file holds 50,000 URLs and 50 MB (see SITEMAP_URL_LIMIT in utils/sitemap.ts)
 const SITEMAP_MAX_URLS = 50_000;
 const SITEMAP_MAX_BYTES = 50 * 1024 * 1024;
+// A day of slack: lastmod is a Central-time day, and this is UTC's
+const tomorrow = () => new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+const realDay = (d) => /^\d{4}-\d{2}-\d{2}$/.test(d ?? '') && !Number.isNaN(Date.parse(d));
+const local = (loc) => loc.replace(SITE_URL, `http://localhost:${PORT}`);
 
-async function checkSitemap(problems) {
-  const res = await fetch(`http://localhost:${PORT}/sitemap.xml`);
+/** One sitemap file's <url> entries, after the checks every file gets */
+async function sitemapFile(name, problems) {
+  const res = await fetch(local(`${SITE_URL}${name}`));
   const xml = await res.text();
   if (!res.ok) {
-    problems.push(`/sitemap.xml: HTTP ${res.status}`);
-    return;
+    problems.push(`${name}: HTTP ${res.status}`);
+    return [];
   }
   const entries = [
     ...xml.matchAll(/<url><loc>([^<]+)<\/loc>(?:<lastmod>([^<]+)<\/lastmod>)?<\/url>/g),
-  ].map(([, loc, lastmod]) => ({ loc, lastmod }));
+  ].map(([, loc, lastmod]) => ({ loc: loc.replace(/&amp;/g, '&'), lastmod }));
   const urlCount = (xml.match(/<url>/g) ?? []).length;
   if (entries.length !== urlCount)
-    problems.push(`/sitemap.xml: ${urlCount - entries.length} <url> entries didn't parse`);
+    problems.push(`${name}: ${urlCount - entries.length} <url> entries didn't parse`);
   if (urlCount > SITEMAP_MAX_URLS)
-    problems.push(`/sitemap.xml: ${urlCount} URLs, over ${SITEMAP_MAX_URLS}`);
-  if (Buffer.byteLength(xml) > SITEMAP_MAX_BYTES) problems.push('/sitemap.xml: over 50 MB');
-  if (/<changefreq>|<priority>/.test(xml))
-    problems.push('/sitemap.xml: has changefreq or priority');
+    problems.push(`${name}: ${urlCount} URLs, over ${SITEMAP_MAX_URLS}`);
+  if (Buffer.byteLength(xml) > SITEMAP_MAX_BYTES) problems.push(`${name}: over 50 MB`);
+  if (/<changefreq>|<priority>/.test(xml)) problems.push(`${name}: has changefreq or priority`);
+  for (const { loc, lastmod } of entries) {
+    if (lastmod === undefined) continue;
+    if (!realDay(lastmod)) problems.push(`${name}: ${loc} has a bad <lastmod> (${lastmod})`);
+    else if (lastmod > tomorrow())
+      problems.push(`${name}: ${loc} <lastmod> ${lastmod} is in the future`);
+  }
+  console.log(`${name}: ${urlCount} URLs`);
+  return entries;
+}
 
-  // A day of slack: lastmod is a Central-time day, and this is UTC's
-  const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+function checkPlayers(name, entries, problems) {
   const players = entries.filter((e) => e.loc.startsWith(`${SITE_URL}/player/`));
   for (const { loc, lastmod } of players) {
     if (!/\/player\/\d+\/[a-z0-9-]+$/.test(loc))
-      problems.push(`/sitemap.xml: ${loc} has no name in its URL`);
-    const real = /^\d{4}-\d{2}-\d{2}$/.test(lastmod ?? '') && !Number.isNaN(Date.parse(lastmod));
-    if (!real) problems.push(`/sitemap.xml: ${loc} has no real <lastmod> (${lastmod})`);
-    else if (lastmod > tomorrow)
-      problems.push(`/sitemap.xml: ${loc} <lastmod> ${lastmod} is in the future`);
+      problems.push(`${name}: ${loc} has no name in its URL`);
+    if (!realDay(lastmod)) problems.push(`${name}: ${loc} has no real <lastmod> (${lastmod})`);
   }
   const listed = new Map(
     players.map((e) => [Number(e.loc.match(/\/player\/(\d+)/)?.[1]), e.lastmod]),
@@ -183,14 +200,66 @@ async function checkSitemap(problems) {
   const expected =
     mockApi('http://localhost/api/Player/GetSitemapPlayers').length - SITEMAP_LEFT_OUT.length;
   if (listed.size !== expected)
-    problems.push(`/sitemap.xml: ${listed.size} player pages, expected ${expected}`);
+    problems.push(`${name}: ${listed.size} player pages, expected ${expected}`);
   if (listed.get(SITEMAP_RETIRED.id) !== SITEMAP_RETIRED.lastmod)
     problems.push(
-      `/sitemap.xml: retired player ${SITEMAP_RETIRED.id} isn't dated ${SITEMAP_RETIRED.lastmod}`,
+      `${name}: retired player ${SITEMAP_RETIRED.id} isn't dated ${SITEMAP_RETIRED.lastmod}`,
     );
   for (const id of SITEMAP_LEFT_OUT)
-    if (listed.has(id)) problems.push(`/sitemap.xml: player ${id} (future or bad date) is listed`);
-  console.log(`/sitemap.xml: ${urlCount} URLs, ${players.length} player pages`);
+    if (listed.has(id)) problems.push(`${name}: player ${id} (future or bad date) is listed`);
+}
+
+// Game files: named URLs, played games dated, games weeks away left out; a past season's
+// file also lists its teams' pages for that season
+function checkGames(name, entries, problems) {
+  const games = entries.filter((e) => e.loc.startsWith(`${SITE_URL}/game/`));
+  if (games.length === 0) problems.push(`${name}: no game pages`);
+  for (const { loc } of games)
+    if (!/\/game\/\d+\/[a-z0-9-]+-\d{4}-\d{2}-\d{2}$/.test(loc))
+      problems.push(`${name}: ${loc} has no matchup and day in its URL`);
+  const byId = new Map(games.map((e) => [Number(e.loc.match(/\/game\/(\d+)/)[1]), e]));
+  for (const g of mockApi('http://localhost/api/GameOdds/GetSitemapGames')) {
+    if (!name.endsWith(`games=${g.seasonStartYear}`)) continue;
+    const entry = byId.get(g.id);
+    const day = g.gameDate.slice(0, 10);
+    const weeksAway = Date.parse(g.gameDate) - Date.now() > 14 * 86_400_000;
+    if (g.hasBeenPlayed && entry?.lastmod !== day)
+      problems.push(`${name}: played game ${g.id} isn't listed dated ${day} (${entry?.lastmod})`);
+    if (weeksAway && entry) problems.push(`${name}: game ${g.id}, weeks away, is listed`);
+  }
+}
+
+async function checkSitemap(problems) {
+  const res = await fetch(`http://localhost:${PORT}/sitemap.xml`);
+  const xml = await res.text();
+  if (!res.ok || !xml.includes('<sitemapindex')) {
+    problems.push(`/sitemap.xml: HTTP ${res.status}, not a sitemap index`);
+    return;
+  }
+  const files = [...xml.matchAll(/<sitemap><loc>([^<]+)<\/loc>/g)].map(([, loc]) =>
+    loc.replace(/&amp;/g, '&').replace(SITE_URL, ''),
+  );
+  const expected = [
+    '/sitemap.xml?part=pages',
+    '/sitemap.xml?games=2026',
+    '/sitemap.xml?games=2013',
+  ];
+  for (const f of expected)
+    if (!files.includes(f)) problems.push(`/sitemap.xml: doesn't list ${f}`);
+  for (const name of files) {
+    const entries = await sitemapFile(name, problems);
+    if (name === '/sitemap.xml?part=pages') checkPlayers(name, entries, problems);
+    else checkGames(name, entries, problems);
+  }
+  const old = await sitemapFile(`/sitemap.xml?games=${SITEMAP_OLD_GAME.seasonStartYear}`, problems);
+  for (const id of [SITEMAP_OLD_GAME.awayTeamId, SITEMAP_OLD_GAME.homeTeamId]) {
+    const loc = `${SITE_URL}/team/${id}?season=${SITEMAP_OLD_GAME.seasonStartYear}`;
+    const entry = old.find((e) => e.loc === loc);
+    if (entry?.lastmod !== SITEMAP_OLD_GAME.gameDate.slice(0, 10))
+      problems.push(`/sitemap.xml?games=2013: ${loc} isn't listed dated its last game`);
+  }
+  if ((await fetch(`http://localhost:${PORT}/sitemap.xml?games=1999`)).status !== 404)
+    problems.push('/sitemap.xml?games=1999: not a 404');
 }
 
 const api = createServer((req, res) => {

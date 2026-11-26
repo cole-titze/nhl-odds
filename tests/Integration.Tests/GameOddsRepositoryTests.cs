@@ -57,6 +57,26 @@ public class GameOddsRepositoryTests
     }
 
     [TestMethod]
+    public async Task GetSitemapGames_ShouldNameEachSeasonsTeams_AndSkipUnknownTeams()
+    {
+        await Seed.Teams(new Seed.Team(27, "PHX", "Phoenix", "Coyotes", Season: 2013),
+            new Seed.Team(Seed.Leafs, "TOR", "Toronto", "Maple Leafs", Season: 2013));
+        await Seed.Games(
+            new Seed.Game(2, Nov4Noon) { Played = true },
+            new Seed.Game(1, new DateTime(2014, 1, 10, 0, 0, 0)) { Season = 2013, AwayTeamId = 27, Played = true },
+            // A team with no name that season (no SeasonTeam row) has no named URL
+            new Seed.Game(3, Nov4Evening) { AwayTeamId = 27 });
+        await using var db = TestContexts.Web();
+
+        var games = await TestContexts.GameOdds(db).GetSitemapGames();
+
+        games.Select(g => g.Id).Should().Equal(1, 2);
+        games[0].Should().Be(new SitemapGame(1, 2013, new DateTime(2014, 1, 10, 0, 0, 0), 27, "Coyotes",
+            Seed.Leafs, "Maple Leafs", true));
+        games[1].AwayTeamName.Should().Be("Bruins");
+    }
+
+    [TestMethod]
     public async Task GetGameOdds_NullNotes_ShouldStillLoad()
     {
         await Seed.Games(new Seed.Game(1, Nov4Evening));

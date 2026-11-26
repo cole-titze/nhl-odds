@@ -172,6 +172,30 @@ public class GameOddsRepository : IGameOddsRepository
         }
     }
 
+    public async Task<List<SitemapGame>> GetSitemapGames()
+    {
+        var games = await _dbContext.GameRaw
+            .AsNoTracking()
+            .Select(g => new { g.Id, g.SeasonStartYear, g.GameDateUTC, g.AwayTeamId, g.HomeTeamId, g.HasBeenPlayed })
+            .ToListAsync();
+        var teams = await _dbContext.SeasonTeam
+            .AsNoTracking()
+            .Select(t => new { t.TeamId, t.SeasonStartYear, t.CommonName })
+            .ToListAsync();
+        var names = new Dictionary<(int, int), string>();
+        foreach (var t in teams)
+            names.TryAdd((t.TeamId, t.SeasonStartYear), t.CommonName);
+
+        // A game without both teams (a playoff matchup still TBD) has no named URL yet
+        return games
+            .Where(g => names.ContainsKey((g.AwayTeamId, g.SeasonStartYear)) && names.ContainsKey((g.HomeTeamId, g.SeasonStartYear)))
+            .OrderBy(g => g.Id)
+            .Select(g => new SitemapGame(g.Id, g.SeasonStartYear, g.GameDateUTC,
+                g.AwayTeamId, names[(g.AwayTeamId, g.SeasonStartYear)],
+                g.HomeTeamId, names[(g.HomeTeamId, g.SeasonStartYear)], g.HasBeenPlayed))
+            .ToList();
+    }
+
     private async Task<Dictionary<int, DbSeasonTeam>> GetSeasonTeams(int seasonStartYear)
     {
         var teams = await _dbContext.SeasonTeam

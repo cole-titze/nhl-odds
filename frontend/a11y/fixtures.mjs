@@ -48,6 +48,17 @@ export const SITEMAP_RETIRED = {
 };
 /** Players whose last game is in the future or unreadable: the sitemap leaves them out */
 export const SITEMAP_LEFT_OUT = [8400001, 8400002];
+/** A past season's game in the sitemap fixture: its season's file lists it and both teams' pages for it */
+export const SITEMAP_OLD_GAME = {
+  id: 2013021230,
+  seasonStartYear: 2013,
+  gameDate: '2014-04-13T19:00:00Z',
+  awayTeamId: 25,
+  awayTeamName: 'Stars',
+  homeTeamId: 27,
+  homeTeamName: 'Coyotes',
+  hasBeenPlayed: true,
+};
 
 // Five weeks of games either side of today, so the Games feed can load older
 // and newer chunks the way it does against the real API
@@ -399,6 +410,20 @@ const responses = {
       lastGameDate: games[70].gameDate,
     },
     { id: SITEMAP_LEFT_OUT[1], firstName: 'Bad', lastName: 'Date', lastGameDate: 'not a date' },
+  ],
+  // Every game with a named page (/api/GameOdds/GetSitemapGames): the feed's and an old one
+  GetSitemapGames: [
+    SITEMAP_OLD_GAME,
+    ...games.map((g) => ({
+      id: g.id,
+      seasonStartYear: Math.floor(g.id / 1_000_000),
+      gameDate: g.gameDate,
+      awayTeamId: g.awayTeam.id,
+      awayTeamName: g.awayTeam.teamName,
+      homeTeamId: g.homeTeam.id,
+      homeTeamName: g.homeTeam.teamName,
+      hasBeenPlayed: g.hasBeenPlayed,
+    })),
   ],
   GetBestStrategies: [
     {

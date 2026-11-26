@@ -30,7 +30,7 @@ import { Breadcrumbs, type Crumb } from '../components/Breadcrumbs';
 import { StatCard } from '../components/StatCard';
 import { playerName, playerPath, positionGroups, positionName } from '../utils/players';
 import type { RosterPlayerVM } from '../types';
-import { gamePagePath } from '../utils/pagePaths';
+import { gamePagePath, teamPath } from '../utils/pagePaths';
 
 // The game log starts with the games around the last one played; the rest are behind a button
 const LOG_GAMES_SHOWN = 10;
@@ -181,11 +181,18 @@ export function TeamDetailPage() {
     { name: `${team.locationName} ${team.teamName}`, path: `/team/${team.id}` },
   ];
 
+  // A past season is a page of its own (its own canonical URL and title), so search engines
+  // keep it and follow its games' links. A former team's bare URL shows its last season, so
+  // that's where it points too.
+  const teamLabel = `${team.locationName} ${team.teamName}`;
+  const seasonLabel = isCurrentSeason ? '' : ` ${formatSeasonLabel(season)}`;
+
   return (
     <div>
       <PageTitle
-        title={`${team.locationName} ${team.teamName}`}
-        description={`${team.locationName} ${team.teamName} games with NHL Odds model predictions, results, and betting record.`}
+        title={teamLabel + seasonLabel}
+        description={`${teamLabel}${isCurrentSeason ? '' : ` in ${formatSeasonLabel(season)}`}: games with NHL Odds model predictions, results, and betting record.`}
+        canonicalPath={teamPath(team.id, season)}
         // A team's athletes are its players now: past seasons' rosters aren't listed
         schema={[sportsTeam(team, isCurrentSeason ? (roster ?? []) : []), breadcrumbs(crumbs)]}
         imageAlt={`${team.locationName} ${team.teamName} logo with this season's record, how often the model picked their games right, and their next game`}

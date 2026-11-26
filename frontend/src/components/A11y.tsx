@@ -20,17 +20,20 @@ export function PageTitle({
   noindex = false,
   schema = [],
   imageAlt,
+  canonicalPath,
 }: {
   title?: string;
   description?: string;
   noindex?: boolean;
   schema?: (JsonLd | null)[];
   imageAlt?: string;
+  /** The page's own URL when the query string makes it a different page (a team's past season) */
+  canonicalPath?: string;
 }) {
   const { pathname } = useLocation();
   const fullTitle = title ? `${title} · NHL Odds` : 'NHL Odds';
-  // Without the query string, so URL variants count as one page
-  const url = SITE_URL + pathname;
+  // Without the query string, so URL variants count as one page (unless canonicalPath says otherwise)
+  const url = SITE_URL + (canonicalPath ?? pathname);
   const image = SITE_URL + shareImagePath(pathname);
   const alt = imageAlt ?? `${fullTitle}: ${description}`;
   return (

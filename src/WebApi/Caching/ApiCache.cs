@@ -60,6 +60,7 @@ public static class ApiCache
     public static string TeamRosterKey(int teamId, int seasonStartYear) => $"TeamRoster_{teamId}_{seasonStartYear}";
     public static string GamePlayersKey(int gameId) => $"GamePlayers_{gameId}";
     public const string SitemapPlayersKey = "SitemapPlayers";
+    public const string SitemapGamesKey = "SitemapGames";
     public static string SeasonTotalsKey(int seasonStartYear) => $"SeasonTotals_{seasonStartYear}";
     public static string FindPlayersKey(string foldedName, int seasonStartYear) => $"FindPlayers_{seasonStartYear}_{foldedName}";
 

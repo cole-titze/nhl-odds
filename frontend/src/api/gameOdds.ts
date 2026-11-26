@@ -1,5 +1,5 @@
 import { ApiError, apiFetch } from './client';
-import type { GameOddsVM, PredictionFactorsVM } from '../types';
+import type { GameOddsVM, PredictionFactorsVM, SitemapGameVM } from '../types';
 
 export interface AnchorDateVM {
   anchorDate: string | null;
@@ -56,4 +56,9 @@ export async function getPredictionFactors(
     init,
   );
   return res.factors;
+}
+
+/** Every game with a named page, oldest first (for the sitemap's per-season files) */
+export function getSitemapGames(): Promise<SitemapGameVM[]> {
+  return apiFetch<SitemapGameVM[]>('/api/GameOdds/GetSitemapGames');
 }

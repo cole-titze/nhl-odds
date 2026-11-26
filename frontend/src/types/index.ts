@@ -359,6 +359,18 @@ export interface ActivePlayerVM {
   lastGameDate: string;
 }
 
+/** A game for the sitemap's per-season files (/api/GameOdds/GetSitemapGames) */
+export interface SitemapGameVM {
+  id: number;
+  seasonStartYear: number;
+  gameDate: string;
+  awayTeamId: number;
+  awayTeamName: string;
+  homeTeamId: number;
+  homeTeamName: string;
+  hasBeenPlayed: boolean;
+}
+
 /** The league leaders in one stat for a regular season (#182; /api/Leaders/GetStatLeaders) */
 export interface StatLeadersVM {
   seasonStartYear: number;

@@ -48,6 +48,22 @@ public class GameOddsGetter : IGameOddsGetter
         return gameOdds is null ? null : GameOddsToViewModelsMapper.Map([gameOdds]).Single();
     }
 
+    public async Task<List<SitemapGameVM>> GetSitemapGames()
+    {
+        var games = await _gameOddsRepository.GetSitemapGames();
+        return games.Select(g => new SitemapGameVM
+        {
+            Id = g.Id,
+            SeasonStartYear = g.SeasonStartYear,
+            GameDate = g.GameDateUTC,
+            AwayTeamId = g.AwayTeamId,
+            AwayTeamName = g.AwayTeamName,
+            HomeTeamId = g.HomeTeamId,
+            HomeTeamName = g.HomeTeamName,
+            HasBeenPlayed = g.HasBeenPlayed,
+        }).ToList();
+    }
+
     public async Task<AnchorDateVM> GetAnchorDate(int seasonStartYear)
     {
         var anchor = await _gameOddsRepository.GetAnchorDate(seasonStartYear);

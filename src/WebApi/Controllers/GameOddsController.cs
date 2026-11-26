@@ -47,6 +47,16 @@ public class GameOddsController
         return result is null ? Results.NotFound() : Results.Ok(result);
     }
 
+    // Every game with a named page, for the sitemap's per-season files: about 1,400 a season, 25,000 in all
+    // (a couple of MB of JSON). It changes as games are played and scheduled, so an hour's cache is plenty
+    [HttpGet]
+    public async Task<IResult> GetSitemapGames()
+    {
+        var result = await _cache.GetOrSetAsync(ApiCache.SitemapGamesKey,
+            () => _gameOddsGetter.GetSitemapGames(), r => r.Count / 50, ApiCache.DateRangeLifetime);
+        return Results.Ok(result);
+    }
+
     // The main factors behind the game's prediction, for the Game page; factors: null when the
     // prediction shown has none (saved before #155, or the explainer failed that run)
     [HttpGet]

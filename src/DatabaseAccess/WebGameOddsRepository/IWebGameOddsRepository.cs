@@ -10,4 +10,6 @@ public interface IGameOddsRepository
     Task<GameOdds?> GetGameOdds(int gameId);
     Task<List<GameOdds>> GetAllGameOddsForSeason(int seasonStartYear);
     Task<DateTime?> GetAnchorDate(int seasonStartYear);
+    /// <summary>Every game whose teams are known, oldest first, for the sitemap.</summary>
+    Task<List<SitemapGame>> GetSitemapGames();
 }

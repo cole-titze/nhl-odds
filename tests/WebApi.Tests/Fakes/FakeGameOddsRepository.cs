@@ -31,6 +31,17 @@ public class FakeGameOddsRepository : IGameOddsRepository
         return Task.FromResult<IEnumerable<GameOdds>>(result);
     }
 
+    public Task<List<SitemapGame>> GetSitemapGames()
+    {
+        var result = _gameOdds
+            .OrderBy(x => x.Game.Id)
+            .Select(x => new SitemapGame(x.Game.Id, x.Game.SeasonStartYear, x.Game.GameDate,
+                x.Game.AwayTeam.Id, x.Game.AwayTeam.TeamName, x.Game.HomeTeam.Id, x.Game.HomeTeam.TeamName,
+                x.Game.HasBeenPlayed))
+            .ToList();
+        return Task.FromResult(result);
+    }
+
     public Task<GameOdds?> GetGameOdds(int gameId)
     {
         return Task.FromResult(_gameOdds.FirstOrDefault(x => x.Game.Id == gameId));

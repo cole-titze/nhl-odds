@@ -11,4 +11,5 @@ public interface IGameOddsGetter
     Task<TeamStats> BuildTeamGameOdds(TeamStats team, int seasonStartYear);
     Task<AnchorDateVM> GetAnchorDate(int seasonStartYear);
     Task<GameOddsVM?> GetGameOdds(int gameId);
+    Task<List<SitemapGameVM>> GetSitemapGames();
 }

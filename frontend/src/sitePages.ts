@@ -15,6 +15,8 @@ export type SitemapEntry =
   | 'teams'
   /** One URL per player with a game, dated their last game (utils/playerSitemap.ts) */
   | 'players'
+  /** One URL per game, played (dated its day) or in the next week, in its season's file (utils/sitemap.ts) */
+  | 'games'
   /** Left out, with the reason */
   | { exclude: string };
 
@@ -27,13 +29,10 @@ export const SITE_PAGES: Record<string, SitemapEntry> = {
   '/about': 'static',
   '/team/:teamId': 'teams',
   '/player/:playerId/:slug?': 'players',
-  '/game/:gameId/:slug?': {
-    exclude:
-      'thousands of near-identical pages add little; search engines still reach them through links',
-  },
+  '/game/:gameId/:slug?': 'games',
   '/admin': { exclude: 'noindex: needs an admin key' },
   '/search': { exclude: 'noindex: search results for whatever was typed' },
-  '/sitemap.xml': { exclude: 'the sitemap itself' },
+  '/sitemap.xml': { exclude: 'the sitemap index and its files themselves' },
   '/og/game/:file': { exclude: 'link preview image (og:image), not a page' },
   '/og/team/:file': { exclude: 'link preview image (og:image), not a page' },
   '/og/:file': { exclude: 'link preview image (og:image), not a page' },
