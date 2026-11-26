@@ -10,6 +10,7 @@ import {
   spreadCovered,
 } from './bettingStrategies';
 import type { BetResult, StrategyResult, StrategyType } from './bettingStrategies';
+import { fullTeamName } from './teamName';
 
 export const MODEL_REFERENCE = 'In-House Model';
 // Pseudo-book that bets each game at whichever pinned book has the largest edge,
@@ -476,8 +477,8 @@ export function crossBookLog(
     const bet = findBookmaker(g, betBookmaker);
     if (!ref || !bet) continue;
 
-    const homeName = `${g.homeTeam.locationName} ${g.homeTeam.teamName}`;
-    const awayName = `${g.awayTeam.locationName} ${g.awayTeam.teamName}`;
+    const homeName = `${fullTeamName(g.homeTeam)}`;
+    const awayName = `${fullTeamName(g.awayTeam)}`;
     const book = (bet as Partial<BestPriceOdds>).sourceBookmaker ?? bet.bookmakerName;
 
     if (betType === 'moneyline') {

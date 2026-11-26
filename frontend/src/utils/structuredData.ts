@@ -10,6 +10,7 @@ import { gamePagePath, playerPath } from './pagePaths';
 import type { GameOddsVM, GamePlayersVM, MatchupTeamVM, PlayerVM } from '../types';
 import { SITE_URL } from './site';
 import { shareImagePath } from '../og/paths';
+import { fullTeamName } from './teamName';
 
 export type JsonLd = Record<string, unknown>;
 
@@ -99,7 +100,7 @@ export function sportsTeam(
   return {
     '@type': 'SportsTeam',
     '@id': url,
-    name: `${team.locationName} ${team.teamName}`,
+    name: `${fullTeamName(team)}`,
     sport: 'Ice hockey',
     url,
     ...(team.logoUri ? { logo: team.logoUri } : {}),
@@ -129,7 +130,7 @@ export function person(player: PlayerVM): JsonLd {
 }
 
 const matchupName = (home: MatchupTeamVM, away: MatchupTeamVM) =>
-  `${away.locationName} ${away.teamName} at ${home.locationName} ${home.teamName}`;
+  `${fullTeamName(away)} at ${fullTeamName(home)}`;
 
 /**
  * A game as a SportsEvent, with the final score once it has been played. The

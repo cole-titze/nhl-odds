@@ -12,6 +12,7 @@ import { LoadingStatus } from './A11y';
 import { sectionProps } from '../utils/sections';
 import { hasOddsMovement } from '../utils/oddsMovement';
 import type { GameOddsVM, OddsMovementVM } from '../types';
+import { fullTeamName } from '../utils/teamName';
 
 const HEADING =
   'text-xs font-mono font-bold tracking-widest uppercase text-surface-600 dark:text-surface-400';
@@ -53,7 +54,7 @@ function Chart({ game, movement }: { game: GameOddsVM; movement: OddsMovementVM 
   const hydrated = useHydrated();
   const dark = useIsDarkTheme();
   const { locales, timeZone } = useDisplayTimeZone();
-  const home = game.homeTeam ? `${game.homeTeam.locationName} ${game.homeTeam.teamName}` : 'Home';
+  const home = game.homeTeam ? `${fullTeamName(game.homeTeam)}` : 'Home';
 
   const styles = useMemo(() => {
     let partner = 0;

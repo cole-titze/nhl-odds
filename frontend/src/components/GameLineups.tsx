@@ -13,6 +13,7 @@ import type {
   MatchupTeamVM,
   TeamLineupVM,
 } from '../types';
+import { fullTeamName } from '../utils/teamName';
 
 const HEADING =
   'text-xs font-mono font-bold tracking-widest uppercase text-surface-600 dark:text-surface-400';
@@ -92,7 +93,7 @@ export function GameLineups({
 }
 
 function TeamLineup({ team, lineup }: { team: MatchupTeamVM | null; lineup: TeamLineupVM }) {
-  const name = team ? `${team.locationName} ${team.teamName}` : 'TBD';
+  const name = team ? `${fullTeamName(team)}` : 'TBD';
   const out = [
     ...lineup.injured.map((p) => ({ ...p, why: p.note ? `injured, ${p.note}` : 'injured' })),
     ...lineup.suspended.map((p) => ({ ...p, why: 'suspended' })),

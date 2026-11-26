@@ -31,6 +31,7 @@ import { StatCard } from '../components/StatCard';
 import { playerName, playerPath, positionGroups, positionName } from '../utils/players';
 import type { RosterPlayerVM } from '../types';
 import { gamePagePath, teamPath } from '../utils/pagePaths';
+import { fullTeamName } from '../utils/teamName';
 
 // The game log starts with the games around the last one played; the rest are behind a button
 const LOG_GAMES_SHOWN = 10;
@@ -178,13 +179,13 @@ export function TeamDetailPage() {
   const isCurrentSeason = season === getCurrentSeason();
   const crumbs: Crumb[] = [
     { name: 'Teams', path: '/teams' },
-    { name: `${team.locationName} ${team.teamName}`, path: `/team/${team.id}` },
+    { name: `${fullTeamName(team)}`, path: `/team/${team.id}` },
   ];
 
   // A past season is a page of its own (its own canonical URL and title), so search engines
   // keep it and follow its games' links. A former team's bare URL shows its last season, so
   // that's where it points too.
-  const teamLabel = `${team.locationName} ${team.teamName}`;
+  const teamLabel = `${fullTeamName(team)}`;
   const seasonLabel = isCurrentSeason ? '' : ` ${formatSeasonLabel(season)}`;
 
   return (
@@ -195,7 +196,7 @@ export function TeamDetailPage() {
         canonicalPath={teamPath(team.id, season)}
         // A team's athletes are its players now: past seasons' rosters aren't listed
         schema={[sportsTeam(team, isCurrentSeason ? (roster ?? []) : []), breadcrumbs(crumbs)]}
-        imageAlt={`${team.locationName} ${team.teamName} logo with this season's record, how often the model picked their games right, and their next game`}
+        imageAlt={`${fullTeamName(team)} logo with this season's record, how often the model picked their games right, and their next game`}
       />
       <Breadcrumbs items={crumbs} />
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
@@ -209,9 +210,7 @@ export function TeamDetailPage() {
             }}
           />
           <div>
-            <h1 className="font-display text-3xl font-bold tracking-tight">
-              {team.locationName} {team.teamName}
-            </h1>
+            <h1 className="font-display text-3xl font-bold tracking-tight">{fullTeamName(team)}</h1>
             <span className="stat-number text-sm text-surface-500 dark:text-surface-400">
               <span className="sr-only">Record (wins, losses, overtime losses): </span>
               {team.seasonWins}-{team.seasonLosses}-{team.seasonOvertimeLosses}
@@ -221,10 +220,7 @@ export function TeamDetailPage() {
         <div className="flex items-center gap-2 flex-wrap">
           {/* The feed is this season's games, so it's offered only on this season's page */}
           {season === getCurrentSeason() && (
-            <CalendarSubscribe
-              teamId={team.id}
-              teamName={`${team.locationName} ${team.teamName}`}
-            />
+            <CalendarSubscribe teamId={team.id} teamName={`${fullTeamName(team)}`} />
           )}
           <SeasonSelector value={season} onChange={(s) => setSearchParams({ season: String(s) })} />
         </div>
@@ -365,7 +361,7 @@ export function TeamDetailPage() {
                             />
                           )}
                           <span className="font-medium">
-                            {opponent ? `${opponent.locationName} ${opponent.teamName}` : 'TBD'}
+                            {opponent ? `${fullTeamName(opponent)}` : 'TBD'}
                           </span>
                         </div>
                       </td>

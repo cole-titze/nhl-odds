@@ -40,6 +40,7 @@ import { InjuredReserveBadge } from '../components/InjuredReserveBadge';
 import { Breadcrumbs, type Crumb } from '../components/Breadcrumbs';
 import { LoadingStatus, PageTitle, ScrollRegion } from '../components/A11y';
 import { breadcrumbs, person } from '../utils/structuredData';
+import { fullTeamName } from '../utils/teamName';
 
 function seasonFrom(searchParams: URLSearchParams) {
   return Number(searchParams.get('season')) || undefined;
@@ -169,7 +170,7 @@ export function PlayerPage() {
 
   const name = playerName(player);
   const team = player.currentTeam;
-  const teamName = team ? `${team.locationName} ${team.teamName}` : null;
+  const teamName = team ? `${fullTeamName(team)}` : null;
   // A team only while they're on an NHL roster: a retired (or sent down,
   // unsigned) player shows none
   const isGoalie = player.position === 'G';
@@ -398,7 +399,7 @@ export function PlayerPage() {
                           className="h-5 w-5 object-contain"
                         />
                         <span className="font-medium whitespace-nowrap">
-                          {g.opponent.locationName} {g.opponent.teamName}
+                          {fullTeamName(g.opponent)}
                         </span>
                       </Link>
                     </td>

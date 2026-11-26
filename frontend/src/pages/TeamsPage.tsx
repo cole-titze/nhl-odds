@@ -14,6 +14,7 @@ import { calculateLogLoss } from '../utils/predictions';
 import { Winner } from '../types';
 import type { SeasonBookmakerOddsVM, SeasonTeamGameVM, TeamSummaryVM } from '../types';
 import { compareText } from '../utils/compareText';
+import { fullTeamName } from '../utils/teamName';
 
 type SortKey =
   | 'name'
@@ -167,7 +168,7 @@ export function TeamsPage() {
       let cmp = 0;
       switch (sortKey) {
         case 'name':
-          cmp = compareText(`${a.locationName} ${a.teamName}`, `${b.locationName} ${b.teamName}`);
+          cmp = compareText(`${fullTeamName(a)}`, `${fullTeamName(b)}`);
           break;
         case 'points':
         case 'record':
@@ -252,7 +253,7 @@ export function TeamsPage() {
                   [...data.teams]
                     .sort((a, b) => compareText(a.teamName, b.teamName))
                     .map((t) => ({
-                      name: `${t.locationName} ${t.teamName}`,
+                      name: `${fullTeamName(t)}`,
                       path: `/team/${t.id}`,
                     })),
                 ),

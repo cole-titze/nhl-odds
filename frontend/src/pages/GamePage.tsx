@@ -56,6 +56,7 @@ import {
   positionGroups,
   positionName,
 } from '../utils/players';
+import { fullTeamName } from '../utils/teamName';
 
 // Describes the link preview image (og/cards.tsx GameCard). No date: the page's
 // time zone differs between the server and the browser.
@@ -189,8 +190,8 @@ export function GamePage() {
 
   const borderClass = predictionBorderClass(game);
   const correct = game.hasBeenPlayed ? wasCorrectlyPredicted(game) : null;
-  const matchup = `${game.awayTeam ? `${game.awayTeam.locationName} ${game.awayTeam.teamName}` : 'TBD'} at ${
-    game.homeTeam ? `${game.homeTeam.locationName} ${game.homeTeam.teamName}` : 'TBD'
+  const matchup = `${game.awayTeam ? `${fullTeamName(game.awayTeam)}` : 'TBD'} at ${
+    game.homeTeam ? `${fullTeamName(game.homeTeam)}` : 'TBD'
   }`;
 
   const crumbs: Crumb[] = [
@@ -466,7 +467,7 @@ function GamePlayers({ game, players }: { game: GameOddsVM; players: GamePlayers
         </p>
       )}
       {sides.map(({ team, list }) => {
-        const teamName = `${team!.locationName} ${team!.teamName}`;
+        const teamName = `${fullTeamName(team!)}`;
         return (
           <div key={team!.id} className="glass rounded-xl overflow-hidden">
             <h3 className="px-4 pt-4 pb-2 flex items-center gap-2 text-sm font-semibold">

@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router';
 import type { TeamSummaryVM } from '../types';
 import { TeamLogo } from './TeamLogo';
+import { fullTeamName } from '../utils/teamName';
 
 interface KalshiTeamStats {
   games: number;
@@ -46,7 +47,7 @@ export function TeamRow({ team, season, showDk, showKalshi, kalshiStats }: TeamR
             to={href}
             className="font-medium group-hover:text-accent-600 dark:group-hover:text-accent-400 transition-colors"
           >
-            {team.locationName} {team.teamName}
+            {fullTeamName(team)}
           </Link>
         </div>
       </td>
