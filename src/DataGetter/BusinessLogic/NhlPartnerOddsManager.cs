@@ -51,16 +51,18 @@ public class NhlPartnerOddsManager
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
+        var rows = new List<DbPartnerOdds>();
+        // A day without games (Thanksgiving 2026) comes with "games": [] and no lastUpdatedUTC at all
+        if (!root.TryGetProperty("games", out var games) || games.ValueKind != JsonValueKind.Array
+            || games.GetArrayLength() == 0)
+            return rows;
+
         var updated = ReadDate(root, "lastUpdatedUTC")
             ?? throw new Exception($"{country} partner odds have no lastUpdatedUTC");
         var oddsDate = ReadDate(root, "currentOddsDate");
         var partner = root.TryGetProperty("bettingPartner", out var p) && p.TryGetProperty("name", out var name)
             ? name.GetString() ?? string.Empty
             : string.Empty;
-
-        var rows = new List<DbPartnerOdds>();
-        if (!root.TryGetProperty("games", out var games))
-            return rows;
         foreach (var game in games.EnumerateArray())
         {
             var gameId = game.GetProperty("gameId").GetInt32();

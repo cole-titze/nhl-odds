@@ -92,6 +92,27 @@ public class NhlPartnerOddsManagerTests
     }
 
     [TestMethod]
+    public void ParseOdds_NoGamesAndNoLastUpdated_IsEmpty()
+    {
+        // The feed on a day without games (2026-11-26)
+        var rows = NhlPartnerOddsManager.ParseOdds(
+            """{ "currentOddsDate": "2026-11-26", "bettingPartner": { "name": "DraftKings" }, "games": [] }""",
+            "US", DateTime.UtcNow);
+
+        rows.Should().BeEmpty();
+    }
+
+    [TestMethod]
+    public void ParseOdds_GamesWithoutLastUpdated_Throws()
+    {
+        var json = """{ "games": [ { "gameId": 2026020300, "startTimeUTC": "2026-11-27T00:00:00Z" } ] }""";
+
+        var parse = () => NhlPartnerOddsManager.ParseOdds(json, "US", DateTime.UtcNow);
+
+        parse.Should().Throw<Exception>().WithMessage("*no lastUpdatedUTC*");
+    }
+
+    [TestMethod]
     public async Task SavePartnerOdds_SavesOnlyNewVersions()
     {
         var repo = A.Fake<ISnapshotRepository>();
