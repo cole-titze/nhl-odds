@@ -35,7 +35,10 @@ done
 
 docker run -d --name "$net-webapi" --network "$net" --network-alias webapi \
   -e NHL_DATABASE="Host=database;Database=nhl;Username=postgres;Password=$pw" "$webapi" >/dev/null
-docker run -d --name "$net-frontend" --network "$net" -p 127.0.0.1::8080 "$frontend" >/dev/null
+# API_URL as in prod: the server-side render calls the webapi itself (without it, every
+# loader failed and pages answered 503)
+docker run -d --name "$net-frontend" --network "$net" -p 127.0.0.1::8080 \
+  -e API_URL=http://webapi:8080 "$frontend" >/dev/null
 port=$(docker port "$net-frontend" 8080/tcp | head -1 | sed 's/.*://')
 
 # Webapi has no published port: reach it through the frontend's /api proxy and from a curl container

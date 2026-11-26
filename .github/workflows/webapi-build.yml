@@ -10,6 +10,7 @@ on:
       - 'src/Search/**'
       - 'nhl-odds.sln'
       - '.github/workflows/webapi-build.yml'
+      - '.github/scripts/smoke-test.sh'
   pull_request:
     branches: [main]
     paths:
@@ -19,6 +20,7 @@ on:
       - 'src/Search/**'
       - 'nhl-odds.sln'
       - '.github/workflows/webapi-build.yml'
+      - '.github/scripts/smoke-test.sh'
   schedule:
     - cron: '0 8 * * 6'
   workflow_dispatch:
