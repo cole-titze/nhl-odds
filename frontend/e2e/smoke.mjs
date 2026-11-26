@@ -166,12 +166,27 @@ const browser = await chromium.launch(
 try {
   for (const page of PAGES) await checkPage(browser, page);
 
+  // A sitemap index: the pages file (teams, players) and a file per season of game pages
   await checkResource('/sitemap.xml', (res, body) =>
+    res.status !== 200
+      ? `status ${res.status}`
+      : body.includes('/sitemap.xml?part=pages') && body.includes(`/sitemap.xml?games=${SEASON}`)
+        ? null
+        : `no pages or ${SEASON} games file`,
+  );
+  await checkResource('/sitemap.xml?part=pages', (res, body) =>
     res.status !== 200
       ? `status ${res.status}`
       : body.includes('/team/10')
         ? null
         : 'no /team/10 entry',
+  );
+  await checkResource(`/sitemap.xml?games=${SEASON}`, (res, body) =>
+    res.status !== 200
+      ? `status ${res.status}`
+      : /\/game\/\d+\/[a-z0-9-]+-\d{4}-\d{2}-\d{2}</.test(body)
+        ? null
+        : 'no named game page',
   );
   // The pages above use up most of the API's rate limit (60 requests, 2 more a second), and a
   // rate-limited page renders without the redirect; a full bucket first
