@@ -177,7 +177,7 @@ public class AssistantGateTests
         await CreateService(ollama, settings).Chat(new AssistantRequest(Ask("hi"), "/"), CancellationToken.None);
 
         ollama.Requests[0]["model"]!.GetValue<string>().Should().Be("small");
-        ollama.Requests[1]["model"]!.GetValue<string>().Should().Be("big");        ollama.Requests[0]["options"]!["num_ctx"]!.GetValue<int>().Should().Be(AssistantGate.ContextTokens);
+        ollama.Requests[1]["model"]!.GetValue<string>().Should().Be("big"); ollama.Requests[0]["options"]!["num_ctx"]!.GetValue<int>().Should().Be(AssistantGate.ContextTokens);
     }
 
     [TestMethod]

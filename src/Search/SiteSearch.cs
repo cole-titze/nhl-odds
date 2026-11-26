@@ -276,7 +276,9 @@ public static partial class SiteSearch
                             {
                                 ["teams"] = new JsonObject
                                 {
-                                    ["query"] = query.Text, ["operator"] = "and", ["fuzziness"] = NameFuzziness,
+                                    ["query"] = query.Text,
+                                    ["operator"] = "and",
+                                    ["fuzziness"] = NameFuzziness,
                                     ["analyzer"] = SearchIndexes.NameAnalyzer,
                                 },
                             },
@@ -369,7 +371,10 @@ public static partial class SiteSearch
         // Oilers vs."), and its word scanner makes each fragment a single word (the snippet was just "McDavid")
         var body = new JsonObject
         {
-            ["type"] = "plain", ["fragment_size"] = 160, ["number_of_fragments"] = 1, ["no_match_size"] = 160,
+            ["type"] = "plain",
+            ["fragment_size"] = 160,
+            ["number_of_fragments"] = 1,
+            ["no_match_size"] = 160,
         };
         if (highlightQuery != null)
             body["highlight_query"] = highlightQuery;

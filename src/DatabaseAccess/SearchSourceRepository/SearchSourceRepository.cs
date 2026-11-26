@@ -19,7 +19,11 @@ public class SearchSourceRepository(NhlDbContext db) : ISearchSourceRepository
         var players = await db.Player.AsNoTracking()
             .Select(p => new DbPlayer
             {
-                Id = p.Id, FirstName = p.FirstName, LastName = p.LastName, IsActive = p.IsActive, HeadShot = p.HeadShot,
+                Id = p.Id,
+                FirstName = p.FirstName,
+                LastName = p.LastName,
+                IsActive = p.IsActive,
+                HeadShot = p.HeadShot,
             })
             .ToListAsync(ct);
         var positions = await db.GameRosterSpot.AsNoTracking()
@@ -61,9 +65,15 @@ public class SearchSourceRepository(NhlDbContext db) : ISearchSourceRepository
         db.GameRaw.AsNoTracking()
             .Select(g => new DbGameRaw
             {
-                Id = g.Id, HomeTeamId = g.HomeTeamId, AwayTeamId = g.AwayTeamId, SeasonStartYear = g.SeasonStartYear,
-                GameDateUTC = g.GameDateUTC, HomeGoals = g.HomeGoals, AwayGoals = g.AwayGoals,
-                HasBeenPlayed = g.HasBeenPlayed, GameType = g.GameType,
+                Id = g.Id,
+                HomeTeamId = g.HomeTeamId,
+                AwayTeamId = g.AwayTeamId,
+                SeasonStartYear = g.SeasonStartYear,
+                GameDateUTC = g.GameDateUTC,
+                HomeGoals = g.HomeGoals,
+                AwayGoals = g.AwayGoals,
+                HasBeenPlayed = g.HasBeenPlayed,
+                GameType = g.GameType,
             })
             .ToListAsync(ct);
 

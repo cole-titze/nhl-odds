@@ -87,7 +87,12 @@ public class OddsApiClosingOddsFetcherTests
 
         h2h.Should().ContainSingle().Which.Should().BeEquivalentTo(new
         {
-            GameId = 1, BookmakerKey = "draftkings", HomeOdds = 0.6, AwayOdds = 0.44, PriceTimeUTC = priceTime, OddsApiGameId = "abc",
+            GameId = 1,
+            BookmakerKey = "draftkings",
+            HomeOdds = 0.6,
+            AwayOdds = 0.44,
+            PriceTimeUTC = priceTime,
+            OddsApiGameId = "abc",
         });
         spreads.Should().ContainSingle().Which.Should().BeEquivalentTo(new { HomePoint = -1.5, HomePrice = 170, AwayPrice = -200, PriceTimeUTC = priceTime });
         totals.Should().ContainSingle().Which.Should().BeEquivalentTo(new { OverUnderPoint = 6.5, OverPrice = -110, UnderPrice = -110 });

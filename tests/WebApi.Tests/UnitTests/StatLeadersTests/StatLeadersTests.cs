@@ -21,14 +21,30 @@ public class StatLeadersTests
 
     private static PlayerSeasonTotals Skater(int id, string last, int gp, int goals, int assists, int toi = 0) => new()
     {
-        PlayerId = id, FirstName = "P", LastName = last, Position = POSITION.Center, TeamId = 10,
-        TeamAbbreviation = "TOR", GamesPlayed = gp, Goals = goals, Assists = assists, TimeOnIceSeconds = toi,
+        PlayerId = id,
+        FirstName = "P",
+        LastName = last,
+        Position = POSITION.Center,
+        TeamId = 10,
+        TeamAbbreviation = "TOR",
+        GamesPlayed = gp,
+        Goals = goals,
+        Assists = assists,
+        TimeOnIceSeconds = toi,
     };
 
     private static PlayerSeasonTotals Goalie(int id, string last, int gp, int saves, int ga, int toi) => new()
     {
-        PlayerId = id, FirstName = "G", LastName = last, Position = POSITION.Goalie, IsGoalie = true, TeamId = 6,
-        GamesPlayed = gp, Saves = saves, GoalsAgainst = ga, TimeOnIceSeconds = toi,
+        PlayerId = id,
+        FirstName = "G",
+        LastName = last,
+        Position = POSITION.Goalie,
+        IsGoalie = true,
+        TeamId = 6,
+        GamesPlayed = gp,
+        Saves = saves,
+        GoalsAgainst = ga,
+        TimeOnIceSeconds = toi,
     };
 
     private static StatLeadersVMResult Rank(string stat, params PlayerSeasonTotals[] totals) =>

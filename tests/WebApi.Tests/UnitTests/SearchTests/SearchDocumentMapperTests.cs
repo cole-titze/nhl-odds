@@ -10,7 +10,12 @@ public class SearchDocumentMapperTests
 {
     private static DbSeasonTeam Team(int id, int season, string place, string common, string abbr) => new()
     {
-        TeamId = id, SeasonStartYear = season, PlaceName = place, CommonName = common, Name = $"{place} {common}", Abbreviation = abbr,
+        TeamId = id,
+        SeasonStartYear = season,
+        PlaceName = place,
+        CommonName = common,
+        Name = $"{place} {common}",
+        Abbreviation = abbr,
     };
 
     [TestMethod]
@@ -100,8 +105,12 @@ public class SearchDocumentMapperTests
     {
         static DbNhlArticle Article(string id, string slug, int day) => new()
         {
-            EntityId = id, Slug = slug, Title = "Sharks at Senators recap", Body = id,
-            ContentDate = new DateTime(2026, 10, day), FirstSeenUTC = new DateTime(2026, 10, day),
+            EntityId = id,
+            Slug = slug,
+            Title = "Sharks at Senators recap",
+            Body = id,
+            ContentDate = new DateTime(2026, 10, day),
+            FirstSeenUTC = new DateTime(2026, 10, day),
         };
         var articles = SearchDocumentMapper.MapArticles([
             // The league's original and two team-site reposts: the original is kept, though not the newest

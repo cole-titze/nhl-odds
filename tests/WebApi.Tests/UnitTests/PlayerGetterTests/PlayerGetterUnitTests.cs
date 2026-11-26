@@ -20,18 +20,18 @@ public class PlayerGetterUnitTests
 
     private static Game PlayedGame(int id, DateTime date, int homeGoals, int awayGoals,
         PeriodType endPeriod = PeriodType.Regulation, bool played = true) => new()
-    {
-        Id = id,
-        GameDate = date,
-        SeasonStartYear = YEAR,
-        HomeGoals = homeGoals,
-        AwayGoals = awayGoals,
-        Winner = homeGoals > awayGoals ? Winner.HOME : Winner.AWAY,
-        EndPeriod = endPeriod,
-        HasBeenPlayed = played,
-        HomeTeam = new Team { Id = TOR, LocationName = "Toronto", TeamName = "Maple Leafs" },
-        AwayTeam = new Team { Id = BOS, LocationName = "Boston", TeamName = "Bruins" },
-    };
+        {
+            Id = id,
+            GameDate = date,
+            SeasonStartYear = YEAR,
+            HomeGoals = homeGoals,
+            AwayGoals = awayGoals,
+            Winner = homeGoals > awayGoals ? Winner.HOME : Winner.AWAY,
+            EndPeriod = endPeriod,
+            HasBeenPlayed = played,
+            HomeTeam = new Team { Id = TOR, LocationName = "Toronto", TeamName = "Maple Leafs" },
+            AwayTeam = new Team { Id = BOS, LocationName = "Boston", TeamName = "Bruins" },
+        };
 
     private static FakeWebPlayerRepository RepoWithMatthews()
     {
@@ -49,21 +49,36 @@ public class PlayerGetterUnitTests
         // Three home games, out of order: a win, an overtime loss and a regulation loss
         repo.Lines.Add(new PlayerGameLine
         {
-            PlayerId = 8479318, TeamId = TOR, Position = POSITION.Center,
+            PlayerId = 8479318,
+            TeamId = TOR,
+            Position = POSITION.Center,
             Game = PlayedGame(2026020010, new DateTime(2026, 10, 10, 23, 0, 0, DateTimeKind.Utc), 4, 1),
-            Goals = 2, Assists = 1, ShotsOnGoal = 6, PlusMinus = 2, TimeOnIceSeconds = 1200,
+            Goals = 2,
+            Assists = 1,
+            ShotsOnGoal = 6,
+            PlusMinus = 2,
+            TimeOnIceSeconds = 1200,
         });
         repo.Lines.Add(new PlayerGameLine
         {
-            PlayerId = 8479318, TeamId = TOR, Position = POSITION.Center,
+            PlayerId = 8479318,
+            TeamId = TOR,
+            Position = POSITION.Center,
             Game = PlayedGame(2026020020, new DateTime(2026, 10, 20, 23, 0, 0, DateTimeKind.Utc), 2, 3, PeriodType.Overtime),
-            Goals = 0, Assists = 1, ShotsOnGoal = 3, PlusMinus = -1, TimeOnIceSeconds = 1300,
+            Goals = 0,
+            Assists = 1,
+            ShotsOnGoal = 3,
+            PlusMinus = -1,
+            TimeOnIceSeconds = 1300,
         });
         repo.Lines.Add(new PlayerGameLine
         {
-            PlayerId = 8479318, TeamId = TOR, Position = POSITION.Center,
+            PlayerId = 8479318,
+            TeamId = TOR,
+            Position = POSITION.Center,
             Game = PlayedGame(2026020015, new DateTime(2026, 10, 15, 23, 0, 0, DateTimeKind.Utc), 1, 5),
-            ShotsOnGoal = 2, TimeOnIceSeconds = 1100,
+            ShotsOnGoal = 2,
+            TimeOnIceSeconds = 1100,
         });
         return repo;
     }
@@ -84,7 +99,9 @@ public class PlayerGetterUnitTests
         var repo = new FakeWebPlayerRepository();
         repo.Players.Add(new PlayerProfile
         {
-            Id = 8448208, FirstName = "Retired", LastName = "Player",
+            Id = 8448208,
+            FirstName = "Retired",
+            LastName = "Player",
             LastTeam = new Team { Id = TOR, LocationName = "Toronto", TeamName = "Maple Leafs" },
             LastSeasonStartYear = 2011,
         });
@@ -155,7 +172,9 @@ public class PlayerGetterUnitTests
         var repo = RepoWithMatthews();
         repo.Lines.Add(new PlayerGameLine
         {
-            PlayerId = 8479318, TeamId = TOR, Position = POSITION.Center,
+            PlayerId = 8479318,
+            TeamId = TOR,
+            Position = POSITION.Center,
             Game = PlayedGame(2026020030, new DateTime(2026, 10, 30, 23, 0, 0, DateTimeKind.Utc), 0, 0, played: false),
         });
         var cut = new PlayerGetter(repo);
@@ -184,15 +203,26 @@ public class PlayerGetterUnitTests
         repo.Players.Add(new PlayerProfile { Id = 1, Position = POSITION.Goalie });
         repo.Lines.Add(new PlayerGameLine
         {
-            PlayerId = 1, TeamId = TOR, Position = POSITION.Goalie,
+            PlayerId = 1,
+            TeamId = TOR,
+            Position = POSITION.Goalie,
             Game = PlayedGame(2026020010, new DateTime(2026, 10, 10, 23, 0, 0, DateTimeKind.Utc), 4, 1),
-            Saves = 29, GoalsAgainst = 1, ShotsAgainst = 30, TimeOnIceSeconds = 3600, IsStarter = true,
+            Saves = 29,
+            GoalsAgainst = 1,
+            ShotsAgainst = 30,
+            TimeOnIceSeconds = 3600,
+            IsStarter = true,
         });
         repo.Lines.Add(new PlayerGameLine
         {
-            PlayerId = 1, TeamId = TOR, Position = POSITION.Goalie,
+            PlayerId = 1,
+            TeamId = TOR,
+            Position = POSITION.Goalie,
             Game = PlayedGame(2026020015, new DateTime(2026, 10, 15, 23, 0, 0, DateTimeKind.Utc), 1, 5),
-            Saves = 15, GoalsAgainst = 5, ShotsAgainst = 20, TimeOnIceSeconds = 1800,
+            Saves = 15,
+            GoalsAgainst = 5,
+            ShotsAgainst = 20,
+            TimeOnIceSeconds = 1800,
         });
         var cut = new PlayerGetter(repo);
 

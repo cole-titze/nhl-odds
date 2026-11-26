@@ -14,15 +14,15 @@ public class TrackRecordCalculatorTests
 
     private static TrackRecordGame Game(double model, Winner winner, DateTime? date = null, bool live = true,
         TrackRecordPrice[]? morning = null, TrackRecordPrice[]? closing = null) => new()
-    {
-        GameId = Random.Shared.Next(),
-        GameDateUTC = date ?? Day1,
-        Winner = winner,
-        ModelHomeOdds = model,
-        IsLive = live,
-        Morning = [.. morning ?? []],
-        Closing = [.. closing ?? []],
-    };
+        {
+            GameId = Random.Shared.Next(),
+            GameDateUTC = date ?? Day1,
+            Winner = winner,
+            ModelHomeOdds = model,
+            IsLive = live,
+            Morning = [.. morning ?? []],
+            Closing = [.. closing ?? []],
+        };
 
     private static TrackRecordPrice Price(string book, double home, double away) => new(book, home, away);
 

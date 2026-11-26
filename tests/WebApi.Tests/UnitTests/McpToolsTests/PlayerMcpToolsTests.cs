@@ -47,7 +47,13 @@ public class PlayerMcpToolsTests
         },
         SeasonTotals = new PlayerSeasonTotalsVM
         {
-            GamesPlayed = 2, Goals = 2, Assists = 2, Points = 4, ShotsOnGoal = 8, PlusMinus = 1, TimeOnIceSeconds = 2400,
+            GamesPlayed = 2,
+            Goals = 2,
+            Assists = 2,
+            Points = 4,
+            ShotsOnGoal = 8,
+            PlusMinus = 1,
+            TimeOnIceSeconds = 2400,
         },
     };
 

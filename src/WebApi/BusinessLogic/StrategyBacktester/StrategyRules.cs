@@ -53,27 +53,27 @@ public static class StrategyRules
                 return CheckMoneyline(game, bm, type, threshold);
             case "spreadAll":
             case "spreadValue":
-            {
-                if (bm.HomePoint == 0 || game.PredictedSpread == null)
-                    return null;
-                // PredictedSpread is the predicted margin (home - away); HomePoint is the
-                // handicap (opposite sign). Home covers when margin + handicap > 0.
-                var coverMargin = game.PredictedSpread.Value + bm.HomePoint;
-                var edge = Math.Abs(coverMargin);
-                if (type == "spreadValue" && edge < threshold)
-                    return null;
-                return new BetFlag(coverMargin > 0, edge, bm);
-            }
+                {
+                    if (bm.HomePoint == 0 || game.PredictedSpread == null)
+                        return null;
+                    // PredictedSpread is the predicted margin (home - away); HomePoint is the
+                    // handicap (opposite sign). Home covers when margin + handicap > 0.
+                    var coverMargin = game.PredictedSpread.Value + bm.HomePoint;
+                    var edge = Math.Abs(coverMargin);
+                    if (type == "spreadValue" && edge < threshold)
+                        return null;
+                    return new BetFlag(coverMargin > 0, edge, bm);
+                }
             case "totalAll":
             case "totalValue":
-            {
-                if (bm.OverUnderPoint == 0 || game.PredictedTotal == null)
-                    return null;
-                var edge = Math.Abs(game.PredictedTotal.Value - bm.OverUnderPoint);
-                if (type == "totalValue" && edge < threshold)
-                    return null;
-                return new BetFlag(game.PredictedTotal.Value > bm.OverUnderPoint, edge, bm);
-            }
+                {
+                    if (bm.OverUnderPoint == 0 || game.PredictedTotal == null)
+                        return null;
+                    var edge = Math.Abs(game.PredictedTotal.Value - bm.OverUnderPoint);
+                    if (type == "totalValue" && edge < threshold)
+                        return null;
+                    return new BetFlag(game.PredictedTotal.Value > bm.OverUnderPoint, edge, bm);
+                }
             default:
                 return null;
         }
@@ -95,38 +95,38 @@ public static class StrategyRules
         {
             case "value":
             case "kelly":
-            {
-                var minEdge = MinValueEdge(type, threshold);
-                if (homeEdge >= minEdge && homeEdge >= awayEdge)
-                    return new BetFlag(true, homeEdge, bm);
-                if (awayEdge >= minEdge)
-                    return new BetFlag(false, awayEdge, bm);
-                return null;
-            }
-            case "modelWinner":
-            {
-                var betHome = homeModel.Value >= 0.5;
-                return new BetFlag(betHome, betHome ? homeEdge : awayEdge, bm);
-            }
-            case "underdog":
-            {
-                var betHome = homeModel.Value >= 0.5;
-                var bookProb = betHome ? bm.HomeOdds : bm.AwayOdds;
-                if (bookProb >= 0.5)
+                {
+                    var minEdge = MinValueEdge(type, threshold);
+                    if (homeEdge >= minEdge && homeEdge >= awayEdge)
+                        return new BetFlag(true, homeEdge, bm);
+                    if (awayEdge >= minEdge)
+                        return new BetFlag(false, awayEdge, bm);
                     return null;
-                return new BetFlag(betHome, betHome ? homeEdge : awayEdge, bm);
-            }
+                }
+            case "modelWinner":
+                {
+                    var betHome = homeModel.Value >= 0.5;
+                    return new BetFlag(betHome, betHome ? homeEdge : awayEdge, bm);
+                }
+            case "underdog":
+                {
+                    var betHome = homeModel.Value >= 0.5;
+                    var bookProb = betHome ? bm.HomeOdds : bm.AwayOdds;
+                    if (bookProb >= 0.5)
+                        return null;
+                    return new BetFlag(betHome, betHome ? homeEdge : awayEdge, bm);
+                }
             case "underdogValue":
-            {
-                // Value bets, but only on the side the book has as the underdog
-                var homeDogEdge = bm.HomeOdds < 0.5 ? homeEdge : double.NegativeInfinity;
-                var awayDogEdge = bm.AwayOdds < 0.5 ? awayEdge : double.NegativeInfinity;
-                if (homeDogEdge >= threshold && homeDogEdge >= awayDogEdge)
-                    return new BetFlag(true, homeDogEdge, bm);
-                if (awayDogEdge >= threshold)
-                    return new BetFlag(false, awayDogEdge, bm);
-                return null;
-            }
+                {
+                    // Value bets, but only on the side the book has as the underdog
+                    var homeDogEdge = bm.HomeOdds < 0.5 ? homeEdge : double.NegativeInfinity;
+                    var awayDogEdge = bm.AwayOdds < 0.5 ? awayEdge : double.NegativeInfinity;
+                    if (homeDogEdge >= threshold && homeDogEdge >= awayDogEdge)
+                        return new BetFlag(true, homeDogEdge, bm);
+                    if (awayDogEdge >= threshold)
+                        return new BetFlag(false, awayDogEdge, bm);
+                    return null;
+                }
             case "confidence":
                 if (homeModel.Value >= threshold)
                     return new BetFlag(true, homeEdge, bm);
@@ -190,31 +190,31 @@ public static class StrategyRules
         switch (betType)
         {
             case "spread":
-            {
-                var price = bet.BetHome ? bm.HomePrice : bm.AwayPrice;
-                if (price == 0)
-                    return null;
-                var margin = bet.BetHome ? home.Goals - away.Goals : away.Goals - home.Goals;
-                var cover = margin + (bet.BetHome ? bm.HomePoint : bm.AwayPoint);
-                return cover > 0 ? AmericanToDecimalPayout(price) : cover < 0 ? -1 : 0;
-            }
+                {
+                    var price = bet.BetHome ? bm.HomePrice : bm.AwayPrice;
+                    if (price == 0)
+                        return null;
+                    var margin = bet.BetHome ? home.Goals - away.Goals : away.Goals - home.Goals;
+                    var cover = margin + (bet.BetHome ? bm.HomePoint : bm.AwayPoint);
+                    return cover > 0 ? AmericanToDecimalPayout(price) : cover < 0 ? -1 : 0;
+                }
             case "overUnder":
-            {
-                var price = bet.BetHome ? bm.OverPrice : bm.UnderPrice;
-                if (price == 0)
-                    return null;
-                var total = home.Goals + away.Goals;
-                if (total == bm.OverUnderPoint)
-                    return 0;
-                var won = bet.BetHome == total > bm.OverUnderPoint;
-                return won ? AmericanToDecimalPayout(price) : -1;
-            }
+                {
+                    var price = bet.BetHome ? bm.OverPrice : bm.UnderPrice;
+                    if (price == 0)
+                        return null;
+                    var total = home.Goals + away.Goals;
+                    if (total == bm.OverUnderPoint)
+                        return 0;
+                    var won = bet.BetHome == total > bm.OverUnderPoint;
+                    return won ? AmericanToDecimalPayout(price) : -1;
+                }
             default:
-            {
-                var prob = bet.BetHome ? bm.HomeOdds : bm.AwayOdds;
-                var won = game.Winner == (bet.BetHome ? Winner.HOME : Winner.AWAY);
-                return won ? 1 / prob - 1 : -1;
-            }
+                {
+                    var prob = bet.BetHome ? bm.HomeOdds : bm.AwayOdds;
+                    var won = game.Winner == (bet.BetHome ? Winner.HOME : Winner.AWAY);
+                    return won ? 1 / prob - 1 : -1;
+                }
         }
     }
 

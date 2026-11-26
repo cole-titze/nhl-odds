@@ -9,13 +9,13 @@ namespace DataGetter.Tests.Mappers.Seasons;
 [TestClass]
 public class Season2009Tests : SeasonParsingTestBase
 {
-    protected override int    ExpectedSeasonStartYear => 2009;
-    protected override int    ExpectedHomeTeamId      => 6;
-    protected override int    ExpectedAwayTeamId      => 15;
-    protected override string ExpectedHomeTeamAbbr    => "BOS";
-    protected override string ExpectedAwayTeamAbbr    => "WSH";
-    protected override int    ExpectedHomeGoals        => 1;
-    protected override int    ExpectedAwayGoals        => 4;
+    protected override int ExpectedSeasonStartYear => 2009;
+    protected override int ExpectedHomeTeamId => 6;
+    protected override int ExpectedAwayTeamId => 15;
+    protected override string ExpectedHomeTeamAbbr => "BOS";
+    protected override string ExpectedAwayTeamAbbr => "WSH";
+    protected override int ExpectedHomeGoals => 1;
+    protected override int ExpectedAwayGoals => 4;
 
     protected override string BoxscoreJson => """
         {

@@ -43,6 +43,9 @@ jobs:
       - name: Check formatting
         run: dotnet format style --verify-no-changes
 
+      - name: Check whitespace
+        run: dotnet format whitespace --verify-no-changes
+
   frontend:
     name: Frontend Format
     runs-on: ubuntu-latest

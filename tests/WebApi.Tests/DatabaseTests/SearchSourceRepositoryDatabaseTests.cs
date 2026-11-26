@@ -44,8 +44,13 @@ public class SearchSourceRepositoryDatabaseTests
         foreach (var (id, season) in new[] { (2026020001, 2026), (2011020500, 2011) })
             _db.GameRaw.Add(new DbGameRaw
             {
-                Id = id, SeasonStartYear = season, GameDateUTC = new DateTime(season, 10, 10, 23, 0, 0), HomeTeamId = TOR,
-                AwayTeamId = BOS, HasBeenPlayed = true, GameType = Entities.Types.Enums.GameType.Regular,
+                Id = id,
+                SeasonStartYear = season,
+                GameDateUTC = new DateTime(season, 10, 10, 23, 0, 0),
+                HomeTeamId = TOR,
+                AwayTeamId = BOS,
+                HasBeenPlayed = true,
+                GameType = Entities.Types.Enums.GameType.Regular,
             });
         _db.GameSkaterStats.Add(new DbGameSkaterStats { GameId = 2026020001, PlayerId = TRADED, TeamId = TOR, TimeOnIceSeconds = 900 });
         _db.GameSkaterStats.Add(new DbGameSkaterStats { GameId = 2026020001, PlayerId = SENT_DOWN, TeamId = TOR, TimeOnIceSeconds = 900 });

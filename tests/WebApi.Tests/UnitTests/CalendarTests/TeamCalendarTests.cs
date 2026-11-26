@@ -21,17 +21,30 @@ public class TeamCalendarTests
 
     private static MatchupTeamVM Leafs(double? odds, int goals = 0) => new()
     {
-        Id = 10, LocationName = "Toronto", TeamName = "Maple Leafs", ModelOdds = odds, Goals = goals, Team = Winner.HOME,
+        Id = 10,
+        LocationName = "Toronto",
+        TeamName = "Maple Leafs",
+        ModelOdds = odds,
+        Goals = goals,
+        Team = Winner.HOME,
     };
 
     private static MatchupTeamVM Bruins(double? odds, int goals = 0) => new()
     {
-        Id = 6, LocationName = "Boston", TeamName = "Bruins", ModelOdds = odds, Goals = goals, Team = Winner.AWAY,
+        Id = 6,
+        LocationName = "Boston",
+        TeamName = "Bruins",
+        ModelOdds = odds,
+        Goals = goals,
+        Team = Winner.AWAY,
     };
 
     private static TeamVM Team(params GameOddsVM[] games) => new()
     {
-        Id = 10, LocationName = "Toronto", TeamName = "Maple Leafs", GameOddsVM = games,
+        Id = 10,
+        LocationName = "Toronto",
+        TeamName = "Maple Leafs",
+        GameOddsVM = games,
     };
 
     private static readonly GameOddsVM Upcoming = new()

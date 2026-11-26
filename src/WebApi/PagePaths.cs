@@ -14,7 +14,14 @@ public static partial class PagePaths
     // Letters that don't split into a plain letter and an accent
     private static readonly Dictionary<char, string> Letters = new()
     {
-        ['ø'] = "o", ['æ'] = "ae", ['œ'] = "oe", ['ß'] = "ss", ['ł'] = "l", ['đ'] = "d", ['ð'] = "d", ['þ'] = "th",
+        ['ø'] = "o",
+        ['æ'] = "ae",
+        ['œ'] = "oe",
+        ['ß'] = "ss",
+        ['ł'] = "l",
+        ['đ'] = "d",
+        ['ð'] = "d",
+        ['þ'] = "th",
     };
 
     /// <summary>"Tim Stützle" → "tim-stutzle", "Ryan O'Reilly" → "ryan-oreilly"</summary>

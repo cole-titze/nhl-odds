@@ -52,17 +52,29 @@ public class StatLeadersRepositoryTests
 
     private static DbGameSkaterStats Skater(int gameId, int playerId, int teamId, int goals, int assists, int toi,
         POSITION position = POSITION.Center) => new()
-    {
-        GameId = gameId, PlayerId = playerId, TeamId = teamId, Goals = goals, Assists = assists,
-        TimeOnIceSeconds = toi, ShotsOnGoal = goals * 3, Hits = 1, Position = position,
-    };
+        {
+            GameId = gameId,
+            PlayerId = playerId,
+            TeamId = teamId,
+            Goals = goals,
+            Assists = assists,
+            TimeOnIceSeconds = toi,
+            ShotsOnGoal = goals * 3,
+            Hits = 1,
+            Position = position,
+        };
 
     private static DbGameGoalieStats GoalieLine(int gameId, int playerId, int teamId, int saves, int goalsAgainst, int toi,
         bool starter) => new()
-    {
-        GameId = gameId, PlayerId = playerId, TeamId = teamId, EvenStrengthShotsSaved = saves,
-        EvenStrengthGoalsAllowed = goalsAgainst, TimeOnIceSeconds = toi, IsStarter = starter,
-    };
+        {
+            GameId = gameId,
+            PlayerId = playerId,
+            TeamId = teamId,
+            EvenStrengthShotsSaved = saves,
+            EvenStrengthGoalsAllowed = goalsAgainst,
+            TimeOnIceSeconds = toi,
+            IsStarter = starter,
+        };
 
     [TestMethod]
     public async Task GetSeasonTotals_ShouldSumTheRegularSeason()

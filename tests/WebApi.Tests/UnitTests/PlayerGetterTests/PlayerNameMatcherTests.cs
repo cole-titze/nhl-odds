@@ -76,8 +76,12 @@ public class PlayerNameMatcherTests
         // Traded since their last game: last played for CHI, now on BOS
         repo.LatestTeams.Add(new PlayerLatestTeam
         {
-            PlayerId = 2, TeamId = 16, TeamAbbreviation = "CHI", Position = POSITION.Center,
-            CurrentTeamId = 6, CurrentTeamAbbreviation = "BOS",
+            PlayerId = 2,
+            TeamId = 16,
+            TeamAbbreviation = "CHI",
+            Position = POSITION.Center,
+            CurrentTeamId = 6,
+            CurrentTeamAbbreviation = "BOS",
         });
         var cut = new PlayerGetter(repo);
 

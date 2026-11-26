@@ -10,13 +10,13 @@ public class StrategyRulesTests
 {
     private static GameOddsVM Game(
         double homeModel, int homeGoals, int awayGoals, params BookmakerOddsVM[] books) => new()
-    {
-        HasBeenPlayed = true,
-        Winner = homeGoals > awayGoals ? Winner.HOME : Winner.AWAY,
-        HomeTeam = new MatchupTeamVM { ModelOdds = homeModel, Goals = homeGoals },
-        AwayTeam = new MatchupTeamVM { ModelOdds = 1 - homeModel, Goals = awayGoals },
-        BookmakerOdds = books.ToList(),
-    };
+        {
+            HasBeenPlayed = true,
+            Winner = homeGoals > awayGoals ? Winner.HOME : Winner.AWAY,
+            HomeTeam = new MatchupTeamVM { ModelOdds = homeModel, Goals = homeGoals },
+            AwayTeam = new MatchupTeamVM { ModelOdds = 1 - homeModel, Goals = awayGoals },
+            BookmakerOdds = books.ToList(),
+        };
 
     private static BookmakerOddsVM Book(string name, double homeOdds, double awayOdds) => new()
     {
@@ -94,7 +94,11 @@ public class StrategyRulesTests
     {
         var book = new BookmakerOddsVM
         {
-            BookmakerName = "DraftKings", HomePoint = -1.5, AwayPoint = 1.5, HomePrice = 150, AwayPrice = -180,
+            BookmakerName = "DraftKings",
+            HomePoint = -1.5,
+            AwayPoint = 1.5,
+            HomePrice = 150,
+            AwayPrice = -180,
         };
         var game = Game(0.5, 4, 2, book);
 
@@ -106,7 +110,11 @@ public class StrategyRulesTests
     {
         var book = new BookmakerOddsVM
         {
-            BookmakerName = "DraftKings", HomePoint = -1.5, AwayPoint = 1.5, HomePrice = 150, AwayPrice = -200,
+            BookmakerName = "DraftKings",
+            HomePoint = -1.5,
+            AwayPoint = 1.5,
+            HomePrice = 150,
+            AwayPrice = -200,
         };
         var game = Game(0.5, 3, 2, book);
 

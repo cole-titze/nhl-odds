@@ -62,7 +62,12 @@ public class DbModelCloneTests
         };
         var final = new DbGameGoalieStats
         {
-            GameId = 1, PlayerId = 100, TeamId = 10, IsStarter = true, ShortHandedShotsSaved = 2, ShortHandedGoalsAllowed = 1,
+            GameId = 1,
+            PlayerId = 100,
+            TeamId = 10,
+            IsStarter = true,
+            ShortHandedShotsSaved = 2,
+            ShortHandedGoalsAllowed = 1,
         };
 
         tracked.Clone(final);

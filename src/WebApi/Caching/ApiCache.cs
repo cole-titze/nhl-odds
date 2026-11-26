@@ -24,11 +24,11 @@ public static class ApiCache
 
     public static MemoryCacheEntryOptions Entry(long size, TimeSpan? lifetime = null,
         CacheItemPriority priority = CacheItemPriority.Normal) => new()
-    {
-        Size = Math.Max(1, size),
-        AbsoluteExpirationRelativeToNow = lifetime,
-        Priority = priority,
-    };
+        {
+            Size = Math.Max(1, size),
+            AbsoluteExpirationRelativeToNow = lifetime,
+            Priority = priority,
+        };
 
     // The current season's AllTeams and SeasonTeams stay until the StartupCacheWarmer replaces them: under load
     // the player and game entries pushed them out (nothing but Calendar feeds read AllTeams then), and every feed

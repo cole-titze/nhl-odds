@@ -406,7 +406,7 @@ public class WebPlayerRepository : IWebPlayerRepository
             select new { PlayerId = grp.Key, Last = grp.Max() }).ToListAsync();
         var goalies = await (
             from s in _dbContext.GameGoalieStats.AsNoTracking()
-            // A backup who dressed but never went in didn't play (as on the Player page)
+                // A backup who dressed but never went in didn't play (as on the Player page)
             where s.GameId >= first && s.GameId < next && s.TimeOnIceSeconds > 0
             join g in _dbContext.GameRaw.AsNoTracking() on s.GameId equals g.Id
             group g.GameDateUTC by s.PlayerId into grp
