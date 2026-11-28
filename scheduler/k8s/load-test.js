@@ -317,21 +317,22 @@ function get(name, path) {
   else if (res.status === 0 || res.status >= 400) otherErrors.add(1, tags);
 }
 
-// The team and player ids come from the sitemap, which lists every team and player page
+// The team ids and player paths come from the sitemap's pages file, which lists every team
+// and player page (/sitemap.xml itself is an index since the per-season game files were added).
+// Player pages are /player/<id>/<slug>; the bare /player/<id> only redirects there.
 export function setup() {
-  const res = http.get(`${TARGET}/sitemap.xml`, {
+  const res = http.get(`${TARGET}/sitemap.xml?part=pages`, {
     responseType: "text",
     timeout: "30s",
   });
-  const teamIds = [...String(res.body || "").matchAll(/\/team\/(\d+)</g)].map(
+  const body = String(res.body || "");
+  const teamIds = [...body.matchAll(/\/team\/(\d+)</g)].map((m) => m[1]);
+  const playerIds = [...body.matchAll(/\/player\/(\d+(?:\/[^<\/]+)?)</g)].map(
     (m) => m[1],
   );
-  const playerIds = [
-    ...String(res.body || "").matchAll(/\/player\/(\d+)</g),
-  ].map((m) => m[1]);
   if (res.status !== 200 || teamIds.length === 0 || playerIds.length === 0) {
     throw new Error(
-      `Couldn't read team and player ids from ${TARGET}/sitemap.xml (status ${res.status})`,
+      `Couldn't read team and player ids from ${TARGET}/sitemap.xml?part=pages (status ${res.status})`,
     );
   }
   return { teamIds, playerIds };
