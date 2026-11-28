@@ -16,6 +16,8 @@ const MAX_BODY_BYTES = 16 * 1024;
 const MAPS_DIR = 'build/sourcemaps/assets';
 // Parsed maps are a few MB for the vendor chunk, so only the recently used ones are kept
 const MAX_MAPS = 20;
+// Stack traces rarely have more frames worth reading; the rest are left as they are
+const MAX_FRAMES = 20;
 // Chrome: "at fn (https://host/assets/x.js:1:2)"; Firefox and Safari: "fn@https://host/assets/x.js:1:2"
 const FRAME = /(?:https?:\/\/[^\s/()]+)?\/assets\/([\w.-]+\.js):(\d+):(\d+)/g;
 
@@ -53,7 +55,7 @@ const tidy = (source) =>
 
 /** The stack with each frame in this build's code replaced by its source position. */
 export async function mapStack(stack) {
-  const frames = [...stack.matchAll(FRAME)];
+  const frames = [...stack.matchAll(FRAME)].slice(0, MAX_FRAMES);
   if (frames.length === 0) return stack;
   const mapped = await Promise.all(
     frames.map(async ([text, file, line, column]) => {
@@ -66,8 +68,45 @@ export async function mapStack(stack) {
     }),
   );
   let i = 0;
-  return stack.replace(FRAME, () => mapped[i++]);
+  return stack.replace(FRAME, (text) => (i < mapped.length ? mapped[i++] : text));
 }
+
+// Mapping parses MB-sized source maps, so it's limited before it runs (the API's limits only
+// apply after): per visitor 5, then 1 a minute, and per pod 30 a minute, since the IP header
+// can be spoofed off Cloudflare. Over the limit, the report is forwarded unmapped.
+const PER_IP = { size: 5, perMs: 60_000 };
+const PER_POD = { size: 30, perMs: 2_000 };
+const MAX_TRACKED_IPS = 10_000;
+
+function bucket({ size, perMs }) {
+  return { size, perMs, tokens: size, at: Date.now() };
+}
+
+function take(b, now = Date.now()) {
+  b.tokens = Math.min(b.size, b.tokens + (now - b.at) / b.perMs);
+  b.at = now;
+  if (b.tokens < 1) return false;
+  b.tokens -= 1;
+  return true;
+}
+
+export function mapLimiter() {
+  const pod = bucket(PER_POD);
+  const ips = new Map();
+  return (ip) => {
+    let b = ips.get(ip);
+    if (!b) {
+      // A flood of made-up IPs only costs memory up to here; the pod bucket still applies
+      if (ips.size >= MAX_TRACKED_IPS) ips.clear();
+      b = bucket(PER_IP);
+      ips.set(ip, b);
+    }
+    return take(b) && take(pod);
+  };
+}
+
+const visitorIp = (req) =>
+  String(req.headers['cf-connecting-ip'] ?? req.headers['x-real-ip'] ?? req.socket.remoteAddress);
 
 const tooLarge = () => Object.assign(new Error('too large'), { status: 413 });
 
@@ -111,6 +150,7 @@ async function forward(apiUrl, req, report) {
 
 export function clientErrors({ apiUrl, buildDir = 'build' }) {
   const version = readVersion(buildDir);
+  const mayMap = mapLimiter();
 
   /** POST /api/ClientError: maps the stack, then hands the report to the API. */
   async function report(req, res) {
@@ -126,7 +166,7 @@ export function clientErrors({ apiUrl, buildDir = 'build' }) {
       if (e.status === 413) res.set('Connection', 'close');
       return res.status(e.status ?? 400).end();
     }
-    if (typeof body?.stack === 'string') {
+    if (typeof body?.stack === 'string' && mayMap(visitorIp(req))) {
       try {
         body.stack = await mapStack(body.stack);
       } catch {
