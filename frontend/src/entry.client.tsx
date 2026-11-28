@@ -7,7 +7,9 @@ import { installErrorReporting } from './utils/errorReporting';
 installErrorReporting();
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js');
+  // Crawlers (AdsBot-Google) stub register() to reject; the site works without the worker, so
+  // don't report that as an unhandled rejection
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
 
 startTransition(() => {
