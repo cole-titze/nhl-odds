@@ -7,7 +7,7 @@ namespace Integration.Tests;
 /// One Postgres database for the whole test run, built from database/Scripts/CreateTables.sql
 /// (the schema's source of truth, so no EF migrations or EnsureCreated).
 ///
-/// By default it starts postgres:18-alpine in Docker with Testcontainers. Setting
+/// By default it starts postgres:19-alpine in Docker with Testcontainers. Setting
 /// INTEGRATION_DATABASE to a connection string uses that server instead: a fresh database is
 /// created on it for the run and dropped afterwards. Without either, the tests are skipped
 /// (Inconclusive) locally and fail in CI (CI=true), so a CI run can't pass without running them.
@@ -17,7 +17,7 @@ public static class TestDatabase
 {
     public const string Category = "Integration";
 
-    private const string Image = "postgres:18-alpine";
+    private const string Image = "postgres:19-alpine";
 
     private static PostgreSqlContainer? _container;
     private static string? _serverConnectionString;

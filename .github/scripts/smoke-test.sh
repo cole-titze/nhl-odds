@@ -25,7 +25,7 @@ docker network create "$net" >/dev/null
 docker run -d --name "$net-db" --network "$net" --network-alias database \
   -e POSTGRES_DB=nhl -e POSTGRES_PASSWORD=$pw \
   -v "$here/database/Scripts/CreateTables.sql:/docker-entrypoint-initdb.d/01-create-tables.sql:ro" \
-  postgres:18-alpine >/dev/null
+  postgres:19-alpine >/dev/null
 for i in $(seq 60); do
   # initdb restarts the server once, so wait for the schema rather than the first accept
   docker exec "$net-db" psql -U postgres -d nhl -tAc 'SELECT 1 FROM "GameCleaned" LIMIT 1' >/dev/null 2>&1 && break
