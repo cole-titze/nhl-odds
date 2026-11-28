@@ -68,10 +68,10 @@ jobs:
           context: ./scheduler/k8s
           platforms: linux/arm64
           # Reuse unchanged layers (dependency installs) between runs; the weekly
-          # scheduled build starts clean so base images and OS packages update
+          # scheduled build and manual dispatches (the image rebuilds) start clean, so base images and OS packages update
           cache-from: type=gha,scope=scheduler-k8s
           cache-to: type=gha,mode=max,scope=scheduler-k8s
-          no-cache: ${{ github.event_name == 'schedule' }}
+          no-cache: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
