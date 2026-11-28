@@ -6,9 +6,9 @@ name: Integration Tests
 # (filtered by TestCategory) so the fast tests still gate the image builds. The e2e job runs
 # the built frontend against the real API and a seeded database (frontend/e2e).
 on:
-  # Saturday, with the weekly image rebuilds
+  # Friday, with the weekly image rebuilds
   schedule:
-    - cron: '0 8 * * 6'
+    - cron: '0 8 * * 5'
   workflow_dispatch:
 
 env:

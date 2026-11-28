@@ -22,7 +22,7 @@ on:
       - '.github/workflows/webapi-build.yml'
       - '.github/scripts/smoke-test.sh'
   schedule:
-    - cron: '0 8 * * 6'
+    - cron: '0 8 * * 5'
   workflow_dispatch:
 
 env:
