@@ -67,8 +67,16 @@ async function fetchLive(url) {
 }
 
 async function livePages(base) {
-  const sitemap = await (await fetchLive(`${base}/sitemap.xml`)).text();
-  const paths = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1]).pathname);
+  const locs = (xml) =>
+    [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1].replaceAll('&amp;', '&')));
+  let sitemap = await (await fetchLive(`${base}/sitemap.xml`)).text();
+  // /sitemap.xml is an index: team and player pages are in its pages part
+  if (sitemap.includes('<sitemapindex')) {
+    const pages = locs(sitemap).find((u) => u.searchParams.get('part') === 'pages');
+    if (!pages) throw new Error(`no pages part in the ${base}/sitemap.xml index`);
+    sitemap = await (await fetchLive(`${base}${pages.pathname}${pages.search}`)).text();
+  }
+  const paths = locs(sitemap).map((u) => u.pathname);
   const team = paths.find((p) => p.startsWith('/team/'));
   if (!team) throw new Error(`no /team/ page in ${base}/sitemap.xml`);
   // The newest played game of the last two weeks
